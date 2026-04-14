@@ -965,7 +965,7 @@ table.atlas.compact td:nth-child(10) { display: none; }
   height: 120px;
 }
 .drawer .plot-wrap.no-plot::before {
-  content: "Plot not available on the live portal for this peptide.";
+  content: "Plot not available for this peptide. This is expected for rare peptides, non-canonical ORFs, retroelements, and neoantigens where figures were not pre-generated.";
   color: var(--text-3); font-size: 12px; font-style: italic;
 }
 .drawer .plot-caption {
@@ -2747,7 +2747,7 @@ async function openDrawer(r) {
       <td class="num">${nDetected}${nTotal ? '/' + nTotal : ''}</td>
       <td class="num">${recStr}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--text-3);padding:14px 0;">No per-HLA binding records on file</td></tr>';
+  }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--text-3);padding:14px 0;">No per-HLA binding records on file.<br><span style="font-size:10.5px;font-style:italic;">This can occur when the peptide was detected in samples where HLA typing was unavailable, or when the presenting allele could not be confidently assigned by NetMHCpan. The peptide was still empirically identified by mass spectrometry.</span></td></tr>';
 
   // MS/MS spectrum hotlink (NYU genome server)
   const ASSET_BASE = 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/assets';
@@ -2923,7 +2923,7 @@ async function openDrawer(r) {
     <div class="spectrum-wrap">
       <img src="${spectrumUrl}" alt="MS/MS spectrum for ${pep} in ${code}"
            onload="this.classList.add('ok')"
-           onerror="this.parentNode.innerHTML='<div class=\\'no-spectrum\\'>Annotated spectrum not available for this peptide.<br><a href=\\'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/\\' target=\\'_blank\\'>Browse ImmunoVerse data ↗</a></div>';" />
+           onerror="this.parentNode.innerHTML='<div class=\\'no-spectrum\\'>Annotated spectrum not available for this peptide. Spectra are pre-generated for the most recurrent peptides; rare or private peptides may not have a rendered spectrum.<br><a href=\\'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/\\' target=\\'_blank\\'>Browse ImmunoVerse data ↗</a></div>';" />
       <div class="spectrum-caption">b-ions blue · y-ions red · a-ions green · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>
     </div>
 
@@ -2938,7 +2938,7 @@ async function openDrawer(r) {
 }
 
 function windowInterp(tumor, normal) {
-  if (!tumor && !normal) return '<span style="color:var(--text-3)">No RNA expression on file for this gene.</span>';
+  if (!tumor && !normal) return '<span style="color:var(--text-3)">No RNA expression on file for this gene.</span><br><span style="color:var(--text-3);font-size:11px;font-style:italic;">This is common for mutation neoantigens, cryptic ORFs, retroelements, and pathogen-derived peptides — these arise from non-canonical sources where standard gene-level TCGA/GTEx expression is not applicable. The peptide was still empirically detected on HLA by mass spectrometry.</span>';
   const ratio = tumor / Math.max(normal, 0.01);
   if (ratio > 50) return `Tumor &gt;50× highest normal tissue — <b style="color:var(--accent-lime)">wide therapeutic window</b>.`;
   if (ratio > 10) return `Tumor ${ratio.toFixed(0)}× highest normal tissue — <b style="color:var(--accent-lime)">wide therapeutic window</b>.`;
