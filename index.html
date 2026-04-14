@@ -951,14 +951,92 @@ table.atlas.compact td:nth-child(10) { display: none; }
   border-radius: 8px;
   padding: 10px;
   overflow: hidden;
+  position: relative;
 }
 .drawer .plot-wrap img {
   display: block; width: 100%; height: auto; max-height: 280px;
   object-fit: contain;
   opacity: 0;
   transition: opacity .3s ease;
+  cursor: zoom-in;
 }
 .drawer .plot-wrap img.ok { opacity: 1; }
+.drawer .spectrum-wrap { position: relative; }
+.drawer .spectrum-wrap img { cursor: zoom-in; }
+.expand-btn {
+  position: absolute;
+  top: 6px; right: 6px;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  z-index: 5;
+  display: flex; align-items: center; gap: 4px;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.plot-wrap:hover .expand-btn,
+.spectrum-wrap:hover .expand-btn { opacity: 1; }
+.expand-btn:hover { background: rgba(0,0,0,0.8); }
+.expand-btn svg { width: 13px; height: 13px; }
+
+/* ===================== LIGHTBOX ===================== */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(5,8,20,0.92);
+  backdrop-filter: blur(12px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  cursor: zoom-out;
+}
+.lightbox.open { opacity: 1; pointer-events: auto; }
+.lightbox img {
+  max-width: 92vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 20px 80px rgba(0,0,0,0.7);
+  background: #fff;
+  padding: 12px;
+}
+.lightbox .lb-close {
+  position: absolute;
+  top: 18px; right: 24px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.lightbox .lb-close:hover { background: rgba(255,255,255,0.25); }
+.lightbox .lb-caption {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  font-family: var(--mono);
+  background: rgba(0,0,0,0.5);
+  padding: 6px 16px;
+  border-radius: 8px;
+  max-width: 80vw;
+  text-align: center;
+}
 .drawer .plot-wrap.no-plot {
   background: var(--bg-3);
   display: flex; align-items: center; justify-content: center;
@@ -2110,6 +2188,13 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   </div>
 </footer>
 
+<!-- Lightbox for full-screen image viewing -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()" title="Close (Esc)">×</button>
+  <img id="lbImg" src="" alt="" />
+  <div class="lb-caption" id="lbCaption"></div>
+</div>
+
 <!-- Drawer -->
 <div class="drawer-backdrop" id="drawerBg"></div>
 <aside class="drawer" id="drawer" aria-hidden="true">
@@ -2885,8 +2970,10 @@ async function openDrawer(r) {
     ${exprUrl ? `
     <div class="section-title" data-tip="Boxplot showing the gene's RNA expression (TPM) across tumor samples and GTEx normal tissues. Allows visual assessment of how specifically the gene is expressed in tumors versus individual healthy organs — key for evaluating therapeutic safety.">Gene expression across tumor &amp; normal tissues</div>
     <div class="plot-wrap">
+      <button class="expand-btn" onclick="openLightbox('${exprUrl}','Gene expression: ${geneForExpr} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${exprUrl}" alt="Expression boxplot for ${geneForExpr}"
            onload="this.classList.add('ok')"
+           onclick="openLightbox('${exprUrl}','Gene expression: ${geneForExpr} in ${code}')"
            onerror="this.parentNode.classList.add('no-plot');this.remove();" />
       <div class="plot-caption">${geneForExpr} · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>
     </div>` : ''}
@@ -2905,24 +2992,30 @@ async function openDrawer(r) {
 
     <div class="section-title" data-tip="Shows where this peptide ranks in terms of MS intensity compared to all other peptides in this cancer's immunopeptidome. A high percentile means this peptide is among the most abundantly presented — indicating strong and stable HLA presentation on the tumor surface.">Peptide intensity percentile vs atlas</div>
     <div class="plot-wrap">
+      <button class="expand-btn" onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${percentileUrl}" alt="Percentile plot for ${pep}"
            onload="this.classList.add('ok')"
+           onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"
            onerror="this.parentNode.classList.add('no-plot');this.remove();" />
       <div class="plot-caption">Where this peptide ranks within the ${code} immunopeptidome · served from ImmunoVerse</div>
     </div>
 
     <div class="section-title" data-tip="Rank-abundance curve showing how this peptide's detection frequency (PSM count) compares across the immunopeptidome samples where it was found. A peptide appearing at high abundance across many samples is a strong shared target candidate.">PSM rank-abundance curve</div>
     <div class="plot-wrap">
+      <button class="expand-btn" onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${rankAbundanceUrl}" alt="Rank-abundance curve for ${pep}"
            onload="this.classList.add('ok')"
+           onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"
            onerror="this.parentNode.classList.add('no-plot');this.remove();" />
       <div class="plot-caption">Abundance rank across ${code} samples that detected this peptide · served from ImmunoVerse</div>
     </div>
 
     <div class="section-title" data-tip="The annotated tandem mass spectrum (MS/MS) confirming this peptide's identity. Blue = b-ions (N-terminal fragments), red = y-ions (C-terminal fragments), green = a-ions. A well-matched spectrum with many fragment ions gives high confidence that this exact peptide sequence was detected on HLA.">MS/MS spectrum</div>
     <div class="spectrum-wrap">
+      <button class="expand-btn" onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${spectrumUrl}" alt="MS/MS spectrum for ${pep} in ${code}"
            onload="this.classList.add('ok')"
+           onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"
            onerror="this.parentNode.innerHTML='<div class=\\'no-spectrum\\'>Annotated spectrum not available for this peptide. Spectra are pre-generated for the most recurrent peptides; rare or private peptides may not have a rendered spectrum.<br><a href=\\'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/\\' target=\\'_blank\\'>Browse ImmunoVerse data ↗</a></div>';" />
       <div class="spectrum-caption">b-ions blue · y-ions red · a-ions green · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>
     </div>
@@ -3009,8 +3102,31 @@ function closeDrawer() {
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawerBg').classList.remove('open');
 }
+
+// ===== Lightbox for full-screen image viewing =====
+function openLightbox(src, caption) {
+  const lb = document.getElementById('lightbox');
+  const img = document.getElementById('lbImg');
+  const cap = document.getElementById('lbCaption');
+  img.src = src;
+  img.alt = caption || '';
+  cap.textContent = caption || '';
+  lb.classList.add('open');
+  // Prevent clicks on the image from closing
+  img.onclick = function(e) { e.stopPropagation(); };
+}
+function closeLightbox() {
+  const lb = document.getElementById('lightbox');
+  lb.classList.remove('open');
+  document.getElementById('lbImg').src = '';
+}
 document.getElementById('drawerBg').addEventListener('click', closeDrawer);
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('lightbox').classList.contains('open')) closeLightbox();
+    else closeDrawer();
+  }
+});
 
 // ============ EVENT BINDING ============
 document.getElementById('fCancer').addEventListener('change', e => { STATE.cancer = e.target.value; STATE.page = 1; applyFilters(); });
