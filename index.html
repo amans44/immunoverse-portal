@@ -1359,47 +1359,33 @@ table.atlas.compact td:nth-child(10) { display: none; }
 /* ===================== BODY MAP ===================== */
 .bodymap-wrap {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 420px 1fr;
   gap: 32px;
   align-items: start;
   margin-top: 28px;
 }
 .bodymap-svg-box {
   position: relative;
-  padding: 18px;
+  padding: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   backdrop-filter: blur(8px);
+  overflow: hidden;
 }
 .bodymap-svg-box svg { display: block; width: 100%; height: auto; }
 .bodymap-pin {
-  fill: rgba(34,211,238,0.18);
-  stroke: var(--accent-cyan);
-  stroke-width: 1.2;
+  fill: rgba(34,211,238,0.0);
+  stroke: rgba(34,211,238,0);
+  stroke-width: 4;
   cursor: pointer;
   transition: all .18s;
 }
 .bodymap-pin:hover, .bodymap-pin.active {
-  fill: rgba(167,139,250,0.45);
+  fill: rgba(167,139,250,0.18);
   stroke: var(--accent-violet);
-  stroke-width: 1.8;
-  filter: drop-shadow(0 0 8px rgba(167,139,250,0.6));
-}
-.bodymap-label {
-  fill: var(--text-2);
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
-  pointer-events: none;
-  text-anchor: middle;
-}
-.bodymap-silhouette {
-  fill: rgba(138,147,173,0.04);
-  stroke: rgba(138,147,173,0.3);
-  stroke-width: 1.2;
-  stroke-linejoin: round;
-  stroke-linecap: round;
+  stroke-width: 5;
+  filter: drop-shadow(0 0 14px rgba(167,139,250,0.85));
 }
 .bodymap-info {
   background: var(--bg-card);
@@ -1686,85 +1672,11 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 
     <div class="bodymap-wrap">
       <div class="bodymap-svg-box">
-        <svg viewBox="0 0 340 560" xmlns="http://www.w3.org/2000/svg" aria-label="Human body map with cancer types annotated">
-          <defs>
-            <radialGradient id="bodyGlow" cx="50%" cy="30%" r="60%">
-              <stop offset="0%" stop-color="rgba(34,211,238,0.06)"/>
-              <stop offset="100%" stop-color="transparent"/>
-            </radialGradient>
-            <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="2" result="glow"/>
-              <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
+        <svg viewBox="0 0 1024 1536" xmlns="http://www.w3.org/2000/svg" aria-label="Human body map with cancer types annotated">
+          <!-- Pan-cancer anatomical illustration with annotated tumor types -->
+          <image href="pancancer_image.png" x="0" y="0" width="1024" height="1536" preserveAspectRatio="xMidYMid meet"/>
 
-          <!-- Ambient glow -->
-          <ellipse cx="170" cy="250" rx="140" ry="220" fill="url(#bodyGlow)"/>
-
-          <!-- Detailed anatomic silhouette -->
-          <g class="bodymap-silhouette">
-            <!-- Head & skull -->
-            <path d="M170 12 C146 12 128 28 126 52 C124 68 130 76 138 80 L138 90 C138 94 142 98 148 100 L148 104 L192 104 L192 100 C198 98 202 94 202 90 L202 80 C210 76 216 68 214 52 C212 28 194 12 170 12 Z"/>
-            <!-- Ear details -->
-            <path d="M126 50 C122 50 120 56 120 62 C120 68 123 72 126 70" fill="none" stroke-width="1.5"/>
-            <path d="M214 50 C218 50 220 56 220 62 C220 68 217 72 214 70" fill="none" stroke-width="1.5"/>
-
-            <!-- Neck -->
-            <path d="M152 104 L148 108 C146 114 146 120 148 124 L192 124 C194 120 194 114 192 108 L188 104"/>
-
-            <!-- Shoulders & upper torso -->
-            <path d="M148 124 C132 126 108 134 96 142 C88 148 84 156 84 166 L84 174
-                     L84 174 C82 172 78 170 74 170 C68 172 64 178 64 186 L66 226
-                     C66 234 70 240 76 242 L82 244 C84 244 86 242 86 238 L86 200
-                     L86 200 L86 230 C86 250 90 262 96 272 L106 290
-                     C108 294 108 300 106 306 L100 330
-                     C98 338 98 344 102 350 L106 356
-                     L106 356 L104 386 C102 410 104 430 108 448
-                     L112 470 C114 480 116 488 114 496 L110 516
-                     C108 524 110 530 116 534 L130 538 C136 540 140 536 140 530
-                     L138 516 L136 496 C134 484 136 474 140 466
-                     L152 430 C156 420 158 408 158 396 L160 356"/>
-            <path d="M192 124 C208 126 232 134 244 142 C252 148 256 156 256 166 L256 174
-                     L256 174 C258 172 262 170 266 170 C272 172 276 178 276 186 L274 226
-                     C274 234 270 240 264 242 L258 244 C256 244 254 242 254 238 L254 200
-                     L254 200 L254 230 C254 250 250 262 244 272 L234 290
-                     C232 294 232 300 234 306 L240 330
-                     C242 338 242 344 238 350 L234 356
-                     L234 356 L236 386 C238 410 236 430 232 448
-                     L228 470 C226 480 224 488 226 496 L230 516
-                     C232 524 230 530 224 534 L210 538 C204 540 200 536 200 530
-                     L202 516 L204 496 C206 484 204 474 200 466
-                     L188 430 C184 420 182 408 182 396 L180 356"/>
-
-            <!-- Torso center line & ribcage hints -->
-            <path d="M160 356 L170 356 L180 356" fill="none" stroke-width="0.5" opacity="0.3"/>
-            <path d="M130 160 C148 154 192 154 210 160" fill="none" stroke-width="0.6" opacity="0.2"/>
-            <path d="M124 180 C148 172 192 172 216 180" fill="none" stroke-width="0.6" opacity="0.2"/>
-            <path d="M120 200 C148 190 192 190 220 200" fill="none" stroke-width="0.6" opacity="0.2"/>
-            <path d="M118 220 C148 208 192 208 222 220" fill="none" stroke-width="0.6" opacity="0.15"/>
-
-            <!-- Internal organ outlines (subtle, for anatomic context) -->
-            <!-- Brain -->
-            <ellipse cx="170" cy="44" rx="22" ry="20" fill="none" stroke-width="0.7" opacity="0.2" stroke-dasharray="3 2"/>
-            <!-- Lungs -->
-            <path d="M122 148 C116 160 112 180 112 200 C112 218 118 228 130 228 L148 226 C150 220 150 200 148 180 C146 160 138 148 130 144 Z" fill="none" stroke-width="0.8" opacity="0.2"/>
-            <path d="M218 148 C224 160 228 180 228 200 C228 218 222 228 210 228 L192 226 C190 220 190 200 192 180 C194 160 202 148 210 144 Z" fill="none" stroke-width="0.8" opacity="0.2"/>
-            <!-- Heart -->
-            <path d="M158 180 C154 176 148 178 148 184 C148 192 158 200 164 204 C170 200 180 192 180 184 C180 178 174 176 170 180 Z" fill="none" stroke-width="0.7" opacity="0.15" transform="scale(0.8) translate(38,30)"/>
-            <!-- Stomach -->
-            <path d="M148 236 C140 240 136 252 140 264 C144 274 156 278 164 272 L168 264" fill="none" stroke-width="0.7" opacity="0.2"/>
-            <!-- Liver -->
-            <path d="M176 232 C196 230 212 238 216 252 C218 262 212 270 200 272 L180 268" fill="none" stroke-width="0.7" opacity="0.2"/>
-            <!-- Kidneys -->
-            <ellipse cx="132" cy="264" rx="10" ry="16" fill="none" stroke-width="0.6" opacity="0.15" transform="rotate(-10,132,264)"/>
-            <ellipse cx="208" cy="264" rx="10" ry="16" fill="none" stroke-width="0.6" opacity="0.15" transform="rotate(10,208,264)"/>
-            <!-- Colon outline -->
-            <path d="M130 282 L126 300 C124 310 128 318 138 320 L170 322 L200 320 C210 318 214 310 212 300 L208 282" fill="none" stroke-width="0.6" opacity="0.15"/>
-            <!-- Bladder -->
-            <ellipse cx="170" cy="340" rx="14" ry="10" fill="none" stroke-width="0.6" opacity="0.15"/>
-          </g>
-
-          <!-- Cancer pins (JS-rendered, positioned at anatomic locations) -->
+          <!-- Interactive hotspots (JS-rendered, overlaid on illustration pins) -->
           <g id="bodyPins"></g>
         </svg>
       </div>
@@ -2410,28 +2322,28 @@ function renderCancerGrid(summary) {
 
 // ============ BODY MAP ============
 // Anatomic position (SVG coords) per cancer — hand-tuned
+// Coordinates in the pancancer_image.png native space (1024 x 1536),
+// aligned with the dots drawn on the illustration.
 const BODY_POSITIONS = {
-  GBM:  [170,  42],  // brain
-  HNSC: [202,  80],  // head & neck (right side)
-  ESCA: [170, 130],  // esophagus
-  LUAD: [130, 185],  // left lung
-  LUSC: [210, 185],  // right lung
-  MESO: [108, 210],  // pleura (outer left)
-  BRCA: [142, 156],  // breast (left)
-  LIHC: [205, 248],  // liver
-  CHOL: [190, 260],  // bile duct
-  STAD: [148, 252],  // stomach
-  PAAD: [176, 268],  // pancreas
-  COAD: [170, 308],  // colon
-  KIRC: [210, 264],  // right kidney
-  BLCA: [170, 340],  // bladder
-  OV:   [148, 342],  // ovary (left)
-  CESC: [190, 348],  // cervix (right)
-  SKCM: [268, 200],  // skin (right arm)
-  DLBC: [ 98, 240],  // lymph node (left axilla)
-  AML:  [ 72, 226],  // bone marrow (left forearm)
-  NBL:  [136, 268],  // adrenal (left kidney area, pediatric)
-  RT:   [152, 290],  // soft tissue (pediatric)
+  GBM:  [517,  144],
+  HNSC: [578,  270],
+  ESCA: [501,  420],
+  BRCA: [416,  503],
+  LUAD: [391,  594],
+  LUSC: [609,  602],
+  SKCM: [777,  570],
+  AML:  [213,  706],
+  MESO: [372,  748],
+  DLBC: [330,  838],
+  STAD: [467,  816],
+  CHOL: [594,  795],
+  KIRC: [630,  866],
+  NBL:  [495,  885],
+  PAAD: [548,  953],
+  COAD: [496, 1012],
+  OV:   [412, 1059],
+  BLCA: [565, 1077],
+  CESC: [500, 1137],
 };
 function classColor(k) {
   const map = {
@@ -2444,16 +2356,13 @@ function classColor(k) {
 function renderBodyMap(summary) {
   const g = document.getElementById('bodyPins');
   if (!g) return;
-  // Scale pin radius by target count (sqrt)
-  const max = Math.max(...summary.cancers.map(c => c.count));
+  // Uniform hotspots sized to overlay the dots drawn on the illustration.
   const parts = [];
   summary.cancers.forEach(c => {
     const pos = BODY_POSITIONS[c.code];
     if (!pos) return;
     const [x, y] = pos;
-    const r = 5 + Math.sqrt(c.count / max) * 8;
-    parts.push(`<circle class="bodymap-pin" data-code="${c.code}" cx="${x}" cy="${y}" r="${r.toFixed(1)}"></circle>`);
-    parts.push(`<text class="bodymap-label" x="${x}" y="${(y + r + 9).toFixed(1)}">${c.code}</text>`);
+    parts.push(`<circle class="bodymap-pin" data-code="${c.code}" cx="${x}" cy="${y}" r="34"></circle>`);
   });
   g.innerHTML = parts.join('');
   // Events
