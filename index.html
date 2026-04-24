@@ -1031,6 +1031,73 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .compare-table tbody tr:hover td { background: var(--bg-2); }
 .compare-table tbody tr:hover th.rowlbl { background: var(--bg-2); }
 
+.cmp-sel-bar {
+  position: sticky;
+  top: -1px; /* sit flush with modal top, below the thead when the table scrolls */
+  background: var(--bg-1);
+  z-index: 5;
+  padding: 0 0 10px;
+  margin: -4px 0 12px;
+  border-bottom: 1px dashed var(--border);
+}
+.cmp-sel-row, .cmp-add-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  font-size: 12px;
+}
+.cmp-add-row { margin-top: 8px; color: var(--text-3); }
+.cmp-sel-label, .cmp-add-label {
+  color: var(--text-3); font-size: 11.5px; margin-right: 4px; white-space: nowrap;
+}
+.cmp-sel-label b { color: var(--text-0); }
+.cmp-sel-chip {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  border-radius: 999px;
+  padding: 4px 6px 4px 10px;
+  font-size: 11.5px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+  transition: border-color .1s, background .1s;
+}
+.cmp-sel-chip:hover { border-color: #f87171; background: color-mix(in srgb, #f87171 10%, var(--bg-3)); }
+.cmp-sel-x { color: var(--text-3); font-size: 14px; line-height: 1; padding: 0 4px; }
+.cmp-sel-chip:hover .cmp-sel-x { color: #f87171; }
+.cmp-add-chip {
+  background: transparent;
+  border: 1px dashed var(--border-2);
+  color: var(--text-2);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color .1s, color .1s, background .1s;
+}
+.cmp-add-chip:hover {
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  background: color-mix(in srgb, var(--accent-cyan) 10%, transparent);
+}
+
+.cmp-col-x {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  border-radius: 4px;
+  width: 20px; height: 20px;
+  font-size: 14px; line-height: 1;
+  cursor: pointer;
+  margin-left: 6px;
+  vertical-align: middle;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: color .1s, border-color .1s, background .1s;
+}
+.cmp-col-x:hover {
+  color: #f87171;
+  border-color: #f87171;
+  background: color-mix(in srgb, #f87171 12%, transparent);
+}
+
 .cmp-deep-head {
   font-size: 12.5px;
   text-transform: uppercase;
@@ -3290,7 +3357,14 @@ async function openCompareModal() {
 
   const fmt = (v, d=2) => v == null ? '—' : (typeof v === 'number' ? v.toFixed(d) : String(v));
   const cell = c => `<td>${c}</td>`;
-  const header = rows.map(r => `<th><span class="mono" style="color:var(--text-0);font-weight:700">${r[COL.pep]}</span><br><span style="color:var(--text-2);font-size:11px">${r[COL.code]} · ${CLASS_LABELS[r[COL.cls]]||r[COL.cls]}</span></th>`).join('');
+  const header = rows.map(r => {
+    const key = `${r[COL.pep]}::${r[COL.code]}`;
+    return `<th>
+      <span class="mono" style="color:var(--text-0);font-weight:700">${r[COL.pep]}</span>
+      <button class="cmp-col-x" data-cmpkey="${key}" title="Remove ${r[COL.code]} from comparison" aria-label="Remove ${r[COL.code]}">×</button>
+      <br><span style="color:var(--text-2);font-size:11px">${r[COL.code]} · ${CLASS_LABELS[r[COL.cls]]||r[COL.cls]}</span>
+    </th>`;
+  }).join('');
   const attr = (label, pick, opts={}) => {
     const cells = rows.map(r => cell(opts.html ? pick(r) : `<span style="${opts.style||''}">${fmt(pick(r), opts.d ?? 2)}</span>`)).join('');
     return `<tr><th class="rowlbl">${label}</th>${cells}</tr>`;
@@ -3441,8 +3515,44 @@ async function openCompareModal() {
       ${rows.map(deepColumn).join('')}
     </div>`;
 
+  // Chip row at the top of the modal — one chip per currently-selected
+  // peptide/cancer, and an "Add" row for every other cancer the peptide
+  // occurs in (only visible when all selected peptides share one sequence).
+  const uniquePeps = [...new Set(rows.map(r => r[COL.pep]))];
+  let addBar = '';
+  if (uniquePeps.length === 1) {
+    const pep0 = uniquePeps[0];
+    const currentCodes = new Set(rows.map(r => r[COL.code]));
+    const available = Object.keys(DATA_CACHE).filter(code => {
+      const d = DATA_CACHE[code];
+      return d && d.rows && d.rows.some(rr => rr[0] === pep0) && !currentCodes.has(code);
+    });
+    if (available.length) {
+      addBar = `<div class="cmp-add-row">
+        <span class="cmp-add-label">Also in:</span>
+        ${available.map(code => `<button class="cmp-add-chip" data-pep="${pep0}" data-code="${code}" title="Add ${code} to comparison">+ ${code}</button>`).join('')}
+      </div>`;
+    }
+  }
+  const chipBar = `<div class="cmp-sel-bar">
+    <div class="cmp-sel-row">
+      <span class="cmp-sel-label">Comparing <b>${rows.length}</b>:</span>
+      ${rows.map(r => {
+        const k = `${r[COL.pep]}::${r[COL.code]}`;
+        return `<button class="cmp-sel-chip" data-cmpkey="${k}" title="Remove ${r[COL.code]}">
+          <span class="mono" style="color:var(--text-0);font-weight:600">${r[COL.pep]}</span>
+          <span style="color:var(--text-3)">·</span>
+          ${r[COL.code]}
+          <span class="cmp-sel-x">×</span>
+        </button>`;
+      }).join('')}
+    </div>
+    ${addBar}
+  </div>`;
+
   const tableStyle = wide ? `style="min-width: ${160 + rows.length * 210}px;"` : '';
   const html = `
+    ${chipBar}
     <table class="compare-table" ${tableStyle}>
       <thead><tr><th class="rowlbl">Attribute</th>${header}</tr></thead>
       <tbody>
@@ -3470,6 +3580,32 @@ async function openCompareModal() {
   document.getElementById('compareModalBody').innerHTML = html;
   document.getElementById('compareModal').classList.add('open');
   document.getElementById('compareModalBg').classList.add('open');
+  // Deselect a column — remove from COMPARE and re-render the modal (or
+  // close it and fall back to the floating bar if we drop below 2).
+  const removeFromCompare = (key) => {
+    COMPARE.delete(key);
+    const chk = document.querySelector(`.cmp-chk[data-cmpkey="${CSS.escape(key)}"]`);
+    if (chk) chk.checked = false;
+    renderCompareBar();
+    if (COMPARE.size < 2) { closeCompareModal(); return; }
+    openCompareModal();
+  };
+  document.querySelectorAll('#compareModalBody .cmp-sel-chip, #compareModalBody .cmp-col-x')
+    .forEach(el => el.addEventListener('click', e => {
+      e.stopPropagation();
+      removeFromCompare(el.dataset.cmpkey);
+    }));
+  // "+ CANCER" chips add a peptide/cancer back into the comparison.
+  document.querySelectorAll('#compareModalBody .cmp-add-chip')
+    .forEach(el => el.addEventListener('click', e => {
+      e.stopPropagation();
+      const key = `${el.dataset.pep}::${el.dataset.code}`;
+      COMPARE.add(key);
+      const chk = document.querySelector(`.cmp-chk[data-cmpkey="${CSS.escape(key)}"]`);
+      if (chk) chk.checked = true;
+      renderCompareBar();
+      openCompareModal();
+    }));
 }
 function closeCompareModal() {
   document.getElementById('compareModal').classList.remove('open');
