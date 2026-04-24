@@ -1179,6 +1179,101 @@ table.atlas.compact td:nth-child(10) { display: none; }
   border: 1px solid rgba(244,114,182,0.30);
 }
 
+/* Drawer hero callout — appears right under the peptide title so the
+   most-important "what is this peptide" fact is visible without scrolling. */
+.hero-callout {
+  margin: 8px 0 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-2);
+  background: var(--bg-2);
+  position: relative;
+}
+.hero-callout.hero-variant {
+  background: color-mix(in srgb, var(--accent-pink) 10%, var(--bg-2));
+  border-color: color-mix(in srgb, var(--accent-pink) 34%, var(--border-2));
+}
+.hero-callout.hero-pathogen {
+  background: color-mix(in srgb, var(--accent-violet) 10%, var(--bg-2));
+  border-color: color-mix(in srgb, var(--accent-violet) 34%, var(--border-2));
+}
+.hero-callout.hero-source {
+  background: color-mix(in srgb, var(--accent-cyan) 8%, var(--bg-2));
+  border-color: color-mix(in srgb, var(--accent-cyan) 26%, var(--border-2));
+}
+.hero-kicker {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+.hero-mut-card { padding-top: 4px; }
+.hero-mut-card + .hero-mut-card {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+.hero-mut-primary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.hero-gene {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+  color: var(--text-0);
+  font-family: var(--mono);
+}
+.hero-pchg {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--accent-pink);
+  font-family: var(--mono);
+}
+.hero-callout.hero-pathogen .hero-gene { color: var(--accent-violet); font-family: inherit; letter-spacing: 0; }
+.hero-callout.hero-source  .hero-gene { color: var(--accent-cyan); font-family: var(--mono); font-size: 17px; }
+.hero-mut-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 20px;
+  font-size: 12.5px;
+  color: var(--text-1);
+}
+.hero-meta b {
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10.5px;
+  margin-right: 6px;
+}
+.hero-raw-details { margin-top: 10px; }
+.hero-raw-details summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.hero-raw-details summary:hover { color: var(--text-1); }
+.hero-raw-src {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-1);
+  word-break: break-all;
+  line-height: 1.55;
+}
+
 .drawer .bind-legend {
   margin-top: 8px;
   font-size: 10.5px;
@@ -3476,58 +3571,79 @@ async function openDrawer(r) {
 
   const nuorfBadge = nuorfSub ? `<span class="pill-mini nuorf-sub"><b>${nuorfSub}</b> cryptic subtype</span>` : '';
 
-  // Mutation block — shown for variant class so clinicians see the exact
-  // chr/pos/ref-alt/variant_type, not just the gene symbol.
-  let mutationBlock = '';
+  // === HERO CALLOUT (rendered directly under the peptide title) ===
+  // Surfaces the single most important "what is this peptide" fact up top:
+  //   - variant → gene p.change + chr:pos + ref/alt + variant_type
+  //   - pathogen → organism + protein + UniProt
+  //   - splicing/ERV/nuORF/etc. → structured source annotation
+  let heroCallout = '';
   if (r[COL.cls] === 'variant' && mutations.length) {
-    const rows = mutations.map(m => {
+    const mutCards = mutations.map(m => {
       const vtype = (m.variant_type || '').replace(/_variant$/, '').replace(/_/g, ' ');
-      const loc = m.location || '';
-      const af = m.af_ratio ? ` · AF ${parseFloat(m.af_ratio).toFixed(2)}` : '';
-      return `<tr>
-        <td><b>${m.gene||'—'}</b></td>
-        <td><span class="mono">${m.protein_change||'—'}</span></td>
-        <td><span class="mono">${loc}</span></td>
-        <td><span class="mono">${m.ref_alt||''}</span></td>
-        <td><span class="mut-tag">${vtype||'—'}</span>${af}</td>
-      </tr>`;
-    }).join('');
-    mutationBlock = `
-      <div class="section-title" data-tip="Exact genomic variant(s) underlying this neoantigen — gene, protein change, chromosomal location, reference/alternate allele, and variant class. A single peptide may map to multiple variants (e.g. KRAS/NRAS G12V share the same 9-mer). Cross-reference against the patient's tumor WGS/WES before clinical use.">Variant annotation</div>
-      <div class="bind-wrap">
-        <table class="bind-table">
-          <thead><tr><th>Gene</th><th>Protein change</th><th>Location</th><th>Ref/Alt</th><th>Variant class</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
+      const af = m.af_ratio ? `<span class="hero-meta"><b>AF</b> ${parseFloat(m.af_ratio).toFixed(2)}</span>` : '';
+      const ensg = m.ensg ? `<span class="hero-meta"><b>${m.ensg}</b></span>` : '';
+      return `<div class="hero-mut-card">
+        <div class="hero-mut-primary">
+          <span class="hero-gene">${m.gene||'—'}</span>
+          <span class="hero-pchg">${m.protein_change||''}</span>
+          <span class="mut-tag">${vtype||'mutation'}</span>
+        </div>
+        <div class="hero-mut-meta">
+          <span class="hero-meta"><b>Location</b> <span class="mono">${m.location||'—'}</span></span>
+          <span class="hero-meta"><b>Ref/Alt</b> <span class="mono">${m.ref_alt||'—'}</span></span>
+          ${ensg}
+          ${af}
+        </div>
       </div>`;
-  }
-
-  // Pathogen block — organism, protein, accession for microbial peptides.
-  let pathogenBlock = '';
-  if (r[COL.cls] === 'pathogen' && pathogen) {
+    }).join('');
+    heroCallout = `<div class="hero-callout hero-variant" data-tip="Exact genomic variant(s) underlying this neoantigen. A single peptide may map to multiple variants (e.g. KRAS/NRAS G12V share the same 9-mer). Cross-reference against the patient's tumor WGS/WES before clinical use.">
+      <div class="hero-kicker">Mutation neoantigen · ${mutations.length > 1 ? mutations.length + ' variants map to this peptide' : 'variant annotation'}</div>
+      ${mutCards}
+    </div>`;
+  } else if (r[COL.cls] === 'pathogen' && pathogen) {
     const organism = pathogen.organism || pathogen.code || '—';
-    const protein = pathogen.protein || '—';
+    const protein = pathogen.protein || '';
     const acc = pathogen.accession || '';
     const gn = pathogen.gene || '';
     const uniprotUrl = acc ? `https://www.uniprot.org/uniprotkb/${encodeURIComponent(acc)}/entry` : '';
-    pathogenBlock = `
-      <div class="section-title" data-tip="Microbial or viral origin for this peptide — tumor-resident pathogens can present HLA-bound antigens that act as tumor-specific targets (e.g. F. nucleatum in colorectal cancer, HPV in cervical cancer).">Microbial origin</div>
-      <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;color:var(--text-1);line-height:1.7;">
-        <div><b style="color:var(--accent-cyan)">Organism:</b> ${organism}${pathogen.code && organism !== pathogen.code ? ` <span style="color:var(--text-3);font-family:var(--mono);font-size:11.5px">(${pathogen.code})</span>` : ''}</div>
-        ${protein !== '—' ? `<div><b style="color:var(--accent-cyan)">Protein:</b> ${protein}</div>` : ''}
-        ${gn ? `<div><b style="color:var(--accent-cyan)">Gene:</b> <span class="mono">${gn}</span></div>` : ''}
-        ${acc ? `<div><b style="color:var(--accent-cyan)">UniProt:</b> ${uniprotUrl ? `<a href="${uniprotUrl}" target="_blank" rel="noopener" class="mono">${acc} ↗</a>` : `<span class="mono">${acc}</span>`}</div>` : ''}
-      </div>`;
+    heroCallout = `<div class="hero-callout hero-pathogen" data-tip="Microbial or viral origin. Tumor-resident pathogens can present HLA-bound antigens that act as tumor-specific targets (e.g. F. nucleatum in colorectal cancer, HPV in cervical cancer).">
+      <div class="hero-kicker">Microbial / viral origin</div>
+      <div class="hero-mut-primary">
+        <span class="hero-gene">${organism}</span>
+        ${pathogen.code && organism !== pathogen.code ? `<span class="mono" style="color:var(--text-3);font-size:12px">(${pathogen.code})</span>` : ''}
+      </div>
+      ${protein ? `<div class="hero-mut-meta"><span class="hero-meta"><b>Protein</b> ${protein}</span></div>` : ''}
+      <div class="hero-mut-meta">
+        ${acc ? `<span class="hero-meta"><b>UniProt</b> ${uniprotUrl ? `<a href="${uniprotUrl}" target="_blank" rel="noopener" class="mono">${acc} ↗</a>` : `<span class="mono">${acc}</span>`}</span>` : ''}
+        ${gn ? `<span class="hero-meta"><b>Gene</b> <span class="mono">${gn}</span></span>` : ''}
+      </div>
+    </div>`;
+  } else if (rawSource && ['splicing', 'ERV', 'TE_chimeric_transcript', 'intron_retention', 'nuORF', 'fusion'].includes(r[COL.cls])) {
+    // Pull coordinate + gene fragments from the structured source string so
+    // users can read location at a glance instead of parsing a pipe-blob.
+    const coordMatch = rawSource.match(/chr[\dXYM]+:\d+-\d+/);
+    const coord = coordMatch ? coordMatch[0] : '';
+    const kicker = {
+      splicing: 'Splice junction', ERV: 'Retroelement',
+      TE_chimeric_transcript: 'TE chimeric transcript',
+      intron_retention: 'Retained intron', nuORF: 'Cryptic ORF',
+      fusion: 'Gene fusion',
+    }[r[COL.cls]] || 'Source annotation';
+    heroCallout = `<div class="hero-callout hero-source" data-tip="Structured annotation from the source pipeline: coordinates, transcript IDs, gene symbols touched by the reading frame.">
+      <div class="hero-kicker">${kicker} · source annotation</div>
+      <div class="hero-mut-primary">
+        <span class="hero-gene">${r[COL.gene]||'—'}</span>
+        ${coord ? `<span class="mono" style="color:var(--text-1);font-size:13px">${coord}</span>` : ''}
+      </div>
+      <details class="hero-raw-details"><summary>Show raw annotation</summary>
+        <div class="hero-raw-src">${rawSource}</div>
+      </details>
+    </div>`;
   }
-
-  // Raw source annotation — shown as a collapsed line for splicing / ERV /
-  // nuORF / fusion rows where the structured annotation lives in `source`.
-  let sourceBlock = '';
-  if (rawSource && ['splicing', 'ERV', 'TE_chimeric_transcript', 'intron_retention', 'nuORF', 'fusion'].includes(r[COL.cls])) {
-    sourceBlock = `
-      <div class="section-title" data-tip="Raw annotation string from the source pipeline: junction coordinates, transposable-element family, transcript IDs, and any gene symbols touched by the peptide's reading frame.">Source annotation</div>
-      <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:11.5px;color:var(--text-1);word-break:break-all;line-height:1.5;">${rawSource}</div>`;
-  }
+  // Legacy placeholders so the existing render template below stays stable.
+  const mutationBlock = '';
+  const pathogenBlock = '';
+  const sourceBlock = '';
 
   // Cross-cancer presence: count how many cancers in DATA_CACHE contain this pep.
   const crossCancers = Object.keys(DATA_CACHE).filter(c => {
@@ -3546,11 +3662,10 @@ async function openDrawer(r) {
         <button class="copy-btn" title="Copy peptide" onclick="navigator.clipboard && navigator.clipboard.writeText('${pep}')">⧉ copy</button>
       </div>
     </div>
-    <div class="sub">${r[COL.gene]||'unknown gene'} · ${CLASS_LABELS[r[COL.cls]]||r[COL.cls]} · ${code}${ensg?` · <span style="font-family:var(--mono);color:var(--text-3)">${ensg}</span>`:''}${
-      r[COL.cls] === 'variant' && mutations.length
-        ? ` · <span style="color:var(--accent-pink)">${mutations.map(m => (m.gene||'') + ' ' + (m.protein_change||'')).join(', ')}</span>`
-        : ''
-    }</div>
+    <div class="sub">${r[COL.gene]||'unknown gene'} · ${CLASS_LABELS[r[COL.cls]]||r[COL.cls]} · ${code}${ensg?` · <span style="font-family:var(--mono);color:var(--text-3)">${ensg}</span>`:''}</div>
+
+    ${heroCallout}
+
     <div class="pill-row">
       <span class="pill-mini"><b>${pep.length}</b> aa</span>
       <span class="pill-mini"><b>${r[COL.psm]}</b> PSMs</span>
