@@ -1095,31 +1095,71 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .cmp-plots {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 10px;
 }
 .cmp-plots .cmp-plot {
   margin: 0;
   background: var(--bg-1);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 6px 4px;
-  min-height: 80px;
+  border-radius: 8px;
+  padding: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
-.cmp-plots .cmp-plot img {
+.cmp-plots .cmp-plot-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  letter-spacing: 0.03em;
+  padding: 8px 10px 6px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.3;
+  background: color-mix(in srgb, var(--accent-cyan) 8%, transparent);
+}
+.cmp-plots .cmp-plot-title .cmp-plot-sub {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-2);
+  letter-spacing: 0;
+}
+.cmp-plots .cmp-plot-imgwrap {
+  position: relative;
+  padding: 6px;
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cmp-plots .cmp-plot-imgwrap img {
   width: 100%;
   height: auto;
-  max-height: 150px;
+  max-height: 170px;
   object-fit: contain;
   opacity: 0;
   transition: opacity .2s;
   cursor: zoom-in;
   border-radius: 4px;
 }
-.cmp-plots .cmp-plot img.ok { opacity: 1; }
-.cmp-plots .cmp-plot figcaption { font-size: 10px; color: var(--text-3); text-align: center; padding-top: 2px; }
-.cmp-plots .cmp-plot.no-plot { display: none; }
+.cmp-plots .cmp-plot-imgwrap img.ok { opacity: 1; }
+.cmp-plots .cmp-plot-missing {
+  position: absolute;
+  inset: 6px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  color: var(--text-3);
+  font-style: italic;
+  background: var(--bg-2);
+  border-radius: 4px;
+}
+.cmp-plots .cmp-plot.no-plot { opacity: 0.55; }
+.cmp-plots .cmp-plot.no-plot .cmp-plot-imgwrap img { display: none; }
+.cmp-plots .cmp-plot.no-plot .cmp-plot-missing { display: flex; }
 @media (max-width: 900px) {
   .cmp-deep-grid { grid-template-columns: 1fr !important; }
   .cmp-plots { grid-template-columns: 1fr; }
@@ -3219,10 +3259,13 @@ async function openCompareModal() {
     const percentileUrl = `${ASSET_BASE_CMP}/${code}_${pep}_percentile.png`;
     const rankAbundUrl = `${ASSET_BASE_CMP}/${code}_${pep}_rank_abundance.png`;
     const exprUrl = (ensg && gene) ? `${ASSET_BASE_CMP}/${code}_${ensg}_${gene}_expr_boxplot+boxplot.png` : '';
-    const plot = (src, label) => src
+    const plot = (src, label, sub) => src
       ? `<figure class="cmp-plot">
-           <img src="${src}" alt="${label}" onload="this.classList.add('ok')" onclick="openLightbox('${src}','${label}')" onerror="this.parentNode.classList.add('no-plot');" />
-           <figcaption>${label}</figcaption>
+           <figcaption class="cmp-plot-title">${label}${sub ? `<span class="cmp-plot-sub">${sub}</span>` : ''}</figcaption>
+           <div class="cmp-plot-imgwrap">
+             <img src="${src}" alt="${label}" onload="this.classList.add('ok')" onclick="openLightbox('${src}','${label} — ${pep} in ${code}')" onerror="this.parentNode.parentNode.classList.add('no-plot');" />
+             <div class="cmp-plot-missing">Plot not available</div>
+           </div>
          </figure>`
       : '';
 
@@ -3237,10 +3280,10 @@ async function openCompareModal() {
       </table></div>
       <div class="cmp-sub">Figures</div>
       <div class="cmp-plots">
-        ${plot(exprUrl, 'Expression boxplot')}
-        ${plot(percentileUrl, 'Intensity percentile')}
-        ${plot(rankAbundUrl, 'Rank-abundance')}
-        ${plot(spectrumUrl, 'MS/MS spectrum')}
+        ${plot(exprUrl, 'Expression boxplot', `${gene||''} · tumor vs normal TPM`)}
+        ${plot(percentileUrl, 'Intensity percentile', 'where this peptide ranks in the atlas')}
+        ${plot(rankAbundUrl, 'Rank-abundance', 'PSM abundance across samples')}
+        ${plot(spectrumUrl, 'MS/MS spectrum', 'annotated fragmentation')}
       </div>
     </div>`;
   };
