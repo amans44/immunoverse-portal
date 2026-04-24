@@ -1009,6 +1009,122 @@ table.atlas.compact td:nth-child(10) { display: none; }
 }
 .compare-table tbody tr:hover td { background: var(--bg-2); }
 
+.cmp-deep-head {
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  font-weight: 600;
+  margin: 28px 0 12px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--border);
+}
+.cmp-deep-grid {
+  display: grid;
+  gap: 18px;
+}
+.cmp-col {
+  min-width: 0;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cmp-col-head {
+  font-size: 13px;
+  color: var(--text-1);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.cmp-sub {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  font-weight: 600;
+  margin-top: 6px;
+}
+.cmp-col .bind-wrap {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  overflow-x: auto;
+}
+.cmp-col .bind-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.cmp-col .bind-table th {
+  text-align: left;
+  padding: 4px 6px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.cmp-col .bind-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-1);
+  font-size: 11px;
+}
+.cmp-col .bind-table td.num { text-align: right; font-family: var(--mono); color: var(--text-0); }
+.cmp-col .bind-table tr:last-child td { border-bottom: none; }
+.cmp-col .hla-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-0);
+}
+.cmp-col .bind-cat {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.cmp-plots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.cmp-plots .cmp-plot {
+  margin: 0;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 6px 4px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+}
+.cmp-plots .cmp-plot img {
+  width: 100%;
+  height: auto;
+  max-height: 150px;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity .2s;
+  cursor: zoom-in;
+  border-radius: 4px;
+}
+.cmp-plots .cmp-plot img.ok { opacity: 1; }
+.cmp-plots .cmp-plot figcaption { font-size: 10px; color: var(--text-3); text-align: center; padding-top: 2px; }
+.cmp-plots .cmp-plot.no-plot { display: none; }
+@media (max-width: 900px) {
+  .cmp-deep-grid { grid-template-columns: 1fr !important; }
+  .cmp-plots { grid-template-columns: 1fr; }
+}
+
 .mono { font-family: var(--mono); font-size: 11.5px; color: var(--text-1); }
 .mut-tag {
   display: inline-block;
@@ -3016,9 +3132,13 @@ async function openCompareModal() {
   const bindSummary = r => {
     const b = r[COL.bind] || [];
     if (!b.length) return '—';
-    const topSB = b.filter(x => (x[3]||'').toUpperCase()==='SB').slice(0,3).map(x => x[0]);
-    if (topSB.length) return `<span class="mono">${topSB.join(', ')}</span> <span style="color:var(--text-3)">(+${Math.max(b.length-topSB.length,0)} others)</span>`;
-    return `<span class="mono">${b.slice(0,3).map(x=>x[0]).join(', ')}</span>`;
+    const sb = b.filter(x => (x[3]||'').toUpperCase()==='SB');
+    const wb = b.filter(x => (x[3]||'').toUpperCase()==='WB');
+    const parts = [];
+    if (sb.length) parts.push(`<span style="color:var(--accent-cyan)"><b>${sb.length} SB</b></span>: <span class="mono">${sb.map(x=>x[0]).join(', ')}</span>`);
+    if (wb.length) parts.push(`<span style="color:var(--accent-violet)"><b>${wb.length} WB</b></span>: <span class="mono">${wb.map(x=>x[0]).join(', ')}</span>`);
+    if (!parts.length) parts.push(`<span class="mono">${b.map(x=>x[0]).join(', ')}</span>`);
+    return parts.join('<br>');
   };
   const immunoSummary = r => {
     const b = r[COL.bind] || [];
@@ -3032,6 +3152,104 @@ async function openCompareModal() {
     if (!a.length) return '<span style="color:var(--accent-lime)">clean</span>';
     return `<span style="color:#f87171">${a.length} normal tissue${a.length>1?'s':''}</span>`;
   };
+
+  // Deep-dive column per peptide — full per-HLA table + all four NYU plots
+  // (MS/MS spectrum, percentile, rank-abundance, expression boxplot).
+  const ASSET_BASE_CMP = 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/assets';
+  const deepColumn = r => {
+    const code = r[COL.code];
+    const pep = r[COL.pep];
+    const gene = (r[COL.gene]||'').split('/')[0];
+    const ensg = r[COL.ensg]||'';
+    const bind = (r[COL.bind]||[]).slice().sort((a,b) => {
+      const ra = a[1] == null ? 999 : a[1];
+      const rb = b[1] == null ? 999 : b[1];
+      return ra - rb;
+    });
+    const bindRows = bind.length ? bind.map(b => {
+      const cat = (b[3]||'').toUpperCase();
+      const catCls = cat === 'SB' ? 'bind-sb' : (cat === 'WB' ? 'bind-wb' : 'bind-nb');
+      const immuno = b[5];
+      const immunoCol = immuno != null ? (immuno >= 0.5 ? 'var(--accent-lime)' : 'var(--accent-amber)') : 'var(--text-3)';
+      const rec = b[7];
+      return `<tr>
+        <td><span class="hla-tag">${b[0]}</span></td>
+        <td class="num">${b[1] != null ? b[1].toFixed(2) : '—'}</td>
+        <td class="num">${b[2] != null ? b[2].toFixed(0) : '—'}</td>
+        <td><span class="bind-cat ${catCls}">${cat||'—'}</span></td>
+        <td class="num" style="color:${immunoCol}">${immuno != null ? immuno.toFixed(2) : '—'}</td>
+        <td class="num">${b[4]||0}${b[6] ? '/' + b[6] : ''}</td>
+        <td class="num">${rec != null ? (rec*100).toFixed(0)+'%' : '—'}</td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-3);padding:10px 0;">No per-HLA records on file.</td></tr>';
+
+    const mutBlock = (() => {
+      const d = (DETAIL_CACHE[code]||{})[pep];
+      const muts = d && d[2] && d[2].mutations;
+      if (!muts || !muts.length) return '';
+      const rows = muts.map(m => `<tr>
+        <td><b>${m.gene||'—'}</b></td>
+        <td class="mono">${m.protein_change||'—'}</td>
+        <td class="mono">${m.location||'—'}</td>
+        <td class="mono">${m.ref_alt||'—'}</td>
+        <td><span class="mut-tag">${(m.variant_type||'').replace(/_variant$/, '').replace(/_/g,' ')}</span></td>
+      </tr>`).join('');
+      return `<div class="cmp-sub">Variant annotation</div>
+        <div class="bind-wrap"><table class="bind-table">
+          <thead><tr><th>Gene</th><th>p.change</th><th>Location</th><th>Ref/Alt</th><th>Class</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>`;
+    })();
+
+    const pathBlock = (() => {
+      const d = (DETAIL_CACHE[code]||{})[pep];
+      const p = d && d[2] && d[2].pathogen;
+      if (!p) return '';
+      const uniprotUrl = p.accession ? `https://www.uniprot.org/uniprotkb/${encodeURIComponent(p.accession)}/entry` : '';
+      return `<div class="cmp-sub">Microbial origin</div>
+        <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;">
+          <div><b style="color:var(--accent-cyan)">Organism:</b> ${p.organism||p.code||'—'}</div>
+          ${p.protein ? `<div><b style="color:var(--accent-cyan)">Protein:</b> ${p.protein}</div>` : ''}
+          ${p.accession ? `<div><b style="color:var(--accent-cyan)">UniProt:</b> ${uniprotUrl ? `<a href="${uniprotUrl}" target="_blank" rel="noopener" class="mono">${p.accession} ↗</a>` : `<span class="mono">${p.accession}</span>`}</div>` : ''}
+        </div>`;
+    })();
+
+    // Plots (each auto-hides if the asset 404s via onerror).
+    const spectrumUrl = `${ASSET_BASE_CMP}/${code}_spectrum_${pep}.png`;
+    const percentileUrl = `${ASSET_BASE_CMP}/${code}_${pep}_percentile.png`;
+    const rankAbundUrl = `${ASSET_BASE_CMP}/${code}_${pep}_rank_abundance.png`;
+    const exprUrl = (ensg && gene) ? `${ASSET_BASE_CMP}/${code}_${ensg}_${gene}_expr_boxplot+boxplot.png` : '';
+    const plot = (src, label) => src
+      ? `<figure class="cmp-plot">
+           <img src="${src}" alt="${label}" onload="this.classList.add('ok')" onclick="openLightbox('${src}','${label}')" onerror="this.parentNode.classList.add('no-plot');" />
+           <figcaption>${label}</figcaption>
+         </figure>`
+      : '';
+
+    return `<div class="cmp-col">
+      <div class="cmp-col-head"><span class="mono" style="color:var(--text-0);font-weight:700">${pep}</span> <span style="color:var(--text-3)">·</span> ${code}</div>
+      ${mutBlock}
+      ${pathBlock}
+      <div class="cmp-sub">Per-HLA binding (all ${bind.length})</div>
+      <div class="bind-wrap"><table class="bind-table">
+        <thead><tr><th>HLA</th><th>Rank%</th><th>nM</th><th>Cat</th><th>Immuno</th><th>#Det</th><th>Recur</th></tr></thead>
+        <tbody>${bindRows}</tbody>
+      </table></div>
+      <div class="cmp-sub">Figures</div>
+      <div class="cmp-plots">
+        ${plot(exprUrl, 'Expression boxplot')}
+        ${plot(percentileUrl, 'Intensity percentile')}
+        ${plot(rankAbundUrl, 'Rank-abundance')}
+        ${plot(spectrumUrl, 'MS/MS spectrum')}
+      </div>
+    </div>`;
+  };
+
+  const deepDive = `
+    <div class="cmp-deep-head">Per-peptide deep dive</div>
+    <div class="cmp-deep-grid" style="grid-template-columns: repeat(${rows.length}, minmax(0, 1fr));">
+      ${rows.map(deepColumn).join('')}
+    </div>`;
 
   const html = `
     <table class="compare-table">
@@ -3052,11 +3270,12 @@ async function openCompareModal() {
         ${attr('Homogeneity', r => r[COL.homo], {d:2})}
         ${attr('Unique', r => r[COL.unique]===1 ? 'yes' : 'no')}
         ${attr('Atlas safety', atlasSummary, {html:true})}
-        ${attr('Top SB binders', bindSummary, {html:true})}
+        ${attr('HLAs (all)', bindSummary, {html:true})}
         ${attr('Max immunogenicity', immunoSummary, {html:true})}
         ${attr('ENSG', r => r[COL.ensg] || '—')}
       </tbody>
-    </table>`;
+    </table>
+    ${deepDive}`;
   document.getElementById('compareModalBody').innerHTML = html;
   document.getElementById('compareModal').classList.add('open');
   document.getElementById('compareModalBg').classList.add('open');
