@@ -3007,8 +3007,6 @@ function showBodyInfo(code) {
     <span class="code-badge">${c.code} · ${c.group}</span>
     <div class="info-row">
       <div class="info-stat"><span class="v">${c.count.toLocaleString()}</span><span class="k">Targets</span></div>
-      <div class="info-stat"><span class="v">${(c.unique||0).toLocaleString()}</span><span class="k">Tumor-specific</span></div>
-      <div class="info-stat"><span class="v">${(c.safe||0).toLocaleString()}</span><span class="k">Atlas-safe</span></div>
       <div class="info-stat"><span class="v">${c.genes.toLocaleString()}</span><span class="k">Genes</span></div>
       <div class="info-stat"><span class="v">${(nonCanon/classSum*100).toFixed(0)}%</span><span class="k">Non-canonical</span></div>
     </div>
@@ -3181,10 +3179,9 @@ function applyFilters() {
 
   // Dynamic summary stats for filtered results
   if (tot > 0) {
-    let nUniq = 0, nSafe = 0, nWide = 0, nRecur = 0;
+    let nUniq = 0, nWide = 0, nRecur = 0;
     for (const r of filt) {
       if (r[COL.unique] === 1) nUniq++;
-      if (r[COL.unique] === 1 && (r[COL.atlas]||[]).length === 0) nSafe++;
       const tExp = r[COL.tumorExp], nExp = r[COL.normalExp];
       if (tExp && nExp != null && tExp / Math.max(nExp, 0.01) > 10) nWide++;
       if (r[COL.recurrence] != null ? r[COL.recurrence] >= 0.1 : r[COL.psm] >= 3) nRecur++;
@@ -3193,7 +3190,6 @@ function applyFilters() {
     const bar = (n) => `<span class="bar"><span style="width:${pct(n)}%"></span></span>`;
     document.getElementById('filterStats').innerHTML = `
       <div class="fs" title="Peptides uniquely mapping to one gene">${bar(nUniq)}<b>${pct(nUniq)}%</b> unique</div>
-      <div class="fs" title="Unique peptides NOT detected in healthy tissues (HLA Ligand Atlas) — safe for therapeutic targeting">${bar(nSafe)}<b>${pct(nSafe)}%</b> safe</div>
       <div class="fs" title="Peptides where tumor RNA is >10x the highest normal tissue — wide therapeutic window">${bar(nWide)}<b>${pct(nWide)}%</b> wide T/N</div>
       <div class="fs" title="Peptides detected in ≥10% of patients (or ≥3 PSMs) — shared targets">${bar(nRecur)}<b>${pct(nRecur)}%</b> recurrent</div>
     `;
@@ -3239,9 +3235,9 @@ function renderRows(rows) {
     const hlasMore = (r[COL.hlas]||[]).length > 3 ? ` <span style="color:var(--text-3)">+${(r[COL.hlas]||[]).length-3}</span>` : '';
     const homo = r[COL.homo];
     const homoStr = homo != null ? homo.toFixed(2) : '—';
-    const safeIcon = (r[COL.unique] === 1 && (r[COL.atlas]||[]).length === 0)
-      ? '<span class="safe-dot" title="Tumor-specific AND absent from HLA Ligand Atlas">✓</span>'
-      : ((r[COL.atlas]||[]).length ? `<span class="warn-dot" title="Detected in ${(r[COL.atlas]||[]).length} normal tissue(s) via HLA Ligand Atlas">!</span>` : '');
+    const safeIcon = ((r[COL.atlas]||[]).length
+      ? `<span class="warn-dot" title="Detected in ${(r[COL.atlas]||[]).length} normal tissue(s) via HLA Ligand Atlas">!</span>`
+      : '');
     const recVal = r[COL.recurrence] != null ? (r[COL.recurrence]*100).toFixed(0)+'%' : r[COL.psm];
     const recTip = r[COL.recurrence] != null
       ? `Detected in ${(r[COL.recurrence]*100).toFixed(0)}% of ${r[COL.totalSamples]||'?'} patients with this cancer`
@@ -3767,12 +3763,13 @@ async function openDrawer(r) {
     }).join('')}${vals.length > 10 ? `<div class="int-more">+ ${vals.length - 10} more samples</div>` : ''}</div>`;
   }
 
-  // Safety: HLA Ligand Atlas normal tissues
+  // Safety: HLA Ligand Atlas normal tissues.
+  // Only surface the section when there are Atlas hits to flag. An empty atlas
+  // list is NOT evidence of safety — the Atlas covers a limited panel and
+  // missing an antigen there doesn't establish absence from healthy tissue.
   let safetyBlock = '';
   if (atlas.length) {
     safetyBlock = `<div class="safety-warn"><div class="sw-head">⚠︎ Detected in ${atlas.length} normal tissue${atlas.length>1?'s':''} via HLA Ligand Atlas</div><div class="sw-list">${atlas.map(t=>`<span class="tissue">${t}</span>`).join('')}</div><div class="sw-note">Consider safety risk before pursuing TCR / T-cell engager programs.</div></div>`;
-  } else {
-    safetyBlock = `<div class="safety-ok"><b>✓ Not detected</b> in the HLA Ligand Atlas across 29 healthy tissues — clean safety profile for therapeutic development.</div>`;
   }
 
   const nuorfBadge = nuorfSub ? `<span class="pill-mini nuorf-sub"><b>${nuorfSub}</b> cryptic subtype</span>` : '';
@@ -3972,8 +3969,8 @@ async function openDrawer(r) {
       <div class="bind-legend">Top ${Math.min(addq.length, 12)} of ${addq.length} allele predictions, sorted by rank (tightest binders first).</div>
     </div>` : ''}
 
-    <div class="section-title" data-tip="Checks whether this peptide has been detected on HLA in healthy (non-tumor) tissues from the HLA Ligand Atlas. A clean profile (not detected in normal tissues) means the peptide is tumor-specific and safer for therapeutic targeting — reducing risk of on-target, off-tumor toxicity.">Normal-tissue safety</div>
-    ${safetyBlock}
+    ${atlas.length ? `<div class="section-title" data-tip="Normal-tissue HLA presentation reported in the HLA Ligand Atlas. Consider this a flag of off-tumor risk for any tissues listed; an empty list is not a safety claim on its own.">Normal-tissue safety</div>
+    ${safetyBlock}` : ''}
 
     <div class="section-title" data-tip="Compares the gene's RNA expression in tumor versus normal tissue (TPM from TCGA tumor and GTEx normal). A wide window (tumor >> normal) means the gene is highly overexpressed in cancer — ideal for therapeutic targeting with minimal risk to healthy tissue.">Expression window (RNA · TPM)</div>
     <div class="bars">
@@ -4066,7 +4063,6 @@ function interp(r) {
   else if (ratio > 3) bits.push(`Tumor/normal ratio ${ratio.toFixed(1)}× — moderate window.`);
   else if (r[COL.tumorExp]) bits.push(`Narrow tumor/normal window (${ratio.toFixed(1)}×) — check normal tissue safety carefully.`);
   if (r[COL.depmap] != null && r[COL.depmap] < -0.5) bits.push(`Strongly essential in DepMap (${r[COL.depmap].toFixed(2)}) — tumor dependency.`);
-  if ((r[COL.atlas]||[]).length === 0 && r[COL.unique] === 1) bits.push(`Clean HLA Ligand Atlas profile — not detected across 29 healthy tissues.`);
   if (cls === 'nuORF') bits.push(`Cryptic ORF — validate with Ribo-Seq.`);
   if (cls === 'splicing') bits.push(`Splicing-derived — verify junction specificity vs normal tissue.`);
   if (cls === 'variant') bits.push(`Mutation-derived neoantigen — cross-reference tumor WGS/WES.`);

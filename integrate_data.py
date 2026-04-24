@@ -613,14 +613,31 @@ def parse_atlas(row):
 
 
 def parse_sc_pert(row):
-    """Compute homogeneity from sc_pert field."""
+    """Compute homogeneity from sc_pert field.
+
+    The raw column is usually a bare scalar (e.g. "0.9731") — ~95% of the
+    populated rows. A minority encode a list of per-cell-type scores
+    (e.g. "[0.8, 0.7, 0.9]"); average those. Earlier versions only handled
+    the list case which silently dropped the scalar majority.
+    """
     raw = row.get('sc_pert', '')
-    val = safe_eval(raw)
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    if not s or s in ('nan', 'None'):
+        return None
+    val = safe_eval(s)
     if isinstance(val, (list, tuple)):
         nums = [safe_float(x) for x in val]
         nums = [n for n in nums if n is not None]
         if nums:
             return round(sum(nums) / len(nums), 3)
+        return None
+    if isinstance(val, (int, float)):
+        return round(float(val), 3)
+    f = safe_float(s)
+    if f is not None:
+        return round(f, 3)
     return None
 
 
