@@ -2103,28 +2103,43 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
 
 /* ===================== TOOLTIPS ===================== */
-[data-tip] { cursor: help; }
+/* Inherit the element's own cursor — interactive elements keep their
+   pointer/text cursor; plain headings stay as a default arrow. Avoid
+   the "?" help cursor globally since hoverable info is abundant. */
+[data-tip] { cursor: inherit; }
 .iv-tooltip {
   position: fixed;
   background: #151b2e;
   color: #f2f5ff;
   font-family: 'Inter', system-ui, sans-serif;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1.55;
   letter-spacing: 0;
   text-transform: none;
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-radius: 10px;
   border: 1px solid rgba(120,150,220,0.3);
   box-shadow: 0 12px 36px rgba(0,0,0,0.6);
-  max-width: 300px;
+  width: max-content;
+  max-width: min(520px, calc(100vw - 40px));
+  white-space: normal;
+  word-break: break-word;
   pointer-events: none;
   z-index: 9999;
   opacity: 0;
   transition: opacity .12s;
 }
 .iv-tooltip.show { opacity: 1; }
+
+/* One-liner description that sits directly under a section title so
+   the user doesn't have to hover to learn what a figure shows. */
+.drawer .section-subtitle {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin: -4px 0 10px;
+}
 
 /* Responsive */
 @media (max-width: 960px) {
@@ -3932,6 +3947,7 @@ async function openDrawer(r) {
     ${pathogenBlock}
 
     <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples</div>
+    <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, DeepImmuno score, and per-patient recurrence.</div>
     <div class="bind-wrap">
       <table class="bind-table">
         <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th><th>Immuno.</th><th>#Det/#Tot</th><th>Recur.</th></tr></thead>
@@ -3962,6 +3978,7 @@ async function openDrawer(r) {
 
     ${addqRows ? `
     <div class="section-title" data-tip="Predicted binding across a broad panel of HLA alleles using NetMHCpan 4.1, beyond only the alleles observed in the immunopeptidome samples. Useful for assessing whether this peptide could be presented by additional HLA alleles in the broader population.">Extended NetMHCpan 4.1 prediction panel</div>
+    <div class="section-subtitle">Predicted binding across a wider allele panel — alleles beyond those observed empirically, to estimate reach across the broader patient population.</div>
     <div class="bind-wrap">
       <table class="bind-table">
         <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th></tr></thead>
@@ -3974,6 +3991,7 @@ async function openDrawer(r) {
     ${safetyBlock}` : ''}
 
     <div class="section-title" data-tip="Compares the gene's RNA expression in tumor versus normal tissue (TPM from TCGA tumor and GTEx normal). A wide window (tumor >> normal) means the gene is highly overexpressed in cancer — ideal for therapeutic targeting with minimal risk to healthy tissue.">Expression window (RNA · TPM)</div>
+    <div class="section-subtitle">Tumor (TCGA median) versus the single most-expressing GTEx normal tissue — the bigger the gap, the safer the therapeutic window.</div>
     <div class="bars">
       <div class="gbar"><div class="lbl">Tumor (median)</div><div class="track"><div class="fill fill-tumor" style="width:${Math.min(100, tumor/maxE*100).toFixed(0)}%"></div></div><div class="v">${tumor.toFixed(1)}</div></div>
       <div class="gbar"><div class="lbl">Max GTEx normal</div><div class="track"><div class="fill fill-normal" style="width:${Math.min(100, normal/maxE*100).toFixed(0)}%"></div></div><div class="v">${normal.toFixed(1)}</div></div>
@@ -3983,6 +4001,7 @@ async function openDrawer(r) {
 
     ${exprUrl ? `
     <div class="section-title" data-tip="Boxplot showing the gene's RNA expression (TPM) across tumor samples and GTEx normal tissues. Allows visual assessment of how specifically the gene is expressed in tumors versus individual healthy organs — key for evaluating therapeutic safety.">Gene expression across tumor &amp; normal tissues</div>
+    <div class="section-subtitle">Per-tissue RNA expression boxplot (TPM): the tumor box vs every individual GTEx normal organ — shows which healthy tissues might cross-present this gene's peptides.</div>
     <div class="plot-wrap">
       <button class="expand-btn" onclick="openLightbox('${exprUrl}','Gene expression: ${geneForExpr} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${exprUrl}" alt="Expression boxplot for ${geneForExpr}"
@@ -3993,6 +4012,7 @@ async function openDrawer(r) {
     </div>` : ''}
 
     <div class="section-title" data-tip="Quantitative scores for this peptide's MS presentation quality. Abundance rank = how prominently this peptide is presented relative to others. Spectral score = confidence of MS/MS identification. Homogeneity = whether the source gene is uniformly expressed across tumor cells (from single-cell RNA). DepMap = gene essentiality (negative = cancer depends on this gene).">Presentation metrics</div>
+    <div class="section-subtitle">Four at-a-glance scores: relative abundance, MS/MS identification confidence, single-cell expression homogeneity, and DepMap tumor-dependency.</div>
     <div class="bars">
       <div class="gbar"><div class="lbl">Abundance rank</div><div class="track"><div class="fill" style="width:${abund.toFixed(0)}%"></div></div><div class="v">${(r[COL.abund]||0).toFixed(3)}</div></div>
       <div class="gbar"><div class="lbl">Spectral score</div><div class="track"><div class="fill" style="width:${scoreW}%"></div></div><div class="v">${r[COL.score]||'—'}</div></div>
@@ -4002,9 +4022,11 @@ async function openDrawer(r) {
 
     ${intensBlock ? `
     <div class="section-title" data-tip="Raw mass spectrometry signal intensity for this peptide across individual immunopeptidome samples. Higher intensity = more copies of this peptide are being presented on the tumor cell surface in that sample. Consistent detection across multiple samples supports the peptide as a shared (not private) target.">Per-sample MS intensity (top ${Math.min(intens.length,10)})</div>
+    <div class="section-subtitle">Normalized MS intensity in the individual patient samples that detected this peptide — consistent high bars across samples indicate a shared, robustly presented target.</div>
     ${intensBlock}` : ''}
 
     <div class="section-title" data-tip="Shows where this peptide ranks in terms of MS intensity compared to all other peptides in this cancer's immunopeptidome. A high percentile means this peptide is among the most abundantly presented — indicating strong and stable HLA presentation on the tumor surface.">Peptide intensity percentile vs atlas</div>
+    <div class="section-subtitle">Percentile rank of this peptide's MS intensity among every peptide in the cancer's immunopeptidome — high percentile means one of the most abundantly presented targets.</div>
     <div class="plot-wrap">
       <button class="expand-btn" onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${percentileUrl}" alt="Percentile plot for ${pep}"
@@ -4015,6 +4037,7 @@ async function openDrawer(r) {
     </div>
 
     <div class="section-title" data-tip="Rank-abundance curve showing how this peptide's detection frequency (PSM count) compares across the immunopeptidome samples where it was found. A peptide appearing at high abundance across many samples is a strong shared target candidate.">PSM rank-abundance curve</div>
+    <div class="section-subtitle">The peptide's abundance rank in every patient sample that detected it — a flat curve near the top means consistent high abundance across patients.</div>
     <div class="plot-wrap">
       <button class="expand-btn" onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${rankAbundanceUrl}" alt="Rank-abundance curve for ${pep}"
@@ -4025,6 +4048,7 @@ async function openDrawer(r) {
     </div>
 
     <div class="section-title" data-tip="The annotated tandem mass spectrum (MS/MS) confirming this peptide's identity. Blue = b-ions (N-terminal fragments), red = y-ions (C-terminal fragments), green = a-ions. A well-matched spectrum with many fragment ions gives high confidence that this exact peptide sequence was detected on HLA.">MS/MS spectrum</div>
+    <div class="section-subtitle">The annotated fragmentation spectrum used to identify this peptide — blue b-ions (N-terminal), red y-ions (C-terminal), green a-ions. Dense matching peaks confirm the sequence.</div>
     <div class="spectrum-wrap">
       <button class="expand-btn" onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${spectrumUrl}" alt="MS/MS spectrum for ${pep} in ${code}"
