@@ -3484,6 +3484,7 @@ async function openDrawer(r) {
   const pathogen  = extra.pathogen || null;
   const exprInherited = !!extra.exprInherited;
   const rawSource = extra.source || '';
+  const txMeta = extra.transcriptMeta || null;
 
   // Per-HLA binding mini-table (sorted by rank% ascending — best first)
   const bindSorted = bind.slice().sort((a,b) => {
@@ -3660,7 +3661,7 @@ async function openDrawer(r) {
       fusion: 'Gene fusion',
     }[r[COL.cls]] || 'Source annotation';
     // Pick the best primary identifier: gene > retroelement family > transcript.
-    const primary = r[COL.gene] || teFamily || transcript || '—';
+    const primary = r[COL.gene] || (txMeta && txMeta.gene) || teFamily || transcript || '—';
     heroCallout = `<div class="hero-callout hero-source" data-tip="Structured annotation from the source pipeline: coordinates, transcript IDs, gene or TE symbols touched by the reading frame.">
       <div class="hero-kicker">${kicker} · source annotation</div>
       <div class="hero-mut-primary">
@@ -3668,17 +3669,33 @@ async function openDrawer(r) {
         ${coord ? `<span class="mono" style="color:var(--text-1);font-size:13px">${coord}</span>` : ''}
       </div>
       <div class="hero-mut-meta">
-        ${transcript ? `<span class="hero-meta"><b>Transcript</b> <span class="mono">${transcript}</span></span>` : ''}
+        ${transcript ? `<span class="hero-meta"><b>Transcript</b> <span class="mono">${transcript}</span>${txMeta && txMeta.displayName ? ` <span style="color:var(--text-3);font-size:11px">(${txMeta.displayName})</span>` : ''}</span>` : ''}
+        ${txMeta && txMeta.ensg ? `<span class="hero-meta"><b>ENSG</b> <span class="mono">${txMeta.ensg}</span></span>` : ''}
+        ${txMeta && txMeta.biotype ? `<span class="hero-meta"><b>Biotype</b> ${txMeta.biotype.replace(/_/g, ' ')}</span>` : ''}
         ${teFamily && teFamily !== primary ? `<span class="hero-meta"><b>TE family</b> <span class="mono">${teFamily}</span></span>` : ''}
         ${r[COL.cls] === 'nuORF' && r[COL.nuorf] ? `<span class="hero-meta"><b>Subtype</b> ${r[COL.nuorf]}</span>` : ''}
       </div>
-      ${(coord || transcript) ? `<div class="hero-links" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
-        ${transcript ? `<a class="xref" href="https://rest.ensembl.org/lookup/id/${encodeURIComponent(transcript.split('.')[0])}?expand=0;content-type=text/html" target="_blank" rel="noopener">Ensembl (REST) ↗</a>` : ''}
-        ${transcript ? `<a class="xref" href="https://www.ensembl.org/Homo_sapiens/Transcript/Summary?t=${encodeURIComponent(transcript.split('.')[0])}" target="_blank" rel="noopener">Ensembl transcript page ↗</a>` : ''}
-        ${coord ? `<a class="xref" href="https://grch37.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(coord.replace(/^chr/,'').replace(/ \([+\-]\)$/,''))}" target="_blank" rel="noopener">Ensembl region (GRCh37) ↗</a>` : ''}
-        ${coord ? `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${encodeURIComponent(coord.replace(/ \([+\-]\)$/,''))}" target="_blank" rel="noopener">UCSC hg19 ↗</a>` : ''}
-        ${coord ? `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=${encodeURIComponent(coord.replace(/ \([+\-]\)$/,''))}" target="_blank" rel="noopener">UCSC hg38 ↗</a>` : ''}
-      </div>` : ''}
+      ${(() => {
+        const links = [];
+        // Preferred route: the robust useast Gene/Summary URL with g/r/t
+        // params (this is what the Ensembl search feature actually generates
+        // and survives edge outages that break the bare transcript page).
+        if (txMeta && txMeta.ensg && txMeta.chrom && txMeta.start && txMeta.end) {
+          const region = `${txMeta.chrom}:${txMeta.start}-${txMeta.end}`;
+          const url = `https://useast.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=${encodeURIComponent(txMeta.ensg)};r=${encodeURIComponent(region)}${transcript ? `;t=${encodeURIComponent(transcript.split('.')[0])}` : ''}`;
+          links.push(`<a class="xref" href="${url}" target="_blank" rel="noopener">Ensembl Gene page (GRCh38) ↗</a>`);
+        }
+        if (transcript) {
+          links.push(`<a class="xref" href="https://rest.ensembl.org/lookup/id/${encodeURIComponent(transcript.split('.')[0])}?expand=0;content-type=text/html" target="_blank" rel="noopener">Ensembl REST ↗</a>`);
+        }
+        if (coord) {
+          const c = coord.replace(/ \([+\-]\)$/, '');
+          links.push(`<a class="xref" href="https://grch37.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh37 region ↗</a>`);
+          links.push(`<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg19 ↗</a>`);
+          links.push(`<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg38 ↗</a>`);
+        }
+        return links.length ? `<div class="hero-links" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">${links.join('')}</div>` : '';
+      })()}
       <details class="hero-raw-details"><summary>Show raw annotation</summary>
         <div class="hero-raw-src">${rawSource}</div>
       </details>

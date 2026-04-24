@@ -178,6 +178,13 @@ def resolve_transcript_genes(extracted_dir):
                     'gene_symbol': (info.get('display_name') or '').split('-')[0],  # TNS4-201 -> TNS4
                     'ensg': info.get('Parent') or '',
                     'biotype': info.get('biotype') or '',
+                    # GRCh38 coordinates — needed to build the robust
+                    # useast.ensembl.org Gene/Summary URL with r= param.
+                    'chrom': info.get('seq_region_name') or '',
+                    'start': info.get('start') or 0,
+                    'end': info.get('end') or 0,
+                    'strand': info.get('strand') or 0,
+                    'display_name': info.get('display_name') or '',
                 }
         except Exception as e:
             print(f'  [warn] Ensembl REST batch {start}-{start+len(chunk)} failed: {e}')
@@ -783,6 +790,26 @@ def process_cancer(code, immuno_lookup, immuno_stats, transcript_map=None):
                     extra['pathogen'] = pa
             if expr_inherited:
                 extra['exprInherited'] = True
+            # If we resolved this row's gene via Ensembl REST (nuORF / splicing
+            # fallback), surface the transcript metadata so the hero card can
+            # build the robust useast.ensembl.org Gene/Summary URL with
+            # ?g=ENSG;r=chr:start-end;t=ENST params.
+            if transcript_map:
+                for enst in re.findall(r'ENST\d+(?:\.\d+)?', src_raw):
+                    info = transcript_map.get(enst.split('.')[0])
+                    if info and info.get('ensg'):
+                        extra['transcriptMeta'] = {
+                            'enst': enst,
+                            'ensg': info.get('ensg'),
+                            'chrom': info.get('chrom'),
+                            'start': info.get('start'),
+                            'end': info.get('end'),
+                            'strand': info.get('strand'),
+                            'gene': info.get('gene_symbol'),
+                            'biotype': info.get('biotype'),
+                            'displayName': info.get('display_name'),
+                        }
+                        break  # first resolvable transcript is enough
             # Always include a trimmed source string so power users can see
             # the raw annotation (especially for splicing / ERV / nuORF).
             if src_raw and len(src_raw) < 2000:
