@@ -1,3 +1,17 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# Raw data and manuscript artifacts — local references only.
+# The portal pulls fresh data straight from Dropbox via integrate_data.py,
+# so none of these need to live in the repo (and the concatenated CSV is
+# well over GitHub's 100 MB file limit anyway).
+all_final_enhanced_all.csv
+*_final_enhanced.txt
+*_metadata.txt
+all_deepimmuno_immunogenicity.txt
+US_HLA_frequency.csv
+nature_cancer_submission_*.docx
+cancer_discovery-*/
+cancer_discovery-*.zip
+dropbox.zip
