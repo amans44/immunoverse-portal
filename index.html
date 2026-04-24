@@ -2633,9 +2633,12 @@ const CANCERS = [];
 const DATA_CACHE = {};
 let CURRENT_ROWS = [];
 // Compare set — keys are "{pep}::{cancer}" so the same peptide across
-// different cancers can each be selected independently. Capped at 4 for
-// side-by-side readability.
+// different cancers can each be selected independently. Cap for manual
+// multi-pick is 4 (column readability); the "compare across cancers"
+// shortcut bypasses it because the peptide sequence is identical and the
+// rendered grid scrolls horizontally when there are more than 4 columns.
 const COMPARE_MAX = 4;
+const COMPARE_MAX_CROSS = 21; // every cancer code
 const COMPARE = new Set();
 let STATE = {
   cancer: '', pep: '', gene: '', hla: '', uniq: '', rec: 0,
@@ -3201,7 +3204,7 @@ function renderCompareBar() {
   }).join('');
   bar.innerHTML = `
     <div class="cmp-bar-inner">
-      <div class="cmp-bar-label">Comparing <b>${n}</b> peptide${n>1?'s':''}<span style="color:var(--text-3);margin-left:8px">(max ${COMPARE_MAX})</span></div>
+      <div class="cmp-bar-label">Comparing <b>${n}</b> peptide${n>1?'s':''}${n < COMPARE_MAX ? `<span style="color:var(--text-3);margin-left:8px">(tick up to ${COMPARE_MAX} manually · or use ↗ "compare across cancers" for a whole peptide's footprint)</span>` : ''}</div>
       <div class="cmp-bar-chips">${chips}</div>
       <div class="cmp-bar-actions">
         <button class="btn btn-ghost" onclick="clearCompare()">Clear</button>
@@ -3224,14 +3227,17 @@ function clearCompare() {
   renderCompareBar();
 }
 function compareAcrossCancers(pep) {
-  // Convenience: select every cancer where this peptide exists (up to COMPARE_MAX).
+  // Convenience: select every cancer where this peptide exists. Uses the
+  // cross-cancer cap (effectively all cancers) because we're comparing the
+  // same peptide — the meaningful differences are per-cancer context, not
+  // column count.
   COMPARE.clear();
   for (const code of Object.keys(DATA_CACHE)) {
     const d = DATA_CACHE[code];
     if (!d || !d.rows) continue;
     if (d.rows.some(r => r[0] === pep)) {
       COMPARE.add(`${pep}::${code}`);
-      if (COMPARE.size >= COMPARE_MAX) break;
+      if (COMPARE.size >= COMPARE_MAX_CROSS) break;
     }
   }
   if (COMPARE.size < 2) {
@@ -3393,14 +3399,23 @@ async function openCompareModal() {
     </div>`;
   };
 
+  // When more than 4 peptides are compared (typically via "compare across
+  // cancers"), let the grid scroll horizontally so each column keeps enough
+  // width to stay readable instead of squeezing to unreadable strips.
+  const colMin = rows.length > 4 ? '260px' : '0';
+  const overflow = rows.length > 4 ? 'overflow-x: auto;' : '';
   const deepDive = `
-    <div class="cmp-deep-head">Per-peptide deep dive</div>
-    <div class="cmp-deep-grid" style="grid-template-columns: repeat(${rows.length}, minmax(0, 1fr));">
-      ${rows.map(deepColumn).join('')}
+    <div class="cmp-deep-head">Per-peptide deep dive ${rows.length > 4 ? `<span style="font-weight:400;color:var(--text-3);text-transform:none;letter-spacing:0">— scroll horizontally (${rows.length} columns)</span>` : ''}</div>
+    <div style="${overflow}">
+      <div class="cmp-deep-grid" style="grid-template-columns: repeat(${rows.length}, minmax(${colMin}, 1fr)); ${rows.length > 4 ? 'min-width: ' + (rows.length * 280) + 'px;' : ''}">
+        ${rows.map(deepColumn).join('')}
+      </div>
     </div>`;
 
+  const tableStyle = rows.length > 4 ? `style="min-width: ${160 + rows.length * 200}px;"` : '';
   const html = `
-    <table class="compare-table">
+    <div style="${rows.length > 4 ? 'overflow-x:auto;' : ''}">
+    <table class="compare-table" ${tableStyle}>
       <thead><tr><th class="rowlbl">Attribute</th>${header}</tr></thead>
       <tbody>
         ${attr('Gene', r => r[COL.gene] || '—', {html:false})}
@@ -3423,6 +3438,7 @@ async function openCompareModal() {
         ${attr('ENSG', r => r[COL.ensg] || '—')}
       </tbody>
     </table>
+    </div>
     ${deepDive}`;
   document.getElementById('compareModalBody').innerHTML = html;
   document.getElementById('compareModal').classList.add('open');
@@ -3619,21 +3635,42 @@ async function openDrawer(r) {
       </div>
     </div>`;
   } else if (rawSource && ['splicing', 'ERV', 'TE_chimeric_transcript', 'intron_retention', 'nuORF', 'fusion'].includes(r[COL.cls])) {
-    // Pull coordinate + gene fragments from the structured source string so
-    // users can read location at a glance instead of parsing a pipe-blob.
-    const coordMatch = rawSource.match(/chr[\dXYM]+:\d+-\d+/);
-    const coord = coordMatch ? coordMatch[0] : '';
+    // Pull coordinate, transcript, and TE/retroelement fragments from the
+    // structured source string so users can read location at a glance instead
+    // of parsing the raw pipe-blob. Two coordinate formats appear in the raw
+    // data:
+    //   chr12:55957671-55958473      (splicing, most ERV)
+    //   _17:38652701-38657798:-      (nuORF transcript suffix)
+    let coord = '';
+    const mChr = rawSource.match(/chr[\dXYM]+:\d+-\d+/);
+    if (mChr) coord = mChr[0];
+    if (!coord) {
+      const mTx = rawSource.match(/_(\d+|X|Y|M):(\d+)-(\d+)(?::([+\-]))?/);
+      if (mTx) coord = `chr${mTx[1]}:${mTx[2]}-${mTx[3]}${mTx[4] ? ' (' + mTx[4] + ')' : ''}`;
+    }
+    const txMatch = rawSource.match(/ENST\d+(?:\.\d+)?/);
+    const transcript = txMatch ? txMatch[0] : '';
+    // Retroelement family (L1_ORF2, HERVK, AluSx, etc.) lives in the ERV head.
+    const teMatch = r[COL.cls] === 'ERV' ? rawSource.match(/^([A-Za-z0-9_]+_dup\d+|L1[A-Z0-9_]+|HERV[A-Z0-9_\-]+|Alu[A-Za-z0-9_]+|SVA_[A-Z_\d]+)/) : null;
+    const teFamily = teMatch ? teMatch[1] : '';
     const kicker = {
       splicing: 'Splice junction', ERV: 'Retroelement',
       TE_chimeric_transcript: 'TE chimeric transcript',
       intron_retention: 'Retained intron', nuORF: 'Cryptic ORF',
       fusion: 'Gene fusion',
     }[r[COL.cls]] || 'Source annotation';
-    heroCallout = `<div class="hero-callout hero-source" data-tip="Structured annotation from the source pipeline: coordinates, transcript IDs, gene symbols touched by the reading frame.">
+    // Pick the best primary identifier: gene > retroelement family > transcript.
+    const primary = r[COL.gene] || teFamily || transcript || '—';
+    heroCallout = `<div class="hero-callout hero-source" data-tip="Structured annotation from the source pipeline: coordinates, transcript IDs, gene or TE symbols touched by the reading frame.">
       <div class="hero-kicker">${kicker} · source annotation</div>
       <div class="hero-mut-primary">
-        <span class="hero-gene">${r[COL.gene]||'—'}</span>
+        <span class="hero-gene">${primary}</span>
         ${coord ? `<span class="mono" style="color:var(--text-1);font-size:13px">${coord}</span>` : ''}
+      </div>
+      <div class="hero-mut-meta">
+        ${transcript ? `<span class="hero-meta"><b>Transcript</b> <a href="https://www.ensembl.org/Homo_sapiens/Transcript/Summary?t=${encodeURIComponent(transcript.split('.')[0])}" target="_blank" rel="noopener" class="mono">${transcript} ↗</a></span>` : ''}
+        ${teFamily && teFamily !== primary ? `<span class="hero-meta"><b>TE family</b> <span class="mono">${teFamily}</span></span>` : ''}
+        ${r[COL.cls] === 'nuORF' && r[COL.nuorf] ? `<span class="hero-meta"><b>Subtype</b> ${r[COL.nuorf]}</span>` : ''}
       </div>
       <details class="hero-raw-details"><summary>Show raw annotation</summary>
         <div class="hero-raw-src">${rawSource}</div>
