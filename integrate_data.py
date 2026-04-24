@@ -533,7 +533,10 @@ def parse_sc_pert(row):
 def build_gene_expression_map(enhanced_file):
     """Pre-pass: collect median_tumor/max_median_gtex from self_gene rows,
     keyed by gene symbol AND ENSG so non-self classes can fall back to
-    parent-gene expression (e.g. splicing peptides inheriting PMEL's TCGA/GTEx)."""
+    parent-gene expression (e.g. splicing peptides inheriting PMEL's TCGA/GTEx).
+
+    Each value is (tumor, normal, ensg) — we propagate the parent's ENSG so the
+    NYU boxplot URL (which needs ENSG + gene) can render for inherited rows."""
     by_gene = {}
     by_ensg = {}
     with open(enhanced_file, 'r', encoding='utf-8') as f:
@@ -544,12 +547,13 @@ def build_gene_expression_map(enhanced_file):
             n = safe_float(r.get('max_median_gtex'))
             if t is None and n is None:
                 continue
+            ensg_raw = (r.get('ensgs') or '').strip()
+            ensg = ensg_raw.split(';')[0].split(',')[0] if ensg_raw.startswith('ENSG') else ''
             g = (r.get('gene_symbol') or '').strip()
             if g and g not in ('nan', 'None'):
-                by_gene.setdefault(g, (t, n))
-            ensg = (r.get('ensgs') or '').strip()
-            if ensg.startswith('ENSG'):
-                by_ensg.setdefault(ensg.split(';')[0].split(',')[0], (t, n))
+                by_gene.setdefault(g, (t, n, ensg))
+            if ensg:
+                by_ensg.setdefault(ensg, (t, n, ensg))
     return by_gene, by_ensg
 
 
@@ -617,7 +621,8 @@ def process_cancer(code, immuno_lookup, immuno_stats):
                 nuorf_type = ''
 
             # Parent-gene expression fallback for non-self classes (splicing,
-            # variant, ERV, etc.). Mark as inherited so the UI can disclose it.
+            # variant, ERV, etc.). Also backfill ENSG so the NYU boxplot URL
+            # (which needs ENSG + gene) can resolve. Mark inherited for the UI.
             expr_inherited = False
             if cls != 'self_gene' and tumor is None and normal is None:
                 lookup = None
@@ -629,7 +634,9 @@ def process_cancer(code, immuno_lookup, immuno_stats):
                             lookup = expr_by_gene[g_part]
                             break
                 if lookup:
-                    tumor, normal = lookup
+                    tumor, normal, parent_ensg = lookup
+                    if parent_ensg and not ensg:
+                        ensg = parent_ensg
                     expr_inherited = True
 
             # Per-HLA binding data with immunogenicity
