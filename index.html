@@ -8,8 +8,30 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  // Apply saved theme before first paint so light-mode users don't see a dark flash.
+  (function () {
+    try {
+      var saved = localStorage.getItem('iv.theme');
+      if (saved === 'light' || saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch (e) {}
+  })();
+  function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    var next = cur === 'light' ? 'dark' : 'light';
+    if (next === 'dark') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('iv.theme', next); } catch (e) {}
+  }
+</script>
 <style>
 /* ===================== DESIGN TOKENS ===================== */
+/* Dark mode (default). A [data-theme="light"] selector below overrides the
+   color-only vars for light mode while keeping layout/gradient vars stable. */
 :root {
   --bg-0: #05070e;
   --bg-1: #0a0e1a;
@@ -28,6 +50,7 @@
   --accent-pink: #f472b6;
   --accent-lime: #86efac;
   --accent-amber: #fbbf24;
+  --link: #22d3ee;
   --grad-primary: linear-gradient(135deg, #22d3ee 0%, #818cf8 45%, #c084fc 100%);
   --grad-primary-soft: linear-gradient(135deg, rgba(34,211,238,0.18), rgba(192,132,252,0.18));
   --grad-hero: radial-gradient(1200px 700px at 25% 10%, rgba(34,211,238,0.18), transparent 60%),
@@ -38,6 +61,39 @@
   --radius: 14px;
   --radius-lg: 22px;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --body-overlay-1: rgba(120,150,220,0.03);
+  --body-overlay-2: rgba(120,150,220,0.03);
+}
+
+/* Light mode — brighter surfaces, darker text; accents shift to mid-saturation
+   hues so they stay legible against a white background. */
+:root[data-theme="light"] {
+  --bg-0: #f6f8fc;
+  --bg-1: #ffffff;
+  --bg-2: #f0f3fa;
+  --bg-3: #e7ecf6;
+  --bg-card: rgba(255, 255, 255, 0.88);
+  --bg-card-2: rgba(241, 244, 251, 0.96);
+  --border: rgba(60, 80, 140, 0.14);
+  --border-2: rgba(60, 80, 140, 0.28);
+  --text-0: #0b1220;
+  --text-1: #1f2a44;
+  --text-2: #4a5578;
+  --text-3: #8090b0;
+  --accent-cyan: #0891b2;
+  --accent-violet: #6d28d9;
+  --accent-pink: #be185d;
+  --accent-lime: #15803d;
+  --accent-amber: #b45309;
+  --link: #0369a1;
+  --grad-primary: linear-gradient(135deg, #0891b2 0%, #6366f1 45%, #9333ea 100%);
+  --grad-primary-soft: linear-gradient(135deg, rgba(8,145,178,0.12), rgba(147,51,234,0.12));
+  --grad-hero: radial-gradient(1200px 700px at 25% 10%, rgba(8,145,178,0.10), transparent 60%),
+               radial-gradient(1200px 700px at 85% 20%, rgba(109,40,217,0.10), transparent 60%),
+               radial-gradient(1000px 600px at 60% 90%, rgba(190,24,93,0.06), transparent 60%);
+  --shadow-lg: 0 20px 60px rgba(15,23,42,0.12), 0 2px 8px rgba(15,23,42,0.08);
+  --body-overlay-1: rgba(60,80,140,0.05);
+  --body-overlay-2: rgba(60,80,140,0.05);
 }
 
 * { box-sizing: border-box; }
@@ -69,8 +125,8 @@ body::after {
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(120,150,220,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120,150,220,0.03) 1px, transparent 1px);
+    linear-gradient(var(--body-overlay-1) 1px, transparent 1px),
+    linear-gradient(90deg, var(--body-overlay-2) 1px, transparent 1px);
   background-size: 48px 48px;
   pointer-events: none;
   z-index: 0;
@@ -78,7 +134,7 @@ body::after {
   -webkit-mask-image: radial-gradient(ellipse 1200px 800px at 50% 30%, black 40%, transparent 90%);
 }
 
-a { color: var(--accent-cyan); text-decoration: none; transition: color .15s; }
+a { color: var(--link); text-decoration: none; transition: color .15s; }
 a:hover { color: var(--text-0); }
 
 /* ===================== LAYOUT ===================== */
@@ -93,7 +149,7 @@ nav.topnav {
   z-index: 100;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  background: rgba(5,7,14,0.72);
+  background: color-mix(in srgb, var(--bg-0) 78%, transparent);
   border-bottom: 1px solid var(--border);
 }
 nav.topnav .inner {
@@ -515,7 +571,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   border-radius: var(--radius);
   overflow-x: auto;
   overflow-y: visible;
-  background: rgba(5,8,20,0.45);
+  background: color-mix(in srgb, var(--bg-0) 55%, transparent);
   position: relative;
   -webkit-overflow-scrolling: touch;
 }
@@ -652,7 +708,7 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(5,8,20,0.72);
+  background: color-mix(in srgb, var(--bg-0) 78%, transparent);
   backdrop-filter: blur(4px);
   opacity: 0;
   pointer-events: none;
@@ -660,20 +716,34 @@ table.atlas.compact td:nth-child(10) { display: none; }
   z-index: 200;
 }
 .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+/* Centered modal — was a right-slide drawer, now renders in the middle of the
+   viewport so detail reading doesn't compete with the filtered table. */
 .drawer {
   position: fixed;
-  top: 0; right: 0; bottom: 0;
-  width: min(580px, 92vw);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(.97);
+  width: min(1100px, 94vw);
+  max-height: 90vh;
   background: var(--bg-1);
-  border-left: 1px solid var(--border-2);
-  box-shadow: -30px 0 80px rgba(0,0,0,0.6);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   padding: 28px 32px;
   overflow-y: auto;
-  transform: translateX(100%);
-  transition: transform .25s cubic-bezier(.4,0,.2,1);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .22s cubic-bezier(.4,0,.2,1), opacity .22s;
   z-index: 201;
 }
-.drawer.open { transform: translateX(0); }
+.drawer.open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (max-width: 900px) {
+  .drawer { width: 96vw; padding: 22px 20px; max-height: 94vh; }
+}
 .drawer .close {
   position: absolute;
   top: 18px; right: 18px;
@@ -821,6 +891,123 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .bind-sb { background: rgba(34,211,238,0.16); color: var(--accent-cyan); border: 1px solid rgba(34,211,238,0.34); }
 .bind-wb { background: rgba(167,139,250,0.14); color: var(--accent-violet); border: 1px solid rgba(167,139,250,0.30); }
 .bind-nb { background: var(--bg-2); color: var(--text-3); border: 1px solid var(--border); }
+
+/* ===================== COMPARE ===================== */
+.col-cmp { width: 34px; text-align: center; padding: 0 !important; }
+.cmp-cell { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 6px; }
+.cmp-cell input { position: absolute; opacity: 0; pointer-events: none; }
+.cmp-cell span {
+  width: 16px; height: 16px; border-radius: 4px;
+  border: 1.5px solid var(--border-2);
+  background: transparent;
+  display: inline-block;
+  transition: background .1s, border-color .1s;
+  position: relative;
+}
+.cmp-cell input:checked + span { background: var(--accent-cyan); border-color: var(--accent-cyan); }
+.cmp-cell input:checked + span::after {
+  content: ''; position: absolute;
+  top: 1px; left: 4px; width: 5px; height: 9px;
+  border: solid #05070e; border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.cmp-cell:hover span { border-color: var(--accent-cyan); }
+
+.cmp-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%) translateY(calc(100% + 40px));
+  z-index: 150;
+  background: var(--bg-1);
+  border: 1px solid var(--border-2);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  padding: 12px 16px;
+  max-width: min(1100px, 96vw);
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+}
+.cmp-bar.open { transform: translateX(-50%) translateY(0); }
+.cmp-bar-inner { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.cmp-bar-label { font-size: 12.5px; color: var(--text-2); white-space: nowrap; }
+.cmp-bar-label b { color: var(--text-0); }
+.cmp-bar-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.cmp-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--text-1);
+}
+.cmp-pill-x {
+  background: transparent; border: none; color: var(--text-3);
+  cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px;
+}
+.cmp-pill-x:hover { color: var(--text-0); }
+.cmp-bar-actions { display: flex; gap: 8px; margin-left: auto; }
+.cmp-bar-actions .btn { padding: 8px 14px; font-size: 12.5px; }
+
+.compare-modal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(.97);
+  width: min(1200px, 96vw);
+  max-height: 90vh;
+  background: var(--bg-1);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 28px 32px;
+  overflow: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .22s cubic-bezier(.4,0,.2,1), opacity .22s;
+  z-index: 202;
+}
+.compare-modal.open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.compare-modal .close {
+  position: absolute; top: 18px; right: 18px;
+  background: transparent; color: var(--text-2);
+  border: 1px solid var(--border);
+  width: 32px; height: 32px; border-radius: 8px;
+  cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+}
+.compare-modal .close:hover { background: var(--bg-3); color: var(--text-0); }
+.compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.compare-table th, .compare-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+  color: var(--text-1);
+}
+.compare-table thead th {
+  position: sticky; top: 0;
+  background: var(--bg-1);
+  color: var(--text-0);
+  font-weight: 600;
+  font-size: 12px;
+  padding-top: 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-2);
+}
+.compare-table th.rowlbl {
+  width: 160px; color: var(--text-3);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10.5px;
+  background: transparent;
+  position: static;
+}
+.compare-table tbody tr:hover td { background: var(--bg-2); }
 
 .mono { font-family: var(--mono); font-size: 11.5px; color: var(--text-1); }
 .mut-tag {
@@ -1003,7 +1190,7 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .lightbox {
   position: fixed;
   inset: 0;
-  background: rgba(5,8,20,0.92);
+  background: color-mix(in srgb, var(--bg-0) 94%, transparent);
   backdrop-filter: blur(12px);
   z-index: 9000;
   display: flex;
@@ -1342,34 +1529,6 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .dl-grid a b { font-family: var(--mono); color: var(--text-0); font-weight: 600; }
 .dl-grid a .sz { color: var(--text-3); font-size: 11px; font-family: var(--mono); }
 
-/* ===================== CITATION / FOOTER ===================== */
-.cite-box {
-  background: var(--bg-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 22px;
-  font-family: var(--mono);
-  font-size: 12.5px;
-  color: var(--text-1);
-  line-height: 1.7;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  position: relative;
-}
-.cite-box .copy {
-  position: absolute;
-  top: 12px; right: 12px;
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  color: var(--text-1);
-  font-family: inherit;
-  font-size: 11px;
-  padding: 5px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.cite-box .copy:hover { background: var(--bg-card-2); color: var(--text-0); }
-
 /* ===================== BODY MAP ===================== */
 .bodymap-wrap {
   display: grid;
@@ -1554,6 +1713,23 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 }
 .nav-toggle:hover { background: var(--bg-3); color: var(--text-0); }
 
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  border-radius: 8px;
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+  line-height: 0;
+}
+.theme-toggle:hover { background: var(--bg-3); color: var(--text-0); border-color: var(--border-2); }
+.theme-toggle svg { width: 16px; height: 16px; }
+/* Show the matching icon for the *target* mode (click to switch). */
+:root[data-theme="light"] .theme-toggle .icon-sun,
+:root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+
 /* ===================== TOOLTIPS ===================== */
 [data-tip] { cursor: help; }
 .iv-tooltip {
@@ -1629,6 +1805,10 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <a href="#downloads">Data</a>
       <a href="#cite">Cite</a>
     </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode" title="Toggle theme" onclick="toggleTheme()">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
     <a class="cta" href="#explorer">Explore atlas →</a>
   </div>
 </nav>
@@ -1845,6 +2025,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
         <table class="atlas" id="atlasTable">
           <thead>
             <tr>
+              <th class="col-cmp" data-tip="Tick up to 4 peptides to compare them side-by-side across cancers. The bar at the bottom of the table lights up when you have two or more selected."><span aria-label="Compare column">⧉</span></th>
               <th data-col="code" data-tip="TCGA cancer type abbreviation. Hover any code in the table to see the full name.">Cancer</th>
               <th data-col="pep" data-tip="The amino acid sequence of the HLA-presented peptide detected by mass spectrometry in tumor immunopeptidomes.">Peptide</th>
               <th data-col="gene" data-tip="Gene of origin for this peptide. For canonical antigens this is the gene symbol; for non-canonical classes it may be the ORF, retroelement, or pathogen source.">Gene</th>
@@ -1859,7 +2040,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
             </tr>
           </thead>
           <tbody id="atlasBody">
-            <tr><td colspan="11" class="loader">Loading atlas…</td></tr>
+            <tr><td colspan="12" class="loader">Loading atlas…</td></tr>
           </tbody>
         </table>
         <div class="pagination">
@@ -2048,24 +2229,9 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <h2>Cite ImmunoVerse</h2>
       <p>If you use ImmunoVerse data, pipeline, or derived targets in your research, please cite the manuscript.</p>
     </div>
-    <div class="cite-box">
-      <button class="copy" onclick="navigator.clipboard.writeText(document.querySelector('.cite-box pre').innerText)">Copy BibTeX</button>
-<pre>@article{li2026immunoverse,
-  title  = {A pan-cancer atlas of therapeutic T cell targets},
-  author = {Li, Guangyuan and Guzm{\'a}n-Bringas, Omar U and Sharma, Aman and
-            Dellacherie, Maxence and Sekhri, Palak and Yamin, Rachel and
-            Stepec, Dejan and Burq, Maximilien and Clotea, Ioana and
-            Tardio, Ethan and Natarajan, Aswin and Harpaz, Zachary and
-            Liu, Xinya and Requena, David and Tang, Jason Q and Taylor, Darren and
-            Moon, Damee and Ebina, Wataru and Sullivan, Alexis P and
-            Imielinski, Marcin and Schluter, Jonas and Ueberheide, Beatrix M and
-            Krogsgaard, Michelle and Cruz, C Russell Y and Cimermancic, Peter and
-            Yarmarkovich, Mark},
-  year   = {2026},
-  note   = {bioRxiv 2025.01.22.634237},
-  doi    = {10.1101/2025.01.22.634237},
-  url    = {https://www.immuno-verse.com/}
-}</pre>
+    <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:8px;">
+      <button class="btn btn-primary" onclick="openCitation()">View citation ↗</button>
+      <a class="btn btn-ghost" href="https://doi.org/10.1101/2025.01.22.634237" target="_blank" rel="noopener">Open on bioRxiv ↗</a>
     </div>
     <div style="margin-top:24px; color: var(--text-2); font-size:13.5px;">
       Correspondence: <a href="mailto:Mark.Yarmarkovich@nyulangone.org">Mark.Yarmarkovich@nyulangone.org</a> ·
@@ -2120,11 +2286,23 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   <div class="lb-caption" id="lbCaption"></div>
 </div>
 
-<!-- Drawer -->
+<!-- Drawer (centered modal) -->
 <div class="drawer-backdrop" id="drawerBg"></div>
 <aside class="drawer" id="drawer" aria-hidden="true">
   <button class="close" onclick="closeDrawer()">×</button>
   <div id="drawerBody"></div>
+</aside>
+
+<!-- Compare action bar (floats at bottom when any peptides are selected) -->
+<div class="cmp-bar" id="compareBar"></div>
+
+<!-- Compare modal -->
+<div class="drawer-backdrop" id="compareModalBg" onclick="closeCompareModal()"></div>
+<aside class="compare-modal" id="compareModal" aria-hidden="true">
+  <button class="close" onclick="closeCompareModal()">×</button>
+  <h3 style="margin:0 0 4px">Peptide comparison</h3>
+  <p style="color:var(--text-2);font-size:13px;margin:0 0 18px">Side-by-side attribute comparison. Pathogen and mutation rows pull from the detail files; every other row comes from the main table.</p>
+  <div id="compareModalBody"></div>
 </aside>
 
 <script>
@@ -2193,6 +2371,11 @@ function hlaFreq(allele) {
 const CANCERS = [];
 const DATA_CACHE = {};
 let CURRENT_ROWS = [];
+// Compare set — keys are "{pep}::{cancer}" so the same peptide across
+// different cancers can each be selected independently. Capped at 4 for
+// side-by-side readability.
+const COMPARE_MAX = 4;
+const COMPARE = new Set();
 let STATE = {
   cancer: '', pep: '', gene: '', hla: '', uniq: '', rec: 0,
   length: '', rank: '', hlaClass: '', safe: '', nuorfSub: '',
@@ -2288,7 +2471,7 @@ loadScript('data_js/_summary.js').then(() => {
   renderDownloadGrid(summary);
   loadAll();
 }).catch(err => {
-  document.getElementById('atlasBody').innerHTML = '<tr><td colspan="11" class="loader" style="color:#f87171">Failed to load data — the <code>data_js/</code> directory must sit next to <code>index.html</code>.</td></tr>';
+  document.getElementById('atlasBody').innerHTML = '<tr><td colspan="12" class="loader" style="color:#f87171">Failed to load data — the <code>data_js/</code> directory must sit next to <code>index.html</code>.</td></tr>';
   console.error(err);
 });
 
@@ -2515,7 +2698,7 @@ async function loadCancer(code) {
 
 async function loadAll() {
   // Concurrently load all cancers; ~60 MB total with per-HLA binding records
-  document.getElementById('atlasBody').innerHTML = '<tr><td colspan="11" class="loader">Loading 21 cancer tables (~60 MB)…</td></tr>';
+  document.getElementById('atlasBody').innerHTML = '<tr><td colspan="12" class="loader">Loading 21 cancer tables (~60 MB)…</td></tr>';
   const all = await Promise.all(CANCERS.map(c => loadCancer(c.code)));
   const rows = [];
   all.forEach(d => {
@@ -2637,6 +2820,7 @@ function applyFilters() {
 
   const slice = filt.slice((STATE.page-1)*ps, STATE.page*ps);
   renderRows(slice);
+  renderCompareBar();
 
   // sort header indicators
   document.querySelectorAll('#atlasTable thead th').forEach(th => {
@@ -2660,7 +2844,7 @@ function windowBadge(tumor, normal) {
 function renderRows(rows) {
   const body = document.getElementById('atlasBody');
   if (!rows.length) {
-    body.innerHTML = '<tr><td colspan="11" class="loader" style="padding: 60px 20px;">No peptides match the current filters.</td></tr>';
+    body.innerHTML = '<tr><td colspan="12" class="loader" style="padding: 60px 20px;">No peptides match the current filters.</td></tr>';
     return;
   }
   body.innerHTML = rows.map((r, i) => {
@@ -2693,7 +2877,10 @@ function renderRows(rows) {
     const hlasTip = (r[COL.hlas]||[]).length
       ? `Presented by ${(r[COL.hlas]||[]).length} HLA allele(s): ${(r[COL.hlas]||[]).join(', ')}`
       : 'No HLA allele data';
-    return `<tr data-idx="${i}">
+    const cmpKey = `${r[COL.pep]}::${r[COL.code]}`;
+    const cmpChecked = COMPARE.has(cmpKey) ? 'checked' : '';
+    return `<tr data-idx="${i}" data-cmpkey="${cmpKey}">
+      <td class="col-cmp"><label class="cmp-cell" onclick="event.stopPropagation()"><input type="checkbox" class="cmp-chk" ${cmpChecked} data-cmpkey="${cmpKey}"><span></span></label></td>
       <td><span class="classtag" style="background:rgba(34,211,238,0.08);border-color:rgba(34,211,238,0.25);" title="${CANCER_NAMES[r[COL.code]]||r[COL.code]}">${r[COL.code]}</span></td>
       <td><span class="pep">${r[COL.pep]}</span> ${safeIcon}</td>
       <td><span class="gene">${r[COL.gene]||'—'}</span></td>
@@ -2707,10 +2894,176 @@ function renderRows(rows) {
       <td title="${hlasTip}"><span class="hlas"><b>${hlasShort||'—'}</b>${hlasMore}</span></td>
     </tr>`;
   }).join('');
-  // Click to open drawer
+  // Click to open drawer (checkbox cell is stopPropagation'd)
   body.querySelectorAll('tr[data-idx]').forEach(tr => {
     tr.addEventListener('click', () => openDrawer(rows[parseInt(tr.dataset.idx)]));
   });
+  // Compare checkboxes
+  body.querySelectorAll('.cmp-chk').forEach(chk => {
+    chk.addEventListener('change', e => {
+      const key = chk.dataset.cmpkey;
+      if (chk.checked) {
+        if (COMPARE.size >= COMPARE_MAX) {
+          chk.checked = false;
+          alert(`You can compare up to ${COMPARE_MAX} peptides at once. Deselect one first.`);
+          return;
+        }
+        COMPARE.add(key);
+      } else {
+        COMPARE.delete(key);
+      }
+      renderCompareBar();
+    });
+  });
+}
+
+// ===== Compare: pick-bar + side-by-side modal =====
+function compareRowFromKey(key) {
+  // Find the row matching "pep::code" in the full cached dataset.
+  const [pep, code] = key.split('::');
+  const bucket = DATA_CACHE[code];
+  if (!bucket || !bucket.rows) return null;
+  const match = bucket.rows.find(r => r[0] === pep);
+  if (!match) return null;
+  // Ensure the row has the code slot at COL.code (populated in loadAll).
+  return match;
+}
+function renderCompareBar() {
+  const bar = document.getElementById('compareBar');
+  if (!bar) return;
+  const n = COMPARE.size;
+  if (!n) { bar.classList.remove('open'); return; }
+  bar.classList.add('open');
+  const chips = [...COMPARE].map(key => {
+    const [pep, code] = key.split('::');
+    return `<span class="cmp-pill"><span class="mono" style="font-weight:600;color:var(--text-0)">${pep}</span> <span style="color:var(--text-3)">·</span> ${code} <button class="cmp-pill-x" data-cmpkey="${key}" aria-label="Remove">×</button></span>`;
+  }).join('');
+  bar.innerHTML = `
+    <div class="cmp-bar-inner">
+      <div class="cmp-bar-label">Comparing <b>${n}</b> peptide${n>1?'s':''}<span style="color:var(--text-3);margin-left:8px">(max ${COMPARE_MAX})</span></div>
+      <div class="cmp-bar-chips">${chips}</div>
+      <div class="cmp-bar-actions">
+        <button class="btn btn-ghost" onclick="clearCompare()">Clear</button>
+        <button class="btn btn-primary" onclick="openCompareModal()" ${n<2?'disabled':''}>Compare side-by-side →</button>
+      </div>
+    </div>`;
+  bar.querySelectorAll('.cmp-pill-x').forEach(b => {
+    b.addEventListener('click', () => {
+      COMPARE.delete(b.dataset.cmpkey);
+      // Uncheck the corresponding row if it's still rendered.
+      const chk = document.querySelector(`.cmp-chk[data-cmpkey="${CSS.escape(b.dataset.cmpkey)}"]`);
+      if (chk) chk.checked = false;
+      renderCompareBar();
+    });
+  });
+}
+function clearCompare() {
+  COMPARE.clear();
+  document.querySelectorAll('.cmp-chk').forEach(c => c.checked = false);
+  renderCompareBar();
+}
+function compareAcrossCancers(pep) {
+  // Convenience: select every cancer where this peptide exists (up to COMPARE_MAX).
+  COMPARE.clear();
+  for (const code of Object.keys(DATA_CACHE)) {
+    const d = DATA_CACHE[code];
+    if (!d || !d.rows) continue;
+    if (d.rows.some(r => r[0] === pep)) {
+      COMPARE.add(`${pep}::${code}`);
+      if (COMPARE.size >= COMPARE_MAX) break;
+    }
+  }
+  if (COMPARE.size < 2) {
+    alert(`This peptide is only recorded in ${COMPARE.size} cancer.`);
+    return;
+  }
+  renderCompareBar();
+  // Reflect checkbox state for rows currently on screen.
+  document.querySelectorAll('.cmp-chk').forEach(c => {
+    c.checked = COMPARE.has(c.dataset.cmpkey);
+  });
+  openCompareModal();
+}
+async function openCompareModal() {
+  if (COMPARE.size < 2) return;
+  const keys = [...COMPARE];
+  const rows = keys.map(compareRowFromKey).filter(Boolean);
+  if (rows.length < 2) return;
+  // Lazy-load detail for each involved cancer so pathogen/variant panels work.
+  const codes = [...new Set(rows.map(r => r[COL.code]))];
+  await Promise.all(codes.map(c => loadDetail(c)));
+
+  const fmt = (v, d=2) => v == null ? '—' : (typeof v === 'number' ? v.toFixed(d) : String(v));
+  const cell = c => `<td>${c}</td>`;
+  const header = rows.map(r => `<th><span class="mono" style="color:var(--text-0);font-weight:700">${r[COL.pep]}</span><br><span style="color:var(--text-2);font-size:11px">${r[COL.code]} · ${CLASS_LABELS[r[COL.cls]]||r[COL.cls]}</span></th>`).join('');
+  const attr = (label, pick, opts={}) => {
+    const cells = rows.map(r => cell(opts.html ? pick(r) : `<span style="${opts.style||''}">${fmt(pick(r), opts.d ?? 2)}</span>`)).join('');
+    return `<tr><th class="rowlbl">${label}</th>${cells}</tr>`;
+  };
+  // Mutations: if any row is variant, show first mutation gene+protein_change.
+  const mutLine = r => {
+    const d = (DETAIL_CACHE[r[COL.code]]||{})[r[COL.pep]];
+    const mut = d && d[2] && d[2].mutations && d[2].mutations[0];
+    if (!mut) return r[COL.cls]==='variant' ? '<span style="color:var(--text-3)">(no parsed mutation)</span>' : '—';
+    return `<span class="mono">${mut.gene||''} ${mut.protein_change||''}</span><br><span style="color:var(--text-3);font-size:10.5px">${mut.location||''} · ${mut.variant_type||''}</span>`;
+  };
+  const pathLine = r => {
+    const d = (DETAIL_CACHE[r[COL.code]]||{})[r[COL.pep]];
+    const p = d && d[2] && d[2].pathogen;
+    if (!p) return '—';
+    return `<span>${p.organism||p.code||''}</span><br><span class="mono" style="color:var(--text-3);font-size:10.5px">${p.accession||''}</span>`;
+  };
+  const bindSummary = r => {
+    const b = r[COL.bind] || [];
+    if (!b.length) return '—';
+    const topSB = b.filter(x => (x[3]||'').toUpperCase()==='SB').slice(0,3).map(x => x[0]);
+    if (topSB.length) return `<span class="mono">${topSB.join(', ')}</span> <span style="color:var(--text-3)">(+${Math.max(b.length-topSB.length,0)} others)</span>`;
+    return `<span class="mono">${b.slice(0,3).map(x=>x[0]).join(', ')}</span>`;
+  };
+  const immunoSummary = r => {
+    const b = r[COL.bind] || [];
+    const scored = b.map(x => x[5]).filter(x => x != null);
+    if (!scored.length) return '—';
+    const max = Math.max(...scored);
+    return `<span style="color:${max>=0.5?'var(--accent-lime)':'var(--accent-amber)'}">${max.toFixed(2)}</span> <span style="color:var(--text-3);font-size:11px">max of ${scored.length}</span>`;
+  };
+  const atlasSummary = r => {
+    const a = r[COL.atlas] || [];
+    if (!a.length) return '<span style="color:var(--accent-lime)">clean</span>';
+    return `<span style="color:#f87171">${a.length} normal tissue${a.length>1?'s':''}</span>`;
+  };
+
+  const html = `
+    <table class="compare-table">
+      <thead><tr><th class="rowlbl">Attribute</th>${header}</tr></thead>
+      <tbody>
+        ${attr('Gene', r => r[COL.gene] || '—', {html:false})}
+        ${attr('Class', r => CLASS_LABELS[r[COL.cls]]||r[COL.cls])}
+        ${attr('Mutation', mutLine, {html:true})}
+        ${attr('Pathogen', pathLine, {html:true})}
+        ${attr('PSMs', r => r[COL.psm], {d:0})}
+        ${attr('Recurrence', r => r[COL.recurrence] != null ? (r[COL.recurrence]*100).toFixed(0)+'%' : '—', {html:true})}
+        ${attr('Abund. rank', r => r[COL.abund], {d:3})}
+        ${attr('Spectral score', r => r[COL.score], {d:1})}
+        ${attr('Tumor RNA (TPM)', r => r[COL.tumorExp], {d:1})}
+        ${attr('Max GTEx normal', r => r[COL.normalExp], {d:1})}
+        ${attr('T/N ratio', r => r[COL.tumorExp] && r[COL.normalExp] ? (r[COL.tumorExp]/Math.max(r[COL.normalExp],0.01)).toFixed(1)+'×' : '—', {html:true})}
+        ${attr('DepMap', r => r[COL.depmap], {d:2})}
+        ${attr('Homogeneity', r => r[COL.homo], {d:2})}
+        ${attr('Unique', r => r[COL.unique]===1 ? 'yes' : 'no')}
+        ${attr('Atlas safety', atlasSummary, {html:true})}
+        ${attr('Top SB binders', bindSummary, {html:true})}
+        ${attr('Max immunogenicity', immunoSummary, {html:true})}
+        ${attr('ENSG', r => r[COL.ensg] || '—')}
+      </tbody>
+    </table>`;
+  document.getElementById('compareModalBody').innerHTML = html;
+  document.getElementById('compareModal').classList.add('open');
+  document.getElementById('compareModalBg').classList.add('open');
+}
+function closeCompareModal() {
+  document.getElementById('compareModal').classList.remove('open');
+  document.getElementById('compareModalBg').classList.remove('open');
 }
 
 async function loadDetail(code) {
@@ -2904,10 +3257,22 @@ async function openDrawer(r) {
       <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:11.5px;color:var(--text-1);word-break:break-all;line-height:1.5;">${rawSource}</div>`;
   }
 
+  // Cross-cancer presence: count how many cancers in DATA_CACHE contain this pep.
+  const crossCancers = Object.keys(DATA_CACHE).filter(c => {
+    const d = DATA_CACHE[c];
+    return d && d.rows && d.rows.some(rr => rr[0] === pep);
+  });
+  const crossBtn = crossCancers.length >= 2
+    ? `<button class="copy-btn" title="Compare this peptide across all cancers where it's detected" onclick="compareAcrossCancers('${pep}')">⇄ compare across ${crossCancers.length} cancers</button>`
+    : '';
+
   body.innerHTML = `
     <div class="drawer-head">
       <h3 class="pep-head">${pep}</h3>
-      <button class="copy-btn" title="Copy peptide" onclick="navigator.clipboard && navigator.clipboard.writeText('${pep}')">⧉ copy</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${crossBtn}
+        <button class="copy-btn" title="Copy peptide" onclick="navigator.clipboard && navigator.clipboard.writeText('${pep}')">⧉ copy</button>
+      </div>
     </div>
     <div class="sub">${r[COL.gene]||'unknown gene'} · ${CLASS_LABELS[r[COL.cls]]||r[COL.cls]} · ${code}${ensg?` · <span style="font-family:var(--mono);color:var(--text-3)">${ensg}</span>`:''}${
       r[COL.cls] === 'variant' && mutations.length
@@ -3113,6 +3478,69 @@ function closeDrawer() {
   document.getElementById('drawerBg').classList.remove('open');
 }
 
+// ===== Citation window =====
+const CITATION_BIBTEX = String.raw`@article{li2026immunoverse,
+  title   = {A pan-cancer atlas of therapeutic T cell targets},
+  author  = {Li, Guangyuan and Guzm{\'a}n-Bringas, Omar U and Sharma, Aman and
+             Dellacherie, Maxence and Sekhri, Palak and Yamin, Rachel and
+             Stepec, Dejan and Burq, Maximilien and Clotea, Ioana and
+             Tardio, Ethan and Natarajan, Aswin and Harpaz, Zachary and
+             Liu, Xinya and Requena, David and Tang, Jason Q and Taylor, Darren and
+             Moon, Damee and Ebina, Wataru and Sullivan, Alexis P and
+             Imielinski, Marcin and Schluter, Jonas and Ueberheide, Beatrix M and
+             Krogsgaard, Michelle and Cruz, C Russell Y and Cimermancic, Peter and
+             Yarmarkovich, Mark},
+  year    = {2026},
+  journal = {bioRxiv},
+  doi     = {10.1101/2025.01.22.634237},
+  url     = {https://www.immuno-verse.com/}
+}`;
+const CITATION_APA = 'Li, G., Guzmán-Bringas, O.U., Sharma, A., Dellacherie, M., Sekhri, P., Yamin, R., Stepec, D., Burq, M., Clotea, I., Tardio, E., Natarajan, A., Harpaz, Z., Liu, X., Requena, D., Tang, J.Q., Taylor, D., Moon, D., Ebina, W., Sullivan, A.P., Imielinski, M., Schluter, J., Ueberheide, B.M., Krogsgaard, M., Cruz, C.R.Y., Cimermancic, P., & Yarmarkovich, M. (2026). A pan-cancer atlas of therapeutic T cell targets. bioRxiv. https://doi.org/10.1101/2025.01.22.634237';
+function openCitation() {
+  // Open a standalone tab so users can save / copy without losing their
+  // filtered explorer view. Build HTML in JS, write it to a blob URL.
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const bg   = theme === 'light' ? '#f6f8fc' : '#05070e';
+  const card = theme === 'light' ? '#ffffff' : '#0a0e1a';
+  const text = theme === 'light' ? '#0b1220' : '#f2f5ff';
+  const muted= theme === 'light' ? '#4a5578' : '#8a93ad';
+  const link = theme === 'light' ? '#0369a1' : '#22d3ee';
+  const border = theme === 'light' ? 'rgba(60,80,140,0.18)' : 'rgba(120,150,220,0.18)';
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Cite ImmunoVerse</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: ${bg}; color: ${text}; margin: 0; padding: 36px 24px; }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .lede { color: ${muted}; margin: 0 0 24px; font-size: 14px; }
+  section { background: ${card}; border: 1px solid ${border}; border-radius: 12px; padding: 20px; margin-bottom: 18px; position: relative; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: ${muted}; margin: 0 0 10px; font-weight: 600; }
+  pre { white-space: pre-wrap; word-break: break-word; margin: 0; font-family: ui-monospace, 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.65; color: ${text}; }
+  p.apa { margin: 0; font-size: 13.5px; line-height: 1.65; }
+  button { position: absolute; top: 14px; right: 14px; background: transparent; color: ${muted}; border: 1px solid ${border}; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; }
+  button:hover { color: ${text}; border-color: ${text}; }
+  a { color: ${link}; }
+</style></head><body><div class="wrap">
+  <h1>Cite ImmunoVerse</h1>
+  <p class="lede">A pan-cancer atlas of therapeutic T cell targets — Li et al., 2026. <a href="https://doi.org/10.1101/2025.01.22.634237" target="_blank">DOI: 10.1101/2025.01.22.634237</a></p>
+  <section>
+    <h2>APA</h2>
+    <button onclick="navigator.clipboard.writeText(document.querySelector('.apa').innerText)">Copy</button>
+    <p class="apa">${esc(CITATION_APA)}</p>
+  </section>
+  <section>
+    <h2>BibTeX</h2>
+    <button onclick="navigator.clipboard.writeText(document.querySelector('pre').innerText)">Copy</button>
+    <pre>${esc(CITATION_BIBTEX)}</pre>
+  </section>
+</div></body></html>`;
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank', 'noopener');
+  // Revoke after giving the new window a moment to load.
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
 // ===== Lightbox for full-screen image viewing =====
 function openLightbox(src, caption) {
   const lb = document.getElementById('lightbox');
@@ -3134,6 +3562,7 @@ document.getElementById('drawerBg').addEventListener('click', closeDrawer);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (document.getElementById('lightbox').classList.contains('open')) closeLightbox();
+    else if (document.getElementById('compareModal').classList.contains('open')) closeCompareModal();
     else closeDrawer();
   }
 });
