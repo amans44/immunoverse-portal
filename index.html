@@ -1955,6 +1955,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
     <div class="links">
       <a href="#atlas">Atlas</a>
       <a href="#explorer">Explorer</a>
+      <a href="#cancers">Cancers</a>
       <a href="#highlights">Highlights</a>
       <a href="#classes">Classes</a>
       <a href="#methods">Methods</a>
@@ -2016,8 +2017,8 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   <div class="container">
     <div class="section-head">
       <div class="kicker">Atlas at a glance</div>
-      <h2>21 cancers · 340,000+ ranked candidate targets</h2>
-      <p>Click any cancer tile — or any pin on the human-body map — to open its ranked target table. Each tile's donut shows the fraction of the repertoire from <b style="color:var(--accent-violet)">non-canonical</b> sources (splicing, cryptic ORFs, retroelements, mutations, fusions, microbial).</p>
+      <h2>A pan-cancer view of therapeutic T cell targets</h2>
+      <p>Hover any pin on the human-body map to preview that cancer, or click to jump straight to its filtered view in the explorer below.</p>
     </div>
 
     <div class="bodymap-wrap">
@@ -2035,12 +2036,6 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
         <div class="bodymap-placeholder">Hover any pin to explore, or click to jump to that cancer in the atlas.</div>
       </div>
     </div>
-
-    <div style="margin: 32px 0 12px; display: flex; align-items: baseline; justify-content: space-between;">
-      <h3 style="font-size: 15px; font-weight: 600; color: var(--text-1); margin: 0; letter-spacing: -0.005em;">All 21 cancers</h3>
-      <span style="font-size: 11.5px; color: var(--text-3);">Sorted by target count · click to filter explorer</span>
-    </div>
-    <div class="cancer-grid" id="cancerGrid"></div>
   </div>
 </section>
 
@@ -2214,6 +2209,21 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ALL CANCERS GRID -->
+<section id="cancers">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">All 21 cancers</div>
+      <h2>21 cancers · 340,000+ ranked candidate targets</h2>
+      <p>Each tile's donut shows the fraction of the repertoire from <b style="color:var(--accent-violet)">non-canonical</b> sources (splicing, cryptic ORFs, retroelements, mutations, fusions, microbial). Click a tile to filter the explorer above.</p>
+    </div>
+    <div style="margin: 6px 0 12px; display: flex; align-items: baseline; justify-content: space-between;">
+      <span style="font-size: 11.5px; color: var(--text-3);">Sorted by target count · click to filter explorer</span>
+    </div>
+    <div class="cancer-grid" id="cancerGrid"></div>
   </div>
 </section>
 
