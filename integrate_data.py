@@ -119,6 +119,81 @@ CLASS_LABELS = {
 }
 
 
+TRANSCRIPT_CACHE_FILE = EXTRACTED_DIR.parent / 'transcript_genes.json'
+
+
+def resolve_transcript_genes(extracted_dir):
+    """Collect unique ENSTs from rows missing gene_symbol, then batch-lookup
+    their parent gene via Ensembl REST. Cached on disk between runs so we
+    only ever hit the API for new transcripts.
+
+    This rescues nuORF, splicing, and ERV rows where the raw tables only
+    carry a transcript ID (e.g. "ENST00000254051.10_1_17:..._|nuORF" ->
+    resolves to TNS4). Failures are tolerated — we just return an empty
+    mapping and let the UI fall back to "unknown gene"."""
+    import json as _json
+    cache = {}
+    if TRANSCRIPT_CACHE_FILE.exists():
+        try:
+            cache = _json.loads(TRANSCRIPT_CACHE_FILE.read_text())
+        except Exception:
+            cache = {}
+
+    wanted = set()
+    for fn in extracted_dir.glob('*_final_enhanced.txt'):
+        with open(fn, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f, delimiter='\t')
+            for r in reader:
+                g = (r.get('gene_symbol') or '').strip()
+                if g and g not in ('nan', 'None'):
+                    continue
+                src = r.get('source') or ''
+                for m in re.findall(r'ENST\d+', src):
+                    if m not in cache:
+                        wanted.add(m)
+    if not wanted:
+        print(f'  Transcript-gene cache: {len(cache)} resolved (no new lookups needed)')
+        return cache
+
+    print(f'  Transcript-gene cache: resolving {len(wanted)} new ENSTs from Ensembl REST...')
+    ids = list(wanted)
+    batch_size = 1000
+    for start in range(0, len(ids), batch_size):
+        chunk = ids[start:start + batch_size]
+        payload = _json.dumps({'ids': chunk}).encode('utf-8')
+        req = urllib.request.Request(
+            'https://rest.ensembl.org/lookup/id?expand=0',
+            data=payload,
+            headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
+            method='POST',
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                data = _json.loads(resp.read().decode('utf-8'))
+            for enst, info in data.items():
+                if not info:
+                    cache[enst] = None
+                    continue
+                cache[enst] = {
+                    'gene_symbol': (info.get('display_name') or '').split('-')[0],  # TNS4-201 -> TNS4
+                    'ensg': info.get('Parent') or '',
+                    'biotype': info.get('biotype') or '',
+                }
+        except Exception as e:
+            print(f'  [warn] Ensembl REST batch {start}-{start+len(chunk)} failed: {e}')
+            # Mark batch so we don't re-try every run.
+            for enst in chunk:
+                cache.setdefault(enst, None)
+    try:
+        TRANSCRIPT_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        TRANSCRIPT_CACHE_FILE.write_text(_json.dumps(cache))
+    except Exception as e:
+        print(f'  [warn] Could not persist transcript cache: {e}')
+    resolved = sum(1 for v in cache.values() if v and v.get('gene_symbol'))
+    print(f'  Transcript-gene cache: {resolved}/{len(cache)} resolved total')
+    return cache
+
+
 def safe_float(v):
     if v is None or v == '' or v == 'nan' or v == 'None':
         return None
@@ -372,12 +447,15 @@ def parse_pathogen_entry(src):
     }
 
 
-def clean_gene(row):
+def clean_gene(row, transcript_map=None):
     """Extract clean gene symbol from source/gene_symbol fields.
 
     Class-aware: variant rows use the structured GENE|p.X|... block;
     pathogen rows fall back to the organism name; other classes use
-    gene_symbol first and a suffix-regex on `source` as last resort.
+    gene_symbol first, a suffix-regex on `source`, and finally resolve
+    any ENST in the source via `transcript_map` (pre-computed Ensembl
+    REST lookup) so nuORF / splicing rows show the real parent gene
+    instead of "—".
     """
     cls = (row.get('typ') or '').strip()
     src = row.get('source', '') or ''
@@ -429,6 +507,15 @@ def clean_gene(row):
                     found.append(canonicalize_gene(hit))
         if found:
             return '/'.join(found[:3])
+
+    # Last resort: resolve any ENST in the source to its parent gene via the
+    # pre-built transcript_map (Ensembl REST batch lookup). Keeps nuORF and
+    # splicing rows from showing an empty gene when all we have is ENST.
+    if transcript_map and src:
+        for enst in re.findall(r'ENST\d+', src):
+            info = transcript_map.get(enst)
+            if info and info.get('gene_symbol'):
+                return canonicalize_gene(info['gene_symbol'])
     return ''
 
 
@@ -557,7 +644,7 @@ def build_gene_expression_map(enhanced_file):
     return by_gene, by_ensg
 
 
-def process_cancer(code, immuno_lookup, immuno_stats):
+def process_cancer(code, immuno_lookup, immuno_stats, transcript_map=None):
     enhanced_file = EXTRACTED_DIR / f'{code}_final_enhanced.txt'
     metadata_file = EXTRACTED_DIR / f'{code}_metadata.txt'
 
@@ -613,7 +700,7 @@ def process_cancer(code, immuno_lookup, immuno_stats):
             dep = safe_float(r.get('depmap_median'))
             homo = parse_sc_pert(r)
             uniq = 1 if str(r.get('unique', '')).strip().lower() in ('true', '1') else 0
-            gene = clean_gene(r)
+            gene = clean_gene(r, transcript_map)
             ensg = extract_ensg(r)
             atlas = parse_atlas(r)
             nuorf_type = r.get('nuorf_type', '').strip()
@@ -839,12 +926,15 @@ def main():
     immuno_file = EXTRACTED_DIR / 'all_deepimmuno_immunogenicity.txt'
     immuno_lookup = load_immunogenicity(immuno_file) if immuno_file.exists() else {}
 
+    print('Resolving transcript -> gene via Ensembl REST (cached)...')
+    transcript_map = resolve_transcript_genes(EXTRACTED_DIR)
+
     immuno_stats = {'hits': 0, 'total': 0}
     print('\nProcessing cancers...')
     cancers = []
     for code in sorted(CANCER_META.keys()):
         print(f'\n--- {code} ---')
-        meta = process_cancer(code, immuno_lookup, immuno_stats)
+        meta = process_cancer(code, immuno_lookup, immuno_stats, transcript_map)
         if meta:
             cancers.append(meta)
 

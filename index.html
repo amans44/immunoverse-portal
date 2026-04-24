@@ -3668,10 +3668,17 @@ async function openDrawer(r) {
         ${coord ? `<span class="mono" style="color:var(--text-1);font-size:13px">${coord}</span>` : ''}
       </div>
       <div class="hero-mut-meta">
-        ${transcript ? `<span class="hero-meta"><b>Transcript</b> <a href="https://www.ensembl.org/Homo_sapiens/Transcript/Summary?t=${encodeURIComponent(transcript.split('.')[0])}" target="_blank" rel="noopener" class="mono">${transcript} ↗</a></span>` : ''}
+        ${transcript ? `<span class="hero-meta"><b>Transcript</b> <span class="mono">${transcript}</span></span>` : ''}
         ${teFamily && teFamily !== primary ? `<span class="hero-meta"><b>TE family</b> <span class="mono">${teFamily}</span></span>` : ''}
         ${r[COL.cls] === 'nuORF' && r[COL.nuorf] ? `<span class="hero-meta"><b>Subtype</b> ${r[COL.nuorf]}</span>` : ''}
       </div>
+      ${(coord || transcript) ? `<div class="hero-links" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
+        ${transcript ? `<a class="xref" href="https://rest.ensembl.org/lookup/id/${encodeURIComponent(transcript.split('.')[0])}?expand=0;content-type=text/html" target="_blank" rel="noopener">Ensembl (REST) ↗</a>` : ''}
+        ${transcript ? `<a class="xref" href="https://www.ensembl.org/Homo_sapiens/Transcript/Summary?t=${encodeURIComponent(transcript.split('.')[0])}" target="_blank" rel="noopener">Ensembl transcript page ↗</a>` : ''}
+        ${coord ? `<a class="xref" href="https://grch37.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(coord.replace(/^chr/,'').replace(/ \([+\-]\)$/,''))}" target="_blank" rel="noopener">Ensembl region (GRCh37) ↗</a>` : ''}
+        ${coord ? `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${encodeURIComponent(coord.replace(/ \([+\-]\)$/,''))}" target="_blank" rel="noopener">UCSC hg19 ↗</a>` : ''}
+        ${coord ? `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=${encodeURIComponent(coord.replace(/ \([+\-]\)$/,''))}" target="_blank" rel="noopener">UCSC hg38 ↗</a>` : ''}
+      </div>` : ''}
       <details class="hero-raw-details"><summary>Show raw annotation</summary>
         <div class="hero-raw-src">${rawSource}</div>
       </details>
