@@ -1213,9 +1213,9 @@ table.atlas.compact td:nth-child(10) { display: none; }
   letter-spacing: 0.08em;
 }
 .cmp-plots {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 .cmp-plots .cmp-plot {
   margin: 0;
@@ -1257,7 +1257,7 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .cmp-plots .cmp-plot-imgwrap img {
   width: 100%;
   height: auto;
-  max-height: 170px;
+  max-height: 360px;
   object-fit: contain;
   opacity: 0;
   transition: opacity .2s;
@@ -1282,7 +1282,6 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .cmp-plots .cmp-plot.no-plot .cmp-plot-missing { display: flex; }
 @media (max-width: 900px) {
   .cmp-deep-grid { grid-template-columns: 1fr !important; }
-  .cmp-plots { grid-template-columns: 1fr; }
 }
 
 .mono { font-family: var(--mono); font-size: 11.5px; color: var(--text-1); }
