@@ -960,29 +960,20 @@ table.atlas.compact td:nth-child(10) { display: none; }
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   padding: 28px 32px;
-  /* overflow-y only — inner wrappers handle horizontal scroll so their
-     scrollbars land right next to the wide content (overview table and
-     deep-dive grid) instead of at the outer modal edge. */
-  overflow-y: auto;
-  overflow-x: hidden;
+  /* Single scroll container, both axes. Because the modal is position:fixed,
+     the horizontal scrollbar anchors to the modal's bottom edge and is always
+     reachable regardless of how far you've scrolled vertically. */
+  overflow: auto;
   opacity: 0;
   pointer-events: none;
   transition: transform .22s cubic-bezier(.4,0,.2,1), opacity .22s;
   z-index: 202;
+  scrollbar-gutter: stable both-edges;
 }
-.compare-modal .cmp-hscroll {
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-color: var(--border-2) transparent;
-  padding-bottom: 10px; /* room for the scrollbar so it doesn't overlap content */
-}
-.compare-modal .cmp-hscroll::-webkit-scrollbar { height: 10px; }
-.compare-modal .cmp-hscroll::-webkit-scrollbar-track { background: transparent; }
-.compare-modal .cmp-hscroll::-webkit-scrollbar-thumb {
-  background: var(--border-2);
-  border-radius: 999px;
-}
-.compare-modal .cmp-hscroll::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+.compare-modal::-webkit-scrollbar { width: 10px; height: 10px; }
+.compare-modal::-webkit-scrollbar-track { background: transparent; }
+.compare-modal::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 999px; }
+.compare-modal::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
 .compare-modal.open {
   transform: translate(-50%, -50%) scale(1);
   opacity: 1;
@@ -997,16 +988,19 @@ table.atlas.compact td:nth-child(10) { display: none; }
   display: flex; align-items: center; justify-content: center;
 }
 .compare-modal .close:hover { background: var(--bg-3); color: var(--text-0); }
-.compare-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.compare-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px; }
 .compare-table th, .compare-table td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: top;
   color: var(--text-1);
+  background: var(--bg-1); /* opaque so sticky cells cover content scrolling under them */
 }
+/* Header row stays pinned to the modal top when scrolling vertically. */
 .compare-table thead th {
-  position: sticky; top: 0;
+  position: sticky; top: -1px;
+  z-index: 3;
   background: var(--bg-1);
   color: var(--text-0);
   font-weight: 600;
@@ -1014,17 +1008,28 @@ table.atlas.compact td:nth-child(10) { display: none; }
   padding-top: 4px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border-2);
+  box-shadow: 0 1px 0 var(--border-2);
 }
+/* First column (Attribute labels) stays pinned to the modal left when
+   scrolling horizontally, so you always know which row is which. The
+   body labels are `<th class="rowlbl">` cells, not `<td>`. */
 .compare-table th.rowlbl {
-  width: 160px; color: var(--text-3);
+  position: sticky; left: 0;
+  z-index: 2;
+  background: var(--bg-1);
+  width: 160px;
+  color: var(--text-3);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 10.5px;
-  background: transparent;
-  position: static;
+  border-right: 1px solid var(--border-2);
+}
+.compare-table thead th.rowlbl {
+  z-index: 4; /* top-left corner sits above both header row and first column */
 }
 .compare-table tbody tr:hover td { background: var(--bg-2); }
+.compare-table tbody tr:hover th.rowlbl { background: var(--bg-2); }
 
 .cmp-deep-head {
   font-size: 12.5px;
@@ -1053,8 +1058,14 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .cmp-col-head {
   font-size: 13px;
   color: var(--text-1);
-  padding-bottom: 10px;
+  padding: 0 0 10px;
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg-2);
+  margin: -14px -14px 0;
+  padding: 12px 14px 10px;
+  z-index: 1;
 }
 .cmp-sub {
   font-size: 10.5px;
@@ -3417,22 +3428,21 @@ async function openCompareModal() {
   };
 
   // When more than 4 peptides are compared (typically via "compare across
-  // cancers"), let the grid scroll horizontally so each column keeps enough
-  // width to stay readable instead of squeezing to unreadable strips.
+  // cancers"), let the content overflow so the modal's bottom-pinned
+  // horizontal scrollbar is always reachable. Headers / first column are
+  // made sticky in CSS so you can still tell which row/column is which
+  // while panning around.
   const wide = rows.length > 4;
   const colMin = wide ? '260px' : '0';
   const gridMinWidth = wide ? `${rows.length * 290}px` : '';
   const deepDive = `
     <div class="cmp-deep-head">Per-peptide deep dive ${wide ? `<span style="font-weight:400;color:var(--text-3);text-transform:none;letter-spacing:0">— scroll horizontally (${rows.length} columns) ↔</span>` : ''}</div>
-    <div class="${wide ? 'cmp-hscroll' : ''}">
-      <div class="cmp-deep-grid" style="grid-template-columns: repeat(${rows.length}, minmax(${colMin}, 1fr)); ${gridMinWidth ? 'min-width:' + gridMinWidth + ';' : ''}">
-        ${rows.map(deepColumn).join('')}
-      </div>
+    <div class="cmp-deep-grid" style="grid-template-columns: repeat(${rows.length}, minmax(${colMin}, 1fr)); ${gridMinWidth ? 'min-width:' + gridMinWidth + ';' : ''}">
+      ${rows.map(deepColumn).join('')}
     </div>`;
 
   const tableStyle = wide ? `style="min-width: ${160 + rows.length * 210}px;"` : '';
   const html = `
-    <div class="${wide ? 'cmp-hscroll' : ''}">
     <table class="compare-table" ${tableStyle}>
       <thead><tr><th class="rowlbl">Attribute</th>${header}</tr></thead>
       <tbody>
@@ -3456,7 +3466,6 @@ async function openCompareModal() {
         ${attr('ENSG', r => r[COL.ensg] || '—')}
       </tbody>
     </table>
-    </div>
     ${deepDive}`;
   document.getElementById('compareModalBody').innerHTML = html;
   document.getElementById('compareModal').classList.add('open');
