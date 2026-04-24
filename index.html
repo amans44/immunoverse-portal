@@ -959,21 +959,38 @@ table.atlas.compact td:nth-child(10) { display: none; }
   border: 1px solid var(--border-2);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  padding: 28px 32px;
-  /* Single scroll container, both axes. Because the modal is position:fixed,
-     the horizontal scrollbar anchors to the modal's bottom edge and is always
-     reachable regardless of how far you've scrolled vertically. */
-  overflow: auto;
+  padding: 24px 28px;
+  /* The modal is a flex column: fixed header (close / title / chip bar) on
+     top, a single flex-grow scroll area below. Keeping the chip bar out of
+     the scroll container means it genuinely stays visible — no fighting
+     between two sticky elements on the same top offset. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   opacity: 0;
   pointer-events: none;
   transition: transform .22s cubic-bezier(.4,0,.2,1), opacity .22s;
   z-index: 202;
+}
+.compare-modal #compareModalBody {
+  flex: 1 1 auto;
+  min-height: 0; /* lets the scroll child actually shrink in a flex parent */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.cmp-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  /* Single scrollable pane — both axes. Bottom scrollbar is always in view
+     because this pane's height is constrained by the modal. */
+  overflow: auto;
   scrollbar-gutter: stable both-edges;
 }
-.compare-modal::-webkit-scrollbar { width: 10px; height: 10px; }
-.compare-modal::-webkit-scrollbar-track { background: transparent; }
-.compare-modal::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 999px; }
-.compare-modal::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+.cmp-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.cmp-scroll::-webkit-scrollbar-track { background: transparent; }
+.cmp-scroll::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 999px; }
+.cmp-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
 .compare-modal.open {
   transform: translate(-50%, -50%) scale(1);
   opacity: 1;
@@ -988,58 +1005,66 @@ table.atlas.compact td:nth-child(10) { display: none; }
   display: flex; align-items: center; justify-content: center;
 }
 .compare-modal .close:hover { background: var(--bg-3); color: var(--text-0); }
-.compare-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px; }
+.compare-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12.5px;
+}
 .compare-table th, .compare-table td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: top;
   color: var(--text-1);
-  background: var(--bg-1); /* opaque so sticky cells cover content scrolling under them */
+  background: var(--bg-1); /* every cell opaque so sticky cells layer cleanly */
 }
-/* Header row stays pinned to the modal top when scrolling vertically. */
+/* thead pins to the scroll pane's top when scrolling vertically. */
 .compare-table thead th {
-  position: sticky; top: -1px;
+  position: sticky;
+  top: 0;
   z-index: 3;
   background: var(--bg-1);
   color: var(--text-0);
   font-weight: 600;
   font-size: 12px;
-  padding-top: 4px;
+  padding-top: 8px;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-2);
-  box-shadow: 0 1px 0 var(--border-2);
+  border-bottom: 2px solid var(--border-2);
 }
-/* First column (Attribute labels) stays pinned to the modal left when
-   scrolling horizontally, so you always know which row is which. The
-   body labels are `<th class="rowlbl">` cells, not `<td>`. */
+/* First column (Attribute labels) pins left during horizontal scroll. */
 .compare-table th.rowlbl {
-  position: sticky; left: 0;
+  position: sticky;
+  left: 0;
   z-index: 2;
-  background: var(--bg-1);
+  background: var(--bg-1) !important; /* override any tr:hover inherited mix */
   width: 160px;
+  min-width: 160px;
   color: var(--text-3);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 10.5px;
-  border-right: 1px solid var(--border-2);
+  border-right: 2px solid var(--border-2);
 }
 .compare-table thead th.rowlbl {
-  z-index: 4; /* top-left corner sits above both header row and first column */
+  z-index: 4; /* top-left cell above both sticky axes */
 }
+/* Hover highlight on non-sticky cells only, so the pinned ones stay opaque
+   and don't let scrolled content bleed through. */
 .compare-table tbody tr:hover td { background: var(--bg-2); }
-.compare-table tbody tr:hover th.rowlbl { background: var(--bg-2); }
 
 .cmp-sel-bar {
-  position: sticky;
-  top: -1px; /* sit flush with modal top, below the thead when the table scrolls */
+  flex: 0 0 auto;
   background: var(--bg-1);
-  z-index: 5;
-  padding: 0 0 10px;
-  margin: -4px 0 12px;
+  padding: 0 0 12px;
+  margin: 0 0 12px;
   border-bottom: 1px dashed var(--border);
+  max-height: 140px;
+  overflow-y: auto;
 }
+.cmp-sel-bar::-webkit-scrollbar { width: 6px; }
+.cmp-sel-bar::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 999px; }
 .cmp-sel-row, .cmp-add-row {
   display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
   font-size: 12px;
@@ -3553,6 +3578,7 @@ async function openCompareModal() {
   const tableStyle = wide ? `style="min-width: ${160 + rows.length * 210}px;"` : '';
   const html = `
     ${chipBar}
+    <div class="cmp-scroll">
     <table class="compare-table" ${tableStyle}>
       <thead><tr><th class="rowlbl">Attribute</th>${header}</tr></thead>
       <tbody>
@@ -3576,7 +3602,8 @@ async function openCompareModal() {
         ${attr('ENSG', r => r[COL.ensg] || '—')}
       </tbody>
     </table>
-    ${deepDive}`;
+    ${deepDive}
+    </div>`;
   document.getElementById('compareModalBody').innerHTML = html;
   document.getElementById('compareModal').classList.add('open');
   document.getElementById('compareModalBg').classList.add('open');
