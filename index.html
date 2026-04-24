@@ -611,6 +611,38 @@ table.atlas tbody td {
 }
 table.atlas tbody tr:hover td { background: rgba(34,211,238,0.04); }
 table.atlas tbody tr { cursor: pointer; transition: background .1s; }
+/* Freeze the first three columns (Compare, Cancer, Peptide) so they stay
+   visible while the user scrolls horizontally through wider columns. */
+table.atlas th.col-stick,
+table.atlas td.col-stick {
+  position: sticky;
+  background: var(--bg-1);
+  z-index: 1;
+}
+/* Column widths chosen to match the rendered content. If these change the
+   left offsets of col-stick-2 / col-stick-3 must move in lockstep. */
+table.atlas th.col-stick-1, table.atlas td.col-stick-1 { left: 0;     width: 44px;  min-width: 44px; }
+table.atlas th.col-stick-2, table.atlas td.col-stick-2 { left: 44px;  width: 82px;  min-width: 82px; }
+table.atlas th.col-stick-3, table.atlas td.col-stick-3 { left: 126px; min-width: 140px; }
+/* Header row cells sit above body sticky cells during vertical scroll. */
+table.atlas thead th.col-stick { z-index: 3; background: var(--bg-2); }
+table.atlas tbody td.col-stick { z-index: 1; }
+table.atlas tbody tr:hover td.col-stick { background: color-mix(in srgb, var(--bg-1) 92%, var(--accent-cyan) 8%); }
+/* Subtle divider so the frozen block visually separates from scrolled cols. */
+table.atlas th.col-stick-3, table.atlas td.col-stick-3 { box-shadow: 1px 0 0 var(--border); }
+
+/* HLAs column: show every allele, wrap to multi-line instead of truncating.
+   Header cell itself stays nowrap (column label); body cell wraps. */
+table.atlas td.col-hlas { min-width: 220px; }
+table.atlas td.col-hlas .hlas {
+  display: block;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.5;
+  color: var(--text-1);
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
 /* Compact view — hide secondary columns */
 table.atlas.compact th[data-col="score"],
 table.atlas.compact td:nth-child(7),
@@ -810,7 +842,9 @@ table.atlas.compact td:nth-child(10) { display: none; }
 }
 
 /* ===================== DRAWER EXTENSIONS ===================== */
-.drawer .drawer-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+/* Reserve space on the right so the copy / cross-cancer buttons never
+   collide with the absolutely-positioned .close button at top:18 right:18. */
+.drawer .drawer-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-right: 52px; flex-wrap: wrap; }
 .drawer .pep-head { margin: 0; font-family: var(--mono); letter-spacing: 0.5px; }
 .drawer .copy-btn {
   background: var(--bg-3);
@@ -2406,9 +2440,9 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
         <table class="atlas" id="atlasTable">
           <thead>
             <tr>
-              <th class="col-cmp" data-tip="Tick up to 4 peptides to compare them side-by-side across cancers. The bar at the bottom of the table lights up when you have two or more selected."><span aria-label="Compare column">⧉</span></th>
-              <th data-col="code" data-tip="TCGA cancer type abbreviation. Hover any code in the table to see the full name.">Cancer</th>
-              <th data-col="pep" data-tip="The amino acid sequence of the HLA-presented peptide detected by mass spectrometry in tumor immunopeptidomes.">Peptide</th>
+              <th class="col-cmp col-stick col-stick-1" data-tip="Tick up to 4 peptides to compare them side-by-side across cancers. The bar at the bottom of the table lights up when you have two or more selected."><span aria-label="Compare column">⧉</span></th>
+              <th class="col-stick col-stick-2" data-col="code" data-tip="TCGA cancer type abbreviation. Hover any code in the table to see the full name.">Cancer</th>
+              <th class="col-stick col-stick-3" data-col="pep" data-tip="The amino acid sequence of the HLA-presented peptide detected by mass spectrometry in tumor immunopeptidomes.">Peptide</th>
               <th data-col="gene" data-tip="Gene of origin for this peptide. For canonical antigens this is the gene symbol; for non-canonical classes it may be the ORF, retroelement, or pathogen source.">Gene</th>
               <th data-col="class" data-tip="Molecular aberration class: how this peptide is produced (e.g. canonical self-antigen, splicing variant, cryptic ORF, endogenous retrovirus, mutation, fusion, pathogen).">Class</th>
               <th class="sortable" data-col="psm" data-tip="Fraction of immunopeptidome patients in which this peptide was detected. Higher = more frequently shared across patients.">Recurrence</th>
@@ -3247,8 +3281,7 @@ function renderRows(rows) {
     const abundW = (abund * 100).toFixed(0);
     const depmap = r[COL.depmap];
     const depmapColor = depmap == null ? 'var(--text-3)' : (depmap < -0.5 ? 'var(--accent-lime)' : (depmap < 0 ? 'var(--accent-amber)' : 'var(--text-2)'));
-    const hlasShort = (r[COL.hlas]||[]).slice(0,3).join(' · ');
-    const hlasMore = (r[COL.hlas]||[]).length > 3 ? ` <span style="color:var(--text-3)">+${(r[COL.hlas]||[]).length-3}</span>` : '';
+    const hlasAll = (r[COL.hlas]||[]).join(' · ');
     const homo = r[COL.homo];
     const homoStr = homo != null ? homo.toFixed(2) : '—';
     const safeIcon = ((r[COL.atlas]||[]).length
@@ -3275,9 +3308,9 @@ function renderRows(rows) {
     const cmpKey = `${r[COL.pep]}::${r[COL.code]}`;
     const cmpChecked = COMPARE.has(cmpKey) ? 'checked' : '';
     return `<tr data-idx="${i}" data-cmpkey="${cmpKey}">
-      <td class="col-cmp"><label class="cmp-cell" onclick="event.stopPropagation()"><input type="checkbox" class="cmp-chk" ${cmpChecked} data-cmpkey="${cmpKey}"><span></span></label></td>
-      <td><span class="classtag" style="background:rgba(34,211,238,0.08);border-color:rgba(34,211,238,0.25);" title="${CANCER_NAMES[r[COL.code]]||r[COL.code]}">${r[COL.code]}</span></td>
-      <td><span class="pep">${r[COL.pep]}</span> ${safeIcon}</td>
+      <td class="col-cmp col-stick col-stick-1"><label class="cmp-cell" onclick="event.stopPropagation()"><input type="checkbox" class="cmp-chk" ${cmpChecked} data-cmpkey="${cmpKey}"><span></span></label></td>
+      <td class="col-stick col-stick-2"><span class="classtag" style="background:rgba(34,211,238,0.08);border-color:rgba(34,211,238,0.25);" title="${CANCER_NAMES[r[COL.code]]||r[COL.code]}">${r[COL.code]}</span></td>
+      <td class="col-stick col-stick-3"><span class="pep">${r[COL.pep]}</span> ${safeIcon}</td>
       <td><span class="gene">${r[COL.gene]||'—'}</span></td>
       <td><span class="classtag" title="${CLASS_TIPS[r[COL.cls]]||''}"><span class="sw c-${r[COL.cls]}"></span>${CLASS_LABELS[r[COL.cls]]||r[COL.cls]}</span></td>
       <td title="${recTip}"><span class="pep">${recVal}</span></td>
@@ -3286,7 +3319,7 @@ function renderRows(rows) {
       <td title="${windowTip}">${windowBadge(r[COL.tumorExp], r[COL.normalExp])}</td>
       <td title="${depmapTip}"><span class="pep" style="color:${depmapColor}">${depmap!=null ? depmap.toFixed(2) : '—'}</span></td>
       <td class="col-homo" title="${homoTip}"><span class="pep">${homoStr}</span></td>
-      <td title="${hlasTip}"><span class="hlas"><b>${hlasShort||'—'}</b>${hlasMore}</span></td>
+      <td class="col-hlas" title="${hlasTip}"><span class="hlas">${hlasAll||'—'}</span></td>
     </tr>`;
   }).join('');
   // Click to open drawer (checkbox cell is stopPropagation'd)
