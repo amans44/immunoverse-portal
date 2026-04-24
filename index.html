@@ -822,6 +822,20 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .bind-wb { background: rgba(167,139,250,0.14); color: var(--accent-violet); border: 1px solid rgba(167,139,250,0.30); }
 .bind-nb { background: var(--bg-2); color: var(--text-3); border: 1px solid var(--border); }
 
+.mono { font-family: var(--mono); font-size: 11.5px; color: var(--text-1); }
+.mut-tag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(244,114,182,0.14);
+  color: var(--accent-pink);
+  border: 1px solid rgba(244,114,182,0.30);
+}
+
 .drawer .bind-legend {
   margin-top: 8px;
   font-size: 10.5px;
@@ -1741,11 +1755,11 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <div class="hl-chips" id="hlChips">
         <span class="hl-label">Jump to hero targets:</span>
         <button class="hl-chip" data-pep="KTWDQVPFSV" data-gene="PMEL" data-cancer="SKCM">sPMEL · KTWDQVPFSV</button>
-        <button class="hl-chip" data-gene="LINE1" data-pep="">LINE1 ORF2</button>
+        <button class="hl-chip" data-gene="LINE1 ORF2" data-pep="">LINE1 ORF2</button>
         <button class="hl-chip" data-gene="MAGEA4" data-pep="GVYDGREHTV">MAGE-A4 · GVYDGREHTV</button>
         <button class="hl-chip" data-gene="PRAME" data-pep="GQHLHLETF">PRAME · GQHLHLETF</button>
         <button class="hl-chip" data-gene="" data-pep="LYLETRSEF">Cryptic · LYLETRSEF</button>
-        <button class="hl-chip" data-gene="KRAS" data-pep="VVVGAVGVGK">KRAS G12V · VVVGAVGVGK</button>
+        <button class="hl-chip" data-gene="KRAS" data-pep="VVVGAVGVGK" data-cancer="COAD">KRAS G12V · VVVGAVGVGK</button>
         <button class="hl-chip" data-gene="" data-pep="" data-class="pathogen">Microbial antigens</button>
         <button class="hl-chip" data-gene="" data-pep="" data-class="variant">Neoantigens</button>
       </div>
@@ -2019,7 +2033,6 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <div style="margin-top:28px; display:flex; gap:12px; flex-wrap:wrap;">
         <a class="btn btn-ghost" href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">Full molecular catalogues ↗</a>
         <a class="btn btn-ghost" href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/database/" target="_blank" rel="noopener">HLA frequency &amp; database ↗</a>
-        <a class="btn btn-ghost" href="https://www.dropbox.com/scl/fo/2we0ndqepjbrc9dgrl4om/AFWgxeokcbxOkA4CFTTxJeA?rlkey=lre6rtqqkcjeglo2ylwtny3ea&st=j7qfw0w3&dl=0" target="_blank" rel="noopener">Enhanced data tables (Dropbox) ↗</a>
         <a class="btn btn-ghost" href="https://cgc.sbgenomics.com/home" target="_blank" rel="noopener">Cancer Genomics Cloud pipeline ↗</a>
         <a class="btn btn-ghost" href="https://github.com/frankligy/pan_cancer_intracellular_antigen_atlas" target="_blank" rel="noopener">GitHub repository ↗</a>
       </div>
@@ -2230,6 +2243,24 @@ const CLASS_DESC = {
   pathogen:'Tumor-resident microbial and viral antigens (H. pylori, F. nucleatum, HBV, HPV, CMV, N. circulans…).',
 };
 const CLASS_ORDER = ['self_gene','splicing','variant','nuORF','ERV','TE_chimeric_transcript','intron_retention','fusion','pathogen'];
+
+// Gene aliases — maps a user-facing search term to a list of forms the raw data
+// might use. Keeps backend canonicalization (integrate_data.py) in sync with
+// fuzzy frontend matching so quick-filter chips still work after Frank renames.
+const GENE_ALIASES = {
+  'LINE1':       ['LINE1', 'LINE1 ORF2', 'L1_ORF2', 'L1-ORF2', 'L1-orf2', 'L1 ORF2', 'LINE-1'],
+  'LINE1 ORF2':  ['LINE1 ORF2', 'L1_ORF2', 'L1-ORF2', 'L1-orf2', 'L1 ORF2', 'LINE1', 'LINE-1'],
+  'L1':          ['L1_ORF2', 'L1-ORF2', 'L1-orf2', 'LINE1', 'LINE1 ORF2', 'LINE-1'],
+  'L1-ORF2':     ['L1_ORF2', 'L1-ORF2', 'LINE1 ORF2', 'LINE1'],
+  'PMEL':        ['PMEL', 'sPMEL', 'SILV'],
+};
+function geneSearchTerms(input) {
+  const s = (input || '').trim().toUpperCase();
+  if (!s) return [];
+  const key = Object.keys(GENE_ALIASES).find(k => k.toUpperCase() === s);
+  const aliases = key ? GENE_ALIASES[key].map(a => a.toUpperCase()) : [s];
+  return aliases.includes(s) ? aliases : [s, ...aliases];
+}
 
 // ============ LOAD SUMMARY ============
 // Uses <script> tag loading (not fetch) so the portal works when opened directly
@@ -2516,6 +2547,7 @@ function applyFilters() {
          length: plen, rank: rankCut, hlaClass, safe, nuorfSub} = STATE;
   const pepL = pep.trim().toUpperCase();
   const geneL = gene.trim().toUpperCase();
+  const geneTerms = geneSearchTerms(geneL);
   const hlaL  = hla.trim().toUpperCase().replace(/HLA-?/,'');
   const rankN = rankCut ? parseFloat(rankCut) : null;
   const plenN = plen ? parseInt(plen) : null;
@@ -2525,7 +2557,10 @@ function applyFilters() {
     if (cancer && r[COL.code] !== cancer) return false;
     if (classFilter.size && !classFilter.has(r[COL.cls])) return false;
     if (pepL && !r[COL.pep].toUpperCase().includes(pepL)) return false;
-    if (geneL && !(r[COL.gene]||'').toUpperCase().includes(geneL)) return false;
+    if (geneL) {
+      const g = (r[COL.gene]||'').toUpperCase();
+      if (!geneTerms.some(t => g.includes(t))) return false;
+    }
     if (hlaL) {
       const hs = (r[COL.hlas]||[]).join(',').toUpperCase();
       if (!hs.includes(hlaL)) return false;
@@ -2703,11 +2738,16 @@ async function openDrawer(r) {
   const atlas = r[COL.atlas] || [];
   const ensg = r[COL.ensg] || '';
   const nuorfSub = r[COL.nuorf] || '';
-  // Lazy-load heavy detail (addq, intens) for this cancer
+  // Lazy-load heavy detail (addq, intens, extra) for this cancer
   const detail = await loadDetail(code);
   const pepDetail = detail[pep] || [];
   const addq = pepDetail[0] || [];
   const intens = pepDetail[1] || [];
+  const extra = pepDetail[2] || {};
+  const mutations = Array.isArray(extra.mutations) ? extra.mutations : [];
+  const pathogen  = extra.pathogen || null;
+  const exprInherited = !!extra.exprInherited;
+  const rawSource = extra.source || '';
 
   // Per-HLA binding mini-table (sorted by rank% ascending — best first)
   const bindSorted = bind.slice().sort((a,b) => {
@@ -2811,12 +2851,69 @@ async function openDrawer(r) {
 
   const nuorfBadge = nuorfSub ? `<span class="pill-mini nuorf-sub"><b>${nuorfSub}</b> cryptic subtype</span>` : '';
 
+  // Mutation block — shown for variant class so clinicians see the exact
+  // chr/pos/ref-alt/variant_type, not just the gene symbol.
+  let mutationBlock = '';
+  if (r[COL.cls] === 'variant' && mutations.length) {
+    const rows = mutations.map(m => {
+      const vtype = (m.variant_type || '').replace(/_variant$/, '').replace(/_/g, ' ');
+      const loc = m.location || '';
+      const af = m.af_ratio ? ` · AF ${parseFloat(m.af_ratio).toFixed(2)}` : '';
+      return `<tr>
+        <td><b>${m.gene||'—'}</b></td>
+        <td><span class="mono">${m.protein_change||'—'}</span></td>
+        <td><span class="mono">${loc}</span></td>
+        <td><span class="mono">${m.ref_alt||''}</span></td>
+        <td><span class="mut-tag">${vtype||'—'}</span>${af}</td>
+      </tr>`;
+    }).join('');
+    mutationBlock = `
+      <div class="section-title" data-tip="Exact genomic variant(s) underlying this neoantigen — gene, protein change, chromosomal location, reference/alternate allele, and variant class. A single peptide may map to multiple variants (e.g. KRAS/NRAS G12V share the same 9-mer). Cross-reference against the patient's tumor WGS/WES before clinical use.">Variant annotation</div>
+      <div class="bind-wrap">
+        <table class="bind-table">
+          <thead><tr><th>Gene</th><th>Protein change</th><th>Location</th><th>Ref/Alt</th><th>Variant class</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // Pathogen block — organism, protein, accession for microbial peptides.
+  let pathogenBlock = '';
+  if (r[COL.cls] === 'pathogen' && pathogen) {
+    const organism = pathogen.organism || pathogen.code || '—';
+    const protein = pathogen.protein || '—';
+    const acc = pathogen.accession || '';
+    const gn = pathogen.gene || '';
+    const uniprotUrl = acc ? `https://www.uniprot.org/uniprotkb/${encodeURIComponent(acc)}/entry` : '';
+    pathogenBlock = `
+      <div class="section-title" data-tip="Microbial or viral origin for this peptide — tumor-resident pathogens can present HLA-bound antigens that act as tumor-specific targets (e.g. F. nucleatum in colorectal cancer, HPV in cervical cancer).">Microbial origin</div>
+      <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;color:var(--text-1);line-height:1.7;">
+        <div><b style="color:var(--accent-cyan)">Organism:</b> ${organism}${pathogen.code && organism !== pathogen.code ? ` <span style="color:var(--text-3);font-family:var(--mono);font-size:11.5px">(${pathogen.code})</span>` : ''}</div>
+        ${protein !== '—' ? `<div><b style="color:var(--accent-cyan)">Protein:</b> ${protein}</div>` : ''}
+        ${gn ? `<div><b style="color:var(--accent-cyan)">Gene:</b> <span class="mono">${gn}</span></div>` : ''}
+        ${acc ? `<div><b style="color:var(--accent-cyan)">UniProt:</b> ${uniprotUrl ? `<a href="${uniprotUrl}" target="_blank" rel="noopener" class="mono">${acc} ↗</a>` : `<span class="mono">${acc}</span>`}</div>` : ''}
+      </div>`;
+  }
+
+  // Raw source annotation — shown as a collapsed line for splicing / ERV /
+  // nuORF / fusion rows where the structured annotation lives in `source`.
+  let sourceBlock = '';
+  if (rawSource && ['splicing', 'ERV', 'TE_chimeric_transcript', 'intron_retention', 'nuORF', 'fusion'].includes(r[COL.cls])) {
+    sourceBlock = `
+      <div class="section-title" data-tip="Raw annotation string from the source pipeline: junction coordinates, transposable-element family, transcript IDs, and any gene symbols touched by the peptide's reading frame.">Source annotation</div>
+      <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:11.5px;color:var(--text-1);word-break:break-all;line-height:1.5;">${rawSource}</div>`;
+  }
+
   body.innerHTML = `
     <div class="drawer-head">
       <h3 class="pep-head">${pep}</h3>
       <button class="copy-btn" title="Copy peptide" onclick="navigator.clipboard && navigator.clipboard.writeText('${pep}')">⧉ copy</button>
     </div>
-    <div class="sub">${r[COL.gene]||'unknown gene'} · ${CLASS_LABELS[r[COL.cls]]||r[COL.cls]} · ${code}${ensg?` · <span style="font-family:var(--mono);color:var(--text-3)">${ensg}</span>`:''}</div>
+    <div class="sub">${r[COL.gene]||'unknown gene'} · ${CLASS_LABELS[r[COL.cls]]||r[COL.cls]} · ${code}${ensg?` · <span style="font-family:var(--mono);color:var(--text-3)">${ensg}</span>`:''}${
+      r[COL.cls] === 'variant' && mutations.length
+        ? ` · <span style="color:var(--accent-pink)">${mutations.map(m => (m.gene||'') + ' ' + (m.protein_change||'')).join(', ')}</span>`
+        : ''
+    }</div>
     <div class="pill-row">
       <span class="pill-mini"><b>${pep.length}</b> aa</span>
       <span class="pill-mini"><b>${r[COL.psm]}</b> PSMs</span>
@@ -2826,6 +2923,9 @@ async function openDrawer(r) {
       ${uniqBadge}
       ${nuorfBadge}
     </div>
+
+    ${mutationBlock}
+    ${pathogenBlock}
 
     <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples</div>
     <div class="bind-wrap">
@@ -2874,7 +2974,8 @@ async function openDrawer(r) {
       <div class="gbar"><div class="lbl">Tumor (median)</div><div class="track"><div class="fill fill-tumor" style="width:${Math.min(100, tumor/maxE*100).toFixed(0)}%"></div></div><div class="v">${tumor.toFixed(1)}</div></div>
       <div class="gbar"><div class="lbl">Max GTEx normal</div><div class="track"><div class="fill fill-normal" style="width:${Math.min(100, normal/maxE*100).toFixed(0)}%"></div></div><div class="v">${normal.toFixed(1)}</div></div>
     </div>
-    <div class="window-interp">${windowInterp(tumor, normal)}</div>
+    <div class="window-interp">${windowInterp(tumor, normal)}${exprInherited ? ` <span style="color:var(--text-3);font-size:11.5px;font-style:italic;">(inherited from parent gene — junction/variant-level expression not available)</span>` : ''}</div>
+    ${sourceBlock}
 
     ${exprUrl ? `
     <div class="section-title" data-tip="Boxplot showing the gene's RNA expression (TPM) across tumor samples and GTEx normal tissues. Allows visual assessment of how specifically the gene is expressed in tumors versus individual healthy organs — key for evaluating therapeutic safety.">Gene expression across tumor &amp; normal tissues</div>

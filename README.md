@@ -25,9 +25,21 @@ Option A.
 - `data/*.json` — 21 per-cancer tables (~38 MB total). Compact column-array
   format, pre-sorted by relative abundance.
 - `data/_summary.json` — class totals, cancer metadata, labels.
-- `preprocess.py` — script that regenerates the JSON files from the original
-  per-cancer `*_final_enhanced_all.csv` files under
-  `working files/ImmunoVerse/table/`.
+- `integrate_data.py` — regenerates `data_js/*.js` and `data/*.json` from the
+  raw Dropbox files. On every run it downloads the Dropbox ZIP (cached for
+  24 h) so the site stays in sync with Frank's uploads.
+- `.github/workflows/refresh-data.yml` — daily Actions cron that runs
+  `integrate_data.py` and commits any diff, so GitHub Pages serves fresh data
+  without manual intervention.
+- `preprocess.py` — legacy, retained for reference.
+
+### Refreshing the data manually
+```bash
+python integrate_data.py          # uses 24h cache
+IMMUNOVERSE_FORCE_REFRESH=1 python integrate_data.py   # force re-download
+```
+Set `IMMUNOVERSE_DROPBOX_URL` to point at a different share if the source ever
+moves.
 
 ## Deployment
 The folder is fully self-contained and can be dropped on any static host

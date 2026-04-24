@@ -1,28 +1,86 @@
 """
 Integrate all ImmunoVerse data from Dropbox into the portal's data_js/ files.
 
-Data sources (from Dropbox shared folder):
+Data sources (live from the shared Dropbox folder — downloaded automatically):
   - {CANCER}_final_enhanced.txt  — per-cancer peptide tables with full annotations
   - {CANCER}_metadata.txt        — per-sample HLA types for computing recurrency
   - all_deepimmuno_immunogenicity.txt — DeepImmuno immunogenicity predictions
   - US_HLA_frequency.csv         — US population HLA allele frequencies
 
-This script reads the extracted Dropbox data and regenerates the data_js/*.js files
-with additional columns: immunogenicity, per-HLA recurrency, total samples.
+On every run this script checks the local cache (default: ~24h). If the cache is
+missing or stale, it re-downloads the Dropbox folder as a ZIP and extracts it.
+Point IMMUNOVERSE_DROPBOX_URL at a different share to swap data sources.
 """
 
 import ast
 import csv
+import io
 import json
 import os
 import re
+import shutil
 import sys
+import time
+import urllib.request
+import zipfile
 from collections import defaultdict
 from pathlib import Path
 
 # === CONFIGURATION ===
-EXTRACTED_DIR = Path(os.environ.get('IMMUNOVERSE_DATA', r'C:\Users\itsam\AppData\Local\Temp\immunoverse_extracted'))
+DROPBOX_URL = os.environ.get(
+    'IMMUNOVERSE_DROPBOX_URL',
+    'https://www.dropbox.com/scl/fo/2we0ndqepjbrc9dgrl4om/AFWgxeokcbxOkA4CFTTxJeA?rlkey=lre6rtqqkcjeglo2ylwtny3ea&dl=1',
+)
+# Where the extracted Dropbox files are cached between runs.
+EXTRACTED_DIR = Path(os.environ.get('IMMUNOVERSE_DATA', Path.home() / '.cache' / 'immunoverse' / 'extracted'))
+CACHE_ZIP = EXTRACTED_DIR.parent / 'dropbox.zip'
+CACHE_TTL_SECONDS = int(os.environ.get('IMMUNOVERSE_CACHE_TTL', 60 * 60 * 24))  # 24h default
+FORCE_REFRESH = os.environ.get('IMMUNOVERSE_FORCE_REFRESH', '0') == '1'
 OUT_DIR = Path(os.path.dirname(os.path.abspath(__file__))) / 'data_js'
+
+
+def ensure_raw_data():
+    """Download+extract Dropbox folder if local cache is missing or stale.
+
+    Honors IMMUNOVERSE_DATA for pre-extracted local runs (skip download if
+    the folder already contains the expected index file)."""
+    sentinel = EXTRACTED_DIR / 'all_deepimmuno_immunogenicity.txt'
+    fresh = sentinel.exists() and (time.time() - sentinel.stat().st_mtime) < CACHE_TTL_SECONDS
+    if fresh and not FORCE_REFRESH:
+        age_h = (time.time() - sentinel.stat().st_mtime) / 3600
+        print(f'Using cached Dropbox data at {EXTRACTED_DIR} ({age_h:.1f}h old)')
+        return
+
+    EXTRACTED_DIR.parent.mkdir(parents=True, exist_ok=True)
+    print(f'Downloading Dropbox folder -> {CACHE_ZIP}')
+    url = DROPBOX_URL
+    # Force dl=1 so we get the zip instead of the HTML viewer page.
+    if 'dl=0' in url:
+        url = url.replace('dl=0', 'dl=1')
+    elif 'dl=1' not in url:
+        sep = '&' if '?' in url else '?'
+        url = f'{url}{sep}dl=1'
+
+    req = urllib.request.Request(url, headers={'User-Agent': 'ImmunoVerse-Portal/1.0'})
+    with urllib.request.urlopen(req, timeout=600) as resp, open(CACHE_ZIP, 'wb') as f:
+        shutil.copyfileobj(resp, f)
+
+    if EXTRACTED_DIR.exists():
+        shutil.rmtree(EXTRACTED_DIR)
+    EXTRACTED_DIR.mkdir(parents=True, exist_ok=True)
+
+    print(f'Extracting -> {EXTRACTED_DIR}')
+    with zipfile.ZipFile(CACHE_ZIP) as zf:
+        for member in zf.namelist():
+            # Flatten structure and drop absolute paths Dropbox sometimes injects.
+            name = os.path.basename(member)
+            if not name:
+                continue
+            with zf.open(member) as src, open(EXTRACTED_DIR / name, 'wb') as dst:
+                shutil.copyfileobj(src, dst)
+    # Touch sentinel so TTL kicks in.
+    sentinel.touch(exist_ok=True)
+    print(f'Downloaded and extracted {sum(1 for _ in EXTRACTED_DIR.iterdir())} files.')
 
 CANCER_META = {
     'AML':  ('Acute Myeloid Leukemia',           'Heme'),
@@ -89,14 +147,25 @@ def safe_eval(s):
 
 
 def normalize_hla(allele):
-    """Normalize HLA allele to standard format: A*01:01"""
+    """Normalize HLA allele to standard format: A*01:01
+
+    Handles three input shapes used across the raw files:
+      - HLA-A*02:01    (final_enhanced presented_by_each_sample_hla)
+      - HLA-A*0201     (DeepImmuno immunogenicity file — no colon)
+      - HLA-A0201 / A0201 (metadata sometimes)
+    """
     if not allele:
         return None
     a = str(allele).replace('HLA-', '').strip()
-    # Convert 4-digit format like A0101 to A*01:01
-    m = re.match(r'^([ABC])(\d{2})(\d{2,3})$', a)
+    # A*0201 -> A*02:01 (DeepImmuno format — critical: prior bug was dropping these)
+    m = re.match(r'^([ABC])\*(\d{2})(\d{2,3})$', a)
     if m:
         a = f'{m.group(1)}*{m.group(2)}:{m.group(3)}'
+    else:
+        # A0101 -> A*01:01
+        m = re.match(r'^([ABC])(\d{2})(\d{2,3})$', a)
+        if m:
+            a = f'{m.group(1)}*{m.group(2)}:{m.group(3)}'
     return a if '*' in a else None
 
 
@@ -152,26 +221,212 @@ def load_metadata(filepath):
     return sample_hlas, len(patients), dict(hla_patient_count)
 
 
+# Canonical tokens that must never be treated as "the gene" — variant_type values
+# and format markers that used to sneak through the old suffix regex.
+_NOT_GENE_TOKENS = {
+    'missense_variant', 'frameshift_variant', 'stop_gained', 'stop_lost',
+    'start_lost', 'inframe_insertion', 'inframe_deletion', 'splice_donor_variant',
+    'splice_acceptor_variant', 'synonymous_variant', 'nuORF', 'nuorf',
+    'anti-sense', 'sense', 'True', 'False', 'None', 'none', 'nan',
+}
+
+# Gene aliases — maps raw forms to a canonical display name. Used both for clean
+# display and (mirrored in the frontend) for alias-aware search.
+GENE_ALIASES = {
+    'L1_ORF2': 'LINE1 ORF2',
+    'L1-ORF2': 'LINE1 ORF2',
+    'L1-orf2': 'LINE1 ORF2',
+    'L1_orf2': 'LINE1 ORF2',
+    'LINE-1': 'LINE1',
+    'LINE_1': 'LINE1',
+}
+
+
+def canonicalize_gene(name):
+    """Map raw gene tokens to canonical display form using GENE_ALIASES."""
+    if not name:
+        return name
+    return GENE_ALIASES.get(name, name)
+
+
+def parse_variant_entries(src):
+    """Parse the variant-format sub-records from a `source` string.
+
+    Each variant entry has the shape:
+      GENE|p.PROTEIN_CHANGE|N|FLOAT|ENSG|chr:start-end|REF/ALT|variant_type
+
+    Returns a list of dicts — may be multiple (e.g. KRAS/NRAS double-hit).
+    """
+    if not src:
+        return []
+    out = []
+    for piece in re.split(r';', src):
+        parts = piece.split('|')
+        if len(parts) < 8:
+            continue
+        # Heuristic: a variant record starts with a gene symbol and has p.XXX in slot 1
+        if not re.match(r'^p\.', parts[1] or ''):
+            continue
+        vt = parts[-1].strip()
+        if vt not in _NOT_GENE_TOKENS and not vt.endswith('_variant'):
+            # Allow e.g. "frameshift_variant" but reject non-variant tails.
+            continue
+        out.append({
+            'gene': parts[0].strip(),
+            'protein_change': parts[1].strip(),
+            'af_count': parts[2].strip(),
+            'af_ratio': parts[3].strip(),
+            'ensg': parts[4].strip(),
+            'location': parts[5].strip(),
+            'ref_alt': parts[6].strip(),
+            'variant_type': vt,
+        })
+    return out
+
+
+# UniProt mnemonic organism-code suffixes seen in this dataset. Most rows lack an
+# OS= field, so we map the name-stem suffix to a human-readable label.
+ORGANISM_CODES = {
+    'FUSNU': 'Fusobacterium nucleatum',
+    'HELPY': 'Helicobacter pylori',
+    'NEIMU': 'Neisseria mucosa',
+    'NEIMA': 'Neisseria meningitidis',
+    'NIACI': 'Neisseria cinerea',
+    'HCMV':  'Human cytomegalovirus',
+    'HCMVM': 'Human cytomegalovirus (Merlin)',
+    'HCMVA': 'Human cytomegalovirus (AD169)',
+    'HHV1':  'Human herpesvirus 1',
+    'HHV4':  'Epstein-Barr virus',
+    'HHV5':  'Human cytomegalovirus',
+    'HPV16': 'Human papillomavirus 16',
+    'HPV18': 'Human papillomavirus 18',
+    'HBV':   'Hepatitis B virus',
+    'HCV':   'Hepatitis C virus',
+    '9BACT': 'Unclassified Bacteria',
+    '9CLOT': 'Unclassified Clostridium',
+    '9VIRU': 'Unclassified Virus',
+    '9FIRM': 'Unclassified Firmicutes',
+    '9GAMM': 'Unclassified Gammaproteobacteria',
+}
+
+
+def parse_pathogen_entry(src):
+    """Parse UniProt-style pathogen source.
+
+    Two shapes exist in the raw data:
+      - minimal:  tr|U7T4X1|U7T4X1_FUSNU
+      - full:     tr|ACC|NAME Long protein desc OS=Fuso... OX=123 GN=... PE=4 SV=1
+    Returns a dict the drawer can render (organism, protein, accession, gene).
+    """
+    if not src:
+        return None
+    head = src.split(';', 1)[0]  # primary entry
+    pipe_parts = head.split('|')
+    accession = pipe_parts[1] if len(pipe_parts) > 1 else ''
+    rest = pipe_parts[2] if len(pipe_parts) > 2 else head
+
+    def grab(tag):
+        m = re.search(rf'{tag}=([^=]+?)(?=[A-Z]{{2}}=|$)', rest)
+        return m.group(1).strip() if m else ''
+
+    organism = grab('OS')
+    gene = grab('GN')
+    protein = rest
+    # Strip away the TAG= trailers so the protein name is readable.
+    protein = re.sub(r'(OS|OX|GN|PE|SV)=.*$', '', protein).strip()
+
+    # Fallback: most rows lack OS=. The name stem (e.g. U7T4X1_FUSNU) encodes
+    # the organism via a UniProt mnemonic suffix.
+    # UniProt organism codes are 3-5 chars — cap at 5 so we don't eat into
+    # the protein description (e.g. "FUSNU" + "DUF4132..." would greedy-match).
+    code = ''
+    m = re.match(r'^([A-Z0-9]+)_([A-Z0-9]{3,5})', protein)
+    if m:
+        code = m.group(2)
+        if not organism:
+            organism = ORGANISM_CODES.get(code, code)
+        # Strip the accession_code prefix so `protein` reads as a description,
+        # or stays empty for the minimal form (name==stem).
+        if protein == m.group(0):
+            protein = ''
+        else:
+            protein = protein[len(m.group(0)):].lstrip(' _')
+
+    # Heuristic re-spacing for the squashed description/organism fields.
+    # Break before capitals, before digits after letters, and after digits.
+    def _respace(s):
+        s = re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', s)
+        s = re.sub(r'(?<=[A-Za-z])(?=\d)', ' ', s)
+        s = re.sub(r'(?<=\d)(?=[A-Za-z])', ' ', s)
+        return s
+    if protein:
+        protein = _respace(protein)
+    if organism:
+        organism = _respace(organism)
+    return {
+        'accession': accession,
+        'protein': protein,
+        'organism': organism,
+        'code': code,
+        'gene': gene,
+    }
+
+
 def clean_gene(row):
-    """Extract clean gene symbol from source/gene_symbol fields."""
+    """Extract clean gene symbol from source/gene_symbol fields.
+
+    Class-aware: variant rows use the structured GENE|p.X|... block;
+    pathogen rows fall back to the organism name; other classes use
+    gene_symbol first and a suffix-regex on `source` as last resort.
+    """
+    cls = (row.get('typ') or '').strip()
+    src = row.get('source', '') or ''
+
+    # Variant class: always prefer the structured record (fixes "missense_variant" bug).
+    if cls == 'variant':
+        variants = parse_variant_entries(src)
+        genes = []
+        for v in variants:
+            g = canonicalize_gene(v['gene'])
+            if g and g not in genes:
+                genes.append(g)
+        if genes:
+            return '/'.join(genes[:3])
+
+    # Pathogen class: organism is a better label than the opaque accession.
+    if cls == 'pathogen':
+        pa = parse_pathogen_entry(src)
+        if pa:
+            if pa['organism']:
+                return pa['organism']
+            if pa['protein']:
+                return pa['protein'][:60]
+            if pa['accession']:
+                return pa['accession']
+
     g = row.get('gene_symbol', '')
     if g and g != 'nan' and g != 'None':
         # May be a Python list repr
         val = safe_eval(g)
         if isinstance(val, (list, tuple)):
-            names = [str(x).strip() for x in val if x and str(x).strip() not in ('nan', 'None', '')]
+            names = [canonicalize_gene(str(x).strip()) for x in val
+                     if x and str(x).strip() not in ('nan', 'None', '')]
             return '/'.join(dict.fromkeys(names).keys())  # dedup preserving order
-        return str(g).strip()
+        return canonicalize_gene(str(g).strip())
 
-    # Parse from source
-    src = row.get('source', '')
+    # Fallback suffix-regex parse on source (guarded against variant_type tails
+    # and purely-numeric trailers that slipped through before).
     if src and src != 'nan':
         found = []
         for piece in re.split(r'[;,]', src):
             m = re.findall(r'\|([A-Za-z0-9\-_.]+)\s*$', piece)
             for hit in m:
-                if hit and not hit.startswith('ENS') and hit not in found:
-                    found.append(hit)
+                if (hit and not hit.startswith('ENS')
+                        and hit not in found
+                        and hit not in _NOT_GENE_TOKENS
+                        and not hit.endswith('_variant')
+                        and not re.fullmatch(r'-?\d+(?:\.\d+)?', hit)):
+                    found.append(canonicalize_gene(hit))
         if found:
             return '/'.join(found[:3])
     return ''
@@ -275,7 +530,30 @@ def parse_sc_pert(row):
     return None
 
 
-def process_cancer(code, immuno_lookup):
+def build_gene_expression_map(enhanced_file):
+    """Pre-pass: collect median_tumor/max_median_gtex from self_gene rows,
+    keyed by gene symbol AND ENSG so non-self classes can fall back to
+    parent-gene expression (e.g. splicing peptides inheriting PMEL's TCGA/GTEx)."""
+    by_gene = {}
+    by_ensg = {}
+    with open(enhanced_file, 'r', encoding='utf-8') as f:
+        for r in csv.DictReader(f, delimiter='\t'):
+            if (r.get('typ') or '').strip() != 'self_gene':
+                continue
+            t = safe_float(r.get('median_tumor'))
+            n = safe_float(r.get('max_median_gtex'))
+            if t is None and n is None:
+                continue
+            g = (r.get('gene_symbol') or '').strip()
+            if g and g not in ('nan', 'None'):
+                by_gene.setdefault(g, (t, n))
+            ensg = (r.get('ensgs') or '').strip()
+            if ensg.startswith('ENSG'):
+                by_ensg.setdefault(ensg.split(';')[0].split(',')[0], (t, n))
+    return by_gene, by_ensg
+
+
+def process_cancer(code, immuno_lookup, immuno_stats):
     enhanced_file = EXTRACTED_DIR / f'{code}_final_enhanced.txt'
     metadata_file = EXTRACTED_DIR / f'{code}_metadata.txt'
 
@@ -290,12 +568,15 @@ def process_cancer(code, immuno_lookup):
         _, total_patients, hla_patient_count = load_metadata(metadata_file)
         print(f'  {code}: {total_patients} patients, {len(hla_patient_count)} unique HLA alleles in metadata')
 
+    # Pre-scan for parent-gene expression so non-self classes get a sensible value.
+    expr_by_gene, expr_by_ensg = build_gene_expression_map(enhanced_file)
+
     rows = []
-    detail = {}  # peptide -> [addq, intens]
+    detail = {}  # peptide -> [addq, intens, extra_dict]
     class_count = {}
     gene_set = set()
 
-    with open(enhanced_file, 'r') as f:
+    with open(enhanced_file, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f, delimiter='\t')
         for r in reader:
             pep = r.get('pep', '').strip()
@@ -335,6 +616,22 @@ def process_cancer(code, immuno_lookup):
             if nuorf_type in ('nan', 'None', ''):
                 nuorf_type = ''
 
+            # Parent-gene expression fallback for non-self classes (splicing,
+            # variant, ERV, etc.). Mark as inherited so the UI can disclose it.
+            expr_inherited = False
+            if cls != 'self_gene' and tumor is None and normal is None:
+                lookup = None
+                if ensg:
+                    lookup = expr_by_ensg.get(ensg)
+                if not lookup and gene:
+                    for g_part in gene.split('/'):
+                        if g_part in expr_by_gene:
+                            lookup = expr_by_gene[g_part]
+                            break
+                if lookup:
+                    tumor, normal = lookup
+                    expr_inherited = True
+
             # Per-HLA binding data with immunogenicity
             hlas, bind = parse_bind_data(r, immuno_lookup)
 
@@ -373,9 +670,34 @@ def process_cancer(code, immuno_lookup):
                     if f is not None:
                         intens.append(round(f, 4))
 
-            # Store detail data (addq + intens) keyed by peptide
-            if addq or intens:
-                detail[pep] = [addq, intens]
+            # Track immunogenicity lookup stats (diagnostic only).
+            for b in bind:
+                immuno_stats['total'] += 1
+                if b[5] is not None:
+                    immuno_stats['hits'] += 1
+
+            # Class-specific extras (mutation, pathogen) surfaced in the drawer.
+            extra = {}
+            src_raw = r.get('source', '') or ''
+            if cls == 'variant':
+                muts = parse_variant_entries(src_raw)
+                if muts:
+                    extra['mutations'] = muts
+            if cls == 'pathogen':
+                pa = parse_pathogen_entry(src_raw)
+                if pa:
+                    extra['pathogen'] = pa
+            if expr_inherited:
+                extra['exprInherited'] = True
+            # Always include a trimmed source string so power users can see
+            # the raw annotation (especially for splicing / ERV / nuORF).
+            if src_raw and len(src_raw) < 2000:
+                extra['source'] = src_raw.strip()
+
+            # Store detail data keyed by peptide. Use a 3-slot list so the
+            # drawer can pull [addq, intens, extra] with simple indexing.
+            if addq or intens or extra:
+                detail[pep] = [addq, intens, extra]
 
             # Build the row: 18 columns matching the COL indices in index.html
             # + 2 new fields: recurrence (overall) and totalSamples
@@ -504,20 +826,26 @@ def build_summary(cancers):
 
 
 def main():
+    ensure_raw_data()
+
     print('Loading immunogenicity data...')
     immuno_file = EXTRACTED_DIR / 'all_deepimmuno_immunogenicity.txt'
     immuno_lookup = load_immunogenicity(immuno_file) if immuno_file.exists() else {}
 
+    immuno_stats = {'hits': 0, 'total': 0}
     print('\nProcessing cancers...')
     cancers = []
     for code in sorted(CANCER_META.keys()):
         print(f'\n--- {code} ---')
-        meta = process_cancer(code, immuno_lookup)
+        meta = process_cancer(code, immuno_lookup, immuno_stats)
         if meta:
             cancers.append(meta)
 
     build_summary(cancers)
-    print('\nDone! Updated data_js/ and data/ directories.')
+    total = immuno_stats['total'] or 1
+    pct = 100 * immuno_stats['hits'] / total
+    print(f"\nImmunogenicity coverage: {immuno_stats['hits']:,}/{immuno_stats['total']:,} per-HLA binds ({pct:.1f}%)")
+    print('Done! Updated data_js/ and data/ directories.')
 
 
 if __name__ == '__main__':
