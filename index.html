@@ -1047,13 +1047,21 @@ table.atlas.compact td:nth-child(10) { display: none; }
   font-size: 12.5px;
 }
 .compare-table th, .compare-table td {
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: top;
   color: var(--text-1);
   background: var(--bg-1); /* every cell opaque so sticky cells layer cleanly */
 }
+/* Vertical separators between peptide columns so each peptide reads as
+   its own column. Label column already has its own right border. */
+.compare-table th + th,
+.compare-table td + td { border-left: 1px solid var(--border); }
+/* Peptide columns get a reasonable min-width so they don't squeeze when
+   only 2-3 peptides are being compared. */
+.compare-table thead th:not(.rowlbl),
+.compare-table tbody td:not(.rowlbl) { min-width: 220px; }
 /* thead pins to the scroll pane's top when scrolling vertically. */
 .compare-table thead th {
   position: sticky;
@@ -3576,8 +3584,11 @@ async function openCompareModal() {
   // horizontal scrollbar is always reachable. Headers / first column are
   // made sticky in CSS so you can still tell which row/column is which
   // while panning around.
+  // Even for 2-4 peptides the deep-dive cards looked crammed because
+  // minmax(0, 1fr) allowed columns to squeeze right up against each other.
+  // Give every column a floor; only force overflow scrolling past 4.
   const wide = rows.length > 4;
-  const colMin = wide ? '260px' : '0';
+  const colMin = wide ? '260px' : '320px';
   const gridMinWidth = wide ? `${rows.length * 290}px` : '';
   const deepDive = `
     <div class="cmp-deep-head">Per-peptide deep dive ${wide ? `<span style="font-weight:400;color:var(--text-3);text-transform:none;letter-spacing:0">— scroll horizontally (${rows.length} columns) ↔</span>` : ''}</div>
