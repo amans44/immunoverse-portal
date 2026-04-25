@@ -389,7 +389,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   color: inherit;
   font: inherit;
   display: grid;
-  grid-template-columns: 1fr 52px;
+  grid-template-columns: 1fr 60px;
   grid-template-rows: auto auto auto;
   gap: 4px 10px;
   align-items: start;
@@ -437,16 +437,16 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
 .ctile .donut {
   grid-column: 2;
   grid-row: 1 / 3;
-  width: 52px; height: 52px;
+  width: 60px; height: 60px;
   position: relative;
 }
 .ctile .donut svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
-.ctile .donut .dc { font-size: 11.5px; font-weight: 700; color: var(--text-0); }
-.ctile .donut .dlbl { font-size: 8.5px; color: var(--text-3); margin-top: -1px; letter-spacing: 0.05em; text-transform: uppercase; }
+.ctile .donut .dc { font-size: 14px; font-weight: 700; color: var(--text-0); line-height: 1; }
+.ctile .donut .dsub { font-size: 8px; color: var(--text-3); letter-spacing: 0.04em; text-transform: uppercase; margin-top: 2px; line-height: 1; }
 .ctile .donut .dcenter {
   position: absolute; inset: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  pointer-events: none; line-height: 1;
+  pointer-events: none;
 }
 .ctile .tile-stats {
   grid-column: 1 / -1;
@@ -2482,7 +2482,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
     <div class="section-head">
       <div class="kicker">All 21 cancers</div>
       <h2>21 cancers · 340,000+ ranked candidate targets</h2>
-      <p>Each tile's donut shows the fraction of the repertoire from <b style="color:var(--accent-violet)">non-canonical</b> sources (splicing, cryptic ORFs, retroelements, mutations, fusions, microbial). Click a tile to filter the explorer above.</p>
+      <p>Each tile's donut (<b>NC</b> = non-canonical) shows the fraction of the repertoire from <b style="color:var(--accent-violet)">non-canonical</b> sources — splicing, cryptic ORFs, retroelements, mutations, fusions, microbial. Click a tile to filter the explorer above.</p>
     </div>
     <div style="margin: 6px 0 12px; display: flex; align-items: baseline; justify-content: space-between;">
       <span style="font-size: 11.5px; color: var(--text-3);">Sorted by target count · click to filter explorer</span>
@@ -2922,8 +2922,9 @@ function renderCancerGrid(summary) {
     const classSum = CLASS_ORDER.reduce((a,k)=> a + (c.classes[k]||0), 0) || 1;
     const nonCanon = classSum - (c.classes.self_gene || 0);
     const nonCanonPct = Math.round(nonCanon / classSum * 100);
-    // SVG donut: non-canonical fraction
-    const r = 22, cx = 26, cy = 26, circ = 2 * Math.PI * r;
+    // SVG donut: non-canonical fraction. Radius chosen so the ring sits
+    // comfortably inside the 60×60 viewport with room for the inner label.
+    const r = 25, cx = 30, cy = 30, circ = 2 * Math.PI * r;
     const offset = circ * (1 - nonCanon / classSum);
     const bars = CLASS_ORDER.map(k => {
       const v = c.classes[k] || 0;
@@ -2941,9 +2942,9 @@ function renderCancerGrid(summary) {
           <span class="group">${c.group}</span>
         </div>
         <div class="donut" title="${nonCanon.toLocaleString()} non-canonical (${nonCanonPct}%) of ${classSum.toLocaleString()} peptides">
-          <svg viewBox="0 0 52 52">
-            <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(120,150,220,0.15)" stroke-width="5"/>
-            <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="url(#gradDonut)" stroke-width="5"
+          <svg viewBox="0 0 60 60">
+            <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(120,150,220,0.15)" stroke-width="4"/>
+            <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="url(#gradDonut)" stroke-width="4"
                     stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" stroke-linecap="round"/>
             <defs>
               <linearGradient id="gradDonut" x1="0" y1="0" x2="1" y2="1">
@@ -2954,7 +2955,7 @@ function renderCancerGrid(summary) {
           </svg>
           <div class="dcenter">
             <div class="dc">${nonCanonPct}%</div>
-            <div class="dlbl">non-canon</div>
+            <div class="dsub">NC</div>
           </div>
         </div>
         <div class="name">${c.name}</div>
