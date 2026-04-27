@@ -4458,9 +4458,10 @@ applyFilters = function() { _origApply(); pushUrlState(); };
 </script>
 
 <!-- ImmunoVerse Portal Chatbot widget (floating bottom-right).
-     To point at a non-same-origin agent backend, set
-       window.IMMUNOVERSE_AGENT_BASE = "https://your-agent-host";
-     in a <script> tag before this one. -->
+     IMMUNOVERSE_AGENT_BASE points at the FastAPI agent hosted on Render
+     (private repo: amans44/ImmunoVerse_Chat_AgenticAI). The agent's
+     CORS_ORIGINS env var must include https://immuno-verse.com. -->
+<script>window.IMMUNOVERSE_AGENT_BASE = "https://immunoverse-agent.onrender.com";</script>
 <script src="chatbot/chatbot.js" defer></script>
 </body>
 </html>
