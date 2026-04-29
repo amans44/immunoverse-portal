@@ -1576,6 +1576,14 @@ table.atlas.compact td:nth-child(10) { display: none; }
   cursor: zoom-in;
 }
 .drawer .plot-wrap img.ok { opacity: 1; }
+.drawer .plot-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 720px) {
+  .drawer .plot-grid-2 { grid-template-columns: 1fr; }
+}
 .drawer .spectrum-wrap { position: relative; }
 .drawer .spectrum-wrap img { cursor: zoom-in; }
 .expand-btn {
@@ -3550,6 +3558,13 @@ async function openCompareModal() {
     const percentileUrl = `${ASSET_BASE_CMP}/${code}_${pep}_percentile.png`;
     const rankAbundUrl = `${ASSET_BASE_CMP}/${code}_${pep}_rank_abundance.png`;
     const exprUrl = (ensg && gene) ? `${ASSET_BASE_CMP}/${code}_${ensg}_${gene}_expr_boxplot+boxplot.png` : '';
+    // Junction- / TE-level differential plot URLs (preferred over the
+    // gene-level boxplot for non-canonical rows; mirrors openDrawer).
+    const cmpDiff = ((DETAIL_CACHE[code]||{})[pep] || [])[2]?.diffPlot || null;
+    const cmpDiffSplicingUrl = cmpDiff && cmpDiff.splicing
+      ? `${ASSET_BASE_CMP}/${encodeURI(cmpDiff.splicing)}` : '';
+    const cmpDiffErvUrl = cmpDiff && cmpDiff.erv
+      ? `${ASSET_BASE_CMP}/${encodeURI(cmpDiff.erv)}` : '';
     const plot = (src, label, sub) => src
       ? `<figure class="cmp-plot">
            <figcaption class="cmp-plot-title">${label}${sub ? `<span class="cmp-plot-sub">${sub}</span>` : ''}</figcaption>
@@ -3559,6 +3574,17 @@ async function openCompareModal() {
            </div>
          </figure>`
       : '';
+    let exprFigure = '';
+    if (cmpDiff && cmpDiff.kind === 'splicing' && cmpDiffSplicingUrl) {
+      exprFigure = plot(cmpDiffSplicingUrl, 'Splice junction expression', 'tumor vs normal — junction-level');
+    } else if (cmpDiff && cmpDiff.kind === 'erv' && cmpDiffErvUrl) {
+      exprFigure = plot(cmpDiffErvUrl, 'Retroelement expression', 'tumor vs normal — TE-level');
+    } else if (cmpDiff && cmpDiff.kind === 'both') {
+      exprFigure = plot(cmpDiffSplicingUrl, 'Splice junction expression', 'tumor vs normal — junction')
+                 + plot(cmpDiffErvUrl, 'Retroelement expression', 'tumor vs normal — TE');
+    } else {
+      exprFigure = plot(exprUrl, 'Expression boxplot', `${gene||''} · tumor vs normal TPM`);
+    }
 
     return `<div class="cmp-col">
       <div class="cmp-col-head"><span class="mono" style="color:var(--text-0);font-weight:700">${pep}</span> <span style="color:var(--text-3)">·</span> ${code}</div>
@@ -3571,7 +3597,7 @@ async function openCompareModal() {
       </table></div>
       <div class="cmp-sub">Figures</div>
       <div class="cmp-plots">
-        ${plot(exprUrl, 'Expression boxplot', `${gene||''} · tumor vs normal TPM`)}
+        ${exprFigure}
         ${plot(percentileUrl, 'Intensity percentile', 'where this peptide ranks in the atlas')}
         ${plot(rankAbundUrl, 'Rank-abundance', 'PSM abundance across samples')}
         ${plot(spectrumUrl, 'MS/MS spectrum', 'annotated fragmentation')}
@@ -3775,6 +3801,16 @@ async function openDrawer(r) {
   const exprUrl = ensg && geneForExpr
     ? `${ASSET_BASE}/${code}_${ensg}_${geneForExpr}_expr_boxplot+boxplot.png`
     : '';
+  // Per-class differential plot URLs derived from the source string in
+  // integrate_data.compute_diff_plot. Splicing rows get a junction-level
+  // plot, ERV rows a TE-level plot, TE_chimeric rows both side-by-side.
+  // Falls back to the gene-level exprUrl above when absent (most rows,
+  // including all self_gene/variant/pathogen/intron_retention/fusion).
+  const diffPlot = extra.diffPlot || null;
+  const diffSplicingUrl = diffPlot && diffPlot.splicing
+    ? `${ASSET_BASE}/${encodeURI(diffPlot.splicing)}` : '';
+  const diffErvUrl = diffPlot && diffPlot.erv
+    ? `${ASSET_BASE}/${encodeURI(diffPlot.erv)}` : '';
 
   // External cross-references
   const geneStr = r[COL.gene] || '';
@@ -3941,9 +3977,23 @@ async function openDrawer(r) {
         }
         if (coord) {
           const c = coord.replace(/ \([+\-]\)$/, '');
-          links.push(`<a class="xref" href="https://grch37.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh37 region ↗</a>`);
-          links.push(`<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg19 ↗</a>`);
-          links.push(`<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg38 ↗</a>`);
+          // ERV/TE coordinates are hg38; cryptic ORF coordinates are hg19.
+          // Splicing / TE_chimeric / intron_retention / fusion: keep both
+          // until we can confirm the upstream build per class.
+          const cls = r[COL.cls];
+          const ucscHg19 = `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg19 ↗</a>`;
+          const ucscHg38 = `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg38 ↗</a>`;
+          if (cls === 'ERV') {
+            links.push(`<a class="xref" href="https://useast.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh38 region ↗</a>`);
+            links.push(ucscHg38);
+          } else if (cls === 'nuORF') {
+            links.push(`<a class="xref" href="https://grch37.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh37 region ↗</a>`);
+            links.push(ucscHg19);
+          } else {
+            links.push(`<a class="xref" href="https://grch37.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh37 region ↗</a>`);
+            links.push(ucscHg19);
+            links.push(ucscHg38);
+          }
         }
         return links.length ? `<div class="hero-links" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">${links.join('')}</div>` : '';
       })()}
@@ -4044,17 +4094,49 @@ async function openDrawer(r) {
     <div class="window-interp">${windowInterp(tumor, normal)}${exprInherited ? ` <span style="color:var(--text-3);font-size:11.5px;font-style:italic;">(inherited from parent gene — junction/variant-level expression not available)</span>` : ''}</div>
     ${sourceBlock}
 
-    ${exprUrl ? `
-    <div class="section-title" data-tip="Boxplot showing the gene's RNA expression (TPM) across tumor samples and GTEx normal tissues. Allows visual assessment of how specifically the gene is expressed in tumors versus individual healthy organs — key for evaluating therapeutic safety.">Gene expression across tumor &amp; normal tissues</div>
-    <div class="section-subtitle">Per-tissue RNA expression boxplot (TPM): the tumor box vs every individual GTEx normal organ — shows which healthy tissues might cross-present this gene's peptides.</div>
-    <div class="plot-wrap">
-      <button class="expand-btn" onclick="openLightbox('${exprUrl}','Gene expression: ${geneForExpr} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
-      <img src="${exprUrl}" alt="Expression boxplot for ${geneForExpr}"
-           onload="this.classList.add('ok')"
-           onclick="openLightbox('${exprUrl}','Gene expression: ${geneForExpr} in ${code}')"
-           onerror="this.parentNode.classList.add('no-plot');this.remove();" />
-      <div class="plot-caption">${geneForExpr} · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>
-    </div>` : ''}
+    ${(() => {
+      // For non-canonical rows with a unique source mapping, prefer the
+      // junction- or TE-level differential plot from NeoVerse over the
+      // gene-level expression boxplot (which only reflects the parent
+      // gene, not the actual antigen source).
+      const plotImg = (src, alt, captionLabel, expandTitle) => `
+        <div class="plot-wrap">
+          <button class="expand-btn" onclick="openLightbox('${src}','${expandTitle}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
+          <img src="${src}" alt="${alt}"
+               onload="this.classList.add('ok')"
+               onclick="openLightbox('${src}','${expandTitle}')"
+               onerror="this.parentNode.classList.add('no-plot');this.remove();" />
+          <div class="plot-caption">${captionLabel} · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>
+        </div>`;
+      if (diffPlot && diffPlot.kind === 'splicing' && diffSplicingUrl) {
+        return `
+        <div class="section-title" data-tip="Splice-junction-level expression: counts the reads spanning this exact junction in tumor vs normal samples. Unlike gene-level expression, this captures whether the specific aberrant junction (not the parent gene) is tumor-enriched.">Splice junction expression (tumor vs normal)</div>
+        <div class="section-subtitle">Reads spanning this exact junction — the per-junction signal that drives the antigen, not the parent gene's bulk expression.</div>
+        ${plotImg(diffSplicingUrl, 'Splice junction differential plot', `Junction · ${pep}`, `Junction expression: ${pep} in ${code}`)}`;
+      }
+      if (diffPlot && diffPlot.kind === 'erv' && diffErvUrl) {
+        return `
+        <div class="section-title" data-tip="Retroelement-level expression: copies of this specific TE (e.g. L1 ORF2, AluSx, HERV) in tumor vs normal samples. TEs are usually silenced in normal tissue, so a tumor-up signal here is the actual safety window.">Retroelement expression (tumor vs normal)</div>
+        <div class="section-subtitle">Per-TE RNA signal — the actual safety window for transposon-derived antigens, since the parent gene's expression doesn't capture TE de-repression.</div>
+        ${plotImg(diffErvUrl, 'TE differential plot', `TE · ${pep}`, `TE expression: ${pep} in ${code}`)}`;
+      }
+      if (diffPlot && diffPlot.kind === 'both' && (diffSplicingUrl || diffErvUrl)) {
+        return `
+        <div class="section-title" data-tip="TE-chimeric transcripts arise from a splice junction joining a transposable element to a host gene. Both signals matter: the junction (left) shows whether the chimeric event is tumor-enriched, and the TE (right) shows whether the source element is de-repressed.">Chimeric junction &amp; retroelement expression</div>
+        <div class="section-subtitle">Two-panel differential — splice junction (left) and the source TE (right) — since a TE-chimeric antigen requires both the junction and the element to be tumor-up.</div>
+        <div class="plot-grid-2">
+          ${diffSplicingUrl ? plotImg(diffSplicingUrl, 'Splice junction differential plot', `Junction · ${pep}`, `Junction expression: ${pep} in ${code}`) : ''}
+          ${diffErvUrl ? plotImg(diffErvUrl, 'TE differential plot', `TE · ${pep}`, `TE expression: ${pep} in ${code}`) : ''}
+        </div>`;
+      }
+      if (exprUrl) {
+        return `
+        <div class="section-title" data-tip="Boxplot showing the gene's RNA expression (TPM) across tumor samples and GTEx normal tissues. Allows visual assessment of how specifically the gene is expressed in tumors versus individual healthy organs — key for evaluating therapeutic safety.">Gene expression across tumor &amp; normal tissues</div>
+        <div class="section-subtitle">Per-tissue RNA expression boxplot (TPM): the tumor box vs every individual GTEx normal organ — shows which healthy tissues might cross-present this gene's peptides.</div>
+        ${plotImg(exprUrl, `Expression boxplot for ${geneForExpr}`, geneForExpr, `Gene expression: ${geneForExpr} in ${code}`)}`;
+      }
+      return '';
+    })()}
 
     <div class="section-title" data-tip="Quantitative scores for this peptide's MS presentation quality. Abundance rank = how prominently this peptide is presented relative to others. Spectral score = confidence of MS/MS identification. Homogeneity = whether the source gene is uniformly expressed across tumor cells (from single-cell RNA). DepMap = gene essentiality (negative = cancer depends on this gene).">Presentation metrics</div>
     <div class="section-subtitle">Four at-a-glance scores: relative abundance, MS/MS identification confidence, single-cell expression homogeneity, and DepMap tumor-dependency.</div>

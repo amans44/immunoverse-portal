@@ -331,6 +331,80 @@ def canonicalize_gene(name):
     return GENE_ALIASES.get(name, name)
 
 
+def modify_source_string(source):
+    """Mirror of Frank's launch_portal_app.modify_source_string.
+
+    Returns the unique source-record substring when the row maps to exactly
+    one structured annotation, the literal sentinel ``'not_unique'`` when
+    multiple candidates remain after stripping nc/nuORF noise, or the
+    original source when nothing else applies.
+
+    Used to gate per-class differential plots: only unique mappings get
+    junction-/TE-level plots (matching how Frank's Dash app behaves)."""
+    if not source:
+        return source
+    pat = re.compile(r'ENSG(\d+)\|ENST(\d+)\|')
+    if ';' in source:
+        sources = source.split(';')
+        tmp = [item for item in sources if pat.search(item)]
+        if len(tmp) == 1:
+            source = tmp[0]
+        elif len(tmp) > 1:
+            return 'not_unique'
+    if ';' in source:
+        sources = source.split(';')
+        tmp = [item for item in sources if 'nuORF' not in item and 'nc|' not in item]
+        source = ';'.join(tmp)
+        if ';' in source:
+            return 'not_unique'
+    return source
+
+
+def compute_diff_plot(cls, source, code):
+    """For non-canonical classes with unique mapping, derive the per-class
+    differential-plot filename(s) Frank's NeoVerse pipeline produces.
+
+    Returns a dict the frontend can consume directly, or None when the row
+    falls back to gene-level expression (current default).
+
+      splicing               -> {kind:'splicing', splicing:'CODE_COORDS_splicing.png'}
+      ERV                    -> {kind:'erv',      erv:'CODE_TE_expr.png'}
+      TE_chimeric_transcript -> {kind:'both',     splicing:..., erv:...}
+    """
+    if not source or cls not in ('splicing', 'ERV', 'TE_chimeric_transcript'):
+        return None
+    src = modify_source_string(source)
+    if not src or src == 'not_unique':
+        return None
+    parts = src.split('|')
+    try:
+        if cls == 'splicing':
+            coords = parts[0]
+            if not re.match(r'^chr[\dXYM]+:\d+-\d+$', coords):
+                return None
+            return {'kind': 'splicing', 'splicing': f'{code}_{coords}_splicing.png'}
+        if cls == 'ERV':
+            erv = parts[0]
+            if not erv:
+                return None
+            return {'kind': 'erv', 'erv': f'{code}_{erv}_expr.png'}
+        if cls == 'TE_chimeric_transcript':
+            coords = parts[0]
+            te_info = parts[7] if len(parts) > 7 else ''
+            te_pieces = te_info.split(',')
+            if not re.match(r'^chr[\dXYM]+:\d+-\d+$', coords) or len(te_pieces) < 2:
+                return None
+            erv = te_pieces[1]
+            return {
+                'kind': 'both',
+                'splicing': f'{code}_{coords}_splicing.png',
+                'erv': f'{code}_{erv}_expr.png',
+            }
+    except (IndexError, AttributeError):
+        return None
+    return None
+
+
 def parse_variant_entries(src):
     """Parse the variant-format sub-records from a `source` string.
 
@@ -807,6 +881,12 @@ def process_cancer(code, immuno_lookup, immuno_stats, transcript_map=None):
                     extra['pathogen'] = pa
             if expr_inherited:
                 extra['exprInherited'] = True
+            # Per-class differential plot filename(s) — only emitted when the
+            # source string maps unambiguously to one junction/TE record
+            # (matches Frank's Dash launcher logic).
+            diff_plot = compute_diff_plot(cls, src_raw, code)
+            if diff_plot:
+                extra['diffPlot'] = diff_plot
             # If we resolved this row's gene via Ensembl REST (nuORF / splicing
             # fallback), surface the transcript metadata so the hero card can
             # build the robust useast.ensembl.org Gene/Summary URL with
