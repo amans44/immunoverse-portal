@@ -3991,21 +3991,17 @@ async function openDrawer(r) {
         }
         if (coord) {
           const c = coord.replace(/ \([+\-]\)$/, '');
-          // ERV/TE coordinates are hg38; cryptic ORF coordinates are hg19.
-          // Splicing / TE_chimeric / intron_retention / fusion: keep both
-          // until we can confirm the upstream build per class.
+          // nuORF (cryptic ORF) coordinates are hg19. Every other class
+          // (ERV, splicing, TE_chimeric, intron_retention, fusion) comes
+          // from the NeoVerse pipeline which aligns to GRCh38 → hg38.
           const cls = r[COL.cls];
           const ucscHg19 = `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg19 ↗</a>`;
           const ucscHg38 = `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg38 ↗</a>`;
-          if (cls === 'ERV') {
-            links.push(`<a class="xref" href="https://useast.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh38 region ↗</a>`);
-            links.push(ucscHg38);
-          } else if (cls === 'nuORF') {
+          if (cls === 'nuORF') {
             links.push(`<a class="xref" href="https://grch37.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh37 region ↗</a>`);
             links.push(ucscHg19);
           } else {
-            links.push(`<a class="xref" href="https://grch37.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh37 region ↗</a>`);
-            links.push(ucscHg19);
+            links.push(`<a class="xref" href="https://useast.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh38 region ↗</a>`);
             links.push(ucscHg38);
           }
         }
