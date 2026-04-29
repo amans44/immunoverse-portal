@@ -1,0 +1,205 @@
+{
+  "_about": "Curated map of cancer-immunotherapy targets that overlap with antigens in this atlas. Used to surface a 'Clinical-stage target' badge in search results. Conservative — only includes well-established programs. Last reviewed 2026-04.",
+  "targets": [
+    {
+      "gene": "MAGEA3",
+      "aliases": ["MAGE-A3"],
+      "status": "Phase III completed; ongoing Ph II TCR-T",
+      "modality": ["Vaccine", "TCR-T"],
+      "indication": "Melanoma, NSCLC, multiple myeloma",
+      "programs": "GSK MAGE-A3 vaccine (Ph III), Adaptimmune SPEAR T cell"
+    },
+    {
+      "gene": "MAGEA4",
+      "aliases": ["MAGE-A4"],
+      "status": "Approved (US, 2024)",
+      "modality": ["TCR-T"],
+      "indication": "Synovial sarcoma, MRCLS",
+      "programs": "Adaptimmune afami-cel (Tecelra)"
+    },
+    {
+      "gene": "CTAG1B",
+      "aliases": ["NY-ESO-1", "NY ESO 1", "CTAG1A"],
+      "status": "Phase II/III",
+      "modality": ["TCR-T", "Vaccine"],
+      "indication": "Synovial sarcoma, melanoma, ovarian",
+      "programs": "GSK letetresgene autoleucel, Adaptimmune ADP-A2M4"
+    },
+    {
+      "gene": "PRAME",
+      "aliases": [],
+      "status": "Phase I/II",
+      "modality": ["TCR-T", "Bispecific"],
+      "indication": "Melanoma, NSCLC, ovarian, sarcoma",
+      "programs": "Immatics IMA203 (Ph I), brenetafusp (Ph III)"
+    },
+    {
+      "gene": "PMEL",
+      "aliases": ["gp100", "SILV", "PMEL17"],
+      "status": "Approved (2022)",
+      "modality": ["Bispecific T-cell engager", "Vaccine"],
+      "indication": "Uveal melanoma, cutaneous melanoma",
+      "programs": "Immunocore tebentafusp (Kimmtrak)"
+    },
+    {
+      "gene": "MLANA",
+      "aliases": ["MART-1", "Melan-A"],
+      "status": "Phase I/II",
+      "modality": ["TCR-T", "Vaccine"],
+      "indication": "Melanoma",
+      "programs": "Multiple academic / industry TCR-T trials"
+    },
+    {
+      "gene": "TYR",
+      "aliases": ["Tyrosinase"],
+      "status": "Phase I/II",
+      "modality": ["Vaccine", "TCR-T"],
+      "indication": "Melanoma",
+      "programs": "Multiple peptide-vaccine trials"
+    },
+    {
+      "gene": "KRAS",
+      "aliases": [],
+      "status": "Phase I/II (TCR-T against G12V/G12D); approved small-mol KRAS-G12C inhibitors",
+      "modality": ["TCR-T", "Vaccine", "Small-molecule"],
+      "indication": "PDAC, NSCLC, CRC",
+      "programs": "Achilles, NCI/Rosenberg neoantigen TCR-T; sotorasib/adagrasib (G12C)"
+    },
+    {
+      "gene": "TP53",
+      "aliases": [],
+      "status": "Phase I/II",
+      "modality": ["TCR-T", "Vaccine"],
+      "indication": "Solid tumors with TP53 hotspot mutations",
+      "programs": "NCI Rosenberg lab TCR-T (R175H, R248W)"
+    },
+    {
+      "gene": "WT1",
+      "aliases": [],
+      "status": "Phase II/III",
+      "modality": ["Vaccine", "TCR-T"],
+      "indication": "AML, MDS, mesothelioma",
+      "programs": "Sumitomo galinpepimut-S, multiple TCR-T trials"
+    },
+    {
+      "gene": "BIRC5",
+      "aliases": ["Survivin"],
+      "status": "Phase II",
+      "modality": ["Vaccine"],
+      "indication": "Solid tumors, brain",
+      "programs": "DSP-7888, multiple academic trials"
+    },
+    {
+      "gene": "MSLN",
+      "aliases": ["Mesothelin"],
+      "status": "Phase II",
+      "modality": ["CAR-T", "ADC", "Bispecific"],
+      "indication": "Mesothelioma, ovarian, pancreatic",
+      "programs": "Multiple CAR-T programs; anetumab (ADC)"
+    },
+    {
+      "gene": "ERBB2",
+      "aliases": ["HER2", "HER-2", "HER2/neu"],
+      "status": "Approved",
+      "modality": ["ADC", "Antibody", "CAR-T (clinical)"],
+      "indication": "Breast, gastric, NSCLC, CRC",
+      "programs": "Trastuzumab deruxtecan (Enhertu), trastuzumab, pertuzumab"
+    },
+    {
+      "gene": "CD19",
+      "aliases": [],
+      "status": "Approved (multiple)",
+      "modality": ["CAR-T", "Bispecific"],
+      "indication": "B-cell ALL, DLBCL, FL, CLL",
+      "programs": "Tisagenlecleucel, axi-cel, brexu-cel, blinatumomab"
+    },
+    {
+      "gene": "CD22",
+      "aliases": [],
+      "status": "Approved (ADC)",
+      "modality": ["ADC", "CAR-T"],
+      "indication": "B-ALL, DLBCL",
+      "programs": "Inotuzumab ozogamicin, multiple CAR-T trials"
+    },
+    {
+      "gene": "TNFRSF17",
+      "aliases": ["BCMA"],
+      "status": "Approved (multiple)",
+      "modality": ["CAR-T", "Bispecific", "ADC"],
+      "indication": "Multiple myeloma",
+      "programs": "Ide-cel, cilta-cel, teclistamab, elranatamab, belantamab"
+    },
+    {
+      "gene": "DLL3",
+      "aliases": [],
+      "status": "Approved (2024)",
+      "modality": ["Bispecific T-cell engager"],
+      "indication": "Small cell lung cancer",
+      "programs": "Amgen tarlatamab (Imdelltra)"
+    },
+    {
+      "gene": "CLDN18",
+      "aliases": ["Claudin 18.2", "CLDN18.2"],
+      "status": "Approved (2024)",
+      "modality": ["Antibody", "CAR-T"],
+      "indication": "Gastric / GEJ adenocarcinoma",
+      "programs": "Zolbetuximab (Vyloy), CT041 CAR-T (Carsgen)"
+    },
+    {
+      "gene": "TACSTD2",
+      "aliases": ["TROP2"],
+      "status": "Approved",
+      "modality": ["ADC"],
+      "indication": "TNBC, urothelial, NSCLC",
+      "programs": "Sacituzumab govitecan (Trodelvy), datopotamab"
+    },
+    {
+      "gene": "FOLH1",
+      "aliases": ["PSMA"],
+      "status": "Approved (radioligand)",
+      "modality": ["Radioligand", "CAR-T (clinical)", "Bispecific"],
+      "indication": "Prostate cancer",
+      "programs": "Lu-177 PSMA-617 (Pluvicto)"
+    },
+    {
+      "gene": "EGFR",
+      "aliases": ["EGFRvIII"],
+      "status": "Phase I/II (CAR-T); approved (small-mol/Ab)",
+      "modality": ["CAR-T", "Antibody", "ADC", "Small-molecule"],
+      "indication": "Glioblastoma (vIII), NSCLC, CRC, H&N",
+      "programs": "Multiple CAR-T trials; cetuximab, osimertinib"
+    },
+    {
+      "gene": "IL13RA2",
+      "aliases": [],
+      "status": "Phase I",
+      "modality": ["CAR-T"],
+      "indication": "Glioblastoma",
+      "programs": "City of Hope IL13Ra2 CAR-T"
+    },
+    {
+      "gene": "GPC3",
+      "aliases": [],
+      "status": "Phase I/II",
+      "modality": ["CAR-T", "TCR-T"],
+      "indication": "Hepatocellular carcinoma, hepatoblastoma",
+      "programs": "Multiple CAR-T trials"
+    },
+    {
+      "gene": "AFP",
+      "aliases": ["Alpha-fetoprotein"],
+      "status": "Phase I",
+      "modality": ["TCR-T"],
+      "indication": "Hepatocellular carcinoma",
+      "programs": "Adaptimmune ADP-A2AFP"
+    },
+    {
+      "gene": "CEACAM5",
+      "aliases": ["CEA"],
+      "status": "Phase II/III",
+      "modality": ["ADC", "CAR-T", "Bispecific"],
+      "indication": "Colorectal, lung",
+      "programs": "Tusamitamab ravtansine (ADC)"
+    }
+  ]
+}

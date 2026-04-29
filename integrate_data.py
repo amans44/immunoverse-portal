@@ -1043,6 +1043,162 @@ def build_summary(cancers):
     print(f'  Classes: {class_tot}')
 
 
+CLINICAL_TARGETS_FILE = Path(os.path.dirname(os.path.abspath(__file__))) / 'clinical_targets.json'
+
+
+def build_search_index(cancer_metas):
+    """Walk every per-cancer data file we just wrote and emit a single
+    global search index for the homepage typeahead.
+
+    Compact schema (one-letter keys keep gzipped payload small):
+      rows[i] = {
+        p:peptide, g:gene, e:ensg, c:class, ca:cancer_code,
+        h:top_hlas_csv, t:primary_enst, ps:psm_count, re:recurrence,
+        m:mutation_label?, pa:pathogen_organism?
+      }
+      meta = [{k:'cancer'|'class'|'target', ...}]
+
+    Lazy-loaded by the homepage on first focus of the search input.
+    """
+    json_dir = Path(os.path.dirname(os.path.abspath(__file__))) / 'data'
+    rows_out = []
+    gene_count = defaultdict(set)  # gene -> {(cancer_code, peptide)} for "X peptides across N cancers" rollups
+
+    for meta in cancer_metas:
+        code = meta['code']
+        try:
+            with open(json_dir / f'{code}.json', encoding='utf-8') as f:
+                cd = json.load(f)
+            with open(json_dir / f'{code}_detail.json', encoding='utf-8') as f:
+                detail = json.load(f)
+        except FileNotFoundError:
+            continue
+
+        cols = {n: i for i, n in enumerate(cd['cols'])}
+        ipep, igene, icls = cols['pep'], cols['gene'], cols['class']
+        ihlas, iensg = cols['hlas'], cols['ensg']
+        ipsm, irec = cols['psm'], cols['recurrence']
+
+        for r in cd['rows']:
+            pep = r[ipep]
+            gene = r[igene] or ''
+            cls = r[icls] or ''
+            ensg = r[iensg] or ''
+            hlas = r[ihlas] or []
+            psm = r[ipsm] or 0
+            rec = r[irec]
+
+            # Per-peptide extras (mutations, pathogen, transcript meta)
+            extra = (detail.get(pep) or [None, None, {}])[2] or {}
+            enst = ''
+            if extra.get('transcriptMeta'):
+                enst = extra['transcriptMeta'].get('enst', '') or ''
+                enst = enst.split('.')[0]  # strip version
+
+            mut_label = ''
+            if cls == 'variant' and extra.get('mutations'):
+                bits = []
+                for m in extra['mutations'][:2]:
+                    g = (m.get('gene') or '').strip()
+                    pc = (m.get('protein_change') or '').strip()
+                    if g and pc:
+                        bits.append(f'{g} {pc}')
+                    elif g:
+                        bits.append(g)
+                mut_label = '/'.join(bits)
+
+            pat_org = ''
+            if cls == 'pathogen' and extra.get('pathogen'):
+                pat_org = (extra['pathogen'].get('organism') or '').strip()
+
+            entry = {
+                'p': pep,
+                'g': gene,
+                'c': cls,
+                'ca': code,
+                'ps': psm,
+            }
+            if ensg:
+                entry['e'] = ensg
+            if hlas:
+                entry['h'] = ','.join(hlas[:6])  # cap to 6 to keep payload small
+            if enst:
+                entry['t'] = enst
+            if rec is not None:
+                entry['re'] = rec
+            if mut_label:
+                entry['m'] = mut_label
+            if pat_org:
+                entry['pa'] = pat_org
+            rows_out.append(entry)
+
+            for g_part in gene.split('/'):
+                g_part = g_part.strip()
+                if g_part:
+                    gene_count[g_part].add((code, pep))
+
+    # Build meta entries: cancers + classes + clinical targets.
+    cancer_meta_entries = [
+        {
+            'k': 'cancer',
+            'code': m['code'],
+            'name': m['name'],
+            'group': m.get('group', ''),
+            'count': m.get('count', 0),
+        }
+        for m in cancer_metas
+    ]
+
+    class_meta_entries = [
+        {'k': 'class', 'code': k, 'label': v}
+        for k, v in CLASS_LABELS.items()
+    ]
+
+    target_meta_entries = []
+    if CLINICAL_TARGETS_FILE.exists():
+        try:
+            with open(CLINICAL_TARGETS_FILE, encoding='utf-8') as f:
+                tdata = json.load(f)
+            for t in tdata.get('targets', []):
+                gene = t.get('gene', '').strip()
+                if not gene:
+                    continue
+                # Count how many peptides in the atlas mention this gene (or any alias).
+                hits = set()
+                for name in [gene] + (t.get('aliases') or []):
+                    hits |= gene_count.get(name, set())
+                target_meta_entries.append({
+                    'k': 'target',
+                    'gene': gene,
+                    'aliases': t.get('aliases', []),
+                    'status': t.get('status', ''),
+                    'modality': t.get('modality', []),
+                    'indication': t.get('indication', ''),
+                    'programs': t.get('programs', ''),
+                    'atlasHits': len(hits),
+                })
+            print(f'  Clinical targets: {len(target_meta_entries)} curated entries '
+                  f'({sum(1 for t in target_meta_entries if t["atlasHits"] > 0)} with atlas peptides)')
+        except Exception as e:
+            print(f'  [warn] clinical_targets.json not loaded: {e}')
+
+    index = {
+        'rows': rows_out,
+        'meta': cancer_meta_entries + class_meta_entries + target_meta_entries,
+        'classLabels': CLASS_LABELS,
+    }
+
+    js_content = f'window.__IDX__={json.dumps(index, separators=(",", ":"))};'
+    with open(OUT_DIR / '_search_index.js', 'w', encoding='utf-8') as f:
+        f.write(js_content)
+    with open(json_dir / '_search_index.json', 'w', encoding='utf-8') as f:
+        json.dump(index, separators=(',', ':'), fp=f)
+
+    raw_kb = (OUT_DIR / '_search_index.js').stat().st_size / 1024
+    print(f'\nSearch index: {len(rows_out):,} rows, {len(index["meta"]):,} meta entries, '
+          f'{raw_kb:.0f} KB raw (~{raw_kb / 4:.0f} KB gzipped)')
+
+
 def main():
     ensure_raw_data()
 
@@ -1063,6 +1219,7 @@ def main():
             cancers.append(meta)
 
     build_summary(cancers)
+    build_search_index(cancers)
     total = immuno_stats['total'] or 1
     pct = 100 * immuno_stats['hits'] / total
     print(f"\nImmunogenicity coverage: {immuno_stats['hits']:,}/{immuno_stats['total']:,} per-HLA binds ({pct:.1f}%)")

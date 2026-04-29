@@ -2191,6 +2191,180 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   margin: -4px 0 10px;
 }
 
+/* ===================== GLOBAL SEARCH ===================== */
+.search-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  max-width: 460px;
+  min-width: 0;
+}
+.search-input-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-input-row svg.search-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px; height: 16px;
+  color: var(--text-3);
+  pointer-events: none;
+}
+.search-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 56px 0 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text-0);
+  font-family: inherit;
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.search-input::placeholder { color: var(--text-3); }
+.search-input:focus {
+  border-color: var(--accent-cyan);
+  background: var(--bg-1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-cyan) 18%, transparent);
+}
+.search-kbd {
+  position: absolute;
+  right: 8px;
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-3);
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-radius: 5px;
+  padding: 3px 6px;
+  pointer-events: none;
+  user-select: none;
+}
+.search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0; right: 0;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+  max-height: 70vh;
+  overflow-y: auto;
+  z-index: 200;
+  font-size: 13px;
+}
+.search-results[hidden] { display: none; }
+.search-empty {
+  padding: 18px 16px;
+  color: var(--text-3);
+  font-size: 12.5px;
+  text-align: center;
+  line-height: 1.6;
+}
+.search-empty .search-tips {
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.search-empty code {
+  font-family: var(--mono);
+  background: var(--bg-3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--text-1);
+}
+.search-group {
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+.search-group:first-child { border-top: 0; }
+.search-group-head {
+  padding: 6px 14px 4px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+}
+.search-item {
+  padding: 8px 14px;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 12px;
+  border-left: 2px solid transparent;
+  transition: background .1s;
+}
+.search-item:hover,
+.search-item.active {
+  background: var(--bg-2);
+  border-left-color: var(--accent-cyan);
+}
+.search-item .si-primary {
+  font-family: var(--mono);
+  color: var(--text-0);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-item .si-meta {
+  font-size: 11.5px;
+  color: var(--text-2);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-item .si-tail {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+.search-item .si-pill {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+.search-item mark {
+  background: color-mix(in srgb, var(--accent-cyan) 35%, transparent);
+  color: var(--text-0);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+.search-item.target-hit .si-primary::after {
+  content: "🎯";
+  margin-left: 6px;
+  font-size: 12px;
+}
+.search-target-badge {
+  display: inline-block;
+  background: color-mix(in srgb, var(--accent-amber) 22%, transparent);
+  color: var(--accent-amber);
+  border: 1px solid color-mix(in srgb, var(--accent-amber) 45%, transparent);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+
 /* Responsive */
 @media (max-width: 960px) {
   .hero .hero-grid { grid-template-columns: 1fr; gap: 20px; }
@@ -2198,6 +2372,8 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   .filters { grid-template-columns: 1fr 1fr; }
   footer.ftr .cols { grid-template-columns: 1fr 1fr; }
   .nav-toggle { display: block; }
+  .search-wrap { max-width: none; order: 3; flex-basis: 100%; margin-top: 8px; }
+  .search-kbd { display: none; }
   nav .links {
     display: none;
     position: absolute;
@@ -2230,6 +2406,16 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <span class="logo"></span>
       ImmunoVerse <span class="sub">Atlas</span>
     </a>
+    <div class="search-wrap" role="search">
+      <div class="search-input-row">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="globalSearch" class="search-input" type="search" autocomplete="off" spellcheck="false"
+          placeholder="Search peptides, genes, cancers, HLA alleles…"
+          aria-label="Search ImmunoVerse atlas" aria-autocomplete="list" aria-controls="searchResults" />
+        <span class="search-kbd" id="searchKbd">⌘K</span>
+      </div>
+      <div class="search-results" id="searchResults" role="listbox" hidden></div>
+    </div>
     <button class="nav-toggle" aria-label="Toggle menu" onclick="document.querySelector('.links').classList.toggle('open')">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
@@ -3171,6 +3357,337 @@ async function selectCancer(code) {
   applyFilters();
   document.getElementById('explorer').scrollIntoView({behavior:'smooth'});
 }
+
+// ============ GLOBAL SEARCH ============
+// One-shot lazy load of the prebuilt search index (data_js/_search_index.js).
+// The file is ~3 MB raw / ~700 KB gzipped — paid only when the user actually
+// focuses the search input.
+let IDX_CACHE = null;
+let IDX_LOADING = null;
+async function loadSearchIndex() {
+  if (IDX_CACHE) return IDX_CACHE;
+  if (IDX_LOADING) return IDX_LOADING;
+  IDX_LOADING = (async () => {
+    try {
+      await loadScript('data_js/_search_index.js');
+      IDX_CACHE = window.__IDX__ || {rows: [], meta: []};
+    } catch(e) {
+      console.warn('Search index failed to load', e);
+      IDX_CACHE = {rows: [], meta: []};
+    }
+    return IDX_CACHE;
+  })();
+  return IDX_LOADING;
+}
+
+const SEARCH_GROUP_LIMITS = {peptides:6, genes:5, targets:3, cancers:3, hlas:5, classes:3};
+
+function _searchEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function _searchHighlight(text, q) {
+  if (!q || !text) return _searchEsc(text);
+  const safe = _searchEsc(text);
+  const needle = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return safe.replace(new RegExp(needle, 'gi'), m => `<mark>${m}</mark>`);
+}
+function _rankScore(needle, hay) {
+  if (!hay) return 0;
+  const h = String(hay).toUpperCase();
+  const n = needle.toUpperCase();
+  if (h === n) return 100;
+  if (h.startsWith(n)) return 60;
+  if (h.includes(n)) return 25;
+  return 0;
+}
+
+function searchAll(q) {
+  if (!IDX_CACHE) return null;
+  q = q.trim();
+  if (q.length < 2) return null;
+  // Allow either "A*02:01" or "HLA-A*02:01" to match the same allele list.
+  const Qhla = q.toUpperCase().replace(/^HLA-?/, '');
+
+  const peptides = [];
+  const genes = new Map();
+  const hlas = new Map();
+  const targets = [];
+  const cancers = [];
+  const classes = [];
+
+  for (const r of IDX_CACHE.rows) {
+    let best = 0, matched = null;
+    const tries = [['p',r.p], ['g',r.g], ['e',r.e], ['m',r.m], ['pa',r.pa], ['t',r.t]];
+    for (const [k,v] of tries) {
+      if (!v) continue;
+      const s = _rankScore(q, v);
+      if (s > best) { best = s; matched = k; }
+    }
+    let hlaSubHit = null;
+    if (r.h) {
+      const hu = r.h.toUpperCase();
+      if (hu.includes(Qhla) && Qhla.length >= 2) {
+        hlaSubHit = Qhla;
+        if (best === 0) best = 30;
+      }
+    }
+    if (best === 0) continue;
+
+    // Always include the matched row in the peptides group — users searching
+    // a gene/HLA/mutation expect to see actual peptides, not just gene rollups.
+    // The gene group below additionally aggregates by-gene counts.
+    peptides.push(Object.assign({_score: best, _matched: matched}, r));
+    // Also collect into the gene group when gene name matched.
+    if (r.g) {
+      const sg = _rankScore(q, r.g);
+      if (sg > 0) {
+        const g0 = r.g.split('/')[0];
+        if (!genes.has(g0)) genes.set(g0, {gene:g0, rows:[], _score:0});
+        const ge = genes.get(g0);
+        ge.rows.push(r);
+        if (sg > ge._score) ge._score = sg;
+      }
+    }
+    if (hlaSubHit) {
+      for (const a of r.h.split(',')) {
+        if (a.toUpperCase().includes(Qhla)) {
+          if (!hlas.has(a)) hlas.set(a, {allele:a, hits:0, _score: a.toUpperCase()===Qhla ? 100 : 50});
+          hlas.get(a).hits++;
+          break;
+        }
+      }
+    }
+  }
+
+  for (const m of IDX_CACHE.meta || []) {
+    if (m.k === 'cancer') {
+      const s = Math.max(_rankScore(q, m.code), _rankScore(q, m.name));
+      if (s) cancers.push(Object.assign({_score:s}, m));
+    } else if (m.k === 'class') {
+      const s = Math.max(_rankScore(q, m.code), _rankScore(q, m.label));
+      if (s) classes.push(Object.assign({_score:s}, m));
+    } else if (m.k === 'target') {
+      let s = _rankScore(q, m.gene);
+      for (const a of (m.aliases || [])) s = Math.max(s, _rankScore(q, a));
+      if (s) targets.push(Object.assign({_score:s}, m));
+    }
+  }
+
+  peptides.sort((a,b) => b._score - a._score || (b.ps||0) - (a.ps||0));
+  const genesList = [...genes.values()].sort((a,b) => b._score - a._score || b.rows.length - a.rows.length);
+  const hlasList = [...hlas.values()].sort((a,b) => b._score - a._score || b.hits - a.hits);
+  cancers.sort((a,b) => b._score - a._score);
+  classes.sort((a,b) => b._score - a._score);
+  targets.sort((a,b) => b._score - a._score || (b.atlasHits||0) - (a.atlasHits||0));
+
+  return {
+    peptides: peptides.slice(0, SEARCH_GROUP_LIMITS.peptides),
+    genes: genesList.slice(0, SEARCH_GROUP_LIMITS.genes),
+    targets: targets.slice(0, SEARCH_GROUP_LIMITS.targets),
+    cancers: cancers.slice(0, SEARCH_GROUP_LIMITS.cancers),
+    hlas: hlasList.slice(0, SEARCH_GROUP_LIMITS.hlas),
+    classes: classes.slice(0, SEARCH_GROUP_LIMITS.classes),
+    totals: {
+      peptides: peptides.length, genes: genesList.length, targets: targets.length,
+      cancers: cancers.length, hlas: hlasList.length, classes: classes.length,
+    }
+  };
+}
+
+function renderSearchResults(g, q) {
+  const root = document.getElementById('searchResults');
+  if (!g) { root.hidden = true; return; }
+  const empty = !g.peptides.length && !g.genes.length && !g.cancers.length
+                && !g.classes.length && !g.hlas.length && !g.targets.length;
+  if (empty) {
+    root.innerHTML = `<div class="search-empty">No matches for "<b>${_searchEsc(q)}</b>".<div class="search-tips">Try a peptide (<code>KTWDQVPFSV</code>), gene (<code>PMEL</code>), HLA (<code>A*02:01</code>), or cancer code (<code>SKCM</code>).</div></div>`;
+    root.hidden = false;
+    return;
+  }
+
+  let html = '';
+  const groupHead = (label, total, shown) => `<div class="search-group-head"><span>${label}</span><span>${total}${total > shown ? '+' : ''}</span></div>`;
+
+  if (g.peptides.length) {
+    html += `<div class="search-group">${groupHead('Peptides', g.totals.peptides, g.peptides.length)}`;
+    for (const p of g.peptides) {
+      const cls = (IDX_CACHE.classLabels && IDX_CACHE.classLabels[p.c]) || CLASS_LABELS[p.c] || p.c;
+      const meta = `${p.g||'—'} · ${cls} · ${p.ca}${p.m?` · ${p.m}`:''}${p.pa?` · ${p.pa}`:''}`;
+      html += `<div class="search-item" data-action="peptide" data-pep="${_searchEsc(p.p)}" data-code="${p.ca}" role="option">
+        <div><div class="si-primary">${_searchHighlight(p.p, q)}</div><div class="si-meta">${_searchEsc(meta)}</div></div>
+        <div class="si-tail">${p.ps||0} PSM</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  if (g.genes.length) {
+    html += `<div class="search-group">${groupHead('Genes', g.totals.genes, g.genes.length)}`;
+    for (const ge of g.genes) {
+      const cs = new Set(ge.rows.map(r => r.ca));
+      html += `<div class="search-item" data-action="gene" data-gene="${_searchEsc(ge.gene)}" role="option">
+        <div><div class="si-primary">${_searchHighlight(ge.gene, q)}</div><div class="si-meta">${ge.rows.length} peptide${ge.rows.length>1?'s':''} across ${cs.size} cancer${cs.size>1?'s':''}</div></div>
+        <div class="si-tail">→ explorer</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  if (g.targets.length) {
+    html += `<div class="search-group">${groupHead('Clinical-stage targets', g.totals.targets, g.targets.length)}`;
+    for (const t of g.targets) {
+      const aliasNote = t.aliases && t.aliases.length ? ` · aka ${t.aliases.join(', ')}` : '';
+      const modality = (t.modality || []).join(' · ');
+      html += `<div class="search-item target-hit" data-action="target" data-gene="${_searchEsc(t.gene)}" role="option">
+        <div>
+          <div class="si-primary">${_searchHighlight(t.gene, q)}<span class="search-target-badge">${_searchEsc(t.status||'clinical')}</span></div>
+          <div class="si-meta">${_searchEsc(modality)} · ${_searchEsc(t.indication||'')}${_searchEsc(aliasNote)}</div>
+        </div>
+        <div class="si-tail">${t.atlasHits||0} in atlas</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  if (g.cancers.length) {
+    html += `<div class="search-group">${groupHead('Cancers', g.totals.cancers, g.cancers.length)}`;
+    for (const c of g.cancers) {
+      html += `<div class="search-item" data-action="cancer" data-code="${c.code}" role="option">
+        <div><div class="si-primary">${_searchHighlight(c.code, q)} <span style="color:var(--text-2);font-weight:400;font-family:inherit">${_searchHighlight(c.name, q)}</span></div><div class="si-meta">${(c.count||0).toLocaleString()} peptides${c.group?` · ${_searchEsc(c.group)}`:''}</div></div>
+        <div class="si-tail">→ ${c.code}</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  if (g.hlas.length) {
+    html += `<div class="search-group">${groupHead('HLA alleles', g.totals.hlas, g.hlas.length)}`;
+    for (const h of g.hlas) {
+      html += `<div class="search-item" data-action="hla" data-allele="${_searchEsc(h.allele)}" role="option">
+        <div><div class="si-primary">${_searchHighlight(h.allele, q)}</div><div class="si-meta">${h.hits} peptide${h.hits>1?'s':''} presented across cancers</div></div>
+        <div class="si-tail">→ explorer</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  if (g.classes.length) {
+    html += `<div class="search-group">${groupHead('Molecular classes', g.totals.classes, g.classes.length)}`;
+    for (const cl of g.classes) {
+      html += `<div class="search-item" data-action="class" data-code="${cl.code}" role="option">
+        <div><div class="si-primary">${_searchHighlight(cl.label, q)}</div><div class="si-meta">${_searchEsc(cl.code)}</div></div>
+        <div class="si-tail">→ explorer</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  root.innerHTML = html;
+  root.hidden = false;
+}
+
+async function navigateSearchResult(action, data) {
+  const close = () => { document.getElementById('searchResults').hidden = true; };
+  const clearCancerScopedFilters = () => {
+    STATE.cancer = ''; document.getElementById('fCancer').value = '';
+    STATE.pep = ''; const fp = document.getElementById('fPep'); if (fp) fp.value = '';
+    STATE.gene = ''; const fg = document.getElementById('fGene'); if (fg) fg.value = '';
+    STATE.hla = ''; const fh = document.getElementById('fHla'); if (fh) fh.value = '';
+    STATE.classFilter = new Set();
+    STATE.page = 1;
+  };
+
+  if (action === 'peptide') {
+    try {
+      await loadCancer(data.code);
+      const row = (DATA_CACHE[data.code].rows || []).find(r => r[COL.pep] === data.pep);
+      if (row) {
+        if (row[COL.code] !== data.code) row[COL.code] = data.code;
+        close();
+        openDrawer(row);
+        return;
+      }
+    } catch(e) { console.warn('peptide nav failed', e); }
+    close();
+  } else if (action === 'cancer') {
+    close();
+    selectCancer(data.code);
+  } else if (action === 'gene' || action === 'target') {
+    clearCancerScopedFilters();
+    STATE.gene = data.gene; document.getElementById('fGene').value = data.gene;
+    close();
+    applyFilters();
+    document.getElementById('explorer').scrollIntoView({behavior:'smooth'});
+  } else if (action === 'hla') {
+    clearCancerScopedFilters();
+    STATE.hla = data.allele; document.getElementById('fHla').value = data.allele;
+    close();
+    applyFilters();
+    document.getElementById('explorer').scrollIntoView({behavior:'smooth'});
+  } else if (action === 'class') {
+    clearCancerScopedFilters();
+    STATE.classFilter = new Set([data.code]);
+    close();
+    applyFilters();
+    document.getElementById('explorer').scrollIntoView({behavior:'smooth'});
+  }
+}
+
+(function setupGlobalSearch() {
+  const input = document.getElementById('globalSearch');
+  const results = document.getElementById('searchResults');
+  if (!input || !results) return;
+  let debounceT = null;
+  let activeIdx = -1;
+
+  const updateActive = (items) => {
+    items.forEach((it, i) => it.classList.toggle('active', i === activeIdx));
+    if (items[activeIdx]) items[activeIdx].scrollIntoView({block:'nearest'});
+  };
+
+  const runSearch = async () => {
+    const q = input.value.trim();
+    if (q.length < 2) { results.hidden = true; return; }
+    if (!IDX_CACHE) {
+      results.innerHTML = `<div class="search-empty">Loading search index…</div>`;
+      results.hidden = false;
+      await loadSearchIndex();
+    }
+    activeIdx = -1;
+    renderSearchResults(searchAll(q), q);
+  };
+
+  input.addEventListener('focus', () => {
+    if (!IDX_CACHE && !IDX_LOADING) loadSearchIndex();
+    if (input.value.trim().length >= 2) runSearch();
+  });
+  input.addEventListener('input', () => {
+    clearTimeout(debounceT);
+    debounceT = setTimeout(runSearch, 150);
+  });
+  input.addEventListener('keydown', (e) => {
+    const items = results.querySelectorAll('.search-item');
+    if (e.key === 'Escape') { results.hidden = true; input.blur(); return; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); updateActive(items); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); updateActive(items); }
+    else if (e.key === 'Enter' && activeIdx >= 0 && items[activeIdx]) { e.preventDefault(); items[activeIdx].click(); }
+  });
+  results.addEventListener('click', (e) => {
+    const item = e.target.closest('.search-item');
+    if (!item) return;
+    navigateSearchResult(item.dataset.action, {...item.dataset});
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-wrap')) results.hidden = true;
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      input.focus(); input.select();
+    }
+  });
+  // Show ⌘ vs Ctrl in the keyboard hint per platform
+  const kbd = document.getElementById('searchKbd');
+  if (kbd) {
+    const isMac = (navigator.userAgentData && navigator.userAgentData.platform || navigator.platform || '').toLowerCase().includes('mac');
+    kbd.textContent = isMac ? '⌘K' : 'Ctrl+K';
+  }
+})();
 
 // ============ FILTER / SORT / RENDER ============
 function applyFilters() {
