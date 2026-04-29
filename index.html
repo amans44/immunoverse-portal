@@ -3557,10 +3557,17 @@ async function openCompareModal() {
     const spectrumUrl = `${ASSET_BASE_CMP}/${code}_spectrum_${pep}.png`;
     const percentileUrl = `${ASSET_BASE_CMP}/${code}_${pep}_percentile.png`;
     const rankAbundUrl = `${ASSET_BASE_CMP}/${code}_${pep}_rank_abundance.png`;
-    const exprUrl = (ensg && gene) ? `${ASSET_BASE_CMP}/${code}_${ensg}_${gene}_expr_boxplot+boxplot.png` : '';
+    // Same gating as openDrawer: only attempt the gene boxplot when this
+    // row has real gene-level RNA on file (self_gene, or non-canonical
+    // with successful parent-gene inheritance).
+    const cmpExtra = ((DETAIL_CACHE[code]||{})[pep] || [])[2] || {};
+    const cmpHasRealExpr = (r[COL.cls] === 'self_gene')
+      || (cmpExtra.exprInherited && (r[COL.tumorExp] != null || r[COL.normalExp] != null));
+    const exprUrl = cmpHasRealExpr && ensg && gene && /^ENSG\d{8,}$/.test(ensg)
+      ? `${ASSET_BASE_CMP}/${code}_${ensg}_${gene}_expr_boxplot+boxplot.png` : '';
     // Junction- / TE-level differential plot URLs (preferred over the
     // gene-level boxplot for non-canonical rows; mirrors openDrawer).
-    const cmpDiff = ((DETAIL_CACHE[code]||{})[pep] || [])[2]?.diffPlot || null;
+    const cmpDiff = cmpExtra.diffPlot || null;
     const cmpDiffSplicingUrl = cmpDiff && cmpDiff.splicing
       ? `${ASSET_BASE_CMP}/${encodeURI(cmpDiff.splicing)}` : '';
     const cmpDiffErvUrl = cmpDiff && cmpDiff.erv
@@ -3798,7 +3805,14 @@ async function openDrawer(r) {
   const percentileUrl = `${ASSET_BASE}/${code}_${pep}_percentile.png`;
   const rankAbundanceUrl = `${ASSET_BASE}/${code}_${pep}_rank_abundance.png`;
   const geneForExpr = (r[COL.gene]||'').split('/')[0];
-  const exprUrl = ensg && geneForExpr
+  // Only attempt the gene-level boxplot URL when this row has real
+  // gene-level RNA on file: self_gene rows always do; non-canonical rows
+  // only when we successfully inherited from a parent gene (ENSG999-style
+  // placeholders never resolve to a real plot, so skip the section title
+  // entirely instead of rendering an empty 404 panel).
+  const hasRealExpr = (r[COL.cls] === 'self_gene')
+    || (extra.exprInherited && (r[COL.tumorExp] != null || r[COL.normalExp] != null));
+  const exprUrl = hasRealExpr && ensg && geneForExpr && /^ENSG\d{8,}$/.test(ensg)
     ? `${ASSET_BASE}/${code}_${ensg}_${geneForExpr}_expr_boxplot+boxplot.png`
     : '';
   // Per-class differential plot URLs derived from the source string in
