@@ -1679,135 +1679,123 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .dl-all-btn svg { width: 14px; height: 14px; }
 
 /* ===================== INTERACTIVE SVG VIEWER ===================== */
+/* The figure embeds inline (no Illustrator-style toolbar). The legend
+   inside the SVG itself becomes clickable, and hovering data points
+   surfaces a small tooltip — same interaction pattern as the homepage
+   body map. */
 .svg-viewer {
   background: #fff;
   border: 1px solid var(--border);
   border-radius: 10px;
-  overflow: hidden;
   position: relative;
   margin-top: 8px;
-}
-.svg-viewer.loading::before {
-  content: "Loading interactive figure…";
-  display: block;
-  padding: 60px 20px;
-  text-align: center;
-  color: #555;
-  font-size: 12px;
-}
-.svg-viewer .svg-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: linear-gradient(to bottom, #fafbfc, #f4f5f7);
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-}
-.svg-viewer .svg-tool-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #fff;
-  border: 1px solid #d0d7e0;
-  border-radius: 6px;
-  padding: 4px 9px;
-  font-size: 11.5px;
-  font-family: inherit;
-  color: #2a3340;
-  cursor: pointer;
-  transition: background .12s, border-color .12s;
-}
-.svg-viewer .svg-tool-btn:hover { background: #f0f4f9; border-color: #99a8bd; }
-.svg-viewer .svg-tool-btn.active { background: var(--accent-cyan); border-color: var(--accent-cyan); color: #0a0e1a; font-weight: 600; }
-.svg-viewer .svg-tool-btn svg { width: 12px; height: 12px; }
-.svg-viewer .svg-chip-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.svg-viewer .svg-chip-bar .chip-label {
-  font-size: 11px;
-  color: #4b5670;
-  margin-right: 2px;
-}
-.svg-viewer .svg-color-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px 3px 6px;
-  border-radius: 999px;
-  border: 1.5px solid transparent;
-  background: #fff;
-  cursor: pointer;
-  font-size: 11px;
-  color: #2a3340;
-  transition: border-color .12s, background .12s;
-}
-.svg-viewer .svg-color-chip:hover { background: #f0f4f9; }
-.svg-viewer .svg-color-chip.active { border-color: var(--accent-cyan); background: #e8f7fc; }
-.svg-viewer .svg-color-chip .swatch {
-  display: inline-block;
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  border: 1px solid rgba(0,0,0,0.18);
-}
-.svg-viewer .svg-canvas-wrap {
-  position: relative;
   overflow: hidden;
-  width: 100%;
-  height: 460px;
-  cursor: grab;
-  background: #fff;
-  background-image:
-    linear-gradient(45deg, #f5f7fa 25%, transparent 25%),
-    linear-gradient(-45deg, #f5f7fa 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #f5f7fa 75%),
-    linear-gradient(-45deg, transparent 75%, #f5f7fa 75%);
-  background-size: 20px 20px;
-  background-position: 0 0, 0 10px, 10px -10px, 10px 0px;
 }
-.svg-viewer .svg-canvas-wrap.grabbing { cursor: grabbing; }
-.svg-viewer .svg-canvas-wrap.expanded { height: 78vh; }
-.svg-viewer .svg-canvas-wrap > svg {
+.svg-viewer .svg-stage {
+  position: relative;
+  width: 100%;
+}
+.svg-viewer .svg-stage > svg {
   display: block;
   width: 100%;
-  height: 100%;
-  transform-origin: 0 0;
-  transition: transform .04s linear, opacity .15s ease;
+  height: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: opacity .15s ease;
 }
-.svg-viewer .svg-canvas-wrap > svg .svg-data-dim {
-  opacity: 0.18 !important;
+.svg-viewer .svg-data-dim {
+  opacity: 0.16 !important;
   transition: opacity .25s ease;
+}
+.svg-viewer .svg-data-pop {
+  filter: drop-shadow(0 0 2.5px rgba(34,211,238,0.55));
+}
+.svg-viewer .svg-legend-hot {
+  cursor: pointer;
+}
+.svg-viewer .svg-legend-locked rect.svg-legend-bg,
+.svg-viewer .svg-legend-locked path.svg-legend-bg {
+  fill: rgba(34,211,238,0.10) !important;
+  stroke: var(--accent-cyan) !important;
 }
 .svg-viewer .svg-tooltip {
   position: absolute;
   pointer-events: none;
   background: rgba(13,18,30,0.95);
   color: #f0f4f9;
-  font-size: 11px;
+  font-size: 11.5px;
   font-family: var(--mono);
-  padding: 5px 9px;
+  padding: 6px 10px;
   border-radius: 6px;
   z-index: 10;
   white-space: nowrap;
   opacity: 0;
-  transition: opacity .12s;
+  transition: opacity .1s;
   box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+  max-width: 320px;
+  line-height: 1.4;
 }
 .svg-viewer .svg-tooltip.show { opacity: 1; }
-.svg-viewer .svg-zoom-readout {
-  margin-left: auto;
-  font-size: 10.5px;
-  font-family: var(--mono);
-  color: #4b5670;
+.svg-viewer .svg-tooltip .ttip-key { color: #94d8e8; }
+.svg-viewer .svg-tooltip .ttip-clear { color: var(--accent-amber); margin-top: 2px; display: block; font-size: 10.5px; }
+.svg-viewer .svg-hint {
+  position: absolute;
+  top: 8px; right: 12px;
+  font-size: 11px;
+  color: #6b7280;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 3px 8px;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity .25s;
 }
+.svg-viewer.has-locked .svg-hint { opacity: 0; }
+.svg-viewer .svg-clear-btn {
+  position: absolute;
+  top: 8px; right: 12px;
+  font-size: 11px;
+  color: var(--accent-amber);
+  background: rgba(255,255,255,0.95);
+  border: 1px solid var(--accent-amber);
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-family: inherit;
+  display: none;
+}
+.svg-viewer.has-locked .svg-clear-btn { display: block; }
+.svg-viewer .svg-corner {
+  position: absolute;
+  bottom: 6px; right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0.45;
+  transition: opacity .15s;
+}
+.svg-viewer:hover .svg-corner { opacity: 1; }
+.svg-viewer .svg-corner button {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid #d0d7e0;
+  color: #4b5670;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.svg-viewer .svg-corner button:hover { background: #fff; color: #0a0e1a; }
+.svg-viewer .svg-corner button svg { width: 11px; height: 11px; }
 .svg-viewer .svg-error {
   padding: 20px;
   text-align: center;
   color: #b91c1c;
   font-size: 12px;
+  background: #fff;
 }
 
 /* Small toast for download status feedback. */
@@ -4222,88 +4210,101 @@ async function fetchSvgIfExists(svgUrl) {
   return p;
 }
 
-// Walk the parsed SVG, collect all distinct hex colors used on data
-// elements. Skips axis/label black, white backgrounds, and very pale grays.
-function _detectDataColors(svgEl) {
-  const counts = new Map();
-  const collect = (raw) => {
-    if (!raw) return;
-    const matches = String(raw).match(/#[0-9a-fA-F]{6}/g) || [];
-    for (const m of matches) {
-      const c = m.toLowerCase();
-      if (c === '#000000' || c === '#ffffff' || c === '#cccccc') continue;
-      counts.set(c, (counts.get(c) || 0) + 1);
+// Walk the parsed SVG legend and build a list of {color, label, markerEl,
+// textEl, hitEl}. Matplotlib pairs each legend entry as a <g id="line2d_*">
+// (the colored marker) followed by <g id="text_*"> (the text glyphs). The
+// human-readable label is embedded as an XML comment node inside the text
+// group, e.g. `<!-- A*24:02;B*18:01 -->`. We harvest those comments to get
+// real allele names back.
+function _parseLegend(svgEl) {
+  const legend = svgEl.querySelector('g[id^="legend_"]');
+  if (!legend) return { legendEl: null, entries: [] };
+  const colorOf = (el) => {
+    const m = (el.getAttribute('style') || '').match(/(?:fill|stroke):\s*(#[0-9a-fA-F]{6})/);
+    if (m) return m[1].toLowerCase();
+    const f = el.getAttribute('fill');
+    if (f && /^#[0-9a-fA-F]{6}$/.test(f)) return f.toLowerCase();
+    const s = el.getAttribute('stroke');
+    if (s && /^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+    // Try descendants
+    for (const child of el.querySelectorAll('[style], [fill], [stroke]')) {
+      const c = colorOf(child);
+      if (c && c !== '#000000' && c !== '#ffffff' && c !== '#cccccc') return c;
     }
+    return null;
   };
-  svgEl.querySelectorAll('[style], [fill], [stroke]').forEach(el => {
-    collect(el.getAttribute('style'));
-    collect(el.getAttribute('fill'));
-    collect(el.getAttribute('stroke'));
-  });
-  return [...counts.entries()]
-    .filter(([_, n]) => n >= 2)        // drop one-offs (axis ticks etc)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
-    .map(e => e[0]);
+  const commentText = (el) => {
+    for (const child of el.childNodes) {
+      if (child.nodeType === Node.COMMENT_NODE) {
+        const t = child.nodeValue.trim();
+        if (t) return t;
+      }
+    }
+    return '';
+  };
+  const children = [...legend.children];
+  const entries = [];
+  for (let i = 0; i < children.length; i++) {
+    const g = children[i];
+    if (!/^line2d_/.test(g.id || '')) continue;
+    const next = children[i + 1];
+    if (!next || !/^text_/.test(next.id || '')) continue;
+    const color = colorOf(g);
+    const label = commentText(next);
+    if (!color || !label) continue;
+    entries.push({ color, label, markerEl: g, textEl: next });
+  }
+  return { legendEl: legend, entries };
 }
 
-// Apply a color highlight: every element whose stroke/fill matches the
-// chosen color stays vivid; everything else (data only — axes left alone)
-// gets the svg-data-dim class.
-function _applyColorFilter(svgEl, activeColor) {
-  const dimClass = 'svg-data-dim';
+// Apply a color highlight: data series elements whose stroke/fill matches
+// the chosen color stay vivid; everything else gets dimmed. Axes and
+// legend chrome are left alone.
+function _highlightByColor(svgEl, activeColor) {
+  const dim = 'svg-data-dim';
+  const pop = 'svg-data-pop';
   if (!activeColor) {
-    svgEl.querySelectorAll('.' + dimClass).forEach(el => el.classList.remove(dimClass));
+    svgEl.querySelectorAll('.' + dim).forEach(el => el.classList.remove(dim));
+    svgEl.querySelectorAll('.' + pop).forEach(el => el.classList.remove(pop));
     return;
   }
   const norm = activeColor.toLowerCase();
-  const hasColor = (el) => {
+  const matches = (el) => {
     const style = (el.getAttribute('style') || '').toLowerCase();
     const fill = (el.getAttribute('fill') || '').toLowerCase();
     const stroke = (el.getAttribute('stroke') || '').toLowerCase();
     if (fill === norm || stroke === norm) return true;
     return style.includes(norm);
   };
-  // Matplotlib emits each scatter / line series as a <g id="line2d_N"> or
-  // <g id="PathCollection_N">. Dim those that don't carry the chosen color.
-  // Axis groups (id="matplotlib.axis_*") and patch backgrounds are left alone.
-  svgEl.querySelectorAll('g[id^="line2d_"], g[id^="PathCollection_"], g[id^="LineCollection_"]').forEach(g => {
-    let matches = hasColor(g);
-    if (!matches) {
-      g.querySelectorAll('*').forEach(el => { if (!matches && hasColor(el)) matches = true; });
-    }
-    g.classList.toggle(dimClass, !matches);
+  // Walk plot data containers (line2d_*, PathCollection_*, LineCollection_*),
+  // skipping any that live inside the legend group.
+  const dataGroups = svgEl.querySelectorAll('g[id^="line2d_"], g[id^="PathCollection_"], g[id^="LineCollection_"]');
+  dataGroups.forEach(g => {
+    if (g.closest('g[id^="legend_"]')) return; // legend markers handled separately
+    let hit = matches(g);
+    if (!hit) for (const el of g.querySelectorAll('*')) { if (matches(el)) { hit = true; break; } }
+    g.classList.toggle(dim, !hit);
+    g.classList.toggle(pop, hit);
   });
 }
-
-// SVG icon helpers used inside the viewer toolbar.
-const _SVG_ICON_RESET = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 10 9 10"/></svg>`;
-const _SVG_ICON_EXPAND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>`;
 
 function mountInteractiveSvg(host, svgText, opts) {
   opts = opts || {};
   host.classList.add('svg-viewer');
-  host.classList.remove('loading');
+  host.classList.remove('loading', 'has-locked');
   host.innerHTML = `
-    <div class="svg-toolbar">
-      <button class="svg-tool-btn" data-act="reset" title="Reset zoom and pan">${_SVG_ICON_RESET}<span>Reset</span></button>
-      <button class="svg-tool-btn" data-act="zoom-in" title="Zoom in">+</button>
-      <button class="svg-tool-btn" data-act="zoom-out" title="Zoom out">−</button>
-      <button class="svg-tool-btn" data-act="expand" title="Toggle full-height view">${_SVG_ICON_EXPAND}</button>
-      <div class="svg-chip-bar"><span class="chip-label">Highlight color:</span></div>
-      <span class="svg-zoom-readout">100%</span>
-      <button class="svg-tool-btn" data-act="download" title="Download SVG">${DL_ICON}<span>SVG</span></button>
-      ${opts.pngUrl ? `<button class="svg-tool-btn" data-act="to-png" title="Switch back to static PNG">PNG</button>` : ''}
-    </div>
-    <div class="svg-canvas-wrap"></div>
+    <div class="svg-stage"></div>
     <div class="svg-tooltip"></div>
+    <div class="svg-hint">Hover or click a legend entry to filter</div>
+    <button class="svg-clear-btn" data-act="clear">Clear filter ✕</button>
+    <div class="svg-corner">
+      <button data-act="download" title="Download this figure as SVG">${DL_ICON}<span>SVG</span></button>
+      ${opts.pngUrl ? `<button data-act="to-png" title="Switch back to the static PNG">PNG</button>` : ''}
+    </div>
   `;
-  const wrap = host.querySelector('.svg-canvas-wrap');
+  const stage = host.querySelector('.svg-stage');
   const tip = host.querySelector('.svg-tooltip');
-  const chipBar = host.querySelector('.svg-chip-bar');
-  const zoomReadout = host.querySelector('.svg-zoom-readout');
 
-  // Parse and inline the SVG.
   let svgEl;
   try {
     const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
@@ -4313,106 +4314,107 @@ function mountInteractiveSvg(host, svgText, opts) {
     host.innerHTML = `<div class="svg-error">Failed to parse SVG: ${e.message}</div>`;
     return null;
   }
-  // Force fluid sizing inside our container. matplotlib emits explicit
-  // pt-based width/height that would otherwise overflow the panel.
+  // Fluid: respect aspect ratio, fill container width, height auto-grows.
   svgEl.removeAttribute('width');
   svgEl.removeAttribute('height');
   svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-  wrap.appendChild(svgEl);
+  stage.appendChild(svgEl);
 
-  // Build color-filter chips.
-  const colors = _detectDataColors(svgEl);
-  if (colors.length) {
-    for (const c of colors) {
-      const chip = document.createElement('button');
-      chip.className = 'svg-color-chip';
-      chip.dataset.color = c;
-      chip.innerHTML = `<span class="swatch" style="background:${c}"></span><span>${c.slice(1).toUpperCase()}</span>`;
-      chipBar.appendChild(chip);
+  // Build the legend interaction model.
+  const { legendEl, entries } = _parseLegend(svgEl);
+  // Color → entry index, used to round-trip from a data hover back to its
+  // legend label.
+  const colorToEntry = new Map();
+  entries.forEach((e, i) => colorToEntry.set(e.color, i));
+
+  let lockedColor = null;
+
+  const setHighlight = (color) => {
+    _highlightByColor(svgEl, color);
+    // Sync legend entries: dim non-active markers + their text.
+    if (entries.length) {
+      entries.forEach(en => {
+        const off = color && en.color !== color;
+        en.markerEl.classList.toggle('svg-data-dim', !!off);
+        en.textEl.classList.toggle('svg-data-dim', !!off);
+      });
     }
-  } else {
-    chipBar.querySelector('.chip-label').textContent = '';
+  };
+
+  // Wire each legend entry as a clickable + hoverable hit zone.
+  if (entries.length) {
+    entries.forEach((en) => {
+      const elsToWire = [en.markerEl, en.textEl];
+      elsToWire.forEach(el => {
+        el.classList.add('svg-legend-hot');
+        el.addEventListener('mouseenter', () => {
+          if (lockedColor) return;
+          setHighlight(en.color);
+          tip.innerHTML = `<span class="ttip-key">HLA</span> ${_searchEsc(en.label)}<br><span class="ttip-clear">click to lock</span>`;
+        });
+        el.addEventListener('mouseleave', () => {
+          if (lockedColor) return;
+          setHighlight(null);
+        });
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (lockedColor === en.color) {
+            lockedColor = null;
+            host.classList.remove('has-locked');
+            setHighlight(null);
+          } else {
+            lockedColor = en.color;
+            host.classList.add('has-locked');
+            setHighlight(en.color);
+          }
+        });
+      });
+    });
   }
 
-  // Zoom + pan state.
-  let scale = 1, tx = 0, ty = 0;
-  const SCALE_MIN = 0.5, SCALE_MAX = 12;
-  const update = () => {
-    svgEl.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
-    zoomReadout.textContent = Math.round(scale * 100) + '%';
-  };
-
-  wrap.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const rect = wrap.getBoundingClientRect();
-    const cx = e.clientX - rect.left;
-    const cy = e.clientY - rect.top;
-    const old = scale;
-    const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
-    scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, scale * factor));
-    tx = cx - (cx - tx) * (scale / old);
-    ty = cy - (cy - ty) * (scale / old);
-    update();
-  }, { passive: false });
-
-  let dragging = false, lastX = 0, lastY = 0;
-  wrap.addEventListener('mousedown', (e) => {
-    if (e.button !== 0) return;
-    dragging = true;
-    wrap.classList.add('grabbing');
-    lastX = e.clientX; lastY = e.clientY;
-  });
-  const onMove = (e) => {
-    if (!dragging) return;
-    tx += e.clientX - lastX;
-    ty += e.clientY - lastY;
-    lastX = e.clientX; lastY = e.clientY;
-    update();
-  };
-  const onUp = () => { dragging = false; wrap.classList.remove('grabbing'); };
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
-
-  // Tooltip on hover over data marker groups. Matplotlib scatter points
-  // emit <use> nodes that reference per-marker glyphs — we surface their
-  // (x, y) via the parent group's transform when available, else use a
-  // generic "data point" label.
-  wrap.addEventListener('mousemove', (e) => {
+  // Hover anywhere over a data point in the chart area → live tooltip
+  // with the matched HLA label (resolved via color → legend entry).
+  const stageMouseMove = (e) => {
     const t = e.target.closest('use, path, circle, rect');
     if (!t) { tip.classList.remove('show'); return; }
-    const inLine2d = t.closest('g[id^="line2d_"], g[id^="PathCollection_"]');
-    if (!inLine2d) { tip.classList.remove('show'); return; }
-    const fill = (t.getAttribute('fill') || (t.getAttribute('style') || '').match(/fill:\s*(#[0-9a-fA-F]{6})/) || [])[1] || '';
-    const seriesId = inLine2d.id;
-    const rect = wrap.getBoundingClientRect();
-    tip.style.left = Math.min(rect.width - 140, e.clientX - rect.left + 12) + 'px';
-    tip.style.top = (e.clientY - rect.top - 32) + 'px';
-    tip.textContent = `${seriesId}${fill ? ' · ' + fill : ''}`;
-    tip.classList.add('show');
-  });
-  wrap.addEventListener('mouseleave', () => tip.classList.remove('show'));
-
-  // Color-chip click → toggle highlight.
-  let activeColor = null;
-  chipBar.addEventListener('click', (e) => {
-    const chip = e.target.closest('.svg-color-chip');
-    if (!chip) return;
-    const c = chip.dataset.color;
-    if (activeColor === c) {
-      activeColor = null;
-      chipBar.querySelectorAll('.svg-color-chip').forEach(el => el.classList.remove('active'));
+    if (t.closest('g[id^="legend_"]')) return; // legend hover already drives the tooltip text below
+    const inData = t.closest('g[id^="line2d_"], g[id^="PathCollection_"], g[id^="LineCollection_"]');
+    if (!inData) { tip.classList.remove('show'); return; }
+    let color =
+      ((t.getAttribute('style') || '').match(/(?:fill|stroke):\s*(#[0-9a-fA-F]{6})/) || [])[1]
+      || t.getAttribute('fill')
+      || t.getAttribute('stroke')
+      || '';
+    color = (color || '').toLowerCase();
+    const entryIdx = colorToEntry.get(color);
+    const label = entryIdx != null ? entries[entryIdx].label : null;
+    const rect = host.getBoundingClientRect();
+    tip.style.left = Math.min(rect.width - 280, e.clientX - rect.left + 12) + 'px';
+    tip.style.top = Math.max(0, e.clientY - rect.top - 38) + 'px';
+    if (label) {
+      tip.innerHTML = `<span class="ttip-key">HLA</span> ${_searchEsc(label)}`;
+      // Only auto-light up other points on hover when nothing is locked.
+      if (!lockedColor) setHighlight(color);
     } else {
-      activeColor = c;
-      chipBar.querySelectorAll('.svg-color-chip').forEach(el => el.classList.toggle('active', el === chip));
+      tip.innerHTML = `<span class="ttip-key">color</span> ${color}`;
     }
-    _applyColorFilter(svgEl, activeColor);
-  });
+    tip.classList.add('show');
+  };
+  const stageMouseLeave = () => {
+    tip.classList.remove('show');
+    if (!lockedColor) setHighlight(null);
+  };
+  stage.addEventListener('mousemove', stageMouseMove);
+  stage.addEventListener('mouseleave', stageMouseLeave);
 
-  // Toolbar handlers.
-  host.querySelector('[data-act="reset"]').onclick = () => { scale = 1; tx = 0; ty = 0; update(); };
-  host.querySelector('[data-act="zoom-in"]').onclick = () => { scale = Math.min(SCALE_MAX, scale * 1.25); update(); };
-  host.querySelector('[data-act="zoom-out"]').onclick = () => { scale = Math.max(SCALE_MIN, scale / 1.25); update(); };
-  host.querySelector('[data-act="expand"]').onclick = () => { wrap.classList.toggle('expanded'); };
+  // "Clear filter ✕" button while a lock is active.
+  host.querySelector('[data-act="clear"]').onclick = () => {
+    lockedColor = null;
+    host.classList.remove('has-locked');
+    setHighlight(null);
+  };
+
+  // Corner controls.
   host.querySelector('[data-act="download"]').onclick = () => {
     const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
     _triggerDownload(blob, _safeFilename(opts.filename || 'figure') + '.svg');
@@ -4420,17 +4422,25 @@ function mountInteractiveSvg(host, svgText, opts) {
   const toPngBtn = host.querySelector('[data-act="to-png"]');
   if (toPngBtn && opts.onPngFallback) {
     toPngBtn.onclick = () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+      stage.removeEventListener('mousemove', stageMouseMove);
+      stage.removeEventListener('mouseleave', stageMouseLeave);
       opts.onPngFallback();
     };
   }
 
+  // If the legend wasn't parseable, soften the hint text so the user
+  // still gets context.
+  if (!entries.length) {
+    const hint = host.querySelector('.svg-hint');
+    if (hint) hint.textContent = 'Hover data points for details';
+  }
+
   return {
     destroy: () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+      stage.removeEventListener('mousemove', stageMouseMove);
+      stage.removeEventListener('mouseleave', stageMouseLeave);
     },
+    entriesCount: entries.length,
   };
 }
 
