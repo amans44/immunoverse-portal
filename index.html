@@ -4491,31 +4491,36 @@ async function openDrawer(r) {
       </div>
       ${(() => {
         const links = [];
-        // Preferred route: the robust useast Gene/Summary URL with g/r/t
-        // params (this is what the Ensembl search feature actually generates
-        // and survives edge outages that break the bare transcript page).
-        if (txMeta && txMeta.ensg && txMeta.chrom && txMeta.start && txMeta.end) {
-          // Ensembl parses semicolons as param separators and needs the colon
-          // in r=CHR:START-END kept literal. Our tokens (ENSG/ENST/chrom/coords)
-          // are all alphanumeric so we can safely skip encoding.
-          const region = `${txMeta.chrom}:${txMeta.start}-${txMeta.end}`;
-          const t = transcript ? `;t=${transcript.split('.')[0]}` : '';
-          const url = `https://useast.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=${txMeta.ensg};r=${region}${t}`;
-          links.push(`<a class="xref" href="${url}" target="_blank" rel="noopener">Ensembl Gene page (GRCh38) ↗</a>`);
-        }
-        if (transcript) {
-          links.push(`<a class="xref" href="https://rest.ensembl.org/lookup/id/${encodeURIComponent(transcript.split('.')[0])}?expand=0;content-type=text/html" target="_blank" rel="noopener">Ensembl REST ↗</a>`);
+        const cls = r[COL.cls];
+        // For nuORF (cryptic ORF) we only show UCSC hg19 — the gene-level
+        // GRCh38 Ensembl links and the GRCh37 region link disagree with the
+        // hg19 ORF coordinates the row actually shows, so they just add
+        // noise. Skip the txMeta-derived links entirely for this class.
+        if (cls !== 'nuORF') {
+          // Preferred route: the robust useast Gene/Summary URL with g/r/t
+          // params (this is what the Ensembl search feature actually generates
+          // and survives edge outages that break the bare transcript page).
+          if (txMeta && txMeta.ensg && txMeta.chrom && txMeta.start && txMeta.end) {
+            // Ensembl parses semicolons as param separators and needs the colon
+            // in r=CHR:START-END kept literal. Our tokens (ENSG/ENST/chrom/coords)
+            // are all alphanumeric so we can safely skip encoding.
+            const region = `${txMeta.chrom}:${txMeta.start}-${txMeta.end}`;
+            const t = transcript ? `;t=${transcript.split('.')[0]}` : '';
+            const url = `https://useast.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=${txMeta.ensg};r=${region}${t}`;
+            links.push(`<a class="xref" href="${url}" target="_blank" rel="noopener">Ensembl Gene page (GRCh38) ↗</a>`);
+          }
+          if (transcript) {
+            links.push(`<a class="xref" href="https://rest.ensembl.org/lookup/id/${encodeURIComponent(transcript.split('.')[0])}?expand=0;content-type=text/html" target="_blank" rel="noopener">Ensembl REST ↗</a>`);
+          }
         }
         if (coord) {
           const c = coord.replace(/ \([+\-]\)$/, '');
           // nuORF (cryptic ORF) coordinates are hg19. Every other class
           // (ERV, splicing, TE_chimeric, intron_retention, fusion) comes
           // from the NeoVerse pipeline which aligns to GRCh38 → hg38.
-          const cls = r[COL.cls];
           const ucscHg19 = `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg19 ↗</a>`;
           const ucscHg38 = `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg38 ↗</a>`;
           if (cls === 'nuORF') {
-            links.push(`<a class="xref" href="https://grch37.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh37 region ↗</a>`);
             links.push(ucscHg19);
           } else {
             links.push(`<a class="xref" href="https://useast.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh38 region ↗</a>`);
