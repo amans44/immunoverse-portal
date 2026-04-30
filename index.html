@@ -1710,8 +1710,23 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .svg-viewer .svg-data-pop {
   filter: drop-shadow(0 0 2.5px rgba(34,211,238,0.55));
 }
-.svg-viewer .svg-legend-hot {
+.svg-viewer .svg-legend-hot,
+.svg-viewer .svg-tick-hot {
   cursor: pointer;
+}
+/* Tissue x-axis tick — hover and clicked states. Glyph paths recolor
+   to cyan and gain a thin stroke for an apparent "bold" effect. */
+.svg-viewer .svg-tick-hot path { transition: fill .15s, stroke .15s, stroke-width .15s; }
+.svg-viewer .svg-tick-hover path,
+.svg-viewer .svg-tick-active path {
+  fill: #0a7fa6 !important;
+  stroke: #0a7fa6;
+  stroke-width: 0.6;
+}
+.svg-viewer .svg-tick-active path {
+  fill: #00748f !important;
+  stroke: #00748f;
+  stroke-width: 0.9;
 }
 .svg-viewer .svg-legend-locked rect.svg-legend-bg,
 .svg-viewer .svg-legend-locked path.svg-legend-bg {
@@ -4295,11 +4310,11 @@ function mountInteractiveSvg(host, svgText, opts) {
   host.innerHTML = `
     <div class="svg-stage"></div>
     <div class="svg-tooltip"></div>
-    <div class="svg-hint">Hover or click a legend entry to filter</div>
+    <div class="svg-hint">Hover the legend or a tissue label to highlight; click to lock</div>
     <button class="svg-clear-btn" data-act="clear">Clear filter ✕</button>
     <div class="svg-corner">
-      <button data-act="download" title="Download this figure as SVG">${DL_ICON}<span>SVG</span></button>
-      ${opts.pngUrl ? `<button data-act="to-png" title="Switch back to the static PNG">PNG</button>` : ''}
+      ${opts.pngUrl ? `<button data-act="png-download" title="Download this figure as PNG">${DL_ICON}<span>PNG</span></button>` : ''}
+      ${opts.pngUrl ? `<button data-act="to-png" title="Switch back to the static PNG view">PNG view</button>` : ''}
     </div>
   `;
   const stage = host.querySelector('.svg-stage');
@@ -4372,6 +4387,65 @@ function mountInteractiveSvg(host, svgText, opts) {
     });
   }
 
+  // Push the matplotlib summary table (axes_3 / table_1) down so it stops
+  // clipping the rotated tissue x-axis labels of the panel above. ~22px
+  // is enough to clear "Adrenal gland" / "Small intestine" at -90° rot.
+  // (The SVG canvas has plenty of bottom margin for this nudge.)
+  const tableGroup = svgEl.querySelector('g[id^="axes_3"], g[id^="table_"]');
+  if (tableGroup) {
+    const existing = tableGroup.getAttribute('transform') || '';
+    tableGroup.setAttribute('transform', `${existing} translate(0 22)`.trim());
+  }
+
+  // Make x-axis tissue labels (and any other categorical tick labels with
+  // human-readable comments) interactive — same pattern as the legend.
+  // We discover them by walking each matplotlib axis group inside axes_2
+  // and pulling text groups whose comment isn't a number.
+  const tickLabels = [];
+  svgEl.querySelectorAll('g[id^="matplotlib.axis_"]').forEach(axis => {
+    axis.querySelectorAll('g[id^="xtick_"], g[id^="ytick_"]').forEach(tick => {
+      const textG = tick.querySelector('g[id^="text_"]');
+      if (!textG) return;
+      let label = '';
+      for (const child of textG.childNodes) {
+        if (child.nodeType === Node.COMMENT_NODE) {
+          const t = child.nodeValue.trim();
+          if (t) { label = t; break; }
+        }
+      }
+      // Skip pure-numeric ticks ("0.5", "−40", "1e3" …) — they're axis
+      // values, not categorical labels and shouldn't be hot.
+      if (!label || /^[\-−+]?[\d.,]+(e[\-+]?\d+)?$/i.test(label)) return;
+      tickLabels.push({ label, el: textG });
+    });
+  });
+  tickLabels.forEach(t => {
+    t.el.classList.add('svg-tick-hot');
+    t.el.addEventListener('mouseenter', () => {
+      t.el.classList.add('svg-tick-hover');
+      const rect = host.getBoundingClientRect();
+      // Anchor tooltip near the label's midpoint, fall back to mouse pos
+      // if getBBox() is unavailable.
+      tip.innerHTML = `<span class="ttip-key">tissue</span> ${_searchEsc(t.label)}`;
+      tip.classList.add('show');
+    });
+    t.el.addEventListener('mousemove', (e) => {
+      const rect = host.getBoundingClientRect();
+      tip.style.left = Math.min(rect.width - 180, e.clientX - rect.left + 12) + 'px';
+      tip.style.top = Math.max(0, e.clientY - rect.top - 32) + 'px';
+    });
+    t.el.addEventListener('mouseleave', () => {
+      t.el.classList.remove('svg-tick-hover');
+      if (!t.el.classList.contains('svg-tick-active')) tip.classList.remove('show');
+    });
+    t.el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Toggle "stuck" bold-cyan on this tick. Multiple ticks can be
+      // active at once so the user can compare a few tissues side-by-side.
+      t.el.classList.toggle('svg-tick-active');
+    });
+  });
+
   // Hover anywhere over a data point in the chart area → live tooltip
   // with the matched HLA label (resolved via color → legend entry).
   const stageMouseMove = (e) => {
@@ -4414,11 +4488,15 @@ function mountInteractiveSvg(host, svgText, opts) {
     setHighlight(null);
   };
 
-  // Corner controls.
-  host.querySelector('[data-act="download"]').onclick = () => {
-    const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
-    _triggerDownload(blob, _safeFilename(opts.filename || 'figure') + '.svg');
-  };
+  // Corner controls. PNG download fetches the original raster from NYU
+  // through the proxy so users get a clean, high-quality bitmap (the
+  // canvas-rasterizing path would be lossy at small viewport widths).
+  const pngDlBtn = host.querySelector('[data-act="png-download"]');
+  if (pngDlBtn && opts.pngUrl) {
+    pngDlBtn.onclick = () => {
+      downloadImage(opts.pngUrl, _safeFilename(opts.filename || 'figure') + '.png');
+    };
+  }
   const toPngBtn = host.querySelector('[data-act="to-png"]');
   if (toPngBtn && opts.onPngFallback) {
     toPngBtn.onclick = () => {
@@ -4429,10 +4507,16 @@ function mountInteractiveSvg(host, svgText, opts) {
   }
 
   // If the legend wasn't parseable, soften the hint text so the user
-  // still gets context.
-  if (!entries.length) {
-    const hint = host.querySelector('.svg-hint');
-    if (hint) hint.textContent = 'Hover data points for details';
+  // still gets context. If only ticks are interactive, say so.
+  const hint = host.querySelector('.svg-hint');
+  if (hint) {
+    if (entries.length && tickLabels.length) {
+      hint.textContent = 'Hover legend or tissue labels to highlight; click to lock';
+    } else if (!entries.length && tickLabels.length) {
+      hint.textContent = 'Hover or click tissue labels to highlight';
+    } else if (!entries.length && !tickLabels.length) {
+      hint.textContent = 'Hover data points for details';
+    }
   }
 
   return {
