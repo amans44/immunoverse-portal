@@ -1678,6 +1678,138 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .dl-all-btn:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
 .dl-all-btn svg { width: 14px; height: 14px; }
 
+/* ===================== INTERACTIVE SVG VIEWER ===================== */
+.svg-viewer {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  margin-top: 8px;
+}
+.svg-viewer.loading::before {
+  content: "Loading interactive figure…";
+  display: block;
+  padding: 60px 20px;
+  text-align: center;
+  color: #555;
+  font-size: 12px;
+}
+.svg-viewer .svg-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(to bottom, #fafbfc, #f4f5f7);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.svg-viewer .svg-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #d0d7e0;
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 11.5px;
+  font-family: inherit;
+  color: #2a3340;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.svg-viewer .svg-tool-btn:hover { background: #f0f4f9; border-color: #99a8bd; }
+.svg-viewer .svg-tool-btn.active { background: var(--accent-cyan); border-color: var(--accent-cyan); color: #0a0e1a; font-weight: 600; }
+.svg-viewer .svg-tool-btn svg { width: 12px; height: 12px; }
+.svg-viewer .svg-chip-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.svg-viewer .svg-chip-bar .chip-label {
+  font-size: 11px;
+  color: #4b5670;
+  margin-right: 2px;
+}
+.svg-viewer .svg-color-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 6px;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  background: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  color: #2a3340;
+  transition: border-color .12s, background .12s;
+}
+.svg-viewer .svg-color-chip:hover { background: #f0f4f9; }
+.svg-viewer .svg-color-chip.active { border-color: var(--accent-cyan); background: #e8f7fc; }
+.svg-viewer .svg-color-chip .swatch {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.18);
+}
+.svg-viewer .svg-canvas-wrap {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 460px;
+  cursor: grab;
+  background: #fff;
+  background-image:
+    linear-gradient(45deg, #f5f7fa 25%, transparent 25%),
+    linear-gradient(-45deg, #f5f7fa 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #f5f7fa 75%),
+    linear-gradient(-45deg, transparent 75%, #f5f7fa 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, 10px 0px;
+}
+.svg-viewer .svg-canvas-wrap.grabbing { cursor: grabbing; }
+.svg-viewer .svg-canvas-wrap.expanded { height: 78vh; }
+.svg-viewer .svg-canvas-wrap > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+  transition: transform .04s linear, opacity .15s ease;
+}
+.svg-viewer .svg-canvas-wrap > svg .svg-data-dim {
+  opacity: 0.18 !important;
+  transition: opacity .25s ease;
+}
+.svg-viewer .svg-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(13,18,30,0.95);
+  color: #f0f4f9;
+  font-size: 11px;
+  font-family: var(--mono);
+  padding: 5px 9px;
+  border-radius: 6px;
+  z-index: 10;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity .12s;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+.svg-viewer .svg-tooltip.show { opacity: 1; }
+.svg-viewer .svg-zoom-readout {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-family: var(--mono);
+  color: #4b5670;
+}
+.svg-viewer .svg-error {
+  padding: 20px;
+  text-align: center;
+  color: #b91c1c;
+  font-size: 12px;
+}
+
 /* Small toast for download status feedback. */
 .dl-toast {
   position: fixed;
@@ -4045,6 +4177,311 @@ function downloadAllFromDrawer(btnEl) {
   return downloadAllForPeptide(r, DRAWER_CODE, btnEl);
 }
 
+// ============ INTERACTIVE SVG VIEWER ============
+// When a peptide's figure has been uploaded as an interactive SVG to
+//   {NYU}/assets_svg/{CANCER}/{PEP}_{kind}.svg
+// we replace the static <img> with an inline-embedded SVG that supports
+// color-filter chips, hover tooltips, wheel zoom, and drag pan. Falls back
+// to the existing PNG silently when the SVG doesn't exist.
+const ASSET_SVG_BASE = 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/assets_svg';
+const SVG_FETCH_CACHE = new Map();           // url -> Promise<string|null>
+const SVG_EXISTS_KEY = u => 'svgexist:' + u;
+const SVG_EXISTS_TTL = 12 * 3600 * 1000;     // 12h
+// Auto-load interactive SVG up to this size; bigger files require an explicit
+// click so we don't freeze the tab parsing megabytes of inline SVG paths.
+const SVG_AUTO_BYTES = 2 * 1024 * 1024;
+
+async function fetchSvgIfExists(svgUrl) {
+  if (!IMG_PROXY) return null;
+  if (SVG_FETCH_CACHE.has(svgUrl)) return SVG_FETCH_CACHE.get(svgUrl);
+  // Fast-path: localStorage remembers recent 404s so we don't probe every open.
+  try {
+    const cached = JSON.parse(localStorage.getItem(SVG_EXISTS_KEY(svgUrl)) || 'null');
+    if (cached && cached.exists === false && (Date.now() - cached.t) < SVG_EXISTS_TTL) {
+      const p = Promise.resolve(null);
+      SVG_FETCH_CACHE.set(svgUrl, p);
+      return p;
+    }
+  } catch (e) { /* localStorage may be disabled */ }
+
+  const p = (async () => {
+    try {
+      const r = await fetch(IMG_PROXY + encodeURIComponent(svgUrl));
+      if (!r.ok) {
+        try { localStorage.setItem(SVG_EXISTS_KEY(svgUrl), JSON.stringify({t: Date.now(), exists: false})); } catch (e) {}
+        return null;
+      }
+      try { localStorage.setItem(SVG_EXISTS_KEY(svgUrl), JSON.stringify({t: Date.now(), exists: true})); } catch (e) {}
+      return await r.text();
+    } catch (e) {
+      console.warn('SVG fetch failed', svgUrl, e);
+      return null;
+    }
+  })();
+  SVG_FETCH_CACHE.set(svgUrl, p);
+  return p;
+}
+
+// Walk the parsed SVG, collect all distinct hex colors used on data
+// elements. Skips axis/label black, white backgrounds, and very pale grays.
+function _detectDataColors(svgEl) {
+  const counts = new Map();
+  const collect = (raw) => {
+    if (!raw) return;
+    const matches = String(raw).match(/#[0-9a-fA-F]{6}/g) || [];
+    for (const m of matches) {
+      const c = m.toLowerCase();
+      if (c === '#000000' || c === '#ffffff' || c === '#cccccc') continue;
+      counts.set(c, (counts.get(c) || 0) + 1);
+    }
+  };
+  svgEl.querySelectorAll('[style], [fill], [stroke]').forEach(el => {
+    collect(el.getAttribute('style'));
+    collect(el.getAttribute('fill'));
+    collect(el.getAttribute('stroke'));
+  });
+  return [...counts.entries()]
+    .filter(([_, n]) => n >= 2)        // drop one-offs (axis ticks etc)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(e => e[0]);
+}
+
+// Apply a color highlight: every element whose stroke/fill matches the
+// chosen color stays vivid; everything else (data only — axes left alone)
+// gets the svg-data-dim class.
+function _applyColorFilter(svgEl, activeColor) {
+  const dimClass = 'svg-data-dim';
+  if (!activeColor) {
+    svgEl.querySelectorAll('.' + dimClass).forEach(el => el.classList.remove(dimClass));
+    return;
+  }
+  const norm = activeColor.toLowerCase();
+  const hasColor = (el) => {
+    const style = (el.getAttribute('style') || '').toLowerCase();
+    const fill = (el.getAttribute('fill') || '').toLowerCase();
+    const stroke = (el.getAttribute('stroke') || '').toLowerCase();
+    if (fill === norm || stroke === norm) return true;
+    return style.includes(norm);
+  };
+  // Matplotlib emits each scatter / line series as a <g id="line2d_N"> or
+  // <g id="PathCollection_N">. Dim those that don't carry the chosen color.
+  // Axis groups (id="matplotlib.axis_*") and patch backgrounds are left alone.
+  svgEl.querySelectorAll('g[id^="line2d_"], g[id^="PathCollection_"], g[id^="LineCollection_"]').forEach(g => {
+    let matches = hasColor(g);
+    if (!matches) {
+      g.querySelectorAll('*').forEach(el => { if (!matches && hasColor(el)) matches = true; });
+    }
+    g.classList.toggle(dimClass, !matches);
+  });
+}
+
+// SVG icon helpers used inside the viewer toolbar.
+const _SVG_ICON_RESET = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 10 9 10"/></svg>`;
+const _SVG_ICON_EXPAND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>`;
+
+function mountInteractiveSvg(host, svgText, opts) {
+  opts = opts || {};
+  host.classList.add('svg-viewer');
+  host.classList.remove('loading');
+  host.innerHTML = `
+    <div class="svg-toolbar">
+      <button class="svg-tool-btn" data-act="reset" title="Reset zoom and pan">${_SVG_ICON_RESET}<span>Reset</span></button>
+      <button class="svg-tool-btn" data-act="zoom-in" title="Zoom in">+</button>
+      <button class="svg-tool-btn" data-act="zoom-out" title="Zoom out">−</button>
+      <button class="svg-tool-btn" data-act="expand" title="Toggle full-height view">${_SVG_ICON_EXPAND}</button>
+      <div class="svg-chip-bar"><span class="chip-label">Highlight color:</span></div>
+      <span class="svg-zoom-readout">100%</span>
+      <button class="svg-tool-btn" data-act="download" title="Download SVG">${DL_ICON}<span>SVG</span></button>
+      ${opts.pngUrl ? `<button class="svg-tool-btn" data-act="to-png" title="Switch back to static PNG">PNG</button>` : ''}
+    </div>
+    <div class="svg-canvas-wrap"></div>
+    <div class="svg-tooltip"></div>
+  `;
+  const wrap = host.querySelector('.svg-canvas-wrap');
+  const tip = host.querySelector('.svg-tooltip');
+  const chipBar = host.querySelector('.svg-chip-bar');
+  const zoomReadout = host.querySelector('.svg-zoom-readout');
+
+  // Parse and inline the SVG.
+  let svgEl;
+  try {
+    const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+    svgEl = doc.documentElement;
+    if (svgEl.querySelector('parsererror')) throw new Error('SVG parse error');
+  } catch (e) {
+    host.innerHTML = `<div class="svg-error">Failed to parse SVG: ${e.message}</div>`;
+    return null;
+  }
+  // Force fluid sizing inside our container. matplotlib emits explicit
+  // pt-based width/height that would otherwise overflow the panel.
+  svgEl.removeAttribute('width');
+  svgEl.removeAttribute('height');
+  svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  wrap.appendChild(svgEl);
+
+  // Build color-filter chips.
+  const colors = _detectDataColors(svgEl);
+  if (colors.length) {
+    for (const c of colors) {
+      const chip = document.createElement('button');
+      chip.className = 'svg-color-chip';
+      chip.dataset.color = c;
+      chip.innerHTML = `<span class="swatch" style="background:${c}"></span><span>${c.slice(1).toUpperCase()}</span>`;
+      chipBar.appendChild(chip);
+    }
+  } else {
+    chipBar.querySelector('.chip-label').textContent = '';
+  }
+
+  // Zoom + pan state.
+  let scale = 1, tx = 0, ty = 0;
+  const SCALE_MIN = 0.5, SCALE_MAX = 12;
+  const update = () => {
+    svgEl.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    zoomReadout.textContent = Math.round(scale * 100) + '%';
+  };
+
+  wrap.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = wrap.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const old = scale;
+    const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+    scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, scale * factor));
+    tx = cx - (cx - tx) * (scale / old);
+    ty = cy - (cy - ty) * (scale / old);
+    update();
+  }, { passive: false });
+
+  let dragging = false, lastX = 0, lastY = 0;
+  wrap.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    dragging = true;
+    wrap.classList.add('grabbing');
+    lastX = e.clientX; lastY = e.clientY;
+  });
+  const onMove = (e) => {
+    if (!dragging) return;
+    tx += e.clientX - lastX;
+    ty += e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    update();
+  };
+  const onUp = () => { dragging = false; wrap.classList.remove('grabbing'); };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+
+  // Tooltip on hover over data marker groups. Matplotlib scatter points
+  // emit <use> nodes that reference per-marker glyphs — we surface their
+  // (x, y) via the parent group's transform when available, else use a
+  // generic "data point" label.
+  wrap.addEventListener('mousemove', (e) => {
+    const t = e.target.closest('use, path, circle, rect');
+    if (!t) { tip.classList.remove('show'); return; }
+    const inLine2d = t.closest('g[id^="line2d_"], g[id^="PathCollection_"]');
+    if (!inLine2d) { tip.classList.remove('show'); return; }
+    const fill = (t.getAttribute('fill') || (t.getAttribute('style') || '').match(/fill:\s*(#[0-9a-fA-F]{6})/) || [])[1] || '';
+    const seriesId = inLine2d.id;
+    const rect = wrap.getBoundingClientRect();
+    tip.style.left = Math.min(rect.width - 140, e.clientX - rect.left + 12) + 'px';
+    tip.style.top = (e.clientY - rect.top - 32) + 'px';
+    tip.textContent = `${seriesId}${fill ? ' · ' + fill : ''}`;
+    tip.classList.add('show');
+  });
+  wrap.addEventListener('mouseleave', () => tip.classList.remove('show'));
+
+  // Color-chip click → toggle highlight.
+  let activeColor = null;
+  chipBar.addEventListener('click', (e) => {
+    const chip = e.target.closest('.svg-color-chip');
+    if (!chip) return;
+    const c = chip.dataset.color;
+    if (activeColor === c) {
+      activeColor = null;
+      chipBar.querySelectorAll('.svg-color-chip').forEach(el => el.classList.remove('active'));
+    } else {
+      activeColor = c;
+      chipBar.querySelectorAll('.svg-color-chip').forEach(el => el.classList.toggle('active', el === chip));
+    }
+    _applyColorFilter(svgEl, activeColor);
+  });
+
+  // Toolbar handlers.
+  host.querySelector('[data-act="reset"]').onclick = () => { scale = 1; tx = 0; ty = 0; update(); };
+  host.querySelector('[data-act="zoom-in"]').onclick = () => { scale = Math.min(SCALE_MAX, scale * 1.25); update(); };
+  host.querySelector('[data-act="zoom-out"]').onclick = () => { scale = Math.max(SCALE_MIN, scale / 1.25); update(); };
+  host.querySelector('[data-act="expand"]').onclick = () => { wrap.classList.toggle('expanded'); };
+  host.querySelector('[data-act="download"]').onclick = () => {
+    const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+    _triggerDownload(blob, _safeFilename(opts.filename || 'figure') + '.svg');
+  };
+  const toPngBtn = host.querySelector('[data-act="to-png"]');
+  if (toPngBtn && opts.onPngFallback) {
+    toPngBtn.onclick = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      opts.onPngFallback();
+    };
+  }
+
+  return {
+    destroy: () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    },
+  };
+}
+
+// After openDrawer paints its template, scan for plot-wraps marked with
+// data-svg-kind and try to upgrade each to the interactive viewer. Runs
+// asynchronously so the drawer never blocks on these probes.
+async function _upgradeFiguresToSvg(rootEl, code, pep) {
+  const wraps = rootEl.querySelectorAll('[data-svg-kind]');
+  if (!wraps.length) return;
+  await Promise.all([...wraps].map(async (wrap) => {
+    const kind = wrap.dataset.svgKind;
+    const pngUrl = wrap.dataset.pngUrl || '';
+    const svgUrl = `${ASSET_SVG_BASE}/${code}/${pep}_${kind}.svg`;
+    const text = await fetchSvgIfExists(svgUrl);
+    if (!text) return; // no SVG on NYU → leave the existing <img> alone
+    // Big SVGs (e.g. 12 MB rank-abundance) get a click-to-load gate so we
+    // don't freeze the drawer parsing them on every open.
+    if (text.length > SVG_AUTO_BYTES) {
+      const sizeMb = (text.length / 1024 / 1024).toFixed(1);
+      wrap.innerHTML = `
+        <div class="svg-error" style="color:var(--text-2);background:#fff;padding:32px 20px;">
+          Interactive figure available (${sizeMb} MB SVG) — click to load.
+          <br><button class="dl-inline-btn" style="margin-top:12px;" data-act="load-big">${DL_ICON}<span>Load interactive view</span></button>
+        </div>`;
+      wrap.querySelector('[data-act="load-big"]').onclick = () => {
+        mountInteractiveSvg(wrap, text, {
+          pngUrl,
+          filename: `${code}_${pep}_${kind}`,
+          onPngFallback: () => _renderPngFallback(wrap, pngUrl, kind, code, pep),
+        });
+      };
+      return;
+    }
+    mountInteractiveSvg(wrap, text, {
+      pngUrl,
+      filename: `${code}_${pep}_${kind}`,
+      onPngFallback: () => _renderPngFallback(wrap, pngUrl, kind, code, pep),
+    });
+  }));
+}
+
+function _renderPngFallback(wrap, pngUrl, kind, code, pep) {
+  wrap.classList.remove('svg-viewer');
+  const expandTitle = `${kind.replace(/_/g, ' ')}: ${pep} in ${code}`;
+  wrap.innerHTML = `
+    <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${pngUrl}','${kind}')">${DL_ICON}PNG</button>
+    <button class="expand-btn" onclick="openLightbox('${pngUrl}','${expandTitle}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
+    <img src="${pngUrl}" alt="${kind}" onload="this.classList.add('ok')" onclick="openLightbox('${pngUrl}','${expandTitle}')" onerror="this.parentNode.classList.add('no-plot');this.remove();" />
+    <div class="plot-caption">${kind.replace(/_/g, ' ')} · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>`;
+}
+
 function downloadCompareCsv() {
   const rows = COMPARE_CURRENT_ROWS;
   if (!rows || !rows.length) { _toast('No comparison rows to export', 'err'); return; }
@@ -5078,7 +5515,7 @@ async function openDrawer(r) {
 
     <div class="section-title" data-tip="Shows where this peptide ranks in terms of MS intensity compared to all other peptides in this cancer's immunopeptidome. A high percentile means this peptide is among the most abundantly presented — indicating strong and stable HLA presentation on the tumor surface.">Peptide intensity percentile vs atlas</div>
     <div class="section-subtitle">Percentile rank of this peptide's MS intensity among every peptide in the cancer's immunopeptidome — high percentile means one of the most abundantly presented targets.</div>
-    <div class="plot-wrap">
+    <div class="plot-wrap" data-svg-kind="percentile" data-png-url="${percentileUrl}">
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${percentileUrl}','intensity_percentile')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${percentileUrl}" alt="Percentile plot for ${pep}"
@@ -5090,7 +5527,7 @@ async function openDrawer(r) {
 
     <div class="section-title" data-tip="Rank-abundance curve showing how this peptide's detection frequency (PSM count) compares across the immunopeptidome samples where it was found. A peptide appearing at high abundance across many samples is a strong shared target candidate.">PSM rank-abundance curve</div>
     <div class="section-subtitle">The peptide's abundance rank in every patient sample that detected it — a flat curve near the top means consistent high abundance across patients.</div>
-    <div class="plot-wrap">
+    <div class="plot-wrap" data-svg-kind="rank_abundance" data-png-url="${rankAbundanceUrl}">
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${rankAbundanceUrl}','rank_abundance')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${rankAbundanceUrl}" alt="Rank-abundance curve for ${pep}"
@@ -5120,6 +5557,12 @@ async function openDrawer(r) {
   `;
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawerBg').classList.add('open');
+
+  // Async upgrade pass: every plot-wrap tagged with data-svg-kind tries to
+  // load its NYU `assets_svg/` counterpart and replaces the static <img>
+  // with the interactive viewer when one exists. Runs after the drawer
+  // is fully rendered so the static figure paints first and never blocks.
+  _upgradeFiguresToSvg(body, code, pep);
 }
 
 function windowInterp(tumor, normal) {
