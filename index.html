@@ -1608,6 +1608,99 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .expand-btn:hover { background: rgba(0,0,0,0.8); }
 .expand-btn svg { width: 13px; height: 13px; }
 
+/* ===================== DOWNLOAD BUTTONS ===================== */
+/* Per-figure download icon — sits next to the existing Expand button. */
+.dl-figure-btn {
+  position: absolute;
+  top: 6px; right: 76px;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  z-index: 5;
+  display: flex; align-items: center; gap: 4px;
+  opacity: 0;
+  transition: opacity .15s, background .15s;
+}
+.plot-wrap:hover .dl-figure-btn,
+.spectrum-wrap:hover .dl-figure-btn { opacity: 1; }
+.dl-figure-btn:hover { background: rgba(0,0,0,0.8); }
+.dl-figure-btn svg { width: 13px; height: 13px; }
+
+/* Tiny inline download chip — sits next to a section title's text. */
+.dl-inline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-3);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  vertical-align: middle;
+  margin-left: 8px;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.dl-inline-btn:hover {
+  background: var(--bg-2);
+  color: var(--text-0);
+  border-color: var(--accent-cyan);
+}
+.dl-inline-btn svg { width: 12px; height: 12px; }
+
+/* Prominent "Download all" button at the top of the drawer. */
+.dl-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--grad-primary);
+  color: #0a0e1a;
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s, opacity .15s;
+  box-shadow: 0 3px 12px rgba(34,211,238,0.25);
+}
+.dl-all-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(34,211,238,0.4); }
+.dl-all-btn:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
+.dl-all-btn svg { width: 14px; height: 14px; }
+
+/* Small toast for download status feedback. */
+.dl-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 12.5px;
+  color: var(--text-0);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.45);
+  opacity: 0;
+  transition: opacity .2s, transform .2s;
+  z-index: 9999;
+  pointer-events: none;
+  max-width: 80vw;
+}
+.dl-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.dl-toast.err { border-color: #f87171; color: #f87171; }
+.dl-toast.ok  { border-color: var(--accent-lime); }
+
 /* ===================== LIGHTBOX ===================== */
 .lightbox {
   position: fixed;
@@ -3689,6 +3782,294 @@ async function navigateSearchResult(action, data) {
   }
 })();
 
+// ============ EXPORT / DOWNLOAD HELPERS ============
+// Cloudflare Worker proxy that re-hosts NYU figures with CORS headers,
+// so the browser will let JS read the bytes for one-click downloads. Set
+// to '' to disable (figures will fall back to opening in a new tab).
+const IMG_PROXY = 'https://immunoverse-proxy.amansharma-e44.workers.dev/?url=';
+
+function _safeFilename(s) {
+  return String(s).replace(/[^A-Za-z0-9._\-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 120);
+}
+
+function _triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 200);
+}
+
+function _toast(msg, kind) {
+  const t = document.createElement('div');
+  t.className = 'dl-toast' + (kind ? ' ' + kind : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 300);
+  }, kind === 'err' ? 5000 : 2200);
+}
+
+// CSV builder. rows is an array of arrays; headers is an array of column names.
+function _buildCsv(headers, rows) {
+  const esc = v => {
+    if (v == null) return '';
+    const s = String(v);
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [headers.map(esc).join(','), ...rows.map(r => r.map(esc).join(','))].join('\r\n');
+}
+
+function downloadCsv(headers, rows, filename) {
+  const csv = _buildCsv(headers, rows);
+  _triggerDownload(new Blob([csv], {type: 'text/csv;charset=utf-8'}), filename);
+}
+
+function downloadJson(obj, filename) {
+  _triggerDownload(new Blob([JSON.stringify(obj, null, 2)], {type: 'application/json;charset=utf-8'}), filename);
+}
+
+// Fetch a NYU asset through the Cloudflare CORS proxy and return a Blob.
+// Returns null if the proxy isn't configured (no IMG_PROXY) or the fetch fails.
+async function _fetchImageBlob(nyuUrl) {
+  if (!IMG_PROXY) return null;
+  try {
+    const r = await fetch(IMG_PROXY + encodeURIComponent(nyuUrl));
+    if (!r.ok) return null;
+    return await r.blob();
+  } catch (e) {
+    console.warn('image proxy fetch failed', e);
+    return null;
+  }
+}
+
+async function downloadImage(nyuUrl, filename) {
+  if (IMG_PROXY) {
+    _toast('Fetching figure…');
+    const blob = await _fetchImageBlob(nyuUrl);
+    if (blob) {
+      _triggerDownload(blob, filename);
+      _toast('Saved ' + filename, 'ok');
+      return true;
+    }
+    _toast('Could not fetch figure — opening in new tab', 'err');
+  }
+  // Fallback: open the original URL so the user can right-click + Save.
+  window.open(nyuUrl, '_blank', 'noopener');
+  return false;
+}
+
+// Lazy-load JSZip from CDN. Returns the JSZip constructor.
+let _jszipPromise = null;
+function loadJszip() {
+  if (_jszipPromise) return _jszipPromise;
+  _jszipPromise = new Promise((resolve, reject) => {
+    if (window.JSZip) { resolve(window.JSZip); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+    s.onload = () => resolve(window.JSZip);
+    s.onerror = () => reject(new Error('JSZip failed to load'));
+    document.head.appendChild(s);
+  });
+  return _jszipPromise;
+}
+
+// Bundle every per-peptide artifact into a single ZIP.
+//   - peptide.json — full row + extras
+//   - per_hla_observed.csv — observed-allele binding table
+//   - extended_predictions.csv — extended NetMHCpan panel (if any)
+//   - intensity.csv — per-sample MS intensity (if any)
+//   - figures/*.png — every plot we render in the drawer
+//   - README.txt — small manifest with the source URLs and timestamps
+async function downloadAllForPeptide(row, code, btnEl) {
+  const pep = row[COL.pep];
+  const gene = (row[COL.gene] || '').split('/')[0] || 'unknown';
+  const ensg = row[COL.ensg] || '';
+  const cls = row[COL.cls] || '';
+  const stem = _safeFilename(`${code}_${pep}_${gene}`);
+  if (btnEl) { btnEl.disabled = true; btnEl.dataset.label = btnEl.textContent; btnEl.textContent = 'Bundling…'; }
+
+  try {
+    const JSZip = await loadJszip();
+    const zip = new JSZip();
+
+    // Detail extras (mutations, pathogen, source, transcriptMeta, diffPlot, etc.)
+    await loadDetail(code);
+    const detail = (DETAIL_CACHE[code] || {})[pep] || [];
+    const addq = detail[0] || [];
+    const intens = detail[1] || [];
+    const extra = detail[2] || {};
+
+    // 1. JSON dump of everything we know about this peptide.
+    zip.file(`${stem}/peptide.json`, JSON.stringify({
+      cancer: code, peptide: pep, gene: row[COL.gene], ensg,
+      class: cls, classLabel: CLASS_LABELS[cls] || cls,
+      psm: row[COL.psm], score: row[COL.score], abundance: row[COL.abund], qvalue: row[COL.qval],
+      tumorExpression: row[COL.tumorExp], maxGtexNormal: row[COL.normalExp],
+      depmap: row[COL.depmap], homogeneity: row[COL.homo],
+      uniqueMapping: !!row[COL.unique], hlaLigandAtlas: row[COL.atlas],
+      observedHlas: row[COL.hlas], recurrence: row[COL.recurrence],
+      totalSamples: row[COL.totalSamples], nuorfSubtype: row[COL.nuorf],
+      extras: extra,
+    }, null, 2));
+
+    // 2. Per-HLA observed binding CSV.
+    const obsRows = (row[COL.bind] || []).map(b => [
+      b[0], b[1], b[2], b[3], b[5], b[4], b[6], b[7] != null ? (b[7] * 100).toFixed(1) + '%' : '',
+    ]);
+    if (obsRows.length) {
+      zip.file(`${stem}/per_hla_observed.csv`, _buildCsv(
+        ['HLA', 'Rank %', 'nM', 'Category', 'Immunogenicity', '#Detected', '#TotalPatients', 'Recurrence'],
+        obsRows,
+      ));
+    }
+
+    // 3. Extended NetMHCpan prediction panel CSV.
+    if (Array.isArray(addq) && addq.length) {
+      zip.file(`${stem}/extended_predictions.csv`, _buildCsv(
+        ['HLA', 'Rank %', 'nM', 'Category'],
+        addq.map(b => [b[0], b[1], b[2], b[3]]),
+      ));
+    }
+
+    // 4. Per-sample MS intensity CSV.
+    if (Array.isArray(intens) && intens.length) {
+      const isScalar = typeof intens[0] === 'number';
+      const rows = isScalar
+        ? intens.map((v, i) => [`Sample ${i + 1}`, v])
+        : intens.map(x => [x[0], x[1]]);
+      zip.file(`${stem}/intensity.csv`, _buildCsv(['Sample', 'Intensity'], rows));
+    }
+
+    // 5. Figures — fetch each through the proxy in parallel.
+    const ASSET_BASE = 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/assets';
+    const figJobs = [];
+    const addFig = (label, url) => figJobs.push((async () => {
+      const blob = await _fetchImageBlob(url);
+      if (blob) zip.file(`${stem}/figures/${label}.png`, blob);
+      return { label, url, ok: !!blob };
+    })());
+    addFig('ms_spectrum', `${ASSET_BASE}/${code}_spectrum_${pep}.png`);
+    addFig('intensity_percentile', `${ASSET_BASE}/${code}_${pep}_percentile.png`);
+    addFig('rank_abundance', `${ASSET_BASE}/${code}_${pep}_rank_abundance.png`);
+    if (extra.diffPlot) {
+      if (extra.diffPlot.splicing) addFig('splicing_differential', `${ASSET_BASE}/${extra.diffPlot.splicing}`);
+      if (extra.diffPlot.erv) addFig('te_differential', `${ASSET_BASE}/${extra.diffPlot.erv}`);
+    } else if (cls === 'self_gene' && ensg && gene && /^ENSG\d{8,}$/.test(ensg)) {
+      addFig('expression_boxplot', `${ASSET_BASE}/${code}_${ensg}_${gene}_expr_boxplot+boxplot.png`);
+    }
+    const figResults = await Promise.all(figJobs);
+
+    // 6. README manifest.
+    const lines = [
+      `ImmunoVerse — peptide bundle for ${pep} in ${code}`,
+      `Generated: ${new Date().toISOString()}`,
+      `Source portal: https://www.immuno-verse.com`,
+      ``,
+      `Files in this archive:`,
+      `  peptide.json          — full row + parsed source extras`,
+      ...(obsRows.length ? [`  per_hla_observed.csv  — observed HLA binding`] : []),
+      ...(addq.length ? [`  extended_predictions.csv — wider NetMHCpan panel`] : []),
+      ...(intens.length ? [`  intensity.csv         — per-sample MS intensity`] : []),
+      ``,
+      `Figures (PNG, fetched from NYU via Cloudflare proxy):`,
+      ...figResults.map(f => `  figures/${f.label}.png  ${f.ok ? '✓' : '✗ (not on NYU server)'}  ${f.url}`),
+    ];
+    zip.file(`${stem}/README.txt`, lines.join('\n'));
+
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    _triggerDownload(blob, `${stem}.zip`);
+    const okFigs = figResults.filter(f => f.ok).length;
+    _toast(`Saved ${stem}.zip · ${okFigs}/${figResults.length} figures included`, 'ok');
+  } catch (e) {
+    console.error(e);
+    _toast('Bundle failed: ' + (e.message || 'unknown error'), 'err');
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = btnEl.dataset.label || 'Download all'; }
+  }
+}
+
+// SVG for the inline / figure-corner / drawer-header download icon.
+const DL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+
+// Used by inline buttons in the drawer to read the row from a global ref.
+let DRAWER_ROW = null;
+let DRAWER_CODE = null;
+// Set by openCompareModal so the "Export CSV" chip can grab the visible rows.
+let COMPARE_CURRENT_ROWS = null;
+
+function _drawerRow() { return DRAWER_ROW; }
+
+function downloadObservedHlaCsv() {
+  const r = _drawerRow();
+  if (!r) return;
+  const code = DRAWER_CODE, pep = r[COL.pep];
+  const rows = (r[COL.bind] || []).map(b => [
+    b[0], b[1], b[2], b[3], b[5], b[4], b[6], b[7] != null ? (b[7] * 100).toFixed(1) + '%' : '',
+  ]);
+  if (!rows.length) { _toast('No observed-HLA records to export', 'err'); return; }
+  downloadCsv(
+    ['HLA', 'Rank %', 'nM', 'Category', 'Immunogenicity', '#Detected', '#TotalPatients', 'Recurrence'],
+    rows,
+    _safeFilename(`${code}_${pep}_per_hla_observed.csv`),
+  );
+}
+
+function downloadExtendedPanelCsv() {
+  const r = _drawerRow();
+  if (!r) return;
+  const code = DRAWER_CODE, pep = r[COL.pep];
+  const detail = (DETAIL_CACHE[code] || {})[pep] || [];
+  const addq = detail[0] || [];
+  if (!addq.length) { _toast('No extended-panel predictions for this peptide', 'err'); return; }
+  downloadCsv(
+    ['HLA', 'Rank %', 'nM', 'Category'],
+    addq.map(b => [b[0], b[1], b[2], b[3]]),
+    _safeFilename(`${code}_${pep}_extended_predictions.csv`),
+  );
+}
+
+function downloadDrawerFigure(url, label) {
+  const r = _drawerRow();
+  const stem = r ? _safeFilename(`${DRAWER_CODE}_${r[COL.pep]}_${label}`) : _safeFilename(label);
+  return downloadImage(url, stem + '.png');
+}
+
+function downloadAllFromDrawer(btnEl) {
+  const r = _drawerRow();
+  if (!r || !DRAWER_CODE) return;
+  return downloadAllForPeptide(r, DRAWER_CODE, btnEl);
+}
+
+function downloadCompareCsv() {
+  const rows = COMPARE_CURRENT_ROWS;
+  if (!rows || !rows.length) { _toast('No comparison rows to export', 'err'); return; }
+  const headers = [
+    'peptide', 'cancer', 'gene', 'class', 'psm', 'recurrence',
+    'abund_rank', 'spectral_score', 'tumor_tpm', 'max_gtex_tpm', 'tumor_normal_ratio',
+    'depmap', 'homogeneity', 'unique_mapping', 'atlas_normal_tissues',
+    'observed_hlas', 'ensg',
+  ];
+  const out = rows.map(r => {
+    const t = r[COL.tumorExp], n = r[COL.normalExp];
+    const ratio = (t != null && n != null && n > 0) ? (t / Math.max(n, 0.01)).toFixed(2) : '';
+    return [
+      r[COL.pep], r[COL.code], r[COL.gene], CLASS_LABELS[r[COL.cls]] || r[COL.cls],
+      r[COL.psm], r[COL.recurrence] != null ? (r[COL.recurrence] * 100).toFixed(1) + '%' : '',
+      r[COL.abund], r[COL.score], t, n, ratio,
+      r[COL.depmap], r[COL.homo], r[COL.unique] === 1 ? 'yes' : 'no',
+      (r[COL.atlas] || []).join('; '),
+      (r[COL.hlas] || []).join('; '), r[COL.ensg] || '',
+    ];
+  });
+  const stem = rows.length === 1 ? `${rows[0][COL.code]}_${rows[0][COL.pep]}` : `compare_${rows.length}_peptides`;
+  downloadCsv(headers, out, _safeFilename(stem) + '_comparison.csv');
+}
+
 // ============ FILTER / SORT / RENDER ============
 function applyFilters() {
   const {cancer, pep, gene, hla, uniq, rec, classFilter,
@@ -4165,9 +4546,13 @@ async function openCompareModal() {
       </div>`;
     }
   }
+  // Stash the current comparison so the export button can grab it without
+  // re-deriving from the modal DOM.
+  COMPARE_CURRENT_ROWS = rows;
   const chipBar = `<div class="cmp-sel-bar">
     <div class="cmp-sel-row">
       <span class="cmp-sel-label">Comparing <b>${rows.length}</b>:</span>
+      <button class="dl-inline-btn" title="Download this comparison as CSV" onclick="downloadCompareCsv()" style="margin-left:auto;">${DL_ICON}<span>Export CSV</span></button>
       ${rows.map(r => {
         const k = `${r[COL.pep]}::${r[COL.code]}`;
         return `<button class="cmp-sel-chip" data-cmpkey="${k}" title="Remove ${r[COL.code]}">
@@ -4259,6 +4644,11 @@ async function openDrawer(r) {
   const body = document.getElementById('drawerBody');
   const code = r[COL.code];
   const pep  = r[COL.pep];
+  // Track the currently-open peptide so the inline export buttons in the
+  // drawer template can pull the row + cancer code without threading them
+  // through every onclick handler.
+  DRAWER_ROW = r;
+  DRAWER_CODE = code;
   const abund = (r[COL.abund] ?? 0) * 100;
   const score = r[COL.score] || 0;
   const scoreW = Math.min(100, score);
@@ -4551,9 +4941,10 @@ async function openDrawer(r) {
   body.innerHTML = `
     <div class="drawer-head">
       <h3 class="pep-head">${pep}</h3>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         ${crossBtn}
         <button class="copy-btn" title="Copy peptide" onclick="navigator.clipboard && navigator.clipboard.writeText('${pep}')">⧉ copy</button>
+        <button class="dl-all-btn" title="Bundle every table, JSON record, and figure for this peptide into one ZIP" onclick="downloadAllFromDrawer(this)">${DL_ICON}<span>Download all</span></button>
       </div>
     </div>
     <div class="sub">${r[COL.gene]||'unknown gene'} · ${CLASS_LABELS[r[COL.cls]]||r[COL.cls]} · ${code}${ensg?` · <span style="font-family:var(--mono);color:var(--text-3)">${ensg}</span>`:''}</div>
@@ -4573,7 +4964,7 @@ async function openDrawer(r) {
     ${mutationBlock}
     ${pathogenBlock}
 
-    <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples</div>
+    <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples${bind.length ? `<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadObservedHlaCsv()">${DL_ICON}<span>CSV</span></button>` : ''}</div>
     <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, DeepImmuno score, and per-patient recurrence.</div>
     <div class="bind-wrap">
       <table class="bind-table">
@@ -4604,7 +4995,7 @@ async function openDrawer(r) {
       })() : ''}
 
     ${addqRows ? `
-    <div class="section-title" data-tip="Predicted binding across a broad panel of HLA alleles using NetMHCpan 4.1, beyond only the alleles observed in the immunopeptidome samples. Useful for assessing whether this peptide could be presented by additional HLA alleles in the broader population.">Extended NetMHCpan 4.1 prediction panel</div>
+    <div class="section-title" data-tip="Predicted binding across a broad panel of HLA alleles using NetMHCpan 4.1, beyond only the alleles observed in the immunopeptidome samples. Useful for assessing whether this peptide could be presented by additional HLA alleles in the broader population.">Extended NetMHCpan 4.1 prediction panel<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadExtendedPanelCsv()">${DL_ICON}<span>CSV</span></button></div>
     <div class="section-subtitle">Predicted binding across a wider allele panel — alleles beyond those observed empirically, to estimate reach across the broader patient population.</div>
     <div class="bind-wrap">
       <table class="bind-table">
@@ -4631,8 +5022,9 @@ async function openDrawer(r) {
       // junction- or TE-level differential plot from NeoVerse over the
       // gene-level expression boxplot (which only reflects the parent
       // gene, not the actual antigen source).
-      const plotImg = (src, alt, captionLabel, expandTitle) => `
+      const plotImg = (src, alt, captionLabel, expandTitle, dlLabel) => `
         <div class="plot-wrap">
+          <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${src}','${dlLabel || alt}')">${DL_ICON}PNG</button>
           <button class="expand-btn" onclick="openLightbox('${src}','${expandTitle}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
           <img src="${src}" alt="${alt}"
                onload="this.classList.add('ok')"
@@ -4644,28 +5036,28 @@ async function openDrawer(r) {
         return `
         <div class="section-title" data-tip="Splice-junction-level expression: counts the reads spanning this exact junction in tumor vs normal samples. Unlike gene-level expression, this captures whether the specific aberrant junction (not the parent gene) is tumor-enriched.">Splice junction expression (tumor vs normal)</div>
         <div class="section-subtitle">Reads spanning this exact junction — the per-junction signal that drives the antigen, not the parent gene's bulk expression.</div>
-        ${plotImg(diffSplicingUrl, 'Splice junction differential plot', `Junction · ${pep}`, `Junction expression: ${pep} in ${code}`)}`;
+        ${plotImg(diffSplicingUrl, 'Splice junction differential plot', `Junction · ${pep}`, `Junction expression: ${pep} in ${code}`, 'splicing_differential')}`;
       }
       if (diffPlot && diffPlot.kind === 'erv' && diffErvUrl) {
         return `
         <div class="section-title" data-tip="Retroelement-level expression: copies of this specific TE (e.g. L1 ORF2, AluSx, HERV) in tumor vs normal samples. TEs are usually silenced in normal tissue, so a tumor-up signal here is the actual safety window.">Retroelement expression (tumor vs normal)</div>
         <div class="section-subtitle">Per-TE RNA signal — the actual safety window for transposon-derived antigens, since the parent gene's expression doesn't capture TE de-repression.</div>
-        ${plotImg(diffErvUrl, 'TE differential plot', `TE · ${pep}`, `TE expression: ${pep} in ${code}`)}`;
+        ${plotImg(diffErvUrl, 'TE differential plot', `TE · ${pep}`, `TE expression: ${pep} in ${code}`, 'te_differential')}`;
       }
       if (diffPlot && diffPlot.kind === 'both' && (diffSplicingUrl || diffErvUrl)) {
         return `
         <div class="section-title" data-tip="TE-chimeric transcripts arise from a splice junction joining a transposable element to a host gene. Both signals matter: the junction (left) shows whether the chimeric event is tumor-enriched, and the TE (right) shows whether the source element is de-repressed.">Chimeric junction &amp; retroelement expression</div>
         <div class="section-subtitle">Two-panel differential — splice junction (left) and the source TE (right) — since a TE-chimeric antigen requires both the junction and the element to be tumor-up.</div>
         <div class="plot-grid-2">
-          ${diffSplicingUrl ? plotImg(diffSplicingUrl, 'Splice junction differential plot', `Junction · ${pep}`, `Junction expression: ${pep} in ${code}`) : ''}
-          ${diffErvUrl ? plotImg(diffErvUrl, 'TE differential plot', `TE · ${pep}`, `TE expression: ${pep} in ${code}`) : ''}
+          ${diffSplicingUrl ? plotImg(diffSplicingUrl, 'Splice junction differential plot', `Junction · ${pep}`, `Junction expression: ${pep} in ${code}`, 'splicing_differential') : ''}
+          ${diffErvUrl ? plotImg(diffErvUrl, 'TE differential plot', `TE · ${pep}`, `TE expression: ${pep} in ${code}`, 'te_differential') : ''}
         </div>`;
       }
       if (exprUrl) {
         return `
         <div class="section-title" data-tip="Boxplot showing the gene's RNA expression (TPM) across tumor samples and GTEx normal tissues. Allows visual assessment of how specifically the gene is expressed in tumors versus individual healthy organs — key for evaluating therapeutic safety.">Gene expression across tumor &amp; normal tissues</div>
         <div class="section-subtitle">Per-tissue RNA expression boxplot (TPM): the tumor box vs every individual GTEx normal organ — shows which healthy tissues might cross-present this gene's peptides.</div>
-        ${plotImg(exprUrl, `Expression boxplot for ${geneForExpr}`, geneForExpr, `Gene expression: ${geneForExpr} in ${code}`)}`;
+        ${plotImg(exprUrl, `Expression boxplot for ${geneForExpr}`, geneForExpr, `Gene expression: ${geneForExpr} in ${code}`, 'expression_boxplot')}`;
       }
       return '';
     })()}
@@ -4687,6 +5079,7 @@ async function openDrawer(r) {
     <div class="section-title" data-tip="Shows where this peptide ranks in terms of MS intensity compared to all other peptides in this cancer's immunopeptidome. A high percentile means this peptide is among the most abundantly presented — indicating strong and stable HLA presentation on the tumor surface.">Peptide intensity percentile vs atlas</div>
     <div class="section-subtitle">Percentile rank of this peptide's MS intensity among every peptide in the cancer's immunopeptidome — high percentile means one of the most abundantly presented targets.</div>
     <div class="plot-wrap">
+      <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${percentileUrl}','intensity_percentile')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${percentileUrl}" alt="Percentile plot for ${pep}"
            onload="this.classList.add('ok')"
@@ -4698,6 +5091,7 @@ async function openDrawer(r) {
     <div class="section-title" data-tip="Rank-abundance curve showing how this peptide's detection frequency (PSM count) compares across the immunopeptidome samples where it was found. A peptide appearing at high abundance across many samples is a strong shared target candidate.">PSM rank-abundance curve</div>
     <div class="section-subtitle">The peptide's abundance rank in every patient sample that detected it — a flat curve near the top means consistent high abundance across patients.</div>
     <div class="plot-wrap">
+      <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${rankAbundanceUrl}','rank_abundance')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${rankAbundanceUrl}" alt="Rank-abundance curve for ${pep}"
            onload="this.classList.add('ok')"
@@ -4709,6 +5103,7 @@ async function openDrawer(r) {
     <div class="section-title" data-tip="The annotated tandem mass spectrum (MS/MS) confirming this peptide's identity. Blue = b-ions (N-terminal fragments), red = y-ions (C-terminal fragments), green = a-ions. A well-matched spectrum with many fragment ions gives high confidence that this exact peptide sequence was detected on HLA.">MS/MS spectrum</div>
     <div class="section-subtitle">The annotated fragmentation spectrum used to identify this peptide — blue b-ions (N-terminal), red y-ions (C-terminal), green a-ions. Dense matching peaks confirm the sequence.</div>
     <div class="spectrum-wrap">
+      <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${spectrumUrl}','ms_spectrum')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${spectrumUrl}" alt="MS/MS spectrum for ${pep} in ${code}"
            onload="this.classList.add('ok')"
