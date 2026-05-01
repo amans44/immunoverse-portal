@@ -1694,7 +1694,14 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .svg-viewer .svg-stage {
   position: relative;
   width: 100%;
+  max-height: 620px;
+  overflow: auto;
+  background: #fff;
 }
+/* Subtle scrollbar so the panel doesn't look chrome-heavy */
+.svg-viewer .svg-stage::-webkit-scrollbar { width: 8px; height: 8px; }
+.svg-viewer .svg-stage::-webkit-scrollbar-thumb { background: #c8d0db; border-radius: 4px; }
+.svg-viewer .svg-stage::-webkit-scrollbar-thumb:hover { background: #99a8bd; }
 .svg-viewer .svg-stage > svg {
   display: block;
   width: 100%;
@@ -1715,18 +1722,33 @@ table.atlas.compact td:nth-child(10) { display: none; }
   cursor: pointer;
 }
 /* Tissue x-axis tick — hover and clicked states. Glyph paths recolor
-   to cyan and gain a thin stroke for an apparent "bold" effect. */
-.svg-viewer .svg-tick-hot path { transition: fill .15s, stroke .15s, stroke-width .15s; }
+   to cyan, gain a thicker stroke (apparent boldness), and pop with a
+   small drop-shadow + transient scale for a "lift" effect. */
+.svg-viewer .svg-tick-hot {
+  transition: filter .12s ease;
+  transform-origin: center center;
+}
+.svg-viewer .svg-tick-hot path {
+  transition: fill .12s, stroke .12s, stroke-width .12s;
+}
 .svg-viewer .svg-tick-hover path,
 .svg-viewer .svg-tick-active path {
   fill: #0a7fa6 !important;
   stroke: #0a7fa6;
-  stroke-width: 0.6;
+  stroke-width: 0.9;
 }
 .svg-viewer .svg-tick-active path {
   fill: #00748f !important;
   stroke: #00748f;
-  stroke-width: 0.9;
+  stroke-width: 1.4;
+}
+.svg-viewer .svg-tick-hover {
+  filter: drop-shadow(0 0 1px rgba(34,211,238,0.85))
+          drop-shadow(0 0 2px rgba(34,211,238,0.65));
+}
+.svg-viewer .svg-tick-active {
+  filter: drop-shadow(0 0 1px rgba(0,116,143,0.95))
+          drop-shadow(0 0 1.5px rgba(0,116,143,0.65));
 }
 .svg-viewer .svg-legend-locked rect.svg-legend-bg,
 .svg-viewer .svg-legend-locked path.svg-legend-bg {
@@ -4390,11 +4412,20 @@ function mountInteractiveSvg(host, svgText, opts) {
   // Push the matplotlib summary table (axes_3 / table_1) down so it stops
   // clipping the rotated tissue x-axis labels of the panel above. ~22px
   // is enough to clear "Adrenal gland" / "Small intestine" at -90° rot.
-  // (The SVG canvas has plenty of bottom margin for this nudge.)
+  // After translating, also extend the SVG viewBox so the bottom row of
+  // the table doesn't fall outside the rendered canvas. The .svg-stage
+  // container is already scrollable so vertical overflow is safe.
+  const TABLE_NUDGE = 22;
+  const VIEWBOX_PAD = 32;
   const tableGroup = svgEl.querySelector('g[id^="axes_3"], g[id^="table_"]');
   if (tableGroup) {
     const existing = tableGroup.getAttribute('transform') || '';
-    tableGroup.setAttribute('transform', `${existing} translate(0 22)`.trim());
+    tableGroup.setAttribute('transform', `${existing} translate(0 ${TABLE_NUDGE})`.trim());
+    const vb = (svgEl.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+    if (vb.length === 4 && Number.isFinite(vb[3])) {
+      vb[3] = vb[3] + VIEWBOX_PAD;
+      svgEl.setAttribute('viewBox', vb.join(' '));
+    }
   }
 
   // Make x-axis tissue labels (and any other categorical tick labels with
