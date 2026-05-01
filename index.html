@@ -2673,7 +2673,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <a href="#atlas">Atlas</a>
       <a href="#explorer">Explorer</a>
       <a href="#cancers">Cancers</a>
-      <a href="#highlights">Highlights</a>
+      <a href="#highlights" style="display:none">Highlights</a>
       <a href="#classes">Classes</a>
       <a href="#methods">Methods</a>
       <a href="#downloads">Data</a>
@@ -2943,8 +2943,11 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   </div>
 </section>
 
-<!-- HIGHLIGHTS -->
-<section id="highlights">
+<!-- HIGHLIGHTS — temporarily hidden via display:none so the next section
+     pulls up. Markup is preserved verbatim; remove the inline style on
+     the <section> tag below (and re-enable the matching nav link) to
+     restore. -->
+<section id="highlights" style="display:none">
   <div class="container">
     <div class="section-head">
       <div class="kicker">Manuscript highlights</div>
@@ -3138,7 +3141,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
         <a href="#atlas">Atlas</a>
         <a href="#explorer">Explorer</a>
         <a href="#classes">Aberration classes</a>
-        <a href="#highlights">Highlights</a>
+        <a href="#highlights" style="display:none">Highlights</a>
       </div>
       <div>
         <h6>Resources</h6>
