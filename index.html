@@ -1694,14 +1694,10 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .svg-viewer .svg-stage {
   position: relative;
   width: 100%;
-  max-height: 620px;
-  overflow: auto;
   background: #fff;
+  /* Container stretches to whatever the figure needs — no scrollbar
+     gating; SVG aspect ratio drives the height naturally. */
 }
-/* Subtle scrollbar so the panel doesn't look chrome-heavy */
-.svg-viewer .svg-stage::-webkit-scrollbar { width: 8px; height: 8px; }
-.svg-viewer .svg-stage::-webkit-scrollbar-thumb { background: #c8d0db; border-radius: 4px; }
-.svg-viewer .svg-stage::-webkit-scrollbar-thumb:hover { background: #99a8bd; }
 .svg-viewer .svg-stage > svg {
   display: block;
   width: 100%;
@@ -4215,10 +4211,6 @@ const ASSET_SVG_BASE = 'https://genome.med.nyu.edu/public/yarmarkovichlab/Immuno
 const SVG_FETCH_CACHE = new Map();           // url -> Promise<string|null>
 const SVG_EXISTS_KEY = u => 'svgexist:' + u;
 const SVG_EXISTS_TTL = 12 * 3600 * 1000;     // 12h
-// Auto-load interactive SVG up to this size; bigger files require an explicit
-// click so we don't freeze the tab parsing megabytes of inline SVG paths.
-const SVG_AUTO_BYTES = 2 * 1024 * 1024;
-
 async function fetchSvgIfExists(svgUrl) {
   if (!IMG_PROXY) return null;
   if (SVG_FETCH_CACHE.has(svgUrl)) return SVG_FETCH_CACHE.get(svgUrl);
@@ -4574,24 +4566,9 @@ async function _upgradeFiguresToSvg(rootEl, code, pep) {
     const svgUrl = `${ASSET_SVG_BASE}/${code}/${pep}_${kind}.svg`;
     const text = await fetchSvgIfExists(svgUrl);
     if (!text) return; // no SVG on NYU → leave the existing <img> alone
-    // Big SVGs (e.g. 12 MB rank-abundance) get a click-to-load gate so we
-    // don't freeze the drawer parsing them on every open.
-    if (text.length > SVG_AUTO_BYTES) {
-      const sizeMb = (text.length / 1024 / 1024).toFixed(1);
-      wrap.innerHTML = `
-        <div class="svg-error" style="color:var(--text-2);background:#fff;padding:32px 20px;">
-          Interactive figure available (${sizeMb} MB SVG) — click to load.
-          <br><button class="dl-inline-btn" style="margin-top:12px;" data-act="load-big">${DL_ICON}<span>Load interactive view</span></button>
-        </div>`;
-      wrap.querySelector('[data-act="load-big"]').onclick = () => {
-        mountInteractiveSvg(wrap, text, {
-          pngUrl,
-          filename: `${code}_${pep}_${kind}`,
-          onPngFallback: () => _renderPngFallback(wrap, pngUrl, kind, code, pep),
-        });
-      };
-      return;
-    }
+    // Auto-mount regardless of size — even multi-MB SVGs render directly.
+    // The static PNG has already painted, so any parse latency just delays
+    // the upgrade rather than blocking the drawer open.
     mountInteractiveSvg(wrap, text, {
       pngUrl,
       filename: `${code}_${pep}_${kind}`,
