@@ -4423,17 +4423,11 @@ function mountInteractiveSvg(host, svgText, opts) {
     }
   }
 
-  // Sync the figure-level background patch to the active site theme so a
-  // dark portal doesn't show a glaring white SVG box. We touch only
-  // patch_1 (the outermost figure background) — the inner axes patches
-  // stay white so the chart area itself remains as Frank designed it.
-  const figurePatch = svgEl.querySelector('g[id^="figure_"] > g[id^="patch_1"] path, g#figure_1 > g#patch_1 path');
-  if (figurePatch) {
-    const isLight = (document.documentElement.getAttribute('data-theme') || 'dark') === 'light';
-    figurePatch.setAttribute('style',
-      (figurePatch.getAttribute('style') || '').replace(/fill:\s*#[0-9a-fA-F]{6}/, '') +
-      `;fill: ${isLight ? '#ffffff' : '#0d121e'}`);
-  }
+  // (Removed earlier dark-theme background recolor — matplotlib's text,
+  // axes, gridlines, and tick marks are all black, so a dark figure-
+  // background turned the chart into invisible-on-invisible. The SVG
+  // stays white internally and the .svg-viewer wrapper holds the dark
+  // theme around it.)
 
   // Auto-extract the matplotlib summary table (axes_3 / table_1) into a
   // hover-tooltip heatmap. For each cell <patch_*>:
