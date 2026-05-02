@@ -4423,6 +4423,147 @@ function mountInteractiveSvg(host, svgText, opts) {
     }
   }
 
+  // Sync the figure-level background patch to the active site theme so a
+  // dark portal doesn't show a glaring white SVG box. We touch only
+  // patch_1 (the outermost figure background) — the inner axes patches
+  // stay white so the chart area itself remains as Frank designed it.
+  const figurePatch = svgEl.querySelector('g[id^="figure_"] > g[id^="patch_1"] path, g#figure_1 > g#patch_1 path');
+  if (figurePatch) {
+    const isLight = (document.documentElement.getAttribute('data-theme') || 'dark') === 'light';
+    figurePatch.setAttribute('style',
+      (figurePatch.getAttribute('style') || '').replace(/fill:\s*#[0-9a-fA-F]{6}/, '') +
+      `;fill: ${isLight ? '#ffffff' : '#0d121e'}`);
+  }
+
+  // Auto-extract the matplotlib summary table (axes_3 / table_1) into a
+  // hover-tooltip heatmap. For each cell <patch_*>:
+  //   • cell value comes from the next sibling <!-- N --> XML comment
+  //   • tissue column resolves to the nearest x-axis tick of axes_2
+  //   • HLA row resolves to the leftmost text label in the same row
+  // Zero hardcoded coordinates — works on every percentile-style figure
+  // matplotlib emits.
+  if (tableGroup) {
+    const ax2 = svgEl.querySelector('g[id="axes_2"]');
+    const tissues = []; // [{x, label}]
+    if (ax2) {
+      const xtickRe = /^xtick_/;
+      ax2.querySelectorAll('g[id^="xtick_"]').forEach(tick => {
+        const textG = tick.querySelector('g[id^="text_"]');
+        if (!textG) return;
+        let label = '';
+        for (const c of textG.childNodes) {
+          if (c.nodeType === Node.COMMENT_NODE && c.nodeValue.trim()) { label = c.nodeValue.trim(); break; }
+        }
+        if (!label || /^[\-−+]?[\d.,]+(e[\-+]?\d+)?$/i.test(label)) return;
+        // x position: the inner <g transform="translate(X Y)…">
+        const inner = textG.querySelector('g[transform]');
+        if (!inner) return;
+        const m = inner.getAttribute('transform').match(/translate\(\s*([\-\d.]+)/);
+        if (!m) return;
+        tissues.push({ x: parseFloat(m[1]), label });
+      });
+    }
+
+    // HLA-row labels live inside table_1 itself (leftmost column). Filter
+    // text groups whose comment matches the HLA-allele pattern.
+    const HLA_RE = /^[A-DG]\*\d{2}:\d{2}/;
+    const hlas = []; // [{y, label}]
+    tableGroup.querySelectorAll('g[id^="text_"]').forEach(g => {
+      let label = '';
+      for (const c of g.childNodes) {
+        if (c.nodeType === Node.COMMENT_NODE && c.nodeValue.trim()) { label = c.nodeValue.trim(); break; }
+      }
+      if (!HLA_RE.test(label)) return;
+      const inner = g.querySelector('g[transform]');
+      if (!inner) return;
+      const m = inner.getAttribute('transform').match(/translate\(\s*[\-\d.]+\s+([\-\d.]+)/);
+      if (!m) return;
+      hlas.push({ y: parseFloat(m[1]), label });
+    });
+
+    const nearest = (arr, key, target) => {
+      let best = null, bestD = Infinity;
+      for (const item of arr) {
+        const d = Math.abs(item[key] - target);
+        if (d < bestD) { bestD = d; best = item; }
+      }
+      return best;
+    };
+
+    // Walk table_1 in document order, pairing each <patch_*> with the
+    // immediately-following <!-- N --> comment. Only patches with both a
+    // resolvable bbox AND a digit pair get wired.
+    const cellEntries = [];
+    const walk = (parent) => {
+      const queue = [];
+      let pendingPatch = null;
+      for (const node of parent.childNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE && /^patch_/.test(node.id || '') && node !== parent.querySelector('#patch_43, [id^="patch_4"]:first-child')) {
+          // The very first patch is the table outline — skip it (huge
+          // bounding rect that would catch every hover).
+          pendingPatch = node;
+        } else if (node.nodeType === Node.COMMENT_NODE) {
+          const t = node.nodeValue.trim();
+          if (/^\d+$/.test(t) && pendingPatch) {
+            queue.push({ patch: pendingPatch, value: parseInt(t, 10) });
+            pendingPatch = null;
+          }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          // Recurse into nested groups (table_1 → patch_* / text_*)
+          walk(node).forEach(e => queue.push(e));
+        }
+      }
+      return queue;
+    };
+    const allCells = walk(tableGroup);
+
+    // Filter out the table outline (largest bbox) and any patch larger
+    // than ~30% of the table area — those are background frames, not data
+    // cells.
+    let tableBBoxArea = 0;
+    try {
+      const bb = tableGroup.getBBox();
+      tableBBoxArea = bb.width * bb.height;
+    } catch (e) { /* getBBox may throw if not yet rendered; we just skip the area filter */ }
+
+    cellEntries.length = 0;
+    for (const { patch, value } of allCells) {
+      const path = patch.querySelector('path');
+      if (!path) continue;
+      let bbox;
+      try { bbox = path.getBBox(); } catch (e) { continue; }
+      if (!bbox || bbox.width <= 0 || bbox.height <= 0) continue;
+      if (tableBBoxArea && bbox.width * bbox.height > tableBBoxArea * 0.30) continue;
+      const cx = bbox.x + bbox.width / 2;
+      const cy = bbox.y + bbox.height / 2;
+      cellEntries.push({ patch, path, value, cx, cy });
+    }
+
+    // Wire hover handlers.
+    const valueLabel = (v) => v === 0 ? 'not detected'
+      : v === 1 ? '1 sample reports this peptide'
+      : `${v} samples report this peptide`;
+    cellEntries.forEach(c => {
+      const tissue = tissues.length ? nearest(tissues, 'x', c.cx) : null;
+      const hla = hlas.length ? nearest(hlas, 'y', c.cy) : null;
+      if (!tissue || !hla) return;
+      c.path.style.cursor = 'crosshair';
+      c.path.addEventListener('mouseenter', () => {
+        tip.innerHTML =
+          `<span class="ttip-key">HLA</span> ${_searchEsc(hla.label)}<br>` +
+          `<span class="ttip-key">tissue</span> ${_searchEsc(tissue.label)}<br>` +
+          `<span class="ttip-key">count</span> <b>${c.value}</b> <span style="opacity:.75">· ${valueLabel(c.value)}</span>`;
+        tip.classList.add('show');
+      });
+      c.path.addEventListener('mousemove', (e) => {
+        const rect = host.getBoundingClientRect();
+        tip.style.left = Math.min(rect.width - 260, e.clientX - rect.left + 14) + 'px';
+        tip.style.top = Math.max(0, e.clientY - rect.top - 70) + 'px';
+      });
+      c.path.addEventListener('mouseleave', () => tip.classList.remove('show'));
+    });
+  }
+
   // Make x-axis tissue labels (and any other categorical tick labels with
   // human-readable comments) interactive — same pattern as the legend.
   // We discover them by walking each matplotlib axis group inside axes_2
