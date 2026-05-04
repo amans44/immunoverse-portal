@@ -27,10 +27,11 @@ from collections import defaultdict
 from pathlib import Path
 
 # === CONFIGURATION ===
-DROPBOX_URL = os.environ.get(
-    'IMMUNOVERSE_DROPBOX_URL',
-    'https://www.dropbox.com/scl/fo/2we0ndqepjbrc9dgrl4om/AFWgxeokcbxOkA4CFTTxJeA?rlkey=lre6rtqqkcjeglo2ylwtny3ea&dl=1',
-)
+# Note: GitHub Actions resolves an unset `vars.X` to an empty string, not to
+# an unset env var — so use `or` instead of `os.environ.get(..., default)` to
+# fall through to the hardcoded share URL when the env var is empty.
+DROPBOX_URL = os.environ.get('IMMUNOVERSE_DROPBOX_URL', '').strip() or \
+    'https://www.dropbox.com/scl/fo/2we0ndqepjbrc9dgrl4om/AFWgxeokcbxOkA4CFTTxJeA?rlkey=lre6rtqqkcjeglo2ylwtny3ea&dl=1'
 # Where the extracted Dropbox files are cached between runs.
 EXTRACTED_DIR = Path(os.environ.get('IMMUNOVERSE_DATA', Path.home() / '.cache' / 'immunoverse' / 'extracted'))
 CACHE_ZIP = EXTRACTED_DIR.parent / 'dropbox.zip'
