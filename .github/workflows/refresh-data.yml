@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      issues: write
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -48,4 +49,25 @@ jobs:
           else
             git commit -m "chore(data): daily refresh from Dropbox"
             git push
+          fi
+
+      # Open (or comment on) a tracking issue so silent failures become visible.
+      # Reuses one issue via the `ci-refresh-failure` label to avoid daily spam.
+      - name: Notify on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create ci-refresh-failure --color FF8800 \
+            --description "Daily Dropbox refresh failure" --force 2>/dev/null || true
+          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          NOW="$(date -u +%FT%TZ)"
+          BODY=$(printf 'Workflow run **failed** on %s.\n\nRun: %s\n\nCommon causes: Dropbox share URL rotated (update the `IMMUNOVERSE_DROPBOX_URL` repo variable), rate limit, or download timeout. Inspect the failed step log for the traceback.' "$NOW" "$RUN_URL")
+          ISSUE=$(gh issue list --label ci-refresh-failure --state open \
+                    --json number --jq '.[0].number')
+          if [ -n "$ISSUE" ]; then
+            gh issue comment "$ISSUE" --body "$BODY"
+          else
+            gh issue create --title "Daily Dropbox refresh is failing" \
+              --label ci-refresh-failure --body "$BODY"
           fi
