@@ -40,15 +40,51 @@ jobs:
         run: python integrate_data.py
 
       - name: Commit and push if changed
+        id: commit
         run: |
           git config user.name  "immunoverse-bot"
           git config user.email "immunoverse-bot@users.noreply.github.com"
           git add data_js/ data/
           if git diff --cached --quiet; then
             echo "No data changes — nothing to commit."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "files_changed=0" >> "$GITHUB_OUTPUT"
           else
+            FILES=$(git diff --cached --name-only | wc -l | tr -d ' ')
             git commit -m "chore(data): daily refresh from Dropbox"
             git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "files_changed=$FILES" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Comment on a single tracking issue so you get an email per successful run.
+      # Includes whether data actually changed, so the email body itself tells you
+      # if there's new science to look at vs a quiet no-op day.
+      - name: Notify on success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create ci-refresh-success --color 2EA44F \
+            --description "Daily Dropbox refresh succeeded" --force 2>/dev/null || true
+          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          NOW="$(date -u +%FT%TZ)"
+          if [ "${{ steps.commit.outputs.changed }}" = "true" ]; then
+            BODY=$(printf '✅ **Refreshed with new data** on %s — bot committed %s file(s) to `main`.\n\nRun: %s' \
+              "$NOW" "${{ steps.commit.outputs.files_changed }}" "$RUN_URL")
+          else
+            BODY=$(printf '✅ **Ran cleanly (no data changes)** on %s — Dropbox content identical to what is in the repo.\n\nRun: %s' \
+              "$NOW" "$RUN_URL")
+          fi
+          ISSUE=$(gh issue list --label ci-refresh-success --state open \
+                    --json number --jq '.[0].number')
+          if [ -n "$ISSUE" ]; then
+            gh issue comment "$ISSUE" --body "$BODY"
+          else
+            INTRO='This issue logs every successful run of the daily Dropbox refresh. Subscribe (top-right) to get one email per refresh. Mute or close to stop notifications.'
+            gh issue create --title "Daily Dropbox refresh — success log" \
+              --label ci-refresh-success \
+              --body "$(printf '%s\n\n---\n\n%s' "$INTRO" "$BODY")"
           fi
 
       # Open (or comment on) a tracking issue so silent failures become visible.
