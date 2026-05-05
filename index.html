@@ -2718,7 +2718,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
         <div class="stat"><div class="num">16,687</div><div class="label">Tumor-specific <span class="nocaps">pHLAs</span></div></div>
         <div class="stat"><div class="num">21</div><div class="label">Cancer types</div></div>
         <div class="stat"><div class="num">11</div><div class="label">Aberration classes</div></div>
-        <div class="stat"><div class="num">88%</div><div class="label">Tumors w/ targets</div></div>
+        <div class="stat" data-tip="Fraction of analyzed tumor samples (across the 1,823 immunopeptidomes) that had at least one identified tumor-specific T-cell target."><div class="num">88%</div><div class="label">Tumor coverage</div></div>
         <div class="stat"><div class="num">1,823</div><div class="label">Immunopeptidomes</div></div>
         <div class="stat"><div class="num">7,188</div><div class="label">Tumor RNA-Seq</div></div>
         <div class="stat"><div class="num">17,384</div><div class="label">Normal controls</div></div>
@@ -2768,7 +2768,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <div class="exp-head">
         <div>
           <h3 id="expTitle">All cancers</h3>
-          <div class="meta" data-tip="The atlas catalogues 16,687 unique tumor-specific pHLAs (peptide–HLA antigens). The table below lists peptide–cancer occurrences — a peptide presented in N cancer types contributes N rows.">Showing <b id="shownN">0</b> of <b id="totalN">0</b> peptide–cancer rows · <b>16,687</b> unique <span class="nocaps">pHLAs</span></div>
+          <div class="meta" data-tip="Each row is one detection event — a peptide identified as tumor-specific in one cancer type. • 26,603 = total detection events catalogued by the atlas (a peptide found in N cancer types = N events; the 9,916 surplus over the 16,687 distinct peptides reflects targets shared across cancers, a key scientific finding). • 16,687 = distinct peptide antigens after deduplication across cancers — the manuscript's headline figure. Filtering the table by cancer narrows the event count without affecting the headline figure.">Showing <b id="shownN">0</b> of <b id="totalN">0</b> detection events <span style="color:var(--text-3)">(one peptide × one cancer per row)</span> · <b>16,687</b> distinct peptides</div>
         </div>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
           <button class="guide-toggle" onclick="document.getElementById('guideBox').classList.toggle('open')">? How to use</button>
