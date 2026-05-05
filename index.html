@@ -339,6 +339,10 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+/* Opt-out for terms whose case carries meaning (e.g. pHLAs) — keeps the
+   label's uppercase rhythm but lets specific words preserve their casing.
+   Letter-spacing is reset to 0 so the inline word reads at normal density. */
+.nocaps { text-transform: none; letter-spacing: 0; }
 
 /* ===================== SECTION HEADERS ===================== */
 .section-head { max-width: 900px; margin-bottom: 20px; }
@@ -2669,7 +2673,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <a href="#atlas">Atlas</a>
       <a href="#explorer">Explorer</a>
       <a href="#cancers">Cancers</a>
-      <a href="#highlights" style="display:none">Highlights</a>
+      <a href="#highlights">Highlights</a>
       <a href="#classes">Classes</a>
       <a href="#methods">Methods</a>
       <a href="#downloads">Data</a>
@@ -2711,7 +2715,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
         </div>
       </div>
       <div class="hero-stats">
-        <div class="stat"><div class="num">16,687</div><div class="label">Tumor-specific pHLAs</div></div>
+        <div class="stat"><div class="num">16,687</div><div class="label">Tumor-specific <span class="nocaps">pHLAs</span></div></div>
         <div class="stat"><div class="num">21</div><div class="label">Cancer types</div></div>
         <div class="stat"><div class="num">11</div><div class="label">Aberration classes</div></div>
         <div class="stat"><div class="num">88%</div><div class="label">Tumors w/ targets</div></div>
@@ -2764,7 +2768,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <div class="exp-head">
         <div>
           <h3 id="expTitle">All cancers</h3>
-          <div class="meta">Showing <b id="shownN">0</b> of <b id="totalN">0</b> targets</div>
+          <div class="meta" data-tip="The atlas catalogues 16,687 unique tumor-specific pHLAs (peptide–HLA antigens). The table below lists peptide–cancer occurrences — a peptide presented in N cancer types contributes N rows.">Showing <b id="shownN">0</b> of <b id="totalN">0</b> peptide–cancer rows · <b>16,687</b> unique <span class="nocaps">pHLAs</span></div>
         </div>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
           <button class="guide-toggle" onclick="document.getElementById('guideBox').classList.toggle('open')">? How to use</button>
@@ -2796,7 +2800,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <div class="filter-stats" id="filterStats"></div>
 
       <div class="hl-chips" id="hlChips">
-        <span class="hl-label">Jump to hero targets:</span>
+        <span class="hl-label">Jump to selected targets:</span>
         <button class="hl-chip" data-pep="KTWDQVPFSV" data-gene="PMEL" data-cancer="SKCM">sPMEL · KTWDQVPFSV</button>
         <button class="hl-chip" data-gene="LINE1 ORF2" data-pep="">LINE1 ORF2</button>
         <button class="hl-chip" data-gene="MAGEA4" data-pep="GVYDGREHTV">MAGE-A4 · GVYDGREHTV</button>
@@ -2939,15 +2943,15 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   </div>
 </section>
 
-<!-- HIGHLIGHTS — temporarily hidden via display:none so the next section
-     pulls up. Markup is preserved verbatim; remove the inline style on
-     the <section> tag below (and re-enable the matching nav link) to
-     restore. -->
-<section id="highlights" style="display:none">
+<!-- SELECTED TARGETS — manuscript-curated highlights.
+     Per Mark's review for the Science submission, renamed from "Hero
+     targets" → "Selected targets" so the heading lines up with the
+     body copy ("Selected discoveries from the manuscript"). -->
+<section id="highlights">
   <div class="container">
     <div class="section-head">
       <div class="kicker">Manuscript highlights</div>
-      <h2>Hero targets uncovered by ImmunoVerse</h2>
+      <h2>Selected targets uncovered by ImmunoVerse</h2>
       <p>Selected discoveries from the manuscript — each has experimental validation and, in several cases, direct evidence of T cell anti-tumor activity.</p>
     </div>
     <div class="highlights">
@@ -3137,7 +3141,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
         <a href="#atlas">Atlas</a>
         <a href="#explorer">Explorer</a>
         <a href="#classes">Aberration classes</a>
-        <a href="#highlights" style="display:none">Highlights</a>
+        <a href="#highlights">Highlights</a>
       </div>
       <div>
         <h6>Resources</h6>

@@ -42,7 +42,7 @@
     "  • #atlas      — Pan-cancer overview of therapeutic T cell targets",
     "  • #explorer   — Search, filter, and rank the full atlas",
     "  • #cancers    — 21 cancer types · 340,000+ ranked candidate targets",
-    "  • #highlights — Hero targets uncovered by ImmunoVerse",
+    "  • #highlights — Selected targets uncovered by ImmunoVerse",
     "  • #classes    — 11 molecular sources of tumor-specific antigens",
     "  • #methods    — How ImmunoVerse was built",
     "  • #downloads  — Download the full atlas (data files)",
