@@ -2730,10 +2730,10 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
         <div class="stat" data-tip="Fraction of analyzed tumor samples (across the 1,823 immunopeptidomes) that had at least one identified tumor-specific T-cell target."><div class="num">88%</div><div class="label">Tumor coverage</div></div>
         <div class="stat" data-tip="1,823 mass-spectrometry immunopeptidome runs from 523 biological samples spanning 21 cancer types."><div class="num">1,823</div><div class="label">Immunopeptidomes</div></div>
         <div class="stat" data-tip="7,188 bulk tumor RNA-Seq profiles — used to define each cancer's tumor-specific transcriptome and search-space for HLA-presented antigens."><div class="num">7,188</div><div class="label">Tumor RNA-Seq</div></div>
-        <div class="stat" data-tip-wide data-tip="17,384 GTEx normal-tissue samples covering 51 tissues.
+        <div class="stat" data-tip="17,384 GTEx normal-tissue samples covering 51 tissues.
 
 Used to filter for tumor specificity — tumor antigens are required to be absent or minimally expressed across this normal-tissue panel."><div class="num">17,384</div><div class="label">Normal controls</div></div>
-        <div class="stat" data-tip-wide data-tip="2,401 mutation-derived neoantigens with direct immunopeptidome evidence.
+        <div class="stat" data-tip="2,401 mutation-derived neoantigens with direct immunopeptidome evidence.
 
 Somatic mutations from TCGA / TARGET were searched against histology-matched immunopeptidomic cohorts. Includes 127 public neoantigens shared across multiple tumor samples."><div class="num">2,401</div><div class="label">Neoantigens</div></div>
       </div>
@@ -2781,7 +2781,7 @@ Somatic mutations from TCGA / TARGET were searched against histology-matched imm
       <div class="exp-head">
         <div>
           <h3 id="expTitle">All cancers</h3>
-          <div class="meta" data-tip-wide data-tip="Each row in the table below is one detection event — a peptide identified as tumor-specific in one cancer type.
+          <div class="meta" data-tip="Each row in the table below is one detection event — a peptide identified as tumor-specific in one cancer type.
 
 • 26,603 = total detection events catalogued by the atlas. A peptide found in N cancer types contributes N events. The 9,916-event surplus over 16,687 reflects targets shared across cancers — itself a key scientific finding.
 
@@ -6133,7 +6133,13 @@ applyFilters = function() { _origApply(); pushUrlState(); };
   function show(el, text) {
     clearTimeout(hideTimer);
     tip.textContent = text;
-    tip.classList.toggle('wide', el.hasAttribute('data-tip-wide'));
+    // Auto-widen if the content has explicit newlines (multi-line intent)
+    // or runs long (>220 chars). `data-tip-wide` remains as a manual override
+    // for edge cases where auto-detection picks the wrong treatment.
+    const wide = el.hasAttribute('data-tip-wide')
+              || text.indexOf('\n') !== -1
+              || text.length > 220;
+    tip.classList.toggle('wide', wide);
     tip.classList.add('show');
     const r = el.getBoundingClientRect();
     // Position above the element, centered
