@@ -5093,12 +5093,88 @@ function _ivHlaCategoryColor(hla, categories, fallbackIdx) {
   return IV_SCIFI_PALETTE[fallbackIdx % IV_SCIFI_PALETTE.length];
 }
 
+// Regex-based heatmap extractor. Operates on the raw SVG source text so we
+// don't depend on the browser's image/svg+xml parser preserving <!-- N -->
+// comment nodes (which it sometimes silently strips, leaving DOM-based
+// extraction with nothing to find). Same logical contract as the DOM
+// extractor: returns { hlas, tissues, matrix, maxVal } or null.
+function _ivExtractHeatmapFromText(svgText) {
+  if (!svgText) return null;
+  // Find every text_ block and pull its comment + translate position.
+  const items = [];
+  const re = /<g[^>]+id="text_\d+"[^>]*>([\s\S]*?)<\/g>(?=\s*<g)/g;
+  let block;
+  while ((block = re.exec(svgText)) !== null) {
+    const body = block[1];
+    const cmtM = body.match(/<!--\s*([^\->][^\-]*?)\s*-->/);
+    if (!cmtM) continue;
+    const trM = body.match(/translate\(\s*([\d.\-]+)[\s,]+([\d.\-]+)/);
+    if (!trM) continue;
+    items.push({
+      cmt: cmtM[1].trim(),
+      x: parseFloat(trM[1]),
+      y: parseFloat(trM[2]),
+    });
+  }
+  if (!items.length) return null;
+
+  const hlaRx = /^[A-DG]\*\d{2}:\d{2}$/;
+  const hlaSeen = new Map();
+  items.forEach(t => {
+    if (hlaRx.test(t.cmt) && !hlaSeen.has(t.cmt)) hlaSeen.set(t.cmt, t.y);
+  });
+  const hlas = [...hlaSeen.keys()]
+    .map(name => ({ name, y: hlaSeen.get(name) }))
+    .sort((a, b) => a.y - b.y);
+  if (hlas.length < 2) return null;
+
+  const tissueSeen = new Map();
+  items.forEach(t => {
+    if (hlaRx.test(t.cmt) || /^[\d.]+$/.test(t.cmt) || /[*;]/.test(t.cmt)) return;
+    if (t.cmt.length < 3 || t.cmt.length > 30) return;
+    if (['tumor', 'percentile', 'QYNPIRTTF'].includes(t.cmt)) return;
+    if (!tissueSeen.has(t.cmt)) tissueSeen.set(t.cmt, t.x);
+  });
+  const tissues = [...tissueSeen.keys()]
+    .map(name => ({ name, x: tissueSeen.get(name) }))
+    .sort((a, b) => a.x - b.x);
+  if (tissues.length < 5) return null;
+
+  const cellTexts = items.filter(t => /^\d+$/.test(t.cmt))
+    .map(t => ({ value: parseInt(t.cmt, 10), x: t.x, y: t.y }));
+
+  const matrix = Array.from({ length: hlas.length }, () => new Array(tissues.length).fill(0));
+  cellTexts.forEach(c => {
+    let bestRow = 0, bestRowD = Infinity;
+    hlas.forEach((h, i) => {
+      const d = Math.abs(c.y - h.y);
+      if (d < bestRowD) { bestRowD = d; bestRow = i; }
+    });
+    let bestCol = 0, bestColD = Infinity;
+    tissues.forEach((tt, i) => {
+      const d = Math.abs(c.x - tt.x);
+      if (d < bestColD) { bestColD = d; bestCol = i; }
+    });
+    matrix[bestRow][bestCol] = c.value;
+  });
+
+  return {
+    hlas: hlas.map(h => h.name),
+    tissues: tissues.map(t => t.name),
+    matrix,
+    maxVal: Math.max(1, ...cellTexts.map(c => c.value)),
+  };
+}
+
 // Build the FULL scifi figure (header pill, title, scatter, legend, heatmap)
 // by extracting all data from the matplotlib SVG and rendering the layout
 // from immunoverse_nbl_chart_scifi.html. This entirely replaces matplotlib's
 // SVG rendering for percentile figures.
-function _ivBuildScifiFigure(host, svgEl, peptide, cancer, themeName) {
-  const heatmap = _ivExtractMplHeatmap(svgEl);
+function _ivBuildScifiFigure(host, svgEl, peptide, cancer, themeName, svgText) {
+  // Try DOM-based extraction first; fall back to regex-against-raw-source if
+  // the browser stripped <!-- comments --> during image/svg+xml parsing.
+  let heatmap = _ivExtractMplHeatmap(svgEl);
+  if (!heatmap && svgText) heatmap = _ivExtractHeatmapFromText(svgText);
   const scatter = _ivExtractMplScatter(svgEl);
   if (!heatmap || !scatter) return null;
 
@@ -5260,34 +5336,30 @@ function mountInteractiveSvg(host, svgText, opts) {
     const cancer = fnParts[0] || '';
     const pep = fnParts[1] || '';
     console.log('[iv-scifi] percentile detected:', { filename: opts.filename, cancer, pep });
-    // Deep debug: scan structural counts before extraction so we see whether
-    // the live SVG actually contains what we expect.
+    // Deep debug: does the RAW SVG text actually contain matplotlib's
+    // <!-- LABEL --> comments? If not, we're stuck — matplotlib was run
+    // with --no-comment or similar and we'll need glyph-path decoding.
     {
-      const axes = svgEl.querySelectorAll('g[id^="axes_"]');
-      const pcs = svgEl.querySelectorAll('g[id^="PathCollection_"]');
-      const allUses = svgEl.querySelectorAll('use');
-      const allTextGroups = svgEl.querySelectorAll('g[id^="text_"]');
-      // Sample one text_ to see what's inside
-      const sampleText = allTextGroups[0];
-      const sampleHTML = sampleText
-        ? (new XMLSerializer()).serializeToString(sampleText).slice(0, 300)
-        : '(none)';
-      console.log('[iv-scifi] structural:', {
-        axesCount: axes.length,
-        pathCollections: pcs.length,
-        totalUses: allUses.length,
-        textGroups: allTextGroups.length,
-        sampleTextHTML: sampleHTML,
+      const commentCount = (svgText.match(/<!--/g) || []).length;
+      const hasHla = /<!--\s*[A-DG]\*\d{2}:\d{2}\s*-->/.test(svgText);
+      const hasTumor = /<!--\s*tumor\s*-->/.test(svgText);
+      const hasTissue = /<!--\s*Adrenal/.test(svgText);
+      console.log('[iv-scifi] raw-source:', {
+        svgTextLength: svgText.length,
+        totalCommentMarkers: commentCount,
+        hasHlaComment: hasHla,
+        hasTumorComment: hasTumor,
+        hasTissueComment: hasTissue,
       });
     }
     try {
-      const heatmap = _ivExtractMplHeatmap(svgEl);
+      const heatmap = _ivExtractMplHeatmap(svgEl) || _ivExtractHeatmapFromText(svgText);
       const scatter = _ivExtractMplScatter(svgEl);
       console.log('[iv-scifi] extracted:', {
         heatmap: heatmap && { hlas: heatmap.hlas.length, tissues: heatmap.tissues.length, maxVal: heatmap.maxVal },
         scatter: scatter && { tumorDots: scatter.tumorDots.length, categories: scatter.categories.length },
       });
-      const built = _ivBuildScifiFigure(host, svgEl, pep, cancer, curTheme);
+      const built = _ivBuildScifiFigure(host, svgEl, pep, cancer, curTheme, svgText);
       console.log('[iv-scifi] built:', built ? 'YES' : 'NO (falling back to themed matplotlib)');
       if (built) {
         // Add a corner button strip for PNG download / fallback view.
