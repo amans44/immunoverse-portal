@@ -5296,10 +5296,10 @@ function _ivPaintScifiFigure(wrap, themeName) {
 
   // ---- Legend list ----
   // Each row carries data-cat so it's clickable / hoverable to filter the
-  // figure to that HLA category. Cursor pointer + title = "click to lock"
-  // gives the same affordance as the original matplotlib SVG legend.
+  // figure to that HLA category. Cursor pointer + the cyan hover bg are
+  // enough affordance — no title tooltip needed.
   const legendHTML = scatter.categories.map((c, i) =>
-    `<div class="iv-scifi-legend-row" data-cat="${i}" title="Click to lock; hover to preview">
+    `<div class="iv-scifi-legend-row" data-cat="${i}">
       <span class="iv-scifi-legend-dot" style="background:${c.color};box-shadow:0 0 6px ${c.color}88"></span>
       <span class="iv-scifi-legend-label">${c.label}</span>
     </div>`
