@@ -1825,6 +1825,42 @@ table.atlas.compact td:nth-child(10) { display: none; }
 }
 :root[data-theme="light"] .iv-scifi-htable td:hover { outline-color: #0891b2; }
 
+/* Legend hover/click filter: when a category is active, dim everything that
+   isn't tagged with the matching data-cat (scatter dot) or data-cats list
+   (heatmap row). Categories 0..3 cover all matplotlib default palette slots. */
+.iv-scifi-figure[data-active-cat] .iv-scifi-dot,
+.iv-scifi-figure[data-active-cat] .iv-scifi-htable tbody > tr,
+.iv-scifi-figure[data-active-cat] .iv-scifi-legend-row {
+  transition: opacity 120ms ease, filter 120ms ease;
+}
+.iv-scifi-figure[data-active-cat] .iv-scifi-dot { opacity: 0.12; }
+.iv-scifi-figure[data-active-cat] .iv-scifi-htable tbody > tr { opacity: 0.18; }
+.iv-scifi-figure[data-active-cat] .iv-scifi-legend-row { opacity: 0.35; }
+
+.iv-scifi-figure[data-active-cat="0"] .iv-scifi-dot[data-cat="0"],
+.iv-scifi-figure[data-active-cat="1"] .iv-scifi-dot[data-cat="1"],
+.iv-scifi-figure[data-active-cat="2"] .iv-scifi-dot[data-cat="2"],
+.iv-scifi-figure[data-active-cat="3"] .iv-scifi-dot[data-cat="3"] { opacity: 1; }
+
+.iv-scifi-figure[data-active-cat="0"] .iv-scifi-legend-row[data-cat="0"],
+.iv-scifi-figure[data-active-cat="1"] .iv-scifi-legend-row[data-cat="1"],
+.iv-scifi-figure[data-active-cat="2"] .iv-scifi-legend-row[data-cat="2"],
+.iv-scifi-figure[data-active-cat="3"] .iv-scifi-legend-row[data-cat="3"] {
+  opacity: 1;
+  background: rgba(0,212,255,0.08);
+  border-radius: 4px;
+}
+
+.iv-scifi-figure[data-active-cat="0"] .iv-scifi-htable tbody > tr[data-cats~="0"],
+.iv-scifi-figure[data-active-cat="1"] .iv-scifi-htable tbody > tr[data-cats~="1"],
+.iv-scifi-figure[data-active-cat="2"] .iv-scifi-htable tbody > tr[data-cats~="2"],
+.iv-scifi-figure[data-active-cat="3"] .iv-scifi-htable tbody > tr[data-cats~="3"] {
+  opacity: 1;
+}
+
+.iv-scifi-legend-row { cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+.iv-scifi-legend-row:hover { background: rgba(0,212,255,0.05); }
+
 /* ===================== INTERACTIVE SVG VIEWER ===================== */
 /* The figure embeds inline (no Illustrator-style toolbar). The legend
    inside the SVG itself becomes clickable, and hovering data points
@@ -5035,7 +5071,10 @@ function _ivExtractMplScatter(svgEl) {
   // versions vary in how they nest <use> markers — sometimes direct children
   // of the PathCollection, sometimes wrapped in an intermediate <g>. Scan ALL
   // descendants and pick anything carrying both an x/y position and a fill.
+  // Track which PathCollection each dot came from (cat=0..3) so the legend's
+  // hover/click filter can dim non-matching dots.
   const tumorDots = [];
+  let pcIdx = 0;
   ax1.querySelectorAll('g[id^="PathCollection_"]').forEach(pc => {
     pc.querySelectorAll('use, path, circle').forEach(el => {
       let yPx, fill;
@@ -5059,8 +5098,9 @@ function _ivExtractMplScatter(svgEl) {
       const mplColor = fill.toLowerCase();
       const scifiColor = IV_MPL_TO_SCIFI[mplColor] || mplColor;
       const pct = (yPx - yPx0) / (yPx1 - yPx0);
-      tumorDots.push({ pct: Math.max(0, Math.min(1, pct)), color: scifiColor });
+      tumorDots.push({ pct: Math.max(0, Math.min(1, pct)), color: scifiColor, cat: pcIdx });
     });
+    pcIdx++;
   });
 
   // Legend HLA-category strings: text comments anywhere with `;` separator.
@@ -5229,8 +5269,11 @@ function _ivPaintScifiFigure(wrap, themeName) {
   // Tumor dots: pct 1.0 → cy=0, pct 0.0 → cy=VB_H.
   const tumorCircles = scatter.tumorDots.map(d => {
     const cy = (1 - d.pct) * VB_H;
-    return `<circle cx="${TUMOR_X}" cy="${cy.toFixed(1)}" r="6" fill="${d.color}" opacity="0.18"/>`
-         + `<circle cx="${TUMOR_X}" cy="${cy.toFixed(1)}" r="4.5" fill="${d.color}" opacity="0.95" filter="url(#iv-scifi-glow)"/>`;
+    const cat = d.cat != null ? d.cat : 0;
+    return `<g class="iv-scifi-dot" data-cat="${cat}">`
+         + `<circle cx="${TUMOR_X}" cy="${cy.toFixed(1)}" r="6" fill="${d.color}" opacity="0.18"/>`
+         + `<circle cx="${TUMOR_X}" cy="${cy.toFixed(1)}" r="4.5" fill="${d.color}" opacity="0.95" filter="url(#iv-scifi-glow)"/>`
+         + `</g>`;
   }).join('');
 
   // Per-tissue baseline dots: low-opacity dots near the bottom (percentile≈0)
@@ -5252,14 +5295,23 @@ function _ivPaintScifiFigure(wrap, themeName) {
   ).join('');
 
   // ---- Legend list ----
-  const legendHTML = scatter.categories.map(c =>
-    `<div class="iv-scifi-legend-row">
+  // Each row carries data-cat so it's clickable / hoverable to filter the
+  // figure to that HLA category. Cursor pointer + title = "click to lock"
+  // gives the same affordance as the original matplotlib SVG legend.
+  const legendHTML = scatter.categories.map((c, i) =>
+    `<div class="iv-scifi-legend-row" data-cat="${i}" title="Click to lock; hover to preview">
       <span class="iv-scifi-legend-dot" style="background:${c.color};box-shadow:0 0 6px ${c.color}88"></span>
       <span class="iv-scifi-legend-label">${c.label}</span>
     </div>`
   ).join('') || '<div class="iv-scifi-legend-row"><span class="iv-scifi-legend-label" style="color:#475569">(no legend extracted)</span></div>';
 
   // ---- Heatmap table ----
+  // Each row carries data-cats="0 2 …" listing every legend category whose
+  // HLA list includes this row's HLA. Used by the legend filter to dim
+  // rows that don't belong to the active category.
+  const hlaCats = (hla) => scatter.categories
+    .map((c, i) => c.label.split(';').map(s => s.trim()).includes(hla) ? i : -1)
+    .filter(i => i >= 0).join(' ');
   let tableHTML = '<table class="iv-scifi-htable"><thead><tr><th class="iv-scifi-corner"></th>';
   heatmap.tissues.forEach(t => {
     tableHTML += `<th class="iv-scifi-htcol"><span>${t}</span></th>`;
@@ -5267,7 +5319,8 @@ function _ivPaintScifiFigure(wrap, themeName) {
   tableHTML += '</tr></thead><tbody>';
   heatmap.hlas.forEach((hla, ri) => {
     const rowColor = _ivHlaCategoryColor(hla, scatter.categories, ri);
-    tableHTML += `<tr><th class="iv-scifi-htrow" style="color:${rowColor}">${hla}</th>`;
+    const cats = hlaCats(hla);
+    tableHTML += `<tr data-cats="${cats}"><th class="iv-scifi-htrow" style="color:${rowColor}">${hla}</th>`;
     heatmap.matrix[ri].forEach((v, ci) => {
       tableHTML += `<td style="background:${cellBg(v)};color:${cellFg(v)};font-weight:${v > 2 ? 700 : 400}"`
         + ` data-tip="${hla} × ${heatmap.tissues[ci]} · ${v} peptide${v === 1 ? '' : 's'}">${v}</td>`;
@@ -5275,6 +5328,38 @@ function _ivPaintScifiFigure(wrap, themeName) {
     tableHTML += '</tr>';
   });
   tableHTML += '</tbody></table>';
+
+  // ---- Wire legend hover/click filter (after innerHTML is set below) ----
+  const wireLegendFilter = () => {
+    let lockedCat = null;
+    const setActive = (cat) => {
+      if (cat == null) wrap.removeAttribute('data-active-cat');
+      else wrap.setAttribute('data-active-cat', String(cat));
+    };
+    wrap.querySelectorAll('.iv-scifi-legend-row[data-cat]').forEach(row => {
+      const cat = row.dataset.cat;
+      row.addEventListener('mouseenter', () => {
+        if (lockedCat != null) return;
+        setActive(cat);
+      });
+      row.addEventListener('mouseleave', () => {
+        if (lockedCat != null) return;
+        setActive(null);
+      });
+      row.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (lockedCat === cat) {
+          lockedCat = null; setActive(null);
+        } else {
+          lockedCat = cat; setActive(cat);
+        }
+      });
+    });
+    // Click outside legend → unlock.
+    wrap.addEventListener('click', () => {
+      if (lockedCat != null) { lockedCat = null; setActive(null); }
+    });
+  };
 
   // ---- Compose the full figure ----
   wrap.innerHTML = `
@@ -5308,6 +5393,9 @@ function _ivPaintScifiFigure(wrap, themeName) {
     </div>
     <div class="iv-scifi-htwrap">${tableHTML}</div>
   `;
+
+  // After the DOM exists, wire the legend hover/click filter.
+  wireLegendFilter();
 }
 
 // (the older _ivPaintScifiHeatmap was rolled into _ivPaintScifiFigure above —
