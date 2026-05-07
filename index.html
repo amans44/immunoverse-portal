@@ -1721,28 +1721,64 @@ table.atlas.compact td:nth-child(10) { display: none; }
 :root[data-theme="light"] .iv-scifi-title { color: #0b1220; }
 
 .iv-scifi-mainrow {
-  display: flex; gap: 16px; align-items: stretch;
+  display: grid;
+  grid-template-columns: 26px 28px 80px 1fr 220px;
+  gap: 6px;
+  align-items: stretch;
 }
-.iv-scifi-chart {
-  flex: 1; min-width: 0;
-  display: grid; grid-template-columns: 36px 1fr; gap: 4px;
+
+.iv-scifi-yaxis-block {
+  display: contents;
 }
+.iv-scifi-ylabel {
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  font-size: 9.5px; color: #94a3b8; letter-spacing: 0.05em;
+  align-self: center; justify-self: center;
+  white-space: nowrap;
+}
+:root[data-theme="light"] .iv-scifi-ylabel { color: #475569; }
 .iv-scifi-yaxis {
   display: flex; flex-direction: column; justify-content: space-between;
-  align-items: flex-end; padding-right: 6px;
+  align-items: flex-end; padding-right: 4px;
   font-size: 9px; color: #64748b;
+  height: 200px;
+  align-self: flex-start; margin-top: 0;
 }
 :root[data-theme="light"] .iv-scifi-yaxis { color: #475569; }
+.iv-scifi-tumor-col, .iv-scifi-tissue-col {
+  display: flex; flex-direction: column; min-width: 0;
+}
 .iv-scifi-plot {
   position: relative;
   background: #0a1526; border: 1px solid #1a2740; border-radius: 8px;
   overflow: hidden;
-  min-height: 200px;
+  height: 200px;
 }
 :root[data-theme="light"] .iv-scifi-plot { background: #ffffff; border-color: #cfd9ea; }
 .iv-scifi-plot svg {
   position: absolute; inset: 0; width: 100%; height: 100%;
 }
+.iv-scifi-tlabels {
+  display: flex; padding-top: 4px; height: 70px;
+}
+.iv-scifi-tlabels-tumor { justify-content: center; }
+.iv-scifi-tlabels-tissue {
+  /* one slot per tissue, equal width — perfectly aligned with tissueColX */
+  align-items: flex-start;
+}
+.iv-scifi-tlabel {
+  font-size: 8.5px; line-height: 1; color: #94a3b8;
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  text-align: right; white-space: nowrap; padding-right: 2px;
+  flex: 1; min-width: 0; cursor: pointer;
+  transition: color 80ms ease;
+}
+:root[data-theme="light"] .iv-scifi-tlabel { color: #64748b; }
+.iv-scifi-tlabel-tumor {
+  flex: 0 0 auto; color: #00d4ff !important; font-weight: 700;
+  cursor: default; text-align: center;
+}
+.iv-scifi-tlabel:hover { color: #00d4ff; }
 
 .iv-scifi-legend {
   flex-shrink: 0; min-width: 200px; max-width: 260px;
@@ -1764,26 +1800,28 @@ table.atlas.compact td:nth-child(10) { display: none; }
   font-size: 9.5px; word-break: break-word;
 }
 
-.iv-scifi-xlabels {
-  margin-top: 6px; padding-left: 40px;
-  display: flex; flex-direction: column; gap: 2px;
+/* Tissue filter active rules: when a tissue is locked / hovered, dim
+   everything not tagged with that tissue index. Same pattern as legend
+   data-active-cat but for the tissue column dimension. */
+.iv-scifi-figure[data-active-tissue] .iv-scifi-dot[data-tissue],
+.iv-scifi-figure[data-active-tissue] .iv-scifi-htable td[data-tissue],
+.iv-scifi-figure[data-active-tissue] .iv-scifi-htable th[data-tissue],
+.iv-scifi-figure[data-active-tissue] .iv-scifi-tlabel[data-tissue] {
+  transition: opacity 100ms ease, color 100ms ease;
 }
-.iv-scifi-ylabel-bottom {
-  font-size: 9px; color: #475569; letter-spacing: 0.05em;
-  align-self: flex-start; margin-left: -38px;
+.iv-scifi-figure[data-active-tissue] .iv-scifi-dot[data-tissue],
+.iv-scifi-figure[data-active-tissue] .iv-scifi-htable td[data-tissue] {
+  opacity: 0.18;
 }
-:root[data-theme="light"] .iv-scifi-ylabel-bottom { color: #64748b; }
-.iv-scifi-xlabels-row {
-  display: flex; gap: 1px; height: 70px;
-}
-.iv-scifi-xlabel {
-  font-size: 8px; color: #475569; line-height: 1;
-  writing-mode: vertical-rl; transform: rotate(180deg);
-  text-align: right; flex: 1; min-width: 0;
-  white-space: nowrap; padding-right: 2px;
-}
-:root[data-theme="light"] .iv-scifi-xlabel { color: #64748b; }
-.iv-scifi-xlabel-tumor { color: #00d4ff; font-weight: 700; }
+.iv-scifi-figure[data-active-tissue] .iv-scifi-tlabel[data-tissue] { opacity: 0.4; }
+.iv-scifi-figure[data-active-tissue] .iv-scifi-htable th[data-tissue] { opacity: 0.45; }
+/* Active tissue stays vivid (selectors generated via attribute equality
+   work without enumerating 30 indices). */
+.iv-scifi-figure[data-active-tissue] [data-tissue].iv-tissue-on,
+.iv-scifi-figure [data-tissue].iv-tissue-on { opacity: 1 !important; }
+/* Use JS to toggle .iv-tissue-on on the matching elements. Cleaner than
+   enumerating 30 CSS rules for `[data-active-tissue="0"] [data-tissue="0"]`
+   etc. — see wireFilters in _ivPaintScifiFigure. */
 
 .iv-scifi-htwrap {
   margin-top: 18px;
@@ -5299,66 +5337,74 @@ function _ivPaintScifiFigure(wrap, themeName) {
     return v <= 2 ? '#1e3a8a' : '#ffffff';
   };
 
-  // ---- Scatter SVG ----
-  // viewBox: 660 wide × 220 tall, matching the reference scifi HTML.
-  const VB_W = 660, VB_H = 220;
-  // Tumor column at cx = 30; spread N tissue columns across remaining width.
-  const TUMOR_X = 30;
-  const tissueXSpan = VB_W - 80;
-  const tissueXStart = 60;
-  const colXFor = (i) => tissueXStart + (i + 0.5) * (tissueXSpan / heatmap.tissues.length);
+  // ---- Scatter rendering ----
+  // Y-axis range: 0 → 1.2 (extended past 1.0 so dots at the manuscript
+  // ceiling don't jam against the panel border). Both panels share this
+  // calibration so the dots line up across panels.
+  const VB_H = 200;
+  const Y_MAX = 1.2;
+  // pct → cy mapping: pct=Y_MAX at top, pct=0 at bottom
+  const pctToCy = (p) => (Y_MAX - Math.max(0, Math.min(Y_MAX, p))) / Y_MAX * VB_H;
 
-  // Tumor dots: pct 1.0 → cy=0, pct 0.0 → cy=VB_H.
-  const tumorCircles = scatter.tumorDots.map(d => {
-    const cy = (1 - d.pct) * VB_H;
+  // Tumor panel: narrow, single-column scatter with jitter so overlapping
+  // dots don't fully occlude. ViewBox 60 wide × VB_H tall.
+  const TUMOR_VB_W = 60;
+  const TUMOR_X_CENTER = TUMOR_VB_W / 2;
+  const tumorJitter = (i) => ((i * 17) % 13) - 6; // deterministic ±6 px
+  const tumorCircles = scatter.tumorDots.map((d, i) => {
+    const cx = TUMOR_X_CENTER + tumorJitter(i);
+    const cy = pctToCy(d.pct);
     const cat = d.cat != null ? d.cat : 0;
     return `<g class="iv-scifi-dot" data-cat="${cat}">`
-         + `<circle cx="${TUMOR_X}" cy="${cy.toFixed(1)}" r="6" fill="${d.color}" opacity="0.18"/>`
-         + `<circle cx="${TUMOR_X}" cy="${cy.toFixed(1)}" r="4.5" fill="${d.color}" opacity="0.95" filter="url(#iv-scifi-glow)"/>`
+         + `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="7" fill="${d.color}" opacity="0.20"/>`
+         + `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5" fill="${d.color}" opacity="0.95" filter="url(#iv-scifi-glow)"/>`
          + `</g>`;
   }).join('');
 
-  // Per-tissue scatter: real data extracted from matplotlib's axes_2 colored
-  // paths. Map each dot's matplotlib X (e.g. 113.6 for Adrenal gland) to the
-  // nearest tissue column in our scifi viewBox. Elevated dots get the same
-  // halo + glow as tumor dots; baseline dots (pct≈0) stay subtler.
+  // Per-tissue panel: wide, one column per tissue, dots from matplotlib
+  // axes_2 paths. ViewBox stretches to fill its container at runtime.
+  const TISSUE_VB_W = 660;
+  const N_TISSUES = heatmap.tissues.length;
+  // Each tissue gets equal slice; first column starts at half-slice for
+  // nice centering inside its area.
+  const tissueColX = (i) => (i + 0.5) * (TISSUE_VB_W / N_TISSUES);
+
   let perTissueDotsHTML = '';
   if (scatter.perTissueDots && scatter.perTissueDots.length) {
-    // Bucket tissue columns by their matplotlib-x range so we can snap
-    // each per-tissue dot to its scifi column.
-    // We'll use evenly-spaced colXFor() positions; matplotlib X also maps
-    // linearly across tissues, so map by index proportional to X position.
+    // matplotlib's per-tissue X positions span a known range; map ratio to
+    // the scifi tissue index, then to the scifi column X.
     const xs = scatter.perTissueDots.map(d => d.xPx);
     const xMin = Math.min(...xs), xMax = Math.max(...xs);
     perTissueDotsHTML = scatter.perTissueDots.map(d => {
       const ratio = xMax > xMin ? (d.xPx - xMin) / (xMax - xMin) : 0;
-      const colIdx = Math.round(ratio * (heatmap.tissues.length - 1));
-      const cx = colXFor(colIdx);
-      const cy = (1 - d.pct) * VB_H;
-      const r = d.pct > 0.05 ? 4.5 : 2.6; // elevated dots are bigger
-      const opacity = d.pct > 0.05 ? 0.95 : 0.55;
+      const colIdx = Math.round(ratio * (N_TISSUES - 1));
+      const cx = tissueColX(colIdx);
+      const cy = pctToCy(d.pct);
+      const elevated = d.pct > 0.05;
+      const r = elevated ? 5 : 2.5;
+      const opacity = elevated ? 0.95 : 0.5;
       const cat = d.cat != null && d.cat >= 0 ? d.cat : 0;
-      return `<g class="iv-scifi-dot" data-cat="${cat}">`
-           + (d.pct > 0.05 ? `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r + 1.5}" fill="${d.color}" opacity="0.18"/>` : '')
+      return `<g class="iv-scifi-dot" data-cat="${cat}" data-tissue="${colIdx}">`
+           + (elevated ? `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="7" fill="${d.color}" opacity="0.20"/>` : '')
            + `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}" fill="${d.color}" opacity="${opacity}" filter="url(#iv-scifi-glow)"/>`
            + `</g>`;
     }).join('');
   } else {
-    // Fallback: synthesize a baseline dot per tissue if matplotlib didn't
-    // emit per-tissue data (rare for percentile figures).
-    const baselineY = VB_H - 11;
     perTissueDotsHTML = heatmap.tissues.map((_, ci) =>
-      `<circle cx="${colXFor(ci).toFixed(1)}" cy="${baselineY}" r="2.4" fill="${IV_SCIFI_PALETTE[ci % IV_SCIFI_PALETTE.length]}" opacity="0.35"/>`
+      `<g class="iv-scifi-dot" data-tissue="${ci}"><circle cx="${tissueColX(ci).toFixed(1)}" cy="${pctToCy(0).toFixed(1)}" r="2.4" fill="${IV_SCIFI_PALETTE[ci % IV_SCIFI_PALETTE.length]}" opacity="0.35"/></g>`
     ).join('');
   }
 
-  // Threshold line: dashed orange near the bottom (matches reference).
-  const thresholdLine = `<line x1="0" y1="${VB_H - 11}" x2="${VB_W}" y2="${VB_H - 11}" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>`;
-
-  // Gridlines at 0%, 20%, 40%, 60%, 80%, 95%
-  const gridLines = [0, 20, 40, 60, 80].map(p =>
-    `<line x1="0" y1="${(p/100*VB_H).toFixed(1)}" x2="${VB_W}" y2="${(p/100*VB_H).toFixed(1)}" stroke="${isDark ? '#0f2040' : '#e6e9f0'}" stroke-width="1"/>`
+  // Gridlines at 0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2 — drawn on each panel.
+  const gridLineColor = isDark ? '#0f2040' : '#e6e9f0';
+  const gridLines = (vbw) => [0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2].map(p =>
+    `<line x1="0" y1="${pctToCy(p).toFixed(1)}" x2="${vbw}" y2="${pctToCy(p).toFixed(1)}" stroke="${gridLineColor}" stroke-width="1"/>`
   ).join('');
+  // Threshold (manuscript percentile cutoff at 0.95) — dashed orange.
+  const thresholdLine = (vbw) =>
+    `<line x1="0" y1="${pctToCy(0.95).toFixed(1)}" x2="${vbw}" y2="${pctToCy(0.95).toFixed(1)}" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>`;
+  // Filter defs (one shared id is fine since the SVGs share document scope).
+  const sharedDefs = `<defs><filter id="iv-scifi-glow"><feGaussianBlur stdDeviation="1.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
 
   // ---- Legend list ----
   // Each row carries data-cat so it's clickable / hoverable to filter the
@@ -5388,80 +5434,135 @@ function _ivPaintScifiFigure(wrap, themeName) {
     const cats = hlaCats(hla);
     tableHTML += `<tr data-cats="${cats}"><th class="iv-scifi-htrow" style="color:${rowColor}">${hla}</th>`;
     heatmap.matrix[ri].forEach((v, ci) => {
-      tableHTML += `<td style="background:${cellBg(v)};color:${cellFg(v)};font-weight:${v > 2 ? 700 : 400}"`
+      tableHTML += `<td data-tissue="${ci}" style="background:${cellBg(v)};color:${cellFg(v)};font-weight:${v > 2 ? 700 : 400}"`
         + ` data-tip="${hla} × ${heatmap.tissues[ci]} · ${v} peptide${v === 1 ? '' : 's'}">${v}</td>`;
     });
     tableHTML += '</tr>';
   });
   tableHTML += '</tbody></table>';
 
-  // ---- Wire legend hover/click filter (after innerHTML is set below) ----
-  const wireLegendFilter = () => {
+  // ---- Wire legend + tissue filters (after innerHTML is set below) ----
+  const wireFilters = () => {
     let lockedCat = null;
-    const setActive = (cat) => {
+    let lockedTissue = null;
+    const setCat = (cat) => {
       if (cat == null) wrap.removeAttribute('data-active-cat');
       else wrap.setAttribute('data-active-cat', String(cat));
     };
+    const setTissue = (t) => {
+      if (t == null) {
+        wrap.removeAttribute('data-active-tissue');
+        wrap.querySelectorAll('.iv-tissue-on').forEach(el => el.classList.remove('iv-tissue-on'));
+      } else {
+        wrap.setAttribute('data-active-tissue', String(t));
+        wrap.querySelectorAll('[data-tissue]').forEach(el => {
+          el.classList.toggle('iv-tissue-on', el.dataset.tissue === String(t));
+        });
+      }
+    };
+    // Legend filter (HLA category)
     wrap.querySelectorAll('.iv-scifi-legend-row[data-cat]').forEach(row => {
       const cat = row.dataset.cat;
-      row.addEventListener('mouseenter', () => {
-        if (lockedCat != null) return;
-        setActive(cat);
-      });
-      row.addEventListener('mouseleave', () => {
-        if (lockedCat != null) return;
-        setActive(null);
-      });
+      row.addEventListener('mouseenter', () => { if (lockedCat == null) setCat(cat); });
+      row.addEventListener('mouseleave', () => { if (lockedCat == null) setCat(null); });
       row.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (lockedCat === cat) {
-          lockedCat = null; setActive(null);
-        } else {
-          lockedCat = cat; setActive(cat);
-        }
+        if (lockedCat === cat) { lockedCat = null; setCat(null); }
+        else { lockedCat = cat; setCat(cat); }
       });
     });
-    // Click outside legend → unlock.
+    // Tissue filter (X-axis label)
+    wrap.querySelectorAll('.iv-scifi-tlabel[data-tissue]').forEach(lbl => {
+      const t = lbl.dataset.tissue;
+      lbl.addEventListener('mouseenter', () => { if (lockedTissue == null) setTissue(t); });
+      lbl.addEventListener('mouseleave', () => { if (lockedTissue == null) setTissue(null); });
+      lbl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (lockedTissue === t) { lockedTissue = null; setTissue(null); }
+        else { lockedTissue = t; setTissue(t); }
+      });
+    });
+    // Heatmap column header is also clickable (same data-tissue)
+    wrap.querySelectorAll('.iv-scifi-htable th[data-tissue]').forEach(th => {
+      const t = th.dataset.tissue;
+      th.style.cursor = 'pointer';
+      th.addEventListener('mouseenter', () => { if (lockedTissue == null) setTissue(t); });
+      th.addEventListener('mouseleave', () => { if (lockedTissue == null) setTissue(null); });
+      th.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (lockedTissue === t) { lockedTissue = null; setTissue(null); }
+        else { lockedTissue = t; setTissue(t); }
+      });
+    });
+    // Click on figure background (outside any filter) → unlock both.
     wrap.addEventListener('click', () => {
-      if (lockedCat != null) { lockedCat = null; setActive(null); }
+      if (lockedCat != null) { lockedCat = null; setCat(null); }
+      if (lockedTissue != null) { lockedTissue = null; setTissue(null); }
     });
   };
 
+  // ---- Heatmap column headers also carry data-tissue ----
+  // (needed before innerHTML so the wiring above can find them)
+  const tableWithTissues = tableHTML.replace(
+    /<th class="iv-scifi-htcol"><span>([^<]+)<\/span><\/th>/g,
+    (m, name, offset, full) => {
+      // Walk up to find this column's index — easier to just re-emit numbered.
+      return m; // we'll add data-tissue by regex below
+    }
+  );
+  // Simpler: rebuild header row with indices baked in
+  let tableWithIdx = '<table class="iv-scifi-htable"><thead><tr><th class="iv-scifi-corner"></th>';
+  heatmap.tissues.forEach((t, ci) => {
+    tableWithIdx += `<th class="iv-scifi-htcol" data-tissue="${ci}"><span>${t}</span></th>`;
+  });
+  tableWithIdx += '</tr></thead>' + tableHTML.split('</thead>')[1];
+
   // ---- Compose the full figure ----
+  // Layout grid (columns):
+  //   [percentile axis label] [y-tick numbers] [tumor panel] [per-tissue panel] [legend]
   wrap.innerHTML = `
     <div class="iv-scifi-pill"><span class="iv-scifi-pulse"></span>${cancer || ''} · ${peptide || ''} · Percentile scores</div>
     <div class="iv-scifi-title">${peptide || ''}</div>
     <div class="iv-scifi-mainrow">
-      <div class="iv-scifi-chart">
+      <div class="iv-scifi-yaxis-block">
+        <div class="iv-scifi-ylabel">percentile</div>
         <div class="iv-scifi-yaxis">
-          ${[1.0, 0.8, 0.6, 0.4, 0.2, 0.0].map(v => `<span>${v.toFixed(1)}</span>`).join('')}
+          ${[1.2, 1.0, 0.8, 0.6, 0.4, 0.2, 0.0].map(v => `<span>${v.toFixed(1)}</span>`).join('')}
         </div>
-        <div class="iv-scifi-plot">
-          <svg viewBox="0 0 ${VB_W} ${VB_H}" preserveAspectRatio="none">
-            <defs>
-              <filter id="iv-scifi-glow"><feGaussianBlur stdDeviation="1.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            </defs>
-            ${gridLines}
-            ${thresholdLine}
-            ${perTissueDotsHTML}
+      </div>
+      <div class="iv-scifi-tumor-col">
+        <div class="iv-scifi-plot iv-scifi-plot-tumor">
+          <svg viewBox="0 0 ${TUMOR_VB_W} ${VB_H}" preserveAspectRatio="none">
+            ${sharedDefs}
+            ${gridLines(TUMOR_VB_W)}
+            ${thresholdLine(TUMOR_VB_W)}
             ${tumorCircles}
           </svg>
+        </div>
+        <div class="iv-scifi-tlabels iv-scifi-tlabels-tumor">
+          <div class="iv-scifi-tlabel iv-scifi-tlabel-tumor">tumor</div>
+        </div>
+      </div>
+      <div class="iv-scifi-tissue-col">
+        <div class="iv-scifi-plot iv-scifi-plot-tissue">
+          <svg viewBox="0 0 ${TISSUE_VB_W} ${VB_H}" preserveAspectRatio="none">
+            ${sharedDefs}
+            ${gridLines(TISSUE_VB_W)}
+            ${thresholdLine(TISSUE_VB_W)}
+            ${perTissueDotsHTML}
+          </svg>
+        </div>
+        <div class="iv-scifi-tlabels iv-scifi-tlabels-tissue">
+          ${heatmap.tissues.map((t, i) => `<div class="iv-scifi-tlabel" data-tissue="${i}">${t}</div>`).join('')}
         </div>
       </div>
       <div class="iv-scifi-legend">${legendHTML}</div>
     </div>
-    <div class="iv-scifi-xlabels">
-      <span class="iv-scifi-ylabel-bottom">percentile</span>
-      <div class="iv-scifi-xlabels-row">
-        <div class="iv-scifi-xlabel iv-scifi-xlabel-tumor">tumor</div>
-        ${heatmap.tissues.map(t => `<div class="iv-scifi-xlabel">${t}</div>`).join('')}
-      </div>
-    </div>
-    <div class="iv-scifi-htwrap">${tableHTML}</div>
+    <div class="iv-scifi-htwrap">${tableWithIdx}</div>
   `;
 
-  // After the DOM exists, wire the legend hover/click filter.
-  wireLegendFilter();
+  // After the DOM exists, wire all filters.
+  wireFilters();
 }
 
 // (the older _ivPaintScifiHeatmap was rolled into _ivPaintScifiFigure above —
