@@ -7,7 +7,7 @@
 <meta name="description" content="ImmunoVerse: 16,687 empirically defined tumor-specific T-cell targets across 21 cancer types, integrating 1,823 immunopeptidomes, 7,188 RNA-Seq, 17,384 normal controls, and 594 single-cell datasets." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script>
   // Apply saved theme before first paint so light-mode users don't see a dark flash.
   (function () {
@@ -1681,6 +1681,70 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .dl-all-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(34,211,238,0.4); }
 .dl-all-btn:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
 .dl-all-btn svg { width: 14px; height: 14px; }
+
+/* ===== Scifi heatmap (extracted-data rebuild of matplotlib's broken white-cell heatmap) ===== */
+.iv-scifi-heatmap {
+  background: #080d14;
+  border: 1px solid #1a2740;
+  border-radius: 10px;
+  padding: 16px 18px 18px;
+  margin: 12px 12px 14px;
+  font-family: 'Space Mono', ui-monospace, SFMono-Regular, monospace;
+}
+:root[data-theme="light"] .iv-scifi-heatmap {
+  background: #f8fafc;
+  border-color: #cfd9ea;
+}
+.iv-scifi-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #0f1a2e; border: 1px solid #1a2740;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 9.5px; color: #00d4ff; letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+:root[data-theme="light"] .iv-scifi-pill {
+  background: #eef4ff; border-color: #cfd9ea; color: #0369a1;
+}
+.iv-scifi-pulse {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #00d4ff; animation: ivPulse 2s infinite;
+}
+@keyframes ivPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.iv-scifi-tablewrap { overflow-x: auto; }
+.iv-scifi-table { border-collapse: collapse; font-family: inherit; }
+.iv-scifi-table th, .iv-scifi-table td {
+  font-size: 10px;
+  padding: 4px 5px;
+  text-align: center;
+  border: 1px solid #0f1a2e;
+}
+:root[data-theme="light"] .iv-scifi-table th,
+:root[data-theme="light"] .iv-scifi-table td { border-color: #dde3ee; }
+.iv-scifi-table th.iv-scifi-row {
+  text-align: right; font-weight: 500; padding-right: 10px; padding-left: 6px;
+  white-space: nowrap; font-size: 10px;
+}
+.iv-scifi-table th.iv-scifi-col {
+  font-weight: 400; color: #64748b; font-size: 8.5px;
+  vertical-align: bottom; padding: 4px 2px 6px;
+  height: 90px; max-width: 26px; min-width: 22px;
+}
+:root[data-theme="light"] .iv-scifi-table th.iv-scifi-col { color: #475569; }
+.iv-scifi-table th.iv-scifi-col span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  display: inline-block;
+  white-space: nowrap;
+  line-height: 1;
+}
+.iv-scifi-table th.iv-scifi-corner { background: transparent; border: 0; }
+.iv-scifi-table td {
+  min-width: 22px; max-width: 26px; height: 18px;
+  cursor: default;
+  transition: outline 80ms ease;
+}
+.iv-scifi-table td:hover { outline: 2px solid #00d4ff; outline-offset: -1px; }
+:root[data-theme="light"] .iv-scifi-table td:hover { outline-color: #0891b2; }
 
 /* ===================== INTERACTIVE SVG VIEWER ===================== */
 /* The figure embeds inline (no Illustrator-style toolbar). The legend
@@ -4717,11 +4781,180 @@ function applyIvSvgTheme(svgEl, themeName) {
   const reapply = () => {
     const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
     document.querySelectorAll('.svg-stage > svg').forEach(svg => applyIvSvgTheme(svg, cur));
+    // Also re-skin any previously rendered scifi heatmap table.
+    document.querySelectorAll('.iv-scifi-heatmap').forEach(el => {
+      const data = el._ivData;
+      if (data) _ivPaintScifiHeatmap(el, data, cur);
+    });
   };
   new MutationObserver(reapply).observe(document.documentElement, {
     attributes: true, attributeFilter: ['data-theme'],
   });
 })();
+
+// ===== Scifi heatmap rebuild =====
+//
+// Replaces matplotlib's white-cell patch heatmap with a real HTML table
+// styled per immunoverse_nbl_chart_scifi.html: dark navy panel, Space Mono
+// font, color-encoded cells with a blue ramp + variable text color, row
+// labels colored by HLA category. Data is extracted live from the parsed
+// matplotlib SVG so this works for any peptide percentile figure, not just
+// QYNPIRTTF.
+
+const IV_SCIFI_PALETTE = ['#378ADD', '#f59e0b', '#1D9E75', '#E24B4A'];
+const IV_HLA_RX = /^[A-DG]\*\d{2}:\d{2}$/;
+
+// Pull HLAs (axes_3 row labels), tissues (axes_1 X-axis labels), and integer
+// cell values + positions out of the matplotlib SVG. Returns null if this
+// doesn't look like a percentile heatmap (e.g. rank_abundance or other kind).
+function _ivExtractMplHeatmap(svgEl) {
+  const ax3 = svgEl.querySelector('g[id="axes_3"]');
+  const ax1 = svgEl.querySelector('g[id="axes_1"]');
+  if (!ax3 || !ax1) return null;
+
+  // Helper: extract { comment, x, y } for every text_ in a group.
+  const readTexts = (root) => {
+    const out = [];
+    root.querySelectorAll('g[id^="text_"]').forEach(t => {
+      let cmt = '';
+      for (const c of t.childNodes) {
+        if (c.nodeType === 8) { cmt = c.nodeValue.trim(); break; }
+      }
+      if (!cmt) return;
+      const inner = t.querySelector('g[transform]');
+      if (!inner) return;
+      const m = (inner.getAttribute('transform') || '')
+        .match(/translate\(\s*([\d.\-]+)[\s,]+([\d.\-]+)/);
+      if (!m) return;
+      out.push({ cmt, x: parseFloat(m[1]), y: parseFloat(m[2]) });
+    });
+    return out;
+  };
+
+  const ax3Texts = readTexts(ax3);
+  const ax1Texts = readTexts(ax1);
+
+  // HLA labels: pattern-matched, dedup by name, sort by Y (top-to-bottom).
+  const hlaSeen = new Map();
+  ax3Texts.forEach(t => {
+    if (IV_HLA_RX.test(t.cmt) && !hlaSeen.has(t.cmt)) {
+      hlaSeen.set(t.cmt, t.y);
+    }
+  });
+  const hlas = [...hlaSeen.keys()]
+    .map(name => ({ name, y: hlaSeen.get(name) }))
+    .sort((a, b) => a.y - b.y);
+  if (hlas.length < 2) return null;
+
+  // Tissue labels: in axes_1, comments that aren't numeric and aren't
+  // tumor/percentile/peptide-name. Sort by X (left-to-right).
+  const tissueExclude = /^(tumor|percentile|[\d.]+|[A-Z]{4,}[A-Z*\d:;]+)$/;
+  const tissues = ax1Texts
+    .filter(t => !tissueExclude.test(t.cmt) && !IV_HLA_RX.test(t.cmt) && !/[*;]/.test(t.cmt))
+    .filter(t => t.cmt.length >= 3 && t.cmt.length <= 30)
+    .sort((a, b) => a.x - b.x);
+  if (tissues.length < 5) return null;
+
+  // Heatmap cell values: integer-comment text_ in axes_3 with their (x,y).
+  const cellTexts = ax3Texts.filter(t => /^\d+$/.test(t.cmt))
+    .map(t => ({ value: parseInt(t.cmt, 10), x: t.x, y: t.y }));
+
+  // Snap each cell value to its (rowIdx, colIdx) by nearest HLA-y and tissue-x.
+  const tissueXs = tissues.map(t => t.x);
+  const hlaYs = hlas.map(h => h.y);
+  const matrix = Array.from({ length: hlas.length }, () => new Array(tissues.length).fill(0));
+  cellTexts.forEach(c => {
+    let bestRow = 0, bestRowD = Infinity;
+    hlaYs.forEach((hy, i) => {
+      const d = Math.abs(c.y - hy);
+      if (d < bestRowD) { bestRowD = d; bestRow = i; }
+    });
+    let bestCol = 0, bestColD = Infinity;
+    tissueXs.forEach((tx, i) => {
+      const d = Math.abs(c.x - tx);
+      if (d < bestColD) { bestColD = d; bestCol = i; }
+    });
+    matrix[bestRow][bestCol] = c.value;
+  });
+
+  return {
+    hlas: hlas.map(h => h.name),
+    tissues: tissues.map(t => t.cmt),
+    matrix,
+    maxVal: Math.max(1, ...cellTexts.map(c => c.value)),
+  };
+}
+
+// Build the actual scifi heatmap DOM (HTML table) and stick it onto host.
+// Idempotent: removes any previously rendered scifi heatmap on host first.
+function _ivBuildScifiHeatmap(host, svgEl, peptide, cancer, themeName) {
+  host.querySelectorAll('.iv-scifi-heatmap').forEach(n => n.remove());
+  const data = _ivExtractMplHeatmap(svgEl);
+  if (!data) return null;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'iv-scifi-heatmap';
+  wrap.dataset.peptide = peptide || '';
+  wrap.dataset.cancer = cancer || '';
+  wrap._ivData = data;
+
+  // Hide matplotlib's broken white-cell heatmap (axes_3) on the source SVG
+  // so the user sees only the nice HTML table. Done via CSS override on the
+  // SVG itself so theme re-application doesn't undo it.
+  const sty = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  sty.setAttribute('data-iv-hide-heatmap', '1');
+  sty.textContent = 'g[id="axes_3"]{display:none}';
+  svgEl.querySelector('defs')?.appendChild(sty);
+
+  _ivPaintScifiHeatmap(wrap, data, themeName);
+  host.appendChild(wrap);
+  return wrap;
+}
+
+// Paint (or repaint) the heatmap container's contents for the current theme.
+// Pulled out so theme toggles can re-skin without rebuilding the data.
+function _ivPaintScifiHeatmap(wrap, data, themeName) {
+  const isDark = themeName !== 'light';
+
+  // Color ramp matching the reference HTML's `cellColor()`.
+  const cellBg = (v) => {
+    if (v === 0) return isDark ? '#0a1020' : '#f1f5f9';
+    const t = v / data.maxVal;
+    const stops = isDark
+      ? ['#0d3d6e', '#185FA5', '#3b82f6', '#60a5fa', '#22d3ee']
+      : ['#dbeafe', '#93c5fd', '#3b82f6', '#1d4ed8', '#1e3a8a'];
+    const i = Math.min(stops.length - 2, Math.floor(t * (stops.length - 1)));
+    return stops[i + (t > 0.5 ? 1 : 0)];
+  };
+  const cellFg = (v) => {
+    if (v === 0) return isDark ? '#1e3a5f' : '#94a3b8';
+    if (isDark) return v <= 1 ? '#378ADD' : v <= 2 ? '#60a5fa' : v <= 3 ? '#93c5fd' : '#bfdbfe';
+    return v <= 1 ? '#1e40af' : v <= 2 ? '#1d4ed8' : '#0f172a' /* very dark */;
+  };
+  const rowLabelColor = (i) => IV_SCIFI_PALETTE[i % IV_SCIFI_PALETTE.length];
+
+  // Build the table fresh each paint.
+  let html = '<div class="iv-scifi-pill"><span class="iv-scifi-pulse"></span>'
+    + (wrap.dataset.cancer || '') + ' · ' + (wrap.dataset.peptide || '')
+    + ' · HLA × tissue presentation</div>';
+  html += '<div class="iv-scifi-tablewrap"><table class="iv-scifi-table">';
+  // Column headers (tissues, rotated)
+  html += '<thead><tr><th class="iv-scifi-corner"></th>';
+  data.tissues.forEach(t => {
+    html += `<th class="iv-scifi-col"><span>${t}</span></th>`;
+  });
+  html += '</tr></thead><tbody>';
+  data.hlas.forEach((hla, ri) => {
+    html += `<tr><th class="iv-scifi-row" style="color:${rowLabelColor(ri)}">${hla}</th>`;
+    data.matrix[ri].forEach((v, ci) => {
+      html += `<td style="background:${cellBg(v)};color:${cellFg(v)};font-weight:${v > 2 ? 700 : 400}"`
+        + ` data-tip="${hla} × ${data.tissues[ci]} · ${v} peptide${v === 1 ? '' : 's'}">${v}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
+}
 
 function mountInteractiveSvg(host, svgText, opts) {
   opts = opts || {};
@@ -4758,6 +4991,19 @@ function mountInteractiveSvg(host, svgText, opts) {
   const curTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
   applyIvSvgTheme(svgEl, curTheme);
   stage.appendChild(svgEl);
+
+  // For percentile-kind SVGs, replace matplotlib's busted white-cell heatmap
+  // with a fresh HTML table styled per immunoverse_nbl_chart_scifi.html. The
+  // table reads HLA labels, tissue labels, and cell values directly out of
+  // the parsed matplotlib SVG so this works for any peptide.
+  if ((opts.filename || '').includes('percentile')) {
+    // filename format: ${cancer}_${pep}_${kind}
+    const fnParts = (opts.filename || '').split('_');
+    const cancer = fnParts[0] || '';
+    const pep = fnParts[1] || '';
+    try { _ivBuildScifiHeatmap(host, svgEl, pep, cancer, curTheme); }
+    catch (err) { console.warn('Scifi heatmap rebuild failed:', err); }
+  }
 
   // Build the legend interaction model.
   const { legendEl, entries } = _parseLegend(svgEl);
