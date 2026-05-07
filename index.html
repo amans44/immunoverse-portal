@@ -5223,8 +5223,16 @@ function mountInteractiveSvg(host, svgText, opts) {
     const fnParts = (opts.filename || '').split('_');
     const cancer = fnParts[0] || '';
     const pep = fnParts[1] || '';
+    console.log('[iv-scifi] percentile detected:', { filename: opts.filename, cancer, pep });
     try {
+      const heatmap = _ivExtractMplHeatmap(svgEl);
+      const scatter = _ivExtractMplScatter(svgEl);
+      console.log('[iv-scifi] extracted:', {
+        heatmap: heatmap && { hlas: heatmap.hlas.length, tissues: heatmap.tissues.length, maxVal: heatmap.maxVal },
+        scatter: scatter && { tumorDots: scatter.tumorDots.length, categories: scatter.categories.length },
+      });
       const built = _ivBuildScifiFigure(host, svgEl, pep, cancer, curTheme);
+      console.log('[iv-scifi] built:', built ? 'YES' : 'NO (falling back to themed matplotlib)');
       if (built) {
         // Add a corner button strip for PNG download / fallback view.
         if (opts.pngUrl) {
