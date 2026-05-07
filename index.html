@@ -4362,26 +4362,110 @@ function _highlightByColor(svgEl, activeColor) {
 
 const IV_SVG_THEMES = {
   dark: {
-    panel: '#0a1526', text: '#cbd5e1', grid: '#1a2740',
-    glowColor: '#22d3ee', glowOpacity: 0.55,
-    glowSmOpacity: 0.40, glowDx: 0, glowDy: 0, glowStd: 1.6, glowStdSm: 0.8,
+    canvas: '#080d14',  // deepest bg (figure root patch)
+    panel:  '#0a1526',  // inner plot / legend boxes
+    text:   '#cbd5e1',  // axis & label text
+    border: '#1a2740',  // subtle panel border (matches reference)
+    grid:   '#1a2740',  // gridlines / axes spines
+    haloOpacity: 0.22,  // outer dot halo opacity (reference uses 0.15-0.2)
     hoverStroke: '#22d3ee',
   },
   light: {
-    panel: '#ffffff', text: '#1f2a44', grid: '#dde3ee',
-    glowColor: '#3949bc', glowOpacity: 0.30,
-    glowSmOpacity: 0.22, glowDx: 0, glowDy: 0.5, glowStd: 0.9, glowStdSm: 0.5,
+    canvas: '#f7fafc',
+    panel:  '#ffffff',
+    text:   '#1f2a44',
+    border: '#cfd9ea',
+    grid:   '#dde3ee',
+    haloOpacity: 0.18,
     hoverStroke: '#0891b2',
   },
 };
 
 function _ivBuildColorMap(t) {
+  // Default white → inner panel color. The figure-root patch gets bumped
+  // down to canvas (deepest bg) by _ivTwoTierBg afterwards.
   return {
     '#ffffff': t.panel, '#fff': t.panel, 'white': t.panel,
     '#000000': t.text,  '#000': t.text,  'black': t.text, '#262626': t.text,
     '#bfbfbf': t.grid,  '#b0b0b0': t.grid, '#cccccc': t.grid,
     '#dddddd': t.grid,  '#e0e0e0': t.grid, '#d3d3d3': t.grid,
   };
+}
+
+// After the global white→panel remap, drop the figure root patch one level
+// deeper so the page reads as canvas (#080d14) → panels (#0a1526) like the
+// reference SVG. Light mode keeps near-white throughout.
+function _ivTwoTierBg(svgEl, t) {
+  const root = svgEl.querySelector('g[id="figure_1"] > g[id^="patch_"]');
+  if (!root) return;
+  const path = root.querySelector(':scope > path');
+  if (!path) return;
+  const style = path.getAttribute('style') || '';
+  const next = /fill:/i.test(style)
+    ? style.replace(/fill:\s*[^;]+/i, `fill: ${t.canvas}`)
+    : `${style}${style ? '; ' : ''}fill: ${t.canvas}`;
+  path.setAttribute('style', next);
+}
+
+// Replace the axes-background patch (sharp-corner matplotlib rectangle) with
+// a rounded <rect> + subtle border, matching the reference's `rx="8"` panels.
+// Only the FIRST direct-child patch per axes is treated — the remaining
+// patches are heatmap cells (which the colorize pass handles).
+function _ivRoundAxesPanels(svgEl, t) {
+  svgEl.querySelectorAll('g[id^="axes_"]').forEach(axes => {
+    const pg = axes.querySelector(':scope > g[id^="patch_"]');
+    if (!pg) return;
+    const path = pg.querySelector(':scope > path');
+    if (!path) return;
+    const d = path.getAttribute('d') || '';
+    const nums = [...d.matchAll(/[\d.\-]+/g)]
+      .map(m => parseFloat(m[0]))
+      .filter(isFinite);
+    if (nums.length < 6) return;
+    const xs = [], ys = [];
+    for (let i = 0; i + 1 < nums.length; i += 2) { xs.push(nums[i]); ys.push(nums[i + 1]); }
+    const xmin = Math.min(...xs), xmax = Math.max(...xs);
+    const ymin = Math.min(...ys), ymax = Math.max(...ys);
+    if (xmax - xmin < 30 || ymax - ymin < 30) return; // skip tiny patches
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', xmin); rect.setAttribute('y', ymin);
+    rect.setAttribute('width',  xmax - xmin);
+    rect.setAttribute('height', ymax - ymin);
+    rect.setAttribute('rx', '6'); rect.setAttribute('ry', '6');
+    rect.setAttribute('fill', t.panel);
+    rect.setAttribute('stroke', t.border);
+    rect.setAttribute('stroke-width', '1');
+    rect.setAttribute('data-iv-panel', '1');
+    path.replaceWith(rect);
+  });
+}
+
+// Inject a sibling halo <circle> behind each scatter-plot dot, matching the
+// reference's two-circle pattern (outer halo + inner main, same color). This
+// is a visual layer on top of the source-colored feGaussianBlur glow filter
+// — together they produce a rich "neon dot" look that color-substitution
+// alone can't get from matplotlib's single <use> per marker.
+function _ivAddDotHalos(svgEl, t) {
+  svgEl.querySelectorAll('g[id^="PathCollection_"]').forEach(pc => {
+    if (pc.getAttribute('data-iv-halo') === '1') return;
+    pc.setAttribute('data-iv-halo', '1');
+    const uses = [...pc.querySelectorAll(':scope > use')];
+    uses.forEach(u => {
+      const x = u.getAttribute('x'), y = u.getAttribute('y');
+      if (x == null || y == null) return;
+      const style = u.getAttribute('style') || '';
+      const fillM = style.match(/fill:\s*(#[0-9a-fA-F]{3,6}|[a-z]+)/i);
+      if (!fillM) return;
+      const halo = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      halo.setAttribute('cx', x); halo.setAttribute('cy', y);
+      halo.setAttribute('r', '5');
+      halo.setAttribute('fill', fillM[1]);
+      halo.setAttribute('opacity', String(t.haloOpacity));
+      halo.setAttribute('data-iv-halo-circle', '1');
+      // Insert before the existing use so the halo paints under it.
+      u.parentNode.insertBefore(halo, u);
+    });
+  });
 }
 
 function _ivRemapStyle(styleStr, map) {
@@ -4536,6 +4620,18 @@ function applyIvSvgTheme(svgEl, themeName) {
       }
     });
   });
+
+  // Two-tier background: figure-root patch → deepest canvas, axes/legend
+  // patches stay on the lighter "panel" color the global remap painted.
+  _ivTwoTierBg(svgEl, t);
+
+  // Round axes panel corners and give them a subtle reference-style border.
+  _ivRoundAxesPanels(svgEl, t);
+
+  // Inject a halo <circle> behind every scatter-plot dot (reference's two-
+  // circle pattern). Done before the heatmap colorize so we don't add halos
+  // to heatmap-cell `<path>` elements (PathCollection vs patch is the gate).
+  _ivAddDotHalos(svgEl, t);
 
   // Color-encode any patch-rendered heatmap (matplotlib annot=True grid).
   // Done after the white→panel remap so the value-based fills overwrite the
