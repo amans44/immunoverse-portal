@@ -1682,25 +1682,29 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .dl-all-btn:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
 .dl-all-btn svg { width: 14px; height: 14px; }
 
-/* ===== Scifi heatmap (extracted-data rebuild of matplotlib's broken white-cell heatmap) ===== */
-.iv-scifi-heatmap {
+/* ===== Scifi figure — full extracted-data rebuild of percentile SVGs =====
+   Mirrors immunoverse_nbl_chart_scifi.html: header pill, title, scatter SVG,
+   legend panel, heatmap table. Only structural / layout CSS lives here;
+   per-cell colors are inlined from JS so a theme toggle can repaint without
+   touching the stylesheet. */
+.iv-scifi-figure {
   background: #080d14;
   border: 1px solid #1a2740;
-  border-radius: 10px;
-  padding: 16px 18px 18px;
-  margin: 12px 12px 14px;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin: 8px 0 10px;
   font-family: 'Space Mono', ui-monospace, SFMono-Regular, monospace;
+  color: #e2e8f0;
 }
-:root[data-theme="light"] .iv-scifi-heatmap {
-  background: #f8fafc;
-  border-color: #cfd9ea;
+:root[data-theme="light"] .iv-scifi-figure {
+  background: #f8fafc; border-color: #cfd9ea; color: #1f2a44;
 }
 .iv-scifi-pill {
   display: inline-flex; align-items: center; gap: 6px;
-  background: #0f1a2e; border: 1px solid #1a2740;
-  padding: 4px 10px; border-radius: 20px;
-  font-size: 9.5px; color: #00d4ff; letter-spacing: 0.08em;
-  margin-bottom: 12px;
+  background: #0a1526; border: 1px solid #1a2740;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 9px; color: #00d4ff; letter-spacing: 0.1em;
+  margin-bottom: 6px;
 }
 :root[data-theme="light"] .iv-scifi-pill {
   background: #eef4ff; border-color: #cfd9ea; color: #0369a1;
@@ -1710,41 +1714,116 @@ table.atlas.compact td:nth-child(10) { display: none; }
   background: #00d4ff; animation: ivPulse 2s infinite;
 }
 @keyframes ivPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-.iv-scifi-tablewrap { overflow-x: auto; }
-.iv-scifi-table { border-collapse: collapse; font-family: inherit; }
-.iv-scifi-table th, .iv-scifi-table td {
-  font-size: 10px;
-  padding: 4px 5px;
-  text-align: center;
+.iv-scifi-title {
+  font-size: 15px; font-weight: 600; color: #f1f5f9;
+  letter-spacing: 0.12em; text-align: center; margin: 4px 0 14px;
+}
+:root[data-theme="light"] .iv-scifi-title { color: #0b1220; }
+
+.iv-scifi-mainrow {
+  display: flex; gap: 16px; align-items: stretch;
+}
+.iv-scifi-chart {
+  flex: 1; min-width: 0;
+  display: grid; grid-template-columns: 36px 1fr; gap: 4px;
+}
+.iv-scifi-yaxis {
+  display: flex; flex-direction: column; justify-content: space-between;
+  align-items: flex-end; padding-right: 6px;
+  font-size: 9px; color: #64748b;
+}
+:root[data-theme="light"] .iv-scifi-yaxis { color: #475569; }
+.iv-scifi-plot {
+  position: relative;
+  background: #0a1526; border: 1px solid #1a2740; border-radius: 8px;
+  overflow: hidden;
+  min-height: 200px;
+}
+:root[data-theme="light"] .iv-scifi-plot { background: #ffffff; border-color: #cfd9ea; }
+.iv-scifi-plot svg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+}
+
+.iv-scifi-legend {
+  flex-shrink: 0; min-width: 200px; max-width: 260px;
+  display: flex; flex-direction: column; gap: 6px;
+  background: #0a1526; border: 1px solid #1a2740; border-radius: 8px;
+  padding: 12px 14px;
+  align-self: flex-start;
+}
+:root[data-theme="light"] .iv-scifi-legend { background: #ffffff; border-color: #cfd9ea; }
+.iv-scifi-legend-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; color: #94a3b8; line-height: 1.3;
+}
+:root[data-theme="light"] .iv-scifi-legend-row { color: #475569; }
+.iv-scifi-legend-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.iv-scifi-legend-label {
+  font-size: 9.5px; word-break: break-word;
+}
+
+.iv-scifi-xlabels {
+  margin-top: 6px; padding-left: 40px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.iv-scifi-ylabel-bottom {
+  font-size: 9px; color: #475569; letter-spacing: 0.05em;
+  align-self: flex-start; margin-left: -38px;
+}
+:root[data-theme="light"] .iv-scifi-ylabel-bottom { color: #64748b; }
+.iv-scifi-xlabels-row {
+  display: flex; gap: 1px; height: 70px;
+}
+.iv-scifi-xlabel {
+  font-size: 8px; color: #475569; line-height: 1;
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  text-align: right; flex: 1; min-width: 0;
+  white-space: nowrap; padding-right: 2px;
+}
+:root[data-theme="light"] .iv-scifi-xlabel { color: #64748b; }
+.iv-scifi-xlabel-tumor { color: #00d4ff; font-weight: 700; }
+
+.iv-scifi-htwrap {
+  margin-top: 18px;
+  background: #0a1526; border: 1px solid #1a2740; border-radius: 8px;
+  padding: 10px 12px;
+  overflow-x: auto;
+}
+:root[data-theme="light"] .iv-scifi-htwrap { background: #ffffff; border-color: #cfd9ea; }
+.iv-scifi-htable {
+  border-collapse: collapse; font-family: inherit; width: max-content;
+}
+.iv-scifi-htable th, .iv-scifi-htable td {
+  font-size: 10px; padding: 3px 4px; text-align: center;
   border: 1px solid #0f1a2e;
 }
-:root[data-theme="light"] .iv-scifi-table th,
-:root[data-theme="light"] .iv-scifi-table td { border-color: #dde3ee; }
-.iv-scifi-table th.iv-scifi-row {
-  text-align: right; font-weight: 500; padding-right: 10px; padding-left: 6px;
-  white-space: nowrap; font-size: 10px;
+:root[data-theme="light"] .iv-scifi-htable th,
+:root[data-theme="light"] .iv-scifi-htable td { border-color: #e6e9f0; }
+.iv-scifi-htable th.iv-scifi-htrow {
+  text-align: right; font-weight: 500;
+  padding: 0 10px 0 6px; white-space: nowrap;
 }
-.iv-scifi-table th.iv-scifi-col {
-  font-weight: 400; color: #64748b; font-size: 8.5px;
+.iv-scifi-htable th.iv-scifi-htcol {
+  font-weight: 400; color: #64748b; font-size: 8px;
   vertical-align: bottom; padding: 4px 2px 6px;
-  height: 90px; max-width: 26px; min-width: 22px;
+  height: 80px; max-width: 26px; min-width: 22px;
 }
-:root[data-theme="light"] .iv-scifi-table th.iv-scifi-col { color: #475569; }
-.iv-scifi-table th.iv-scifi-col span {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  display: inline-block;
-  white-space: nowrap;
-  line-height: 1;
+:root[data-theme="light"] .iv-scifi-htable th.iv-scifi-htcol { color: #64748b; }
+.iv-scifi-htable th.iv-scifi-htcol span {
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  display: inline-block; white-space: nowrap; line-height: 1;
 }
-.iv-scifi-table th.iv-scifi-corner { background: transparent; border: 0; }
-.iv-scifi-table td {
-  min-width: 22px; max-width: 26px; height: 18px;
-  cursor: default;
-  transition: outline 80ms ease;
+.iv-scifi-htable th.iv-scifi-corner { background: transparent; border: 0; }
+.iv-scifi-htable td {
+  min-width: 22px; max-width: 28px; height: 18px;
+  cursor: default; transition: outline 80ms ease;
 }
-.iv-scifi-table td:hover { outline: 2px solid #00d4ff; outline-offset: -1px; }
-:root[data-theme="light"] .iv-scifi-table td:hover { outline-color: #0891b2; }
+.iv-scifi-htable td:hover {
+  outline: 2px solid #00d4ff; outline-offset: -1px;
+}
+:root[data-theme="light"] .iv-scifi-htable td:hover { outline-color: #0891b2; }
 
 /* ===================== INTERACTIVE SVG VIEWER ===================== */
 /* The figure embeds inline (no Illustrator-style toolbar). The legend
@@ -4782,9 +4861,8 @@ function applyIvSvgTheme(svgEl, themeName) {
     const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
     document.querySelectorAll('.svg-stage > svg').forEach(svg => applyIvSvgTheme(svg, cur));
     // Also re-skin any previously rendered scifi heatmap table.
-    document.querySelectorAll('.iv-scifi-heatmap').forEach(el => {
-      const data = el._ivData;
-      if (data) _ivPaintScifiHeatmap(el, data, cur);
+    document.querySelectorAll('.iv-scifi-figure').forEach(el => {
+      if (el._ivData) _ivPaintScifiFigure(el, cur);
     });
   };
   new MutationObserver(reapply).observe(document.documentElement, {
@@ -4903,81 +4981,274 @@ function _ivExtractMplHeatmap(svgEl) {
 
 // Build the actual scifi heatmap DOM (HTML table) and stick it onto host.
 // Idempotent: removes any previously rendered scifi heatmap on host first.
-function _ivBuildScifiHeatmap(host, svgEl, peptide, cancer, themeName) {
-  host.querySelectorAll('.iv-scifi-heatmap').forEach(n => n.remove());
-  const data = _ivExtractMplHeatmap(svgEl);
-  if (!data) return null;
+// Map matplotlib's default category palette → the scifi reference's palette.
+const IV_MPL_TO_SCIFI = {
+  '#1f77b4': '#378ADD', '#ff7f0e': '#f59e0b',
+  '#2ca02c': '#1D9E75', '#d62728': '#E24B4A',
+};
+
+// Extract scatter dots and HLA-category legend strings from the matplotlib SVG.
+// Returns { tumorDots: [{y_norm, color}], categories: [{color, label}] } or null.
+function _ivExtractMplScatter(svgEl) {
+  const ax1 = svgEl.querySelector('g[id="axes_1"]');
+  if (!ax1) return null;
+
+  // Y-axis bounds come from the y-axis tick labels in axes_1: 0.0 → 1.0.
+  // Find their translate-Y positions to build a pixel→percentile mapping.
+  const tickYs = {};
+  ax1.querySelectorAll('g[id^="text_"]').forEach(t => {
+    let cmt = '';
+    for (const c of t.childNodes) { if (c.nodeType === 8) { cmt = c.nodeValue.trim(); break; } }
+    if (!/^[01]\.\d$/.test(cmt)) return;
+    const inner = t.querySelector('g[transform]');
+    if (!inner) return;
+    const m = (inner.getAttribute('transform') || '')
+      .match(/translate\(\s*[\d.\-]+[\s,]+([\d.\-]+)/);
+    if (!m) return;
+    tickYs[parseFloat(cmt)] = parseFloat(m[1]);
+  });
+  // Need at least the 0.0 and 1.0 ticks to back-compute percentile.
+  if (!(0 in tickYs) || !(1 in tickYs)) return null;
+  const yPx0 = tickYs[0], yPx1 = tickYs[1];
+
+  // Tumor scatter dots: each PathCollection_N is one HLA category.
+  const tumorDots = [];
+  ax1.querySelectorAll('g[id^="PathCollection_"]').forEach(pc => {
+    pc.querySelectorAll(':scope > use').forEach(u => {
+      const yPx = parseFloat(u.getAttribute('y'));
+      const style = u.getAttribute('style') || '';
+      const m = style.match(/fill:\s*(#[0-9a-fA-F]{6})/);
+      if (!m || !isFinite(yPx)) return;
+      const mplColor = m[1].toLowerCase();
+      const scifiColor = IV_MPL_TO_SCIFI[mplColor] || mplColor;
+      // Normalize Y to [0, 1] where 1.0 = top of chart, 0.0 = bottom.
+      const pct = (yPx - yPx0) / (yPx1 - yPx0);
+      tumorDots.push({ pct: Math.max(0, Math.min(1, pct)), color: scifiColor });
+    });
+  });
+
+  // Legend HLA-category strings: text comments anywhere with `;` separator.
+  const cats = [];
+  const seen = new Set();
+  svgEl.querySelectorAll('g[id^="legend_"] g[id^="text_"]').forEach(t => {
+    let cmt = '';
+    for (const c of t.childNodes) { if (c.nodeType === 8) { cmt = c.nodeValue.trim(); break; } }
+    if (!cmt || !/[;]/.test(cmt) || seen.has(cmt)) return;
+    seen.add(cmt);
+    cats.push(cmt);
+  });
+  // Pair each category string with a scifi-palette color, in order.
+  const categories = cats.slice(0, IV_SCIFI_PALETTE.length).map((label, i) => ({
+    color: IV_SCIFI_PALETTE[i],
+    label,
+  }));
+
+  return { tumorDots, categories };
+}
+
+// Map an HLA name to its category color by membership in the legend strings.
+// Categories with this HLA listed → that category's color. Falls back to
+// rotating the palette if no membership match.
+function _ivHlaCategoryColor(hla, categories, fallbackIdx) {
+  for (const c of categories) {
+    const list = c.label.split(';').map(s => s.trim());
+    if (list.includes(hla)) return c.color;
+  }
+  return IV_SCIFI_PALETTE[fallbackIdx % IV_SCIFI_PALETTE.length];
+}
+
+// Build the FULL scifi figure (header pill, title, scatter, legend, heatmap)
+// by extracting all data from the matplotlib SVG and rendering the layout
+// from immunoverse_nbl_chart_scifi.html. This entirely replaces matplotlib's
+// SVG rendering for percentile figures.
+function _ivBuildScifiFigure(host, svgEl, peptide, cancer, themeName) {
+  const heatmap = _ivExtractMplHeatmap(svgEl);
+  const scatter = _ivExtractMplScatter(svgEl);
+  if (!heatmap || !scatter) return null;
+
+  // Clear the host (replaces .svg-stage entirely).
+  host.classList.add('svg-viewer');
+  host.classList.remove('loading', 'has-locked');
+  host.innerHTML = '';
 
   const wrap = document.createElement('div');
-  wrap.className = 'iv-scifi-heatmap';
+  wrap.className = 'iv-scifi-figure';
   wrap.dataset.peptide = peptide || '';
   wrap.dataset.cancer = cancer || '';
-  wrap._ivData = data;
+  wrap._ivData = { heatmap, scatter, peptide, cancer };
 
-  // Hide matplotlib's broken heatmap. matplotlib spreads it across two
-  // axes — axes_3 holds the patch rectangles, axes_2 holds the cell-value
-  // text overlays (and a redundant per-tissue-scatter view). Hide both so
-  // the user sees only axes_1 (the tumor-column scatter) plus our HTML
-  // table. Done via CSS injected into the SVG so theme reapplication
-  // doesn't undo it.
-  const sty = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-  sty.setAttribute('data-iv-hide-heatmap', '1');
-  sty.textContent = 'g[id="axes_2"], g[id="axes_3"] { display: none; }';
-  const defs = svgEl.querySelector('defs');
-  if (defs) defs.appendChild(sty); else svgEl.insertBefore(sty, svgEl.firstChild);
-
-  _ivPaintScifiHeatmap(wrap, data, themeName);
+  _ivPaintScifiFigure(wrap, themeName);
   host.appendChild(wrap);
   return wrap;
 }
 
-// Paint (or repaint) the heatmap container's contents for the current theme.
-// Pulled out so theme toggles can re-skin without rebuilding the data.
-function _ivPaintScifiHeatmap(wrap, data, themeName) {
+// Render (or re-render on theme toggle) the scifi figure into its container.
+function _ivPaintScifiFigure(wrap, themeName) {
+  const data = wrap._ivData;
+  if (!data) return;
+  const { heatmap, scatter, peptide, cancer } = data;
   const isDark = themeName !== 'light';
 
-  // Color ramp matching the reference HTML's `cellColor()`.
+  // ---- Heatmap cell coloring ----
   const cellBg = (v) => {
     if (v === 0) return isDark ? '#0a1020' : '#f1f5f9';
-    const t = v / data.maxVal;
+    const t = v / heatmap.maxVal;
     const stops = isDark
       ? ['#0d3d6e', '#185FA5', '#3b82f6', '#60a5fa', '#22d3ee']
       : ['#dbeafe', '#93c5fd', '#3b82f6', '#1d4ed8', '#1e3a8a'];
-    const i = Math.min(stops.length - 2, Math.floor(t * (stops.length - 1)));
-    return stops[i + (t > 0.5 ? 1 : 0)];
+    const i = Math.min(stops.length - 1, Math.floor(t * (stops.length - 1) + 0.5));
+    return stops[i];
   };
   const cellFg = (v) => {
     if (v === 0) return isDark ? '#1e3a5f' : '#94a3b8';
     if (isDark) return v <= 1 ? '#378ADD' : v <= 2 ? '#60a5fa' : v <= 3 ? '#93c5fd' : '#bfdbfe';
-    return v <= 1 ? '#1e40af' : v <= 2 ? '#1d4ed8' : '#0f172a' /* very dark */;
+    return v <= 2 ? '#1e3a8a' : '#ffffff';
   };
-  const rowLabelColor = (i) => IV_SCIFI_PALETTE[i % IV_SCIFI_PALETTE.length];
 
-  // Build the table fresh each paint.
-  let html = '<div class="iv-scifi-pill"><span class="iv-scifi-pulse"></span>'
-    + (wrap.dataset.cancer || '') + ' · ' + (wrap.dataset.peptide || '')
-    + ' · HLA × tissue presentation</div>';
-  html += '<div class="iv-scifi-tablewrap"><table class="iv-scifi-table">';
-  // Column headers (tissues, rotated)
-  html += '<thead><tr><th class="iv-scifi-corner"></th>';
-  data.tissues.forEach(t => {
-    html += `<th class="iv-scifi-col"><span>${t}</span></th>`;
+  // ---- Scatter SVG ----
+  // viewBox: 660 wide × 220 tall, matching the reference scifi HTML.
+  const VB_W = 660, VB_H = 220;
+  // Tumor column at cx = 30; spread N tissue columns across remaining width.
+  const TUMOR_X = 30;
+  const tissueXSpan = VB_W - 80;
+  const tissueXStart = 60;
+  const colXFor = (i) => tissueXStart + (i + 0.5) * (tissueXSpan / heatmap.tissues.length);
+
+  // Tumor dots: pct 1.0 → cy=0, pct 0.0 → cy=VB_H.
+  const tumorCircles = scatter.tumorDots.map(d => {
+    const cy = (1 - d.pct) * VB_H;
+    return `<circle cx="${TUMOR_X}" cy="${cy.toFixed(1)}" r="6" fill="${d.color}" opacity="0.18"/>`
+         + `<circle cx="${TUMOR_X}" cy="${cy.toFixed(1)}" r="4.5" fill="${d.color}" opacity="0.95" filter="url(#iv-scifi-glow)"/>`;
+  }).join('');
+
+  // Per-tissue baseline dots: low-opacity dots near the bottom (percentile≈0)
+  // for each tissue column, colored by category index for visual continuity.
+  // This matches the reference's visual rhythm even where matplotlib doesn't
+  // emit per-tissue scatter values.
+  const baselineY = VB_H - 11;
+  const baselineDots = heatmap.tissues.map((_, ci) => {
+    const colorIdx = ci % IV_SCIFI_PALETTE.length;
+    return `<circle cx="${colXFor(ci).toFixed(1)}" cy="${baselineY}" r="2.4" fill="${IV_SCIFI_PALETTE[colorIdx]}" opacity="0.45"/>`;
+  }).join('');
+
+  // Threshold line: dashed orange near the bottom (matches reference).
+  const thresholdLine = `<line x1="0" y1="${VB_H - 11}" x2="${VB_W}" y2="${VB_H - 11}" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>`;
+
+  // Gridlines at 0%, 20%, 40%, 60%, 80%, 95%
+  const gridLines = [0, 20, 40, 60, 80].map(p =>
+    `<line x1="0" y1="${(p/100*VB_H).toFixed(1)}" x2="${VB_W}" y2="${(p/100*VB_H).toFixed(1)}" stroke="${isDark ? '#0f2040' : '#e6e9f0'}" stroke-width="1"/>`
+  ).join('');
+
+  // ---- Legend list ----
+  const legendHTML = scatter.categories.map(c =>
+    `<div class="iv-scifi-legend-row">
+      <span class="iv-scifi-legend-dot" style="background:${c.color};box-shadow:0 0 6px ${c.color}88"></span>
+      <span class="iv-scifi-legend-label">${c.label}</span>
+    </div>`
+  ).join('') || '<div class="iv-scifi-legend-row"><span class="iv-scifi-legend-label" style="color:#475569">(no legend extracted)</span></div>';
+
+  // ---- Heatmap table ----
+  let tableHTML = '<table class="iv-scifi-htable"><thead><tr><th class="iv-scifi-corner"></th>';
+  heatmap.tissues.forEach(t => {
+    tableHTML += `<th class="iv-scifi-htcol"><span>${t}</span></th>`;
   });
-  html += '</tr></thead><tbody>';
-  data.hlas.forEach((hla, ri) => {
-    html += `<tr><th class="iv-scifi-row" style="color:${rowLabelColor(ri)}">${hla}</th>`;
-    data.matrix[ri].forEach((v, ci) => {
-      html += `<td style="background:${cellBg(v)};color:${cellFg(v)};font-weight:${v > 2 ? 700 : 400}"`
-        + ` data-tip="${hla} × ${data.tissues[ci]} · ${v} peptide${v === 1 ? '' : 's'}">${v}</td>`;
+  tableHTML += '</tr></thead><tbody>';
+  heatmap.hlas.forEach((hla, ri) => {
+    const rowColor = _ivHlaCategoryColor(hla, scatter.categories, ri);
+    tableHTML += `<tr><th class="iv-scifi-htrow" style="color:${rowColor}">${hla}</th>`;
+    heatmap.matrix[ri].forEach((v, ci) => {
+      tableHTML += `<td style="background:${cellBg(v)};color:${cellFg(v)};font-weight:${v > 2 ? 700 : 400}"`
+        + ` data-tip="${hla} × ${heatmap.tissues[ci]} · ${v} peptide${v === 1 ? '' : 's'}">${v}</td>`;
     });
-    html += '</tr>';
+    tableHTML += '</tr>';
   });
-  html += '</tbody></table></div>';
-  wrap.innerHTML = html;
+  tableHTML += '</tbody></table>';
+
+  // ---- Compose the full figure ----
+  wrap.innerHTML = `
+    <div class="iv-scifi-pill"><span class="iv-scifi-pulse"></span>${cancer || ''} · ${peptide || ''} · Percentile scores</div>
+    <div class="iv-scifi-title">${peptide || ''}</div>
+    <div class="iv-scifi-mainrow">
+      <div class="iv-scifi-chart">
+        <div class="iv-scifi-yaxis">
+          ${[1.0, 0.8, 0.6, 0.4, 0.2, 0.0].map(v => `<span>${v.toFixed(1)}</span>`).join('')}
+        </div>
+        <div class="iv-scifi-plot">
+          <svg viewBox="0 0 ${VB_W} ${VB_H}" preserveAspectRatio="none">
+            <defs>
+              <filter id="iv-scifi-glow"><feGaussianBlur stdDeviation="1.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            ${gridLines}
+            ${thresholdLine}
+            ${baselineDots}
+            ${tumorCircles}
+          </svg>
+        </div>
+      </div>
+      <div class="iv-scifi-legend">${legendHTML}</div>
+    </div>
+    <div class="iv-scifi-xlabels">
+      <span class="iv-scifi-ylabel-bottom">percentile</span>
+      <div class="iv-scifi-xlabels-row">
+        <div class="iv-scifi-xlabel iv-scifi-xlabel-tumor">tumor</div>
+        ${heatmap.tissues.map(t => `<div class="iv-scifi-xlabel">${t}</div>`).join('')}
+      </div>
+    </div>
+    <div class="iv-scifi-htwrap">${tableHTML}</div>
+  `;
 }
+
+// (the older _ivPaintScifiHeatmap was rolled into _ivPaintScifiFigure above —
+// the figure now renders the full layout, not just the table.)
 
 function mountInteractiveSvg(host, svgText, opts) {
   opts = opts || {};
+  const curTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+
+  // Parse the matplotlib SVG up front — it's our data source for all paths.
+  let svgEl;
+  try {
+    const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+    svgEl = doc.documentElement;
+    if (svgEl.querySelector('parsererror')) throw new Error('SVG parse error');
+  } catch (e) {
+    host.innerHTML = `<div class="svg-error">Failed to parse SVG: ${e.message}</div>`;
+    return null;
+  }
+
+  // For percentile-kind figures: ditch matplotlib's rendering entirely and
+  // build the scifi composition (header pill, title, scatter SVG, legend,
+  // heatmap table) from extracted data — matches immunoverse_nbl_chart_scifi.html.
+  if ((opts.filename || '').includes('percentile')) {
+    const fnParts = (opts.filename || '').split('_');
+    const cancer = fnParts[0] || '';
+    const pep = fnParts[1] || '';
+    try {
+      const built = _ivBuildScifiFigure(host, svgEl, pep, cancer, curTheme);
+      if (built) {
+        // Add a corner button strip for PNG download / fallback view.
+        if (opts.pngUrl) {
+          const corner = document.createElement('div');
+          corner.className = 'svg-corner';
+          corner.innerHTML = `<button data-act="png-download" title="Download this figure as PNG">${DL_ICON}<span>PNG</span></button>`
+            + `<button data-act="to-png" title="Switch back to the static PNG view">PNG view</button>`;
+          host.appendChild(corner);
+          corner.addEventListener('click', (e) => {
+            const b = e.target.closest('button[data-act]');
+            if (!b) return;
+            if (b.dataset.act === 'png-download') {
+              downloadDrawerFigure(opts.pngUrl, opts.filename || 'figure');
+            } else if (b.dataset.act === 'to-png' && opts.onPngFallback) {
+              opts.onPngFallback();
+            }
+          });
+        }
+        return built;
+      }
+    } catch (err) { console.warn('Scifi figure build failed; falling back to themed matplotlib:', err); }
+  }
+
+  // ---- Fallback path: themed matplotlib SVG (rank_abundance, etc.) ----
   host.classList.add('svg-viewer');
   host.classList.remove('loading', 'has-locked');
   host.innerHTML = `
@@ -4993,37 +5264,12 @@ function mountInteractiveSvg(host, svgText, opts) {
   const stage = host.querySelector('.svg-stage');
   const tip = host.querySelector('.svg-tooltip');
 
-  let svgEl;
-  try {
-    const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
-    svgEl = doc.documentElement;
-    if (svgEl.querySelector('parsererror')) throw new Error('SVG parse error');
-  } catch (e) {
-    host.innerHTML = `<div class="svg-error">Failed to parse SVG: ${e.message}</div>`;
-    return null;
-  }
   // Fluid: respect aspect ratio, fill container width, height auto-grows.
   svgEl.removeAttribute('width');
   svgEl.removeAttribute('height');
   svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-  // Re-skin the matplotlib palette to match the current theme. Idempotent;
-  // re-runs automatically on theme toggle via the MutationObserver above.
-  const curTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
   applyIvSvgTheme(svgEl, curTheme);
   stage.appendChild(svgEl);
-
-  // For percentile-kind SVGs, replace matplotlib's busted white-cell heatmap
-  // with a fresh HTML table styled per immunoverse_nbl_chart_scifi.html. The
-  // table reads HLA labels, tissue labels, and cell values directly out of
-  // the parsed matplotlib SVG so this works for any peptide.
-  if ((opts.filename || '').includes('percentile')) {
-    // filename format: ${cancer}_${pep}_${kind}
-    const fnParts = (opts.filename || '').split('_');
-    const cancer = fnParts[0] || '';
-    const pep = fnParts[1] || '';
-    try { _ivBuildScifiHeatmap(host, svgEl, pep, cancer, curTheme); }
-    catch (err) { console.warn('Scifi heatmap rebuild failed:', err); }
-  }
 
   // Build the legend interaction model.
   const { legendEl, entries } = _parseLegend(svgEl);
