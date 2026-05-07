@@ -4804,14 +4804,13 @@ function applyIvSvgTheme(svgEl, themeName) {
 const IV_SCIFI_PALETTE = ['#378ADD', '#f59e0b', '#1D9E75', '#E24B4A'];
 const IV_HLA_RX = /^[A-DG]\*\d{2}:\d{2}$/;
 
-// Pull HLAs (axes_3 row labels), tissues (axes_1 X-axis labels), and integer
-// cell values + positions out of the matplotlib SVG. Returns null if this
-// doesn't look like a percentile heatmap (e.g. rank_abundance or other kind).
+// Pull HLAs, tissues, and integer cell values + positions out of the
+// matplotlib SVG. Searches every axes_ (matplotlib emits the heatmap
+// labels under axes_2, not axes_3 as I'd guessed earlier — different
+// peptides may put it elsewhere too, so scan all axes and pick whichever
+// holds the heatmap data). Returns null if this doesn't look like a
+// percentile heatmap (rank_abundance, gene_boxplot, etc.).
 function _ivExtractMplHeatmap(svgEl) {
-  const ax3 = svgEl.querySelector('g[id="axes_3"]');
-  const ax1 = svgEl.querySelector('g[id="axes_1"]');
-  if (!ax3 || !ax1) return null;
-
   // Helper: extract { comment, x, y } for every text_ in a group.
   const readTexts = (root) => {
     const out = [];
@@ -4831,32 +4830,49 @@ function _ivExtractMplHeatmap(svgEl) {
     return out;
   };
 
-  const ax3Texts = readTexts(ax3);
-  const ax1Texts = readTexts(ax1);
+  // Find the axes that contains both HLAs and tissue labels — that's the
+  // heatmap. Score each axes by (#hlas × #tissues); pick the highest.
+  const axesEls = [...svgEl.querySelectorAll('g[id^="axes_"]')];
+  let best = null, bestScore = 0;
+  for (const ax of axesEls) {
+    const tx = readTexts(ax);
+    const nHla = tx.filter(t => IV_HLA_RX.test(t.cmt)).length;
+    const nTissue = tx.filter(t =>
+      !IV_HLA_RX.test(t.cmt) && !/^[\d.]+$/.test(t.cmt) && !/[*;]/.test(t.cmt)
+      && t.cmt.length >= 3 && t.cmt.length <= 30
+      && !['tumor', 'percentile', 'QYNPIRTTF'].includes(t.cmt)
+    ).length;
+    const score = nHla * nTissue;
+    if (score > bestScore) { bestScore = score; best = { ax, tx }; }
+  }
+  if (!best) return null;
+  const allTexts = best.tx;
 
-  // HLA labels: pattern-matched, dedup by name, sort by Y (top-to-bottom).
+  // HLA labels: pattern-matched, dedup, sort by Y (top-to-bottom).
   const hlaSeen = new Map();
-  ax3Texts.forEach(t => {
-    if (IV_HLA_RX.test(t.cmt) && !hlaSeen.has(t.cmt)) {
-      hlaSeen.set(t.cmt, t.y);
-    }
+  allTexts.forEach(t => {
+    if (IV_HLA_RX.test(t.cmt) && !hlaSeen.has(t.cmt)) hlaSeen.set(t.cmt, t.y);
   });
   const hlas = [...hlaSeen.keys()]
     .map(name => ({ name, y: hlaSeen.get(name) }))
     .sort((a, b) => a.y - b.y);
   if (hlas.length < 2) return null;
 
-  // Tissue labels: in axes_1, comments that aren't numeric and aren't
-  // tumor/percentile/peptide-name. Sort by X (left-to-right).
-  const tissueExclude = /^(tumor|percentile|[\d.]+|[A-Z]{4,}[A-Z*\d:;]+)$/;
-  const tissues = ax1Texts
-    .filter(t => !tissueExclude.test(t.cmt) && !IV_HLA_RX.test(t.cmt) && !/[*;]/.test(t.cmt))
-    .filter(t => t.cmt.length >= 3 && t.cmt.length <= 30)
+  // Tissue labels: dedup, sort by X (left-to-right).
+  const tissueSeen = new Map();
+  allTexts.forEach(t => {
+    if (IV_HLA_RX.test(t.cmt) || /^[\d.]+$/.test(t.cmt) || /[*;]/.test(t.cmt)) return;
+    if (t.cmt.length < 3 || t.cmt.length > 30) return;
+    if (['tumor', 'percentile', 'QYNPIRTTF'].includes(t.cmt)) return;
+    if (!tissueSeen.has(t.cmt)) tissueSeen.set(t.cmt, t.x);
+  });
+  const tissues = [...tissueSeen.keys()]
+    .map(name => ({ name, x: tissueSeen.get(name) }))
     .sort((a, b) => a.x - b.x);
   if (tissues.length < 5) return null;
 
-  // Heatmap cell values: integer-comment text_ in axes_3 with their (x,y).
-  const cellTexts = ax3Texts.filter(t => /^\d+$/.test(t.cmt))
+  // Cell values: integer comments anywhere in the chosen axes.
+  const cellTexts = allTexts.filter(t => /^\d+$/.test(t.cmt))
     .map(t => ({ value: parseInt(t.cmt, 10), x: t.x, y: t.y }));
 
   // Snap each cell value to its (rowIdx, colIdx) by nearest HLA-y and tissue-x.
@@ -4898,13 +4914,17 @@ function _ivBuildScifiHeatmap(host, svgEl, peptide, cancer, themeName) {
   wrap.dataset.cancer = cancer || '';
   wrap._ivData = data;
 
-  // Hide matplotlib's broken white-cell heatmap (axes_3) on the source SVG
-  // so the user sees only the nice HTML table. Done via CSS override on the
-  // SVG itself so theme re-application doesn't undo it.
+  // Hide matplotlib's broken heatmap. matplotlib spreads it across two
+  // axes — axes_3 holds the patch rectangles, axes_2 holds the cell-value
+  // text overlays (and a redundant per-tissue-scatter view). Hide both so
+  // the user sees only axes_1 (the tumor-column scatter) plus our HTML
+  // table. Done via CSS injected into the SVG so theme reapplication
+  // doesn't undo it.
   const sty = document.createElementNS('http://www.w3.org/2000/svg', 'style');
   sty.setAttribute('data-iv-hide-heatmap', '1');
-  sty.textContent = 'g[id="axes_3"]{display:none}';
-  svgEl.querySelector('defs')?.appendChild(sty);
+  sty.textContent = 'g[id="axes_2"], g[id="axes_3"] { display: none; }';
+  const defs = svgEl.querySelector('defs');
+  if (defs) defs.appendChild(sty); else svgEl.insertBefore(sty, svgEl.firstChild);
 
   _ivPaintScifiHeatmap(wrap, data, themeName);
   host.appendChild(wrap);
