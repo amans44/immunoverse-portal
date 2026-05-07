@@ -1635,6 +1635,18 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .spectrum-wrap:hover .dl-figure-btn { opacity: 1; }
 .dl-figure-btn:hover { background: rgba(0,0,0,0.8); }
 .dl-figure-btn svg { width: 13px; height: 13px; }
+/* "Back to interactive SVG" sits left of the PNG-download button so they
+   don't overlap, and stays visible (no opacity:0) so it's discoverable. */
+.dl-figure-btn.iv-back-to-svg {
+  right: 140px;
+  opacity: 1;
+  background: rgba(34, 211, 238, 0.18);
+  border-color: rgba(34, 211, 238, 0.45);
+  color: #22d3ee;
+}
+.dl-figure-btn.iv-back-to-svg:hover {
+  background: rgba(34, 211, 238, 0.30);
+}
 
 /* Tiny inline download chip — sits next to a section title's text. */
 .dl-inline-btn {
@@ -6027,25 +6039,44 @@ async function _upgradeFiguresToSvg(rootEl, code, pep) {
     const svgUrl = `${ASSET_SVG_BASE}/${code}/${pep}_${kind}.svg`;
     const text = await fetchSvgIfExists(svgUrl);
     if (!text) return; // no SVG on NYU → leave the existing <img> alone
-    // Auto-mount regardless of size — even multi-MB SVGs render directly.
-    // The static PNG has already painted, so any parse latency just delays
-    // the upgrade rather than blocking the drawer open.
-    mountInteractiveSvg(wrap, text, {
-      pngUrl,
-      filename: `${code}_${pep}_${kind}`,
-      onPngFallback: () => _renderPngFallback(wrap, pngUrl, kind, code, pep),
-    });
+    // Cache the fetched text on the wrap so we can hop between SVG and PNG
+    // views without re-fetching from NYU each time.
+    wrap._ivSvgText = text;
+    wrap._ivSvgMeta = { pngUrl, kind, code, pep };
+    _mountSvgWithToggle(wrap);
   }));
+}
+
+// Mount the interactive SVG view with a "PNG view" hop. Pulled into its
+// own helper so _renderPngFallback's "back to interactive view" button can
+// re-call it with the cached svgText (no NYU re-fetch needed).
+function _mountSvgWithToggle(wrap) {
+  const text = wrap._ivSvgText;
+  const meta = wrap._ivSvgMeta || {};
+  if (!text) return;
+  mountInteractiveSvg(wrap, text, {
+    pngUrl: meta.pngUrl,
+    filename: `${meta.code}_${meta.pep}_${meta.kind}`,
+    onPngFallback: () => _renderPngFallback(wrap, meta.pngUrl, meta.kind, meta.code, meta.pep),
+  });
 }
 
 function _renderPngFallback(wrap, pngUrl, kind, code, pep) {
   wrap.classList.remove('svg-viewer');
   const expandTitle = `${kind.replace(/_/g, ' ')}: ${pep} in ${code}`;
+  // "Back to interactive view" only shows up when we have a cached SVG —
+  // i.e., the user came here via "PNG view" on a successfully-mounted SVG.
+  // For peptides without an SVG on NYU there is nothing to go back to.
+  const canReturnToSvg = !!wrap._ivSvgText;
   wrap.innerHTML = `
     <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${pngUrl}','${kind}')">${DL_ICON}PNG</button>
+    ${canReturnToSvg ? `<button class="dl-figure-btn iv-back-to-svg" data-act="back-to-svg" title="Back to interactive view">↶ SVG view</button>` : ''}
     <button class="expand-btn" onclick="openLightbox('${pngUrl}','${expandTitle}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
     <img src="${pngUrl}" alt="${kind}" onload="this.classList.add('ok')" onclick="openLightbox('${pngUrl}','${expandTitle}')" onerror="this.parentNode.classList.add('no-plot');this.remove();" />
     <div class="plot-caption">${kind.replace(/_/g, ' ')} · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>`;
+  // Wire the "back to SVG" button if it rendered.
+  const back = wrap.querySelector('[data-act="back-to-svg"]');
+  if (back) back.addEventListener('click', (e) => { e.stopPropagation(); _mountSvgWithToggle(wrap); });
 }
 
 function downloadCompareCsv() {
