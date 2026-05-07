@@ -4343,6 +4343,149 @@ function _highlightByColor(svgEl, activeColor) {
   });
 }
 
+// ===== Matplotlib SVG theme applier =====
+//
+// Re-skins a matplotlib-generated SVG (pulled from NYU `assets_svg/`) so its
+// background / text / gridline palette matches the portal's current theme,
+// adds a soft glow on data points (cyan glow in dark, indigo drop-shadow in
+// light), and a hover-pop stroke on heatmap cells. The reference look is
+// QYNPIRTTF_portal.svg (hand-authored dark-mode prototype).
+//
+// Important invariants:
+//  • Idempotent — safe to call multiple times on the same SVG (re-applied
+//    on every theme toggle).
+//  • Only structural colors are remapped (white panels, black axes/text,
+//    gray gridlines). Data series colors (blue/orange/green/red dots,
+//    heatmap colormap values) are left alone, so the legend-click ↔ data-
+//    highlight wiring in mountInteractiveSvg keeps working.
+//  • Filter IDs are namespaced per SVG so multiple drawers never collide.
+
+const IV_SVG_THEMES = {
+  dark: {
+    panel: '#0a1526', text: '#cbd5e1', grid: '#1a2740',
+    glowColor: '#22d3ee', glowOpacity: 0.55,
+    glowSmOpacity: 0.40, glowDx: 0, glowDy: 0, glowStd: 1.6, glowStdSm: 0.8,
+    hoverStroke: '#22d3ee',
+  },
+  light: {
+    panel: '#ffffff', text: '#1f2a44', grid: '#dde3ee',
+    glowColor: '#3949bc', glowOpacity: 0.30,
+    glowSmOpacity: 0.22, glowDx: 0, glowDy: 0.5, glowStd: 0.9, glowStdSm: 0.5,
+    hoverStroke: '#0891b2',
+  },
+};
+
+function _ivBuildColorMap(t) {
+  return {
+    '#ffffff': t.panel, '#fff': t.panel, 'white': t.panel,
+    '#000000': t.text,  '#000': t.text,  'black': t.text, '#262626': t.text,
+    '#bfbfbf': t.grid,  '#b0b0b0': t.grid, '#cccccc': t.grid,
+    '#dddddd': t.grid,  '#e0e0e0': t.grid, '#d3d3d3': t.grid,
+  };
+}
+
+function _ivRemapStyle(styleStr, map) {
+  if (!styleStr) return styleStr;
+  return styleStr.replace(/(fill|stroke):\s*([^;]+)/gi, (m, prop, val) => {
+    const norm = val.trim().toLowerCase();
+    return (norm in map) ? `${prop}: ${map[norm]}` : m;
+  });
+}
+
+function applyIvSvgTheme(svgEl, themeName) {
+  if (!svgEl || svgEl.nodeType !== 1) return;
+  themeName = themeName === 'light' ? 'light' : 'dark';
+  const t = IV_SVG_THEMES[themeName];
+  const map = _ivBuildColorMap(t);
+  svgEl.setAttribute('data-iv-themed', themeName);
+
+  // Per-SVG unique ID prefix so filter URL refs don't collide between drawers.
+  let nsId = svgEl.getAttribute('data-iv-ns');
+  if (!nsId) {
+    nsId = 'iv' + Math.random().toString(36).slice(2, 8);
+    svgEl.setAttribute('data-iv-ns', nsId);
+  }
+  const fGlow   = `${nsId}-glow`;
+  const fGlowSm = `${nsId}-glow-sm`;
+
+  // 1. Walk every element and remap matched structural colors. Data colors
+  //    aren't in the map so they pass through untouched.
+  svgEl.querySelectorAll('*').forEach(el => {
+    const style = el.getAttribute('style');
+    if (style) {
+      const next = _ivRemapStyle(style, map);
+      if (next !== style) el.setAttribute('style', next);
+    }
+    ['fill', 'stroke'].forEach(attr => {
+      const v = el.getAttribute(attr);
+      if (v && map[v.trim().toLowerCase()]) {
+        el.setAttribute(attr, map[v.trim().toLowerCase()]);
+      }
+    });
+  });
+
+  // 2. Inject (or refresh) iv glow filters in <defs>.
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const mkEl = (tag, attrs) => {
+    const e = document.createElementNS(SVG_NS, tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v));
+    return e;
+  };
+  const mkFilter = (id, attrs, ...children) => {
+    const f = mkEl('filter', { id, 'data-iv-filter': '1', ...attrs });
+    children.forEach(c => f.appendChild(c));
+    return f;
+  };
+
+  let defs = svgEl.querySelector('defs');
+  if (!defs) {
+    defs = mkEl('defs', {});
+    svgEl.insertBefore(defs, svgEl.firstChild);
+  }
+  defs.querySelectorAll('[data-iv-filter]').forEach(n => n.remove());
+  defs.appendChild(mkFilter(fGlow,
+    { x: '-30%', y: '-30%', width: '160%', height: '160%' },
+    mkEl('feDropShadow', {
+      dx: t.glowDx, dy: t.glowDy, stdDeviation: t.glowStd,
+      'flood-color': t.glowColor, 'flood-opacity': t.glowOpacity,
+    })
+  ));
+  defs.appendChild(mkFilter(fGlowSm,
+    { x: '-20%', y: '-20%', width: '140%', height: '140%' },
+    mkEl('feDropShadow', {
+      dx: t.glowDx, dy: t.glowDy / 2, stdDeviation: t.glowStdSm,
+      'flood-color': t.glowColor, 'flood-opacity': t.glowSmOpacity,
+    })
+  ));
+
+  // 3. Refresh the iv style block. Selectors target matplotlib's stable
+  //    structural IDs so we glow scatter-plot dots and legend markers, but
+  //    leave tick marks alone (they live under xtick_/ytick_ wrappers).
+  let stylEl = svgEl.querySelector('style[data-iv-style]');
+  if (stylEl) stylEl.remove();
+  stylEl = mkEl('style', { 'data-iv-style': '1' });
+  stylEl.textContent = `
+    g[id^="PathCollection_"] use,
+    g[id^="PathCollection_"] path { filter: url(#${fGlow}); }
+    g[id^="legend_"] g[id^="line2d_"] use,
+    g[id^="legend_"] g[id^="PathCollection_"] use { filter: url(#${fGlowSm}); }
+    g[id^="QuadMesh_"] path { transition: stroke 80ms ease, stroke-width 80ms ease; }
+    g[id^="QuadMesh_"] path:hover { stroke: ${t.hoverStroke}; stroke-width: 1.5; }
+  `;
+  defs.appendChild(stylEl);
+}
+
+// Watch the global theme toggle and re-skin every mounted matplotlib SVG.
+(function watchIvSvgTheme() {
+  const reapply = () => {
+    const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    document.querySelectorAll('.svg-stage > svg').forEach(svg => applyIvSvgTheme(svg, cur));
+  };
+  new MutationObserver(reapply).observe(document.documentElement, {
+    attributes: true, attributeFilter: ['data-theme'],
+  });
+})();
+
 function mountInteractiveSvg(host, svgText, opts) {
   opts = opts || {};
   host.classList.add('svg-viewer');
@@ -4373,6 +4516,10 @@ function mountInteractiveSvg(host, svgText, opts) {
   svgEl.removeAttribute('width');
   svgEl.removeAttribute('height');
   svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  // Re-skin the matplotlib palette to match the current theme. Idempotent;
+  // re-runs automatically on theme toggle via the MutationObserver above.
+  const curTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  applyIvSvgTheme(svgEl, curTheme);
   stage.appendChild(svgEl);
 
   // Build the legend interaction model.
