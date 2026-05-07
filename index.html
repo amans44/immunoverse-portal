@@ -4392,6 +4392,119 @@ function _ivRemapStyle(styleStr, map) {
   });
 }
 
+// Linear interpolate between two #rrggbb hex strings, t ∈ [0,1].
+function _ivHexLerp(a, b, t) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const ar = (pa >> 16) & 0xff, ag = (pa >> 8) & 0xff, ab = pa & 0xff;
+  const br = (pb >> 16) & 0xff, bg = (pb >> 8) & 0xff, bb = pb & 0xff;
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const bl = Math.round(ab + (bb - ab) * t);
+  return '#' + ((r << 16) | (g << 8) | bl).toString(16).padStart(6, '0');
+}
+
+// Multi-stop blue ramp matching the reference SVG aesthetic.
+// `t` is normalized count (0=lowest, 1=highest in this axes).
+function _ivBlueRamp(t, themeName) {
+  const stops = themeName === 'dark'
+    ? [[0, '#0d3d6e'], [0.35, '#185FA5'], [0.65, '#3b82f6'], [1, '#60a5fa']]
+    : [[0, '#cfe2ff'], [0.35, '#7eb1f6'], [0.65, '#3b82f6'], [1, '#1d4ed8']];
+  t = Math.max(0, Math.min(1, t));
+  for (let i = 1; i < stops.length; i++) {
+    if (t <= stops[i][0]) {
+      const [t0, c0] = stops[i - 1], [t1, c1] = stops[i];
+      return _ivHexLerp(c0, c1, (t - t0) / Math.max(t1 - t0, 1e-9));
+    }
+  }
+  return stops[stops.length - 1][1];
+}
+
+// Detect heatmap axes (any <g id="axes_*"> with many patches) and re-color
+// each cell on a blue ramp according to its embedded numeric value. matplotlib
+// emits annotated heatmaps as a grid of white <path> rectangles plus a parallel
+// stack of <text_*> groups whose `<!-- N -->` comments hold the cell value.
+// We parse patch bboxes from the `d` attribute (works pre-mount), parse text
+// positions from their `transform="translate(x y)"`, then pair each integer-
+// valued text to its containing patch by spatial proximity.
+function _ivColorizeHeatmaps(svgEl, themeName) {
+  const axesEls = svgEl.querySelectorAll('g[id^="axes_"]');
+  axesEls.forEach(axes => {
+    const patchGroups = axes.querySelectorAll(':scope > g[id^="patch_"]');
+    if (patchGroups.length < 50) return; // not a heatmap
+
+    // Parse each patch's bbox from its path's M/L coordinate pairs.
+    const cells = [];
+    patchGroups.forEach(g => {
+      const path = g.querySelector(':scope > path');
+      if (!path) return;
+      const d = path.getAttribute('d') || '';
+      const pts = [...d.matchAll(/[MLHV]?\s*([\d.\-]+)[\s,]+([\d.\-]+)/g)]
+        .map(m => [parseFloat(m[1]), parseFloat(m[2])])
+        .filter(p => isFinite(p[0]) && isFinite(p[1]));
+      if (pts.length < 3) return;
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      cells.push({
+        path,
+        xmin: Math.min(...xs), xmax: Math.max(...xs),
+        ymin: Math.min(...ys), ymax: Math.max(...ys),
+        value: null,
+      });
+    });
+    if (!cells.length) return;
+
+    // Walk text_ groups, pull their integer comment value + translate position,
+    // and snap each to the nearest cell by center-distance.
+    const valTexts = [];
+    axes.querySelectorAll('g[id^="text_"]').forEach(t => {
+      let cmt = '';
+      for (const c of t.childNodes) {
+        if (c.nodeType === 8) { cmt = c.nodeValue.trim(); break; }
+      }
+      if (!/^\d+$/.test(cmt)) return; // only integer cell values
+      const inner = t.querySelector('g[transform]');
+      if (!inner) return;
+      const m = (inner.getAttribute('transform') || '')
+        .match(/translate\(\s*([\d.\-]+)[\s,]+([\d.\-]+)/);
+      if (!m) return;
+      valTexts.push({ tx: parseFloat(m[1]), ty: parseFloat(m[2]), value: parseInt(cmt, 10) });
+    });
+    if (!valTexts.length) return;
+
+    valTexts.forEach(vt => {
+      let best = null, bestD = Infinity;
+      for (const c of cells) {
+        const cx = (c.xmin + c.xmax) / 2, cy = (c.ymin + c.ymax) / 2;
+        const d = (vt.tx - cx) ** 2 + (vt.ty - cy) ** 2;
+        if (d < bestD) { bestD = d; best = c; }
+      }
+      if (best) best.value = vt.value;
+    });
+
+    // Compute per-axes max for normalization, ignoring zeros.
+    const positives = cells.map(c => c.value).filter(v => v != null && v > 0);
+    if (!positives.length) return;
+    const maxV = Math.max(...positives);
+
+    // Re-fill each cell with a blue-ramp color. Empty cells (value=0 or null)
+    // get a near-bg shade so the grid is still visible without dominating.
+    cells.forEach(c => {
+      let fill;
+      if (c.value == null || c.value === 0) {
+        fill = themeName === 'dark' ? '#0a1526' : '#f4f7fb';
+      } else {
+        fill = _ivBlueRamp(c.value / maxV, themeName);
+      }
+      const style = c.path.getAttribute('style') || '';
+      const next = /fill:/i.test(style)
+        ? style.replace(/fill:\s*[^;]+/i, `fill: ${fill}`)
+        : `${style}${style ? '; ' : ''}fill: ${fill}`;
+      c.path.setAttribute('style', next);
+      c.path.setAttribute('data-iv-cell', '1');
+      c.path.setAttribute('data-iv-val', String(c.value ?? 0));
+    });
+  });
+}
+
 function applyIvSvgTheme(svgEl, themeName) {
   if (!svgEl || svgEl.nodeType !== 1) return;
   themeName = themeName === 'light' ? 'light' : 'dark';
@@ -4423,6 +4536,12 @@ function applyIvSvgTheme(svgEl, themeName) {
       }
     });
   });
+
+  // Color-encode any patch-rendered heatmap (matplotlib annot=True grid).
+  // Done after the white→panel remap so the value-based fills overwrite the
+  // navy default we just painted. data-iv-cell tags the colored cells so the
+  // hover stroke CSS below can find them.
+  _ivColorizeHeatmaps(svgEl, themeName);
 
   // 2. Inject (or refresh) iv glow filters in <defs>.
   const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -4486,9 +4605,13 @@ function applyIvSvgTheme(svgEl, themeName) {
     g[id^="PathCollection_"] path { filter: url(#${fGlow}); }
     g[id^="legend_"] g[id^="line2d_"] use,
     g[id^="legend_"] g[id^="PathCollection_"] use { filter: url(#${fGlowSm}); }
-    /* Heatmap cell hover (no-op on swarm SVGs; lights up on QuadMesh ones). */
+    /* Heatmap cell hover. Catches both matplotlib patch-rendered heatmaps
+       (where _ivColorizeHeatmaps tags each cell with data-iv-cell) and
+       any QuadMesh-rendered ones for completeness. */
+    [data-iv-cell],
     g[id^="QuadMesh_"] path { transition: stroke 80ms ease, stroke-width 80ms ease; }
-    g[id^="QuadMesh_"] path:hover { stroke: ${t.hoverStroke}; stroke-width: 1.5; }
+    [data-iv-cell]:hover,
+    g[id^="QuadMesh_"] path:hover { stroke: ${t.hoverStroke}; stroke-width: 1.6; }
   `;
   defs.appendChild(stylEl);
 }
