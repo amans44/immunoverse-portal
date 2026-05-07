@@ -1722,7 +1722,10 @@ table.atlas.compact td:nth-child(10) { display: none; }
 
 .iv-scifi-mainrow {
   display: grid;
-  grid-template-columns: 26px 28px 80px 1fr 220px;
+  /* yLabel | yTicks | tumor | per-tissue | legend
+     Tumor panel matches its 60×200 viewBox 1:1 so X-stretch is identical
+     to the per-tissue panel — keeps dots equally round across both. */
+  grid-template-columns: 26px 28px 60px 1fr 220px;
   gap: 6px;
   align-items: stretch;
 }
@@ -1898,6 +1901,10 @@ table.atlas.compact td:nth-child(10) { display: none; }
 
 .iv-scifi-legend-row { cursor: pointer; padding: 2px 4px; border-radius: 4px; }
 .iv-scifi-legend-row:hover { background: rgba(0,212,255,0.05); }
+/* SVG dots — clickable groups should show the standard pointer cursor and
+   the dot should pop a bit on hover so users notice the affordance. */
+.iv-scifi-dot-clickable { cursor: pointer; }
+.iv-scifi-dot-clickable:hover circle:last-child { r: 6.5; }
 
 /* ===================== INTERACTIVE SVG VIEWER ===================== */
 /* The figure embeds inline (no Illustrator-style toolbar). The legend
@@ -5347,15 +5354,17 @@ function _ivPaintScifiFigure(wrap, themeName) {
   const pctToCy = (p) => (Y_MAX - Math.max(0, Math.min(Y_MAX, p))) / Y_MAX * VB_H;
 
   // Tumor panel: narrow, single-column scatter with jitter so overlapping
-  // dots don't fully occlude. ViewBox 60 wide × VB_H tall.
+  // dots don't fully occlude. ViewBox 60 wide × VB_H tall = 1:1 with the
+  // 60px CSS panel width, so dot radius renders the same in both panels.
   const TUMOR_VB_W = 60;
   const TUMOR_X_CENTER = TUMOR_VB_W / 2;
-  const tumorJitter = (i) => ((i * 17) % 13) - 6; // deterministic ±6 px
+  const tumorJitter = (i) => ((i * 17) % 11) - 5; // deterministic ±5 px
+  const catLabelFor = (cat) => (scatter.categories[cat] && scatter.categories[cat].label) || '';
   const tumorCircles = scatter.tumorDots.map((d, i) => {
     const cx = TUMOR_X_CENTER + tumorJitter(i);
     const cy = pctToCy(d.pct);
     const cat = d.cat != null ? d.cat : 0;
-    return `<g class="iv-scifi-dot" data-cat="${cat}">`
+    return `<g class="iv-scifi-dot iv-scifi-dot-clickable" data-cat="${cat}" data-tip="${catLabelFor(cat)}">`
          + `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="7" fill="${d.color}" opacity="0.20"/>`
          + `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5" fill="${d.color}" opacity="0.95" filter="url(#iv-scifi-glow)"/>`
          + `</g>`;
@@ -5384,7 +5393,9 @@ function _ivPaintScifiFigure(wrap, themeName) {
       const r = elevated ? 5 : 2.5;
       const opacity = elevated ? 0.95 : 0.5;
       const cat = d.cat != null && d.cat >= 0 ? d.cat : 0;
-      return `<g class="iv-scifi-dot" data-cat="${cat}" data-tissue="${colIdx}">`
+      const tissueName = heatmap.tissues[colIdx] || '';
+      const tip = `${catLabelFor(cat)}\n${tissueName} · ${(d.pct * 100).toFixed(0)}% percentile`;
+      return `<g class="iv-scifi-dot iv-scifi-dot-clickable" data-cat="${cat}" data-tissue="${colIdx}" data-tip="${tip}">`
            + (elevated ? `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="7" fill="${d.color}" opacity="0.20"/>` : '')
            + `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}" fill="${d.color}" opacity="${opacity}" filter="url(#iv-scifi-glow)"/>`
            + `</g>`;
@@ -5460,17 +5471,22 @@ function _ivPaintScifiFigure(wrap, themeName) {
         });
       }
     };
-    // Legend filter (HLA category)
-    wrap.querySelectorAll('.iv-scifi-legend-row[data-cat]').forEach(row => {
-      const cat = row.dataset.cat;
-      row.addEventListener('mouseenter', () => { if (lockedCat == null) setCat(cat); });
-      row.addEventListener('mouseleave', () => { if (lockedCat == null) setCat(null); });
-      row.addEventListener('click', (e) => {
+    // Legend filter (HLA category) — applies to legend rows AND data dots.
+    // Hovering or clicking a dot activates the same category filter as the
+    // matching legend row, restoring the dot ↔ legend interaction the
+    // matplotlib SVG had through _highlightByColor.
+    const wireCatHover = (el) => {
+      const cat = el.dataset.cat;
+      el.addEventListener('mouseenter', () => { if (lockedCat == null) setCat(cat); });
+      el.addEventListener('mouseleave', () => { if (lockedCat == null) setCat(null); });
+      el.addEventListener('click', (e) => {
         e.stopPropagation();
         if (lockedCat === cat) { lockedCat = null; setCat(null); }
         else { lockedCat = cat; setCat(cat); }
       });
-    });
+    };
+    wrap.querySelectorAll('.iv-scifi-legend-row[data-cat]').forEach(wireCatHover);
+    wrap.querySelectorAll('.iv-scifi-dot-clickable[data-cat]').forEach(wireCatHover);
     // Tissue filter (X-axis label)
     wrap.querySelectorAll('.iv-scifi-tlabel[data-tissue]').forEach(lbl => {
       const t = lbl.dataset.tissue;
