@@ -4443,32 +4443,50 @@ function applyIvSvgTheme(svgEl, themeName) {
     svgEl.insertBefore(defs, svgEl.firstChild);
   }
   defs.querySelectorAll('[data-iv-filter]').forEach(n => n.remove());
-  defs.appendChild(mkFilter(fGlow,
-    { x: '-30%', y: '-30%', width: '160%', height: '160%' },
-    mkEl('feDropShadow', {
-      dx: t.glowDx, dy: t.glowDy, stdDeviation: t.glowStd,
-      'flood-color': t.glowColor, 'flood-opacity': t.glowOpacity,
-    })
-  ));
-  defs.appendChild(mkFilter(fGlowSm,
-    { x: '-20%', y: '-20%', width: '140%', height: '140%' },
-    mkEl('feDropShadow', {
-      dx: t.glowDx, dy: t.glowDy / 2, stdDeviation: t.glowStdSm,
-      'flood-color': t.glowColor, 'flood-opacity': t.glowSmOpacity,
-    })
-  ));
 
-  // 3. Refresh the iv style block. Selectors target matplotlib's stable
-  //    structural IDs so we glow scatter-plot dots and legend markers, but
-  //    leave tick marks alone (they live under xtick_/ytick_ wrappers).
+  // Source-colored glow filter — blurs the element's own color rather than
+  // flooding cyan over everything. This is the same recipe as the reference
+  // QYNPIRTTF_portal.svg: <feGaussianBlur> the source, then <feMerge> the
+  // blur back under the original. The dot keeps its natural data color and
+  // gains a halo of that same color.
+  const blurStd = themeName === 'dark' ? '2.2' : '1.0';
+  const blurStdSm = themeName === 'dark' ? '1.2' : '0.6';
+  const fBlur1 = mkEl('feGaussianBlur', { stdDeviation: blurStd, result: 'b' });
+  const fMerge1 = mkEl('feMerge', {});
+  fMerge1.appendChild(mkEl('feMergeNode', { in: 'b' }));
+  fMerge1.appendChild(mkEl('feMergeNode', { in: 'SourceGraphic' }));
+  defs.appendChild(mkFilter(fGlow, { x: '-50%', y: '-50%', width: '200%', height: '200%' }, fBlur1, fMerge1));
+
+  const fBlur2 = mkEl('feGaussianBlur', { stdDeviation: blurStdSm, result: 'b' });
+  const fMerge2 = mkEl('feMerge', {});
+  fMerge2.appendChild(mkEl('feMergeNode', { in: 'b' }));
+  fMerge2.appendChild(mkEl('feMergeNode', { in: 'SourceGraphic' }));
+  defs.appendChild(mkFilter(fGlowSm, { x: '-30%', y: '-30%', width: '160%', height: '160%' }, fBlur2, fMerge2));
+
+  // 3. Refresh the iv style block. matplotlib emits text labels as
+  //    <use xlink:href="#DejaVuSans-XX"/> glyph references with NO inline
+  //    fill — they render black via the SVG default. Force-fill them so
+  //    they're readable on the new theme background. Also force the spine
+  //    stroke (axes outline) to the theme's grid color since matplotlib
+  //    bakes it as #000000 directly on the path.
   let stylEl = svgEl.querySelector('style[data-iv-style]');
   if (stylEl) stylEl.remove();
   stylEl = mkEl('style', { 'data-iv-style': '1' });
   stylEl.textContent = `
+    /* Force fill on every text glyph (paths and use refs alike). */
+    g[id^="text_"] use, g[id^="text_"] path,
+    g[id^="xtick_"] g[id^="text_"] use, g[id^="xtick_"] g[id^="text_"] path,
+    g[id^="ytick_"] g[id^="text_"] use, g[id^="ytick_"] g[id^="text_"] path,
+    g[id^="legend_"] g[id^="text_"] use, g[id^="legend_"] g[id^="text_"] path
+      { fill: ${t.text} !important; }
+    /* matplotlib spines (the axes box) — restroke if matplotlib used black. */
+    g[id^="axes_"] > g[id^="patch_"] path[style*="stroke"] { stroke: ${t.grid}; }
+    /* Source-colored halo on scatter-plot data dots and legend markers. */
     g[id^="PathCollection_"] use,
     g[id^="PathCollection_"] path { filter: url(#${fGlow}); }
     g[id^="legend_"] g[id^="line2d_"] use,
     g[id^="legend_"] g[id^="PathCollection_"] use { filter: url(#${fGlowSm}); }
+    /* Heatmap cell hover (no-op on swarm SVGs; lights up on QuadMesh ones). */
     g[id^="QuadMesh_"] path { transition: stroke 80ms ease, stroke-width 80ms ease; }
     g[id^="QuadMesh_"] path:hover { stroke: ${t.hoverStroke}; stroke-width: 1.5; }
   `;
