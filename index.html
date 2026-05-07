@@ -4889,14 +4889,19 @@ const IV_HLA_RX = /^[A-DG]\*\d{2}:\d{2}$/;
 // holds the heatmap data). Returns null if this doesn't look like a
 // percentile heatmap (rank_abundance, gene_boxplot, etc.).
 function _ivExtractMplHeatmap(svgEl) {
-  // Helper: extract { comment, x, y } for every text_ in a group.
+  // Helper: extract { comment, x, y } for every text_ in a group. matplotlib
+  // emits each text label as `<g id="text_N"><!-- LABEL --><g transform=...>`.
+  // Reading comment children via Node.COMMENT_NODE / nodeType===8 is unreliable
+  // across DOMParser MIME-type modes — some browsers strip comments in
+  // image/svg+xml. Regex-parse the element's outerHTML instead; that's the
+  // only place the comment is guaranteed to survive.
   const readTexts = (root) => {
     const out = [];
     root.querySelectorAll('g[id^="text_"]').forEach(t => {
-      let cmt = '';
-      for (const c of t.childNodes) {
-        if (c.nodeType === 8) { cmt = c.nodeValue.trim(); break; }
-      }
+      const html = t.outerHTML || '';
+      const cmtM = html.match(/<!--\s*(.+?)\s*-->/);
+      if (!cmtM) return;
+      const cmt = cmtM[1].trim();
       if (!cmt) return;
       const inner = t.querySelector('g[transform]');
       if (!inner) return;
