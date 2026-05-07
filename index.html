@@ -4889,19 +4889,34 @@ const IV_HLA_RX = /^[A-DG]\*\d{2}:\d{2}$/;
 // holds the heatmap data). Returns null if this doesn't look like a
 // percentile heatmap (rank_abundance, gene_boxplot, etc.).
 function _ivExtractMplHeatmap(svgEl) {
-  // Helper: extract { comment, x, y } for every text_ in a group. matplotlib
-  // emits each text label as `<g id="text_N"><!-- LABEL --><g transform=...>`.
-  // Reading comment children via Node.COMMENT_NODE / nodeType===8 is unreliable
-  // across DOMParser MIME-type modes — some browsers strip comments in
-  // image/svg+xml. Regex-parse the element's outerHTML instead; that's the
-  // only place the comment is guaranteed to survive.
+  // Helper: extract { comment, x, y } for every text_ in a group. Matplotlib
+  // labels live in `<g id="text_N"><!-- LABEL --><g transform=...>` shape.
+  // Comment access is finicky in SVG-namespace DOMs — try three strategies:
+  //   1. Iterate childNodes for nodeType=8 (works in Chrome/Firefox SVG mode)
+  //   2. XMLSerializer the element and regex the source (always available)
+  //   3. outerHTML regex (some browsers strip comments here)
+  const xmlSer = (typeof XMLSerializer !== 'undefined') ? new XMLSerializer() : null;
+  const readComment = (el) => {
+    // Strategy 1: DOM traversal
+    for (const c of el.childNodes) {
+      if (c.nodeType === 8 /* COMMENT_NODE */) return (c.nodeValue || '').trim();
+    }
+    // Strategy 2: XMLSerializer (most reliable for SVG namespace)
+    if (xmlSer) {
+      const src = xmlSer.serializeToString(el);
+      const m = src.match(/<!--\s*(.+?)\s*-->/);
+      if (m) return m[1].trim();
+    }
+    // Strategy 3: outerHTML fallback
+    const oh = el.outerHTML || '';
+    const m2 = oh.match(/<!--\s*(.+?)\s*-->/);
+    if (m2) return m2[1].trim();
+    return '';
+  };
   const readTexts = (root) => {
     const out = [];
     root.querySelectorAll('g[id^="text_"]').forEach(t => {
-      const html = t.outerHTML || '';
-      const cmtM = html.match(/<!--\s*(.+?)\s*-->/);
-      if (!cmtM) return;
-      const cmt = cmtM[1].trim();
+      const cmt = readComment(t);
       if (!cmt) return;
       const inner = t.querySelector('g[transform]');
       if (!inner) return;
@@ -5016,17 +5031,33 @@ function _ivExtractMplScatter(svgEl) {
   if (!(0 in tickYs) || !(1 in tickYs)) return null;
   const yPx0 = tickYs[0], yPx1 = tickYs[1];
 
-  // Tumor scatter dots: each PathCollection_N is one HLA category.
+  // Tumor scatter dots: each PathCollection_N is one HLA category. matplotlib
+  // versions vary in how they nest <use> markers — sometimes direct children
+  // of the PathCollection, sometimes wrapped in an intermediate <g>. Scan ALL
+  // descendants and pick anything carrying both an x/y position and a fill.
   const tumorDots = [];
   ax1.querySelectorAll('g[id^="PathCollection_"]').forEach(pc => {
-    pc.querySelectorAll(':scope > use').forEach(u => {
-      const yPx = parseFloat(u.getAttribute('y'));
-      const style = u.getAttribute('style') || '';
-      const m = style.match(/fill:\s*(#[0-9a-fA-F]{6})/);
-      if (!m || !isFinite(yPx)) return;
-      const mplColor = m[1].toLowerCase();
+    pc.querySelectorAll('use, path, circle').forEach(el => {
+      let yPx, fill;
+      const style = el.getAttribute('style') || '';
+      // Try inline style first, fall back to fill attribute
+      const fm = style.match(/fill:\s*(#[0-9a-fA-F]{3,6})/i)
+        || (el.getAttribute('fill') ? [null, el.getAttribute('fill')] : null);
+      if (!fm) return;
+      fill = fm[1];
+      // <use x="..." y="...">
+      if (el.hasAttribute('y')) yPx = parseFloat(el.getAttribute('y'));
+      // <circle cy="...">
+      else if (el.hasAttribute('cy')) yPx = parseFloat(el.getAttribute('cy'));
+      // <path d="..."> — pull first numeric pair
+      else if (el.tagName === 'path') {
+        const d = el.getAttribute('d') || '';
+        const m = d.match(/[\d.\-]+[\s,]+([\d.\-]+)/);
+        if (m) yPx = parseFloat(m[1]);
+      }
+      if (!isFinite(yPx)) return;
+      const mplColor = fill.toLowerCase();
       const scifiColor = IV_MPL_TO_SCIFI[mplColor] || mplColor;
-      // Normalize Y to [0, 1] where 1.0 = top of chart, 0.0 = bottom.
       const pct = (yPx - yPx0) / (yPx1 - yPx0);
       tumorDots.push({ pct: Math.max(0, Math.min(1, pct)), color: scifiColor });
     });
@@ -5229,6 +5260,26 @@ function mountInteractiveSvg(host, svgText, opts) {
     const cancer = fnParts[0] || '';
     const pep = fnParts[1] || '';
     console.log('[iv-scifi] percentile detected:', { filename: opts.filename, cancer, pep });
+    // Deep debug: scan structural counts before extraction so we see whether
+    // the live SVG actually contains what we expect.
+    {
+      const axes = svgEl.querySelectorAll('g[id^="axes_"]');
+      const pcs = svgEl.querySelectorAll('g[id^="PathCollection_"]');
+      const allUses = svgEl.querySelectorAll('use');
+      const allTextGroups = svgEl.querySelectorAll('g[id^="text_"]');
+      // Sample one text_ to see what's inside
+      const sampleText = allTextGroups[0];
+      const sampleHTML = sampleText
+        ? (new XMLSerializer()).serializeToString(sampleText).slice(0, 300)
+        : '(none)';
+      console.log('[iv-scifi] structural:', {
+        axesCount: axes.length,
+        pathCollections: pcs.length,
+        totalUses: allUses.length,
+        textGroups: allTextGroups.length,
+        sampleTextHTML: sampleHTML,
+      });
+    }
     try {
       const heatmap = _ivExtractMplHeatmap(svgEl);
       const scatter = _ivExtractMplScatter(svgEl);
