@@ -78,4 +78,20 @@ for fname in ("_summary.json", "_search_index.json"):
         copied += 1
 print(f"copied {copied} JSON files into demo/data/")
 
+# --- 5. Static assets : copy chatbot/ and pancancer_image.png ------------------
+# demo/index.html references these via relative paths (chatbot/chatbot.js,
+# pancancer_image.png), so they must sit inside demo/ alongside index.html.
+DEMO_ROOT = ROOT / "demo"
+img_src = ROOT / "pancancer_image.png"
+if img_src.exists():
+    shutil.copyfile(img_src, DEMO_ROOT / "pancancer_image.png")
+    print(f"copied pancancer_image.png into demo/")
+chatbot_src = ROOT / "chatbot"
+chatbot_dst = DEMO_ROOT / "chatbot"
+if chatbot_src.exists():
+    if chatbot_dst.exists():
+        shutil.rmtree(chatbot_dst)
+    shutil.copytree(chatbot_src, chatbot_dst)
+    print(f"copied chatbot/ into demo/")
+
 print("\ndemo data layer built.")
