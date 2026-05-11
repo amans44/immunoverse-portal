@@ -6998,6 +6998,20 @@ async function openDrawer(r) {
     ${mutationBlock}
     ${pathogenBlock}
 
+    <div class="section-title" data-tip="Quantitative scores for this peptide's MS presentation quality. Abundance rank = how prominently this peptide is presented relative to others. Spectral score = confidence of MS/MS identification. Homogeneity = whether the source gene is uniformly expressed across tumor cells (from single-cell RNA). DepMap = gene essentiality (negative = cancer depends on this gene).">Presentation metrics</div>
+    <div class="section-subtitle">Four at-a-glance scores: relative abundance, MS/MS identification confidence, single-cell expression homogeneity, and DepMap tumor-dependency.</div>
+    <div class="bars">
+      <div class="gbar"><div class="lbl">Abundance rank</div><div class="track"><div class="fill" style="width:${abund.toFixed(0)}%"></div></div><div class="v">${(r[COL.abund]||0).toFixed(3)}</div></div>
+      <div class="gbar"><div class="lbl">Spectral score</div><div class="track"><div class="fill" style="width:${scoreW}%"></div></div><div class="v">${r[COL.score]||'—'}</div></div>
+      <div class="gbar"><div class="lbl">Homogeneity (scRNA)</div><div class="track"><div class="fill" style="width:${((r[COL.homo]||0)*100).toFixed(0)}%"></div></div><div class="v">${r[COL.homo]!=null ? r[COL.homo].toFixed(2) : '—'}</div></div>
+      <div class="gbar"><div class="lbl">DepMap essentiality</div><div class="track"><div class="fill fill-dep" style="width:${Math.max(0, Math.min(100, (-(r[COL.depmap]||0))*50+50)).toFixed(0)}%"></div></div><div class="v">${r[COL.depmap]!=null ? r[COL.depmap].toFixed(2) : '—'}</div></div>
+    </div>
+
+    ${intensBlock ? `
+    <div class="section-title" data-tip="Raw mass spectrometry signal intensity for this peptide across individual immunopeptidome samples. Higher intensity = more copies of this peptide are being presented on the tumor cell surface in that sample. Consistent detection across multiple samples supports the peptide as a shared (not private) target.">Per-sample MS intensity (top ${Math.min(intens.length,10)})</div>
+    <div class="section-subtitle">Normalized MS intensity in the individual patient samples that detected this peptide — consistent high bars across samples indicate a shared, robustly presented target.</div>
+    ${intensBlock}` : ''}
+
     <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples${bind.length ? `<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadObservedHlaCsv()">${DL_ICON}<span>CSV</span></button>` : ''}</div>
     <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, DeepImmuno score, and per-patient recurrence.</div>
     <div class="bind-wrap">
@@ -7095,20 +7109,6 @@ async function openDrawer(r) {
       }
       return '';
     })()}
-
-    <div class="section-title" data-tip="Quantitative scores for this peptide's MS presentation quality. Abundance rank = how prominently this peptide is presented relative to others. Spectral score = confidence of MS/MS identification. Homogeneity = whether the source gene is uniformly expressed across tumor cells (from single-cell RNA). DepMap = gene essentiality (negative = cancer depends on this gene).">Presentation metrics</div>
-    <div class="section-subtitle">Four at-a-glance scores: relative abundance, MS/MS identification confidence, single-cell expression homogeneity, and DepMap tumor-dependency.</div>
-    <div class="bars">
-      <div class="gbar"><div class="lbl">Abundance rank</div><div class="track"><div class="fill" style="width:${abund.toFixed(0)}%"></div></div><div class="v">${(r[COL.abund]||0).toFixed(3)}</div></div>
-      <div class="gbar"><div class="lbl">Spectral score</div><div class="track"><div class="fill" style="width:${scoreW}%"></div></div><div class="v">${r[COL.score]||'—'}</div></div>
-      <div class="gbar"><div class="lbl">Homogeneity (scRNA)</div><div class="track"><div class="fill" style="width:${((r[COL.homo]||0)*100).toFixed(0)}%"></div></div><div class="v">${r[COL.homo]!=null ? r[COL.homo].toFixed(2) : '—'}</div></div>
-      <div class="gbar"><div class="lbl">DepMap essentiality</div><div class="track"><div class="fill fill-dep" style="width:${Math.max(0, Math.min(100, (-(r[COL.depmap]||0))*50+50)).toFixed(0)}%"></div></div><div class="v">${r[COL.depmap]!=null ? r[COL.depmap].toFixed(2) : '—'}</div></div>
-    </div>
-
-    ${intensBlock ? `
-    <div class="section-title" data-tip="Raw mass spectrometry signal intensity for this peptide across individual immunopeptidome samples. Higher intensity = more copies of this peptide are being presented on the tumor cell surface in that sample. Consistent detection across multiple samples supports the peptide as a shared (not private) target.">Per-sample MS intensity (top ${Math.min(intens.length,10)})</div>
-    <div class="section-subtitle">Normalized MS intensity in the individual patient samples that detected this peptide — consistent high bars across samples indicate a shared, robustly presented target.</div>
-    ${intensBlock}` : ''}
 
     <div class="section-title" data-tip="Shows where this peptide ranks in terms of MS intensity compared to all other peptides in this cancer's immunopeptidome. A high percentile means this peptide is among the most abundantly presented — indicating strong and stable HLA presentation on the tumor surface.">Peptide intensity percentile vs atlas</div>
     <div class="section-subtitle">Percentile rank of this peptide's MS intensity among every peptide in the cancer's immunopeptidome — high percentile means one of the most abundantly presented targets.</div>
