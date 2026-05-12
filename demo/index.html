@@ -765,8 +765,8 @@ table.atlas.compact td:nth-child(10) { display: none; }
   border: 1px solid var(--border-2);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  padding: 28px 32px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   opacity: 0;
   pointer-events: none;
   transition: transform .22s cubic-bezier(.4,0,.2,1), opacity .22s;
@@ -777,13 +777,22 @@ table.atlas.compact td:nth-child(10) { display: none; }
   opacity: 1;
   pointer-events: auto;
 }
+/* Only the body scrolls — the close button lives on .drawer itself so it
+   stays pinned at top-right regardless of scroll position. */
+#drawerBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 28px 32px;
+}
 @media (max-width: 900px) {
-  .drawer { width: 96vw; padding: 22px 20px; max-height: 94vh; }
+  .drawer { width: 96vw; max-height: 94vh; }
+  #drawerBody { padding: 22px 20px; }
 }
 .drawer .close {
   position: absolute;
   top: 18px; right: 18px;
-  background: transparent;
+  background: var(--bg-1);
   color: var(--text-2);
   border: 1px solid var(--border);
   width: 32px; height: 32px;
@@ -791,6 +800,7 @@ table.atlas.compact td:nth-child(10) { display: none; }
   cursor: pointer;
   font-size: 18px;
   display: flex; align-items: center; justify-content: center;
+  z-index: 10;
 }
 .drawer .close:hover { background: var(--bg-3); color: var(--text-0); }
 .drawer h3 {
@@ -6191,7 +6201,7 @@ async function _upgradeFiguresToSvg(rootEl, code, pep) {
   // since the big rank_abundance and spectrum mounts don't run unless the
   // user actually scrolls to them. Percentile sits near the top of the
   // drawer so it usually fires immediately on observe().
-  const scrollRoot = rootEl.closest('.drawer') || null;
+  const scrollRoot = rootEl.closest('#drawerBody, .drawer') || null;
   const io = ('IntersectionObserver' in window) ? new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (!e.isIntersecting) return;
