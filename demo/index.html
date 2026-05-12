@@ -3047,6 +3047,10 @@ a.dl-locked .sz { color: #fbbf24; }
             <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 .296c-6.63 0-12 5.37-12 12 0 5.3 3.438 9.8 8.205 11.387.6.11.82-.26.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.09-.745.082-.73.082-.73 1.205.085 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.418-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.932 0-1.31.465-2.38 1.235-3.22-.125-.302-.535-1.524.115-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.655 1.652.245 2.874.12 3.176.77.84 1.235 1.91 1.235 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.296c0-6.627-5.37-12-12-12"/></svg>
             Code
           </a>
+          <a class="btn btn-ghost" href="https://www.cancergenomicscloud.org/immunoverse" target="_blank" rel="noopener" title="Run your own data through the ImmunoVerse pipeline on Cancer Genomics Cloud — no code required.">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+            CGC pipeline ↗
+          </a>
         </div>
       </div>
       <div class="hero-stats">
@@ -5101,6 +5105,25 @@ function applyIvSvgTheme(svgEl, themeName) {
 
 const IV_SCIFI_PALETTE = ['#378ADD', '#f59e0b', '#1D9E75', '#E24B4A'];
 const IV_HLA_RX = /^[A-DG]\*\d{2}:\d{2}$/;
+// Peptide sequence: 6–15 uppercase amino-acid letters. Used to identify
+// the peptide-name text label inside matplotlib percentile SVGs so it
+// doesn't get mistaken for a tissue label. Replaces an older hardcoded
+// 'QYNPIRTTF' filter that only worked for the prototype peptide.
+const IV_PEPTIDE_RX = /^[ACDEFGHIKLMNPQRSTVWY]{6,15}$/;
+
+// Extract (x, y) translation from a matplotlib transform attribute. Handles
+// both `translate(x y)` (matplotlib's default output) and `matrix(a b c d e f)`
+// (what SVGO's convertTransform plugin emits after collapsing translate+scale
+// chains). For matrix(a b c d e f), the last two numbers (e, f) are the same
+// tx, ty the portal needs for label positioning.
+function _ivParseTransformXY(transformStr) {
+  if (!transformStr) return null;
+  let m = transformStr.match(/translate\(\s*([\d.\-]+)[\s,]+([\d.\-]+)/);
+  if (m) return [parseFloat(m[1]), parseFloat(m[2])];
+  m = transformStr.match(/matrix\(\s*[\d.\-]+[\s,]+[\d.\-]+[\s,]+[\d.\-]+[\s,]+[\d.\-]+[\s,]+([\d.\-]+)[\s,]+([\d.\-]+)/);
+  if (m) return [parseFloat(m[1]), parseFloat(m[2])];
+  return null;
+}
 
 // Pull HLAs, tissues, and integer cell values + positions out of the
 // matplotlib SVG. Searches every axes_ (matplotlib emits the heatmap
@@ -5140,10 +5163,9 @@ function _ivExtractMplHeatmap(svgEl) {
       if (!cmt) return;
       const inner = t.querySelector('g[transform]');
       if (!inner) return;
-      const m = (inner.getAttribute('transform') || '')
-        .match(/translate\(\s*([\d.\-]+)[\s,]+([\d.\-]+)/);
-      if (!m) return;
-      out.push({ cmt, x: parseFloat(m[1]), y: parseFloat(m[2]) });
+      const xy = _ivParseTransformXY(inner.getAttribute('transform'));
+      if (!xy) return;
+      out.push({ cmt, x: xy[0], y: xy[1] });
     });
     return out;
   };
@@ -5158,7 +5180,7 @@ function _ivExtractMplHeatmap(svgEl) {
     const nTissue = tx.filter(t =>
       !IV_HLA_RX.test(t.cmt) && !/^[\d.]+$/.test(t.cmt) && !/[*;]/.test(t.cmt)
       && t.cmt.length >= 3 && t.cmt.length <= 30
-      && !['tumor', 'percentile', 'QYNPIRTTF'].includes(t.cmt)
+      && !['tumor', 'percentile'].includes(t.cmt) && !IV_PEPTIDE_RX.test(t.cmt)
     ).length;
     const score = nHla * nTissue;
     if (score > bestScore) { bestScore = score; best = { ax, tx }; }
@@ -5181,7 +5203,7 @@ function _ivExtractMplHeatmap(svgEl) {
   allTexts.forEach(t => {
     if (IV_HLA_RX.test(t.cmt) || /^[\d.]+$/.test(t.cmt) || /[*;]/.test(t.cmt)) return;
     if (t.cmt.length < 3 || t.cmt.length > 30) return;
-    if (['tumor', 'percentile', 'QYNPIRTTF'].includes(t.cmt)) return;
+    if (['tumor', 'percentile'].includes(t.cmt) || IV_PEPTIDE_RX.test(t.cmt)) return;
     if (!tissueSeen.has(t.cmt)) tissueSeen.set(t.cmt, t.x);
   });
   const tissues = [...tissueSeen.keys()]
@@ -5242,10 +5264,9 @@ function _ivExtractMplScatter(svgEl) {
     if (!/^[01]\.\d$/.test(cmt)) return;
     const inner = t.querySelector('g[transform]');
     if (!inner) return;
-    const m = (inner.getAttribute('transform') || '')
-      .match(/translate\(\s*[\d.\-]+[\s,]+([\d.\-]+)/);
-    if (!m) return;
-    tickYs[parseFloat(cmt)] = parseFloat(m[1]);
+    const xy = _ivParseTransformXY(inner.getAttribute('transform'));
+    if (!xy) return;
+    tickYs[parseFloat(cmt)] = xy[1];
   });
   // Need at least the 0.0 and 1.0 ticks to back-compute percentile.
   if (!(0 in tickYs) || !(1 in tickYs)) return null;
@@ -5374,13 +5395,18 @@ function _ivExtractHeatmapFromText(svgText) {
     const body = block[1];
     const cmtM = body.match(/<!--\s*([^\->][^\-]*?)\s*-->/);
     if (!cmtM) continue;
+    let xy = null;
     const trM = body.match(/translate\(\s*([\d.\-]+)[\s,]+([\d.\-]+)/);
-    if (!trM) continue;
-    items.push({
-      cmt: cmtM[1].trim(),
-      x: parseFloat(trM[1]),
-      y: parseFloat(trM[2]),
-    });
+    if (trM) {
+      xy = [parseFloat(trM[1]), parseFloat(trM[2])];
+    } else {
+      // SVGO's convertTransform collapses translate+scale into a single
+      // matrix(a b c d e f) — the last two numbers (e, f) are tx, ty.
+      const mxM = body.match(/matrix\(\s*[\d.\-]+[\s,]+[\d.\-]+[\s,]+[\d.\-]+[\s,]+[\d.\-]+[\s,]+([\d.\-]+)[\s,]+([\d.\-]+)/);
+      if (mxM) xy = [parseFloat(mxM[1]), parseFloat(mxM[2])];
+    }
+    if (!xy) continue;
+    items.push({ cmt: cmtM[1].trim(), x: xy[0], y: xy[1] });
   }
   if (!items.length) return null;
 
@@ -5398,7 +5424,7 @@ function _ivExtractHeatmapFromText(svgText) {
   items.forEach(t => {
     if (hlaRx.test(t.cmt) || /^[\d.]+$/.test(t.cmt) || /[*;]/.test(t.cmt)) return;
     if (t.cmt.length < 3 || t.cmt.length > 30) return;
-    if (['tumor', 'percentile', 'QYNPIRTTF'].includes(t.cmt)) return;
+    if (['tumor', 'percentile'].includes(t.cmt) || IV_PEPTIDE_RX.test(t.cmt)) return;
     if (!tissueSeen.has(t.cmt)) tissueSeen.set(t.cmt, t.x);
   });
   const tissues = [...tissueSeen.keys()]
@@ -6160,17 +6186,36 @@ function mountInteractiveSvg(host, svgText, opts) {
 async function _upgradeFiguresToSvg(rootEl, code, pep) {
   const wraps = rootEl.querySelectorAll('[data-svg-kind]');
   if (!wraps.length) return;
+  // Lazy-mount: each figure swaps from PNG to interactive SVG only when
+  // its wrap scrolls into view inside the drawer. Saves CPU on drawer-open
+  // since the big rank_abundance and spectrum mounts don't run unless the
+  // user actually scrolls to them. Percentile sits near the top of the
+  // drawer so it usually fires immediately on observe().
+  const scrollRoot = rootEl.closest('.drawer') || null;
+  const io = ('IntersectionObserver' in window) ? new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      io.unobserve(e.target);
+      if (e.target._ivSvgText) _mountSvgWithToggle(e.target);
+    });
+  }, { root: scrollRoot, rootMargin: '200px 0px', threshold: 0.01 }) : null;
+
   await Promise.all([...wraps].map(async (wrap) => {
     const kind = wrap.dataset.svgKind;
     const pngUrl = wrap.dataset.pngUrl || '';
-    const svgUrl = `${ASSET_SVG_BASE}/${code}/${pep}_${kind}.svg`;
+    // Spectrum files are named `spectrum_{pep}.svg` on NYU; everything
+    // else uses `{pep}_{kind}.svg`.
+    const svgUrl = kind === 'spectrum'
+      ? `${ASSET_SVG_BASE}/${code}/spectrum_${pep}.svg`
+      : `${ASSET_SVG_BASE}/${code}/${pep}_${kind}.svg`;
     const text = await fetchSvgIfExists(svgUrl);
     if (!text) return; // no SVG on NYU → leave the existing <img> alone
     // Cache the fetched text on the wrap so we can hop between SVG and PNG
     // views without re-fetching from NYU each time.
     wrap._ivSvgText = text;
     wrap._ivSvgMeta = { pngUrl, kind, code, pep };
-    _mountSvgWithToggle(wrap);
+    if (io) io.observe(wrap);
+    else _mountSvgWithToggle(wrap);
   }));
 }
 
@@ -7263,7 +7308,7 @@ async function openDrawer(r) {
 
     <div class="section-title" data-tip="The annotated tandem mass spectrum (MS/MS) confirming this peptide's identity. Blue = b-ions (N-terminal fragments), red = y-ions (C-terminal fragments), green = a-ions. A well-matched spectrum with many fragment ions gives high confidence that this exact peptide sequence was detected on HLA.">MS/MS spectrum</div>
     <div class="section-subtitle">The annotated fragmentation spectrum used to identify this peptide — blue b-ions (N-terminal), red y-ions (C-terminal), green a-ions. Dense matching peaks confirm the sequence.</div>
-    <div class="spectrum-wrap">
+    <div class="spectrum-wrap" data-svg-kind="spectrum" data-png-url="${spectrumUrl}">
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${spectrumUrl}','ms_spectrum')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${spectrumUrl}" alt="MS/MS spectrum for ${pep} in ${code}"

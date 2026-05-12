@@ -6059,6 +6059,20 @@ function mountInteractiveSvg(host, svgText, opts) {
 async function _upgradeFiguresToSvg(rootEl, code, pep) {
   const wraps = rootEl.querySelectorAll('[data-svg-kind]');
   if (!wraps.length) return;
+  // Lazy-mount: each figure swaps from PNG to interactive SVG only when
+  // its wrap scrolls into view inside the drawer. Saves CPU on drawer-open
+  // since the big rank_abundance and spectrum mounts don't run unless the
+  // user actually scrolls to them. Percentile sits near the top of the
+  // drawer so it usually fires immediately on observe().
+  const scrollRoot = rootEl.closest('.drawer') || null;
+  const io = ('IntersectionObserver' in window) ? new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      io.unobserve(e.target);
+      if (e.target._ivSvgText) _mountSvgWithToggle(e.target);
+    });
+  }, { root: scrollRoot, rootMargin: '200px 0px', threshold: 0.01 }) : null;
+
   await Promise.all([...wraps].map(async (wrap) => {
     const kind = wrap.dataset.svgKind;
     const pngUrl = wrap.dataset.pngUrl || '';
@@ -6073,7 +6087,8 @@ async function _upgradeFiguresToSvg(rootEl, code, pep) {
     // views without re-fetching from NYU each time.
     wrap._ivSvgText = text;
     wrap._ivSvgMeta = { pngUrl, kind, code, pep };
-    _mountSvgWithToggle(wrap);
+    if (io) io.observe(wrap);
+    else _mountSvgWithToggle(wrap);
   }));
 }
 
