@@ -789,20 +789,34 @@ table.atlas.compact td:nth-child(10) { display: none; }
   .drawer { width: 96vw; max-height: 94vh; }
   #drawerBody { padding: 22px 20px; }
 }
+/* Close button floats ABOVE the drawer's top edge so it reads as a separate
+   dismiss chip — easier to spot, easier to click, never overlapped by content. */
 .drawer .close {
   position: absolute;
-  top: 18px; right: 18px;
+  top: -42px; right: 4px;
   background: var(--bg-1);
   color: var(--text-2);
-  border: 1px solid var(--border);
-  width: 32px; height: 32px;
-  border-radius: 8px;
+  border: 1px solid var(--border-2);
+  width: 34px; height: 34px;
+  border-radius: 50%;
   cursor: pointer;
   font-size: 18px;
+  line-height: 1;
   display: flex; align-items: center; justify-content: center;
   z-index: 10;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+  transition: background .15s, color .15s, transform .15s;
 }
-.drawer .close:hover { background: var(--bg-3); color: var(--text-0); }
+.drawer .close:hover {
+  background: var(--bg-3);
+  color: var(--text-0);
+  transform: scale(1.06);
+}
+/* On very short viewports the space above the drawer disappears — fall back
+   to a corner-overlap pose so the button never clips off the top of the screen. */
+@media (max-height: 700px) {
+  .drawer .close { top: -14px; right: -14px; }
+}
 .drawer h3 {
   margin: 0 0 4px;
   font-size: 24px;
