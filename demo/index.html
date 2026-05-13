@@ -6870,6 +6870,48 @@ async function loadDetail(code) {
   }
   return DETAIL_CACHE[code];
 }
+
+// JS mirror of integrate_data.modify_source_string. Returns the literal
+// sentinel 'not_unique' when multiple distinct source records remain after
+// stripping nuORF / nc| noise — used in the drawer to surface a "multi-
+// mapping" explainer in place of a misleading per-source differential plot.
+function ivModifySourceString(source) {
+  if (!source) return source;
+  if (source.indexOf(';') >= 0) {
+    const parts = source.split(';');
+    const withEnst = parts.filter(s => /ENSG\d+\|ENST\d+\|/.test(s));
+    if (withEnst.length === 1) source = withEnst[0];
+    else if (withEnst.length > 1) return 'not_unique';
+  }
+  if (source.indexOf(';') >= 0) {
+    const parts = source.split(';').filter(s => s.indexOf('nuORF') < 0 && s.indexOf('nc|') < 0);
+    source = parts.join(';');
+    if (source.indexOf(';') >= 0) return 'not_unique';
+  }
+  return source;
+}
+
+// Best-effort extraction of candidate source names from a multi-mapped source
+// string. Returns up to 8 short labels — TE family roots (L1HS, L1PA6, AluSx3)
+// and bare chr:start-end splice junctions. Used by the explainer panel to show
+// users *what* the peptide ambiguously maps to.
+function ivExtractDiffCandidates(source) {
+  if (!source) return [];
+  const seen = new Set();
+  for (const m of source.matchAll(/TE_info:([^,;|]+),([^,;|]+)/g)) {
+    if (m[1]) seen.add(m[1].trim());
+  }
+  for (const rec of source.split(';')) {
+    const first = (rec.split('|')[0] || '').trim();
+    const m = first.match(/^([A-Za-z0-9]+(?:_[A-Za-z0-9]+)?)_dup\d+/);
+    if (m) seen.add(m[1]);
+  }
+  for (const m of source.matchAll(/(chr[\dXYM]+:\d+-\d+)/g)) {
+    seen.add(m[1]);
+  }
+  return [...seen].slice(0, 8);
+}
+
 async function openDrawer(r) {
   const body = document.getElementById('drawerBody');
   const code = r[COL.code];
@@ -7296,6 +7338,26 @@ async function openDrawer(r) {
           ${diffSplicingUrl ? plotImg(diffSplicingUrl, 'Splice junction differential plot', `Junction · ${pep}`, `Junction expression: ${pep} in ${code}`, 'splicing_differential') : ''}
           ${diffErvUrl ? plotImg(diffErvUrl, 'TE differential plot', `TE · ${pep}`, `TE expression: ${pep} in ${code}`, 'te_differential') : ''}
         </div>`;
+      }
+      // No diffPlot was produced for a TE/splicing/ERV row. If the source
+      // string is multi-mapped (modify_source_string → 'not_unique'), surface
+      // an explainer instead of silently omitting the figure section.
+      const TE_CLASSES_FOR_EXPLAINER = ['ERV', 'splicing', 'TE_chimeric_transcript'];
+      if (!diffPlot && TE_CLASSES_FOR_EXPLAINER.includes(r[COL.cls]) && rawSource
+          && ivModifySourceString(rawSource) === 'not_unique') {
+        const cands = ivExtractDiffCandidates(rawSource);
+        const kindLabel = ({
+          'ERV': 'TE family',
+          'splicing': 'splice junction',
+          'TE_chimeric_transcript': 'TE family / junction pair',
+        })[r[COL.cls]] || 'source';
+        const candLine = cands.length
+          ? `<div style="margin-top:8px;padding:8px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;font-size:11.5px;color:var(--text-2);line-height:1.5;"><b style="color:var(--text-1)">${cands.length} candidate source${cands.length===1?'':'s'} detected:</b> ${cands.map(c => `<code style="background:var(--bg-3);padding:1px 5px;border-radius:3px;">${c}</code>`).join(' · ')}</div>`
+          : '';
+        return `
+        <div class="section-title" data-tip="This peptide could not be attributed to a single ${kindLabel} in this cancer — multiple candidates match. Per-source differential plots are intentionally omitted to avoid misleading attribution.">Per-source differential — multi-mapping</div>
+        <div class="section-subtitle">Multiple candidate ${kindLabel}s map to this peptide in this cancer, so no single per-source differential plot is shown. See the <em>"Show raw annotation"</em> panel above for the full candidate list.</div>
+        ${candLine}`;
       }
       if (exprUrl) {
         return `
