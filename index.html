@@ -201,16 +201,66 @@ nav .links a {
 }
 nav .links a:hover { background: var(--bg-3); color: var(--text-0); }
 nav .cta {
-  padding: 9px 18px;
+  padding: 9px 22px;
   background: var(--grad-primary);
   color: #0a0e1a;
   border-radius: 10px;
   font-weight: 600;
   font-size: 14px;
+  white-space: nowrap;
   box-shadow: 0 4px 20px rgba(34,211,238,0.25);
   transition: transform .15s, box-shadow .15s;
 }
 nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211,238,0.4); color: #0a0e1a; }
+
+/* Live visitor counter pill (fed by GoatCounter) */
+.live-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-1) 60%, transparent);
+  white-space: nowrap;
+  flex: none;
+}
+.live-stat .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22d3ee;
+  box-shadow: 0 0 0 0 rgba(34,211,238,0.55);
+  animation: livePulse 2s infinite;
+  flex: none;
+}
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(34,211,238,0.55); }
+  70%  { box-shadow: 0 0 0 7px rgba(34,211,238,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,211,238,0); }
+}
+.live-stat .live-num {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-0);
+  font-variant-numeric: tabular-nums;
+}
+.live-stat .live-label {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+  text-transform: uppercase;
+}
+@media (max-width: 980px) {
+  .live-stat .live-label { display: none; }
+}
+@media (max-width: 560px) {
+  .live-stat { display: none; }
+}
 
 /* ===================== HERO ===================== */
 .hero {
@@ -2953,6 +3003,11 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <a href="#methods">Methods</a>
       <a href="#downloads">Data</a>
       <a href="#cite">Cite</a>
+    </div>
+    <div class="live-stat" id="liveStat" aria-label="Live visitor count" title="Total investigators reached">
+      <span class="live-dot" aria-hidden="true"></span>
+      <span class="live-num" id="liveVisitors">—</span>
+      <span class="live-label">Investigators</span>
     </div>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode" title="Toggle theme" onclick="toggleTheme()">
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
@@ -7657,5 +7712,22 @@ applyFilters = function() { _origApply(); pushUrlState(); };
      https://www.immuno-verse.com. -->
 <script>window.IMMUNOVERSE_AGENT_BASE = "https://immunoverse-agent-739605637035.us-central1.run.app";</script>
 <script src="chatbot/chatbot.js" defer></script>
+<script>
+/* Live visitor counter — pulls total from GoatCounter public JSON.
+   Requires "Allow getting page counts via /counter/<path>.json" enabled
+   in GoatCounter Settings → Site settings. Fails silently if disabled. */
+(function () {
+  var el = document.getElementById('liveVisitors');
+  if (!el) return;
+  fetch('https://immuno-verse.goatcounter.com/counter/TOTAL.json', { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d) return;
+      var n = parseInt(d.count, 10);
+      if (!isNaN(n)) el.textContent = n.toLocaleString();
+    })
+    .catch(function () { /* leave em-dash placeholder */ });
+})();
+</script>
 </body>
 </html>
