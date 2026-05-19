@@ -593,6 +593,8 @@
     appendBubble("user", text);
     chatHistory.push({ role: "user", content: text, tool_call_id: null, tool_calls: null });
 
+    if (typeof window.__bumpQueryCounter === "function") window.__bumpQueryCounter();
+
     const thinking = appendThinking();
     sendBtn.disabled = true;
     currentAbort = new AbortController();

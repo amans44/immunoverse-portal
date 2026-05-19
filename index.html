@@ -4268,6 +4268,7 @@ async function navigateSearchResult(action, data) {
     const item = e.target.closest('.search-item');
     if (!item) return;
     navigateSearchResult(item.dataset.action, {...item.dataset});
+    if (typeof window.__bumpQueryCounter === 'function') window.__bumpQueryCounter();
   });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.search-wrap')) results.hidden = true;
@@ -7713,20 +7714,30 @@ applyFilters = function() { _origApply(); pushUrlState(); };
 <script>window.IMMUNOVERSE_AGENT_BASE = "https://immunoverse-agent-739605637035.us-central1.run.app";</script>
 <script src="chatbot/chatbot.js" defer></script>
 <script>
-/* Live visitor counter — pulls total from GoatCounter public JSON.
-   Requires "Allow getting page counts via /counter/<path>.json" enabled
-   in GoatCounter Settings → Site settings. Fails silently if disabled. */
+/* Live query counter — counts real user actions (searches + chat sends).
+   Backend: Cloudflare Worker (KV-backed) at QUERIES_API.
+   The pill reads /total on page load; window.__bumpQueryCounter() POSTs
+   /increment whenever the user submits a search or a chat message. */
 (function () {
+  var QUERIES_API = 'https://immunoverse-queries.amansharma-e44.workers.dev';
   var el = document.getElementById('liveVisitors');
-  if (!el) return;
-  fetch('https://immuno-verse.goatcounter.com/counter/TOTAL.json', { cache: 'no-store' })
+
+  function render(n) {
+    if (!el) return;
+    if (typeof n === 'number' && !isNaN(n)) el.textContent = n.toLocaleString();
+  }
+
+  fetch(QUERIES_API + '/total', { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (d) {
-      if (!d) return;
-      var n = parseInt(d.count, 10);
-      if (!isNaN(n)) el.textContent = n.toLocaleString();
-    })
+    .then(function (d) { if (d) render(parseInt(d.count, 10)); })
     .catch(function () { /* leave em-dash placeholder */ });
+
+  window.__bumpQueryCounter = function () {
+    fetch(QUERIES_API + '/increment', { method: 'POST', mode: 'cors' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d) render(parseInt(d.count, 10)); })
+      .catch(function () {});
+  };
 })();
 </script>
 </body>
