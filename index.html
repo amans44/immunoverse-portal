@@ -4247,6 +4247,7 @@ async function navigateSearchResult(action, data) {
     }
     activeIdx = -1;
     renderSearchResults(searchAll(q), q);
+    if (typeof window.__bumpQueryCounter === 'function') window.__bumpQueryCounter();
   };
 
   input.addEventListener('focus', () => {
