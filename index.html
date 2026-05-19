@@ -4240,6 +4240,7 @@ async function navigateSearchResult(action, data) {
   const runSearch = async () => {
     const q = input.value.trim();
     if (q.length < 2) { results.hidden = true; return; }
+    if (typeof window.__bumpQueryCounter === 'function') window.__bumpQueryCounter();
     if (!IDX_CACHE) {
       results.innerHTML = `<div class="search-empty">Loading search index…</div>`;
       results.hidden = false;
@@ -4247,7 +4248,6 @@ async function navigateSearchResult(action, data) {
     }
     activeIdx = -1;
     renderSearchResults(searchAll(q), q);
-    if (typeof window.__bumpQueryCounter === 'function') window.__bumpQueryCounter();
   };
 
   input.addEventListener('focus', () => {
