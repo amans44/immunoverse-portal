@@ -7715,11 +7715,11 @@ applyFilters = function() { _origApply(); pushUrlState(); };
 <script>window.IMMUNOVERSE_AGENT_BASE = "https://immunoverse-agent-739605637035.us-central1.run.app";</script>
 <script src="chatbot/chatbot.js" defer></script>
 <script>
-/* Live query counter — counts real user actions (searches + chat sends).
-   Backend: Cloudflare Worker (KV-backed) at QUERIES_API.
-   The pill reads /total on page load; window.__bumpQueryCounter() POSTs
-   /increment whenever the user submits a search or a chat message. */
+/* Pill displays GoatCounter's all-time visit total (cumulative, never resets).
+   The Cloudflare Worker keeps recording action-level counts in the background
+   as a private metric — visible at the Worker's /total endpoint. */
 (function () {
+  var GC_TOTAL = 'https://immuno-verse.goatcounter.com/counter/TOTAL.json';
   var QUERIES_API = 'https://immunoverse-queries.amansharma-e44.workers.dev';
   var el = document.getElementById('liveVisitors');
 
@@ -7728,15 +7728,15 @@ applyFilters = function() { _origApply(); pushUrlState(); };
     if (typeof n === 'number' && !isNaN(n)) el.textContent = n.toLocaleString();
   }
 
-  fetch(QUERIES_API + '/total', { cache: 'no-store' })
+  fetch(GC_TOTAL, { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (d) { if (d) render(parseInt(d.count, 10)); })
-    .catch(function () { /* leave em-dash placeholder */ });
+    .catch(function () {});
 
+  // Fire-and-forget: still log query actions to the private Worker counter,
+  // but don't update the pill from the response (pill is GoatCounter-driven).
   window.__bumpQueryCounter = function () {
     fetch(QUERIES_API + '/increment', { method: 'POST', mode: 'cors' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) { if (d) render(parseInt(d.count, 10)); })
       .catch(function () {});
   };
 })();
