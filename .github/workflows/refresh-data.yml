@@ -39,12 +39,18 @@ jobs:
           IMMUNOVERSE_DROPBOX_URL: ${{ vars.IMMUNOVERSE_DROPBOX_URL }}
         run: python integrate_data.py
 
+      - name: Sync hub/ from NYU public share
+        # Pulls *_metadata.txt + *_download.sbatch from the ImmunoVerse_Hub
+        # directory and rebuilds hub/data_js/. New cancers Fran adds to NYU
+        # appear on /hub the next day automatically.
+        run: python sync_hub.py
+
       - name: Commit and push if changed
         id: commit
         run: |
           git config user.name  "immunoverse-bot"
           git config user.email "immunoverse-bot@users.noreply.github.com"
-          git add data_js/ data/
+          git add data_js/ data/ hub/data_js/ hub/data/
           if git diff --cached --quiet; then
             echo "No data changes — nothing to commit."
             echo "changed=false" >> "$GITHUB_OUTPUT"

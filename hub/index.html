@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ImmunoVerse Hub | Curated Immunopeptidomic Datasets</title>
+<meta name="description" content="A curated, high-density repository of immunopeptidomic mass-spectrometry data — metadata, accessions, and download scripts for pan-cancer research.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Cloudflare Web Analytics -->
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "3d25bed96fe3453ea6e41d1af78967cf"}'></script>
+<!-- GoatCounter -->
+<script data-goatcounter="https://immuno-verse.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+<style>
+/* =========================================================
+   THEME TOKENS — light (default) + dark
+   Palettes lifted from the Stitch design briefs (Clinical
+   Precision / Scientific Modernism) so the Hub has its own
+   identity vs. the main Atlas's dark-only theme.
+   ========================================================= */
+:root,
+[data-theme="light"] {
+  --bg:                #f7f9fb;
+  --surface:           #f7f9fb;
+  --card:              #ffffff;
+  --card-elev:         #ffffff;
+  --container-low:     #f2f4f6;
+  --container:         #eceef0;
+  --container-high:    #e6e8ea;
+  --container-highest: #e0e3e5;
+  --text-0:            #191c1e;
+  --text-1:            #2b2f33;
+  --text-2:            #45464d;
+  --text-3:            #76777d;
+  --outline:           #76777d;
+  --outline-soft:      #c6c6cd;
+  --outline-faint:     #e6e8ea;
+  --primary:           #131b2e;
+  --primary-soft:      #7c839b;
+  --accent:            #006a61;
+  --accent-soft:       #86f2e4;
+  --accent-strong:     #00524a;
+  --shadow-card:       0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 24px rgba(15, 23, 42, 0.06);
+  --shadow-card-hover: 0 4px 8px rgba(15, 23, 42, 0.06), 0 18px 48px rgba(15, 23, 42, 0.12);
+  --hero-grad:         linear-gradient(135deg, #ffffff 0%, #f2f4f6 100%);
+  --hero-side:         linear-gradient(160deg, #131b2e 0%, #1a2540 60%, #0b1326 100%);
+  --pill-bg:           rgba(0, 106, 97, 0.08);
+  --code-bg:           #f2f4f6;
+  --color-scheme:      light;
+}
+
+[data-theme="dark"] {
+  --bg:                #0b1326;
+  --surface:           #0b1326;
+  --card:              #131b2e;
+  --card-elev:         #171f33;
+  --container-low:     #131b2e;
+  --container:         #171f33;
+  --container-high:    #222a3d;
+  --container-highest: #2d3449;
+  --text-0:            #dae2fd;
+  --text-1:            #c5d0e5;
+  --text-2:            #9aa7c1;
+  --text-3:            #859490;
+  --outline:           #859490;
+  --outline-soft:      #3c4947;
+  --outline-faint:     #222a3d;
+  --primary:           #4fdbc8;
+  --primary-soft:      #71f8e4;
+  --accent:            #4fdbc8;
+  --accent-soft:       rgba(79, 219, 200, 0.18);
+  --accent-strong:     #14b8a6;
+  --shadow-card:       0 1px 2px rgba(0,0,0,0.4), 0 6px 24px rgba(0,0,0,0.4);
+  --shadow-card-hover: 0 6px 14px rgba(0,0,0,0.5), 0 24px 60px rgba(0,0,0,0.5);
+  --hero-grad:         linear-gradient(135deg, #131b2e 0%, #0b1326 100%);
+  --hero-side:         linear-gradient(160deg, #4fdbc8 0%, #14b8a6 60%, #0b6457 100%);
+  --pill-bg:           rgba(79, 219, 200, 0.14);
+  --code-bg:           #171f33;
+  --color-scheme:      dark;
+}
+
+* { box-sizing: border-box; }
+html { color-scheme: var(--color-scheme); scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-0);
+  font-family: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color .25s ease, color .25s ease;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+
+.container { max-width: 1400px; margin: 0 auto; padding: 0 32px; }
+
+/* =========================================================
+   TOP NAV
+   ========================================================= */
+nav.topnav {
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  border-bottom: 1px solid var(--outline-faint);
+}
+nav.topnav .inner {
+  max-width: 1400px; margin: 0 auto;
+  padding: 14px 32px;
+  display: flex; align-items: center; gap: 20px;
+}
+.brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 18px; letter-spacing: -0.02em; color: var(--text-0); }
+.brand .logo {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: linear-gradient(135deg, #4fdbc8 0%, #14b8a6 100%);
+  position: relative; box-shadow: 0 4px 14px rgba(20, 184, 166, 0.35);
+}
+.brand .logo::after {
+  content: ""; position: absolute; inset: 4px; border-radius: 5px;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 55%);
+  mix-blend-mode: screen;
+}
+.brand .sub { color: var(--text-2); font-weight: 500; margin-left: 2px; font-size: 14px; }
+.nav-links { display: flex; gap: 4px; align-items: center; margin-left: 24px; }
+.nav-links a {
+  color: var(--text-2);
+  font-size: 14px; font-weight: 500;
+  padding: 8px 14px; border-radius: 8px;
+  transition: background .15s, color .15s;
+}
+.nav-links a:hover { background: var(--container-high); color: var(--text-0); }
+.nav-links a.current { color: var(--accent); background: var(--accent-soft); }
+.nav-spacer { flex: 1; }
+.icon-btn {
+  background: transparent; border: 1px solid var(--outline-faint);
+  width: 38px; height: 38px; border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-2); transition: background .15s, color .15s, border-color .15s;
+}
+.icon-btn:hover { background: var(--container-high); color: var(--text-0); border-color: var(--outline-soft); }
+.icon-btn svg { width: 18px; height: 18px; }
+.theme-toggle [data-icon] { display: none; }
+[data-theme="light"] .theme-toggle [data-icon="moon"] { display: block; }
+[data-theme="dark"]  .theme-toggle [data-icon="sun"]  { display: block; }
+.cta {
+  padding: 9px 20px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 600; font-size: 14px;
+  border: 1px solid var(--primary);
+  white-space: nowrap;
+  transition: transform .15s, box-shadow .15s;
+}
+[data-theme="dark"] .cta { background: var(--accent); color: #003731; border-color: var(--accent); }
+.cta:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(20,184,166,0.25); }
+
+/* =========================================================
+   HERO
+   ========================================================= */
+.hero {
+  padding: 80px 0 40px;
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+.hero h1 {
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1.05; letter-spacing: -0.025em;
+  margin: 0 0 20px;
+  font-weight: 800;
+  color: var(--primary);
+}
+[data-theme="light"] .hero h1 { color: #131b2e; }
+.hero h1 em {
+  font-style: italic;
+  font-weight: 800;
+  background: linear-gradient(135deg, #14b8a6, #0d8278);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+[data-theme="dark"] .hero h1 em {
+  background: linear-gradient(135deg, #4fdbc8, #71f8e4);
+  -webkit-background-clip: text; background-clip: text;
+}
+.hero p.lead {
+  font-size: 17px;
+  color: var(--text-2);
+  margin: 0 0 32px;
+  max-width: 58ch;
+}
+.hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 36px; }
+.btn-primary, .btn-secondary {
+  padding: 13px 24px;
+  font-weight: 600; font-size: 14px;
+  border-radius: 12px; border: 1px solid transparent;
+  display: inline-flex; align-items: center; gap: 10px;
+  transition: transform .15s, box-shadow .15s, background .15s, color .15s, border-color .15s;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+[data-theme="dark"] .btn-primary { background: var(--accent); color: #003731; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(20,184,166,0.25); }
+.btn-secondary { background: transparent; color: var(--text-0); border-color: var(--outline-soft); }
+.btn-secondary:hover { background: var(--container-high); border-color: var(--outline); }
+.btn-primary svg, .btn-secondary svg { width: 16px; height: 16px; }
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 40px;
+  border-top: 1px solid var(--outline-faint);
+  padding-top: 28px;
+  margin-top: 4px;
+}
+.hero-stats .stat-num {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  color: var(--text-0);
+  line-height: 1;
+}
+.hero-stats .stat-label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-top: 8px;
+}
+
+.hero-visual {
+  aspect-ratio: 1 / 1;
+  border-radius: 24px;
+  background: var(--hero-side);
+  border: 1px solid var(--outline-faint);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-card-hover);
+}
+.hero-visual::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 25%, rgba(255,255,255,0.18) 0, transparent 35%),
+    radial-gradient(circle at 80% 75%, rgba(20,184,166,0.30) 0, transparent 45%),
+    linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.18) 100%);
+}
+.hero-visual::after {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.5;
+}
+.hero-panel {
+  position: absolute;
+  left: 24px; right: 24px; bottom: 24px;
+  background: rgba(255,255,255,0.96);
+  border: 1px solid var(--outline-soft);
+  border-radius: 14px;
+  padding: 16px 18px;
+  backdrop-filter: blur(8px);
+  z-index: 1;
+}
+[data-theme="dark"] .hero-panel { background: rgba(11,19,38,0.92); border-color: var(--outline-soft); }
+.hero-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.hero-panel-status { display: flex; align-items: center; gap: 8px; }
+.hero-panel-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #14b8a6;
+  box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.55);
+  animation: hubPulse 2s infinite;
+}
+@keyframes hubPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(20, 184, 166, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
+}
+.hero-panel-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 500; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent-strong);
+}
+[data-theme="dark"] .hero-panel-label { color: var(--accent); }
+.hero-panel-node {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-2);
+}
+.hero-panel-bar {
+  height: 8px; background: var(--container);
+  border-radius: 999px; overflow: hidden; margin-bottom: 8px;
+}
+.hero-panel-bar > span {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, #14b8a6, #4fdbc8);
+  width: 74%;
+}
+.hero-panel-meta {
+  display: flex; justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-3);
+}
+
+/* =========================================================
+   FILTER BAR
+   ========================================================= */
+.filter-bar {
+  position: sticky; top: 67px; z-index: 50;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--outline-faint);
+  padding: 18px 0;
+  margin: 24px 0 36px;
+}
+.filter-bar-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; justify-content: space-between; }
+.filter-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.filter-label, .sort-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-3);
+  margin-right: 6px;
+}
+.chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 8px 16px; border-radius: 10px;
+  background: var(--container-high); color: var(--text-2);
+  border: 1px solid transparent;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.chip:hover { background: var(--container-highest); color: var(--text-0); }
+.chip.active {
+  background: var(--primary); color: #fff; border-color: var(--primary);
+}
+[data-theme="dark"] .chip.active { background: var(--accent); color: #003731; border-color: var(--accent); }
+.sort-wrap { display: flex; align-items: center; gap: 10px; }
+.sort-select {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--outline-soft);
+  border-radius: 10px;
+  padding: 8px 32px 8px 14px;
+  color: var(--accent-strong);
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23006a61' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+[data-theme="dark"] .sort-select { color: var(--accent); background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%234fdbc8' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
+
+/* =========================================================
+   CARD GRID
+   ========================================================= */
+.cards-section { padding-bottom: 80px; }
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--outline-faint);
+  border-radius: 16px;
+  padding: 22px;
+  display: flex; flex-direction: column;
+  transition: transform .2s, box-shadow .2s, border-color .2s;
+  box-shadow: var(--shadow-card);
+}
+.card:hover { transform: translateY(-3px); box-shadow: var(--shadow-card-hover); border-color: var(--outline-soft); }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+.card-tags { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tag-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 500; letter-spacing: 0.04em;
+  padding: 3px 8px; border-radius: 5px;
+  background: var(--pill-bg); color: var(--accent-strong);
+}
+[data-theme="dark"] .tag-code { color: var(--accent); }
+.tag-category {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 500; letter-spacing: 0.08em;
+  color: var(--text-3); text-transform: uppercase;
+}
+.card-title {
+  font-size: 18px; font-weight: 700; line-height: 1.25; letter-spacing: -0.01em;
+  margin: 4px 0 0;
+  color: var(--text-0);
+}
+.card-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--container-low);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-2); flex: none;
+}
+.card-icon svg { width: 18px; height: 18px; }
+.card-rows { margin-top: 8px; }
+.card-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--outline-faint);
+}
+.card-row:last-child { border-bottom: none; }
+.card-row-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.card-row-left svg { width: 16px; height: 16px; color: var(--text-3); flex: none; }
+.card-row-label {
+  font-size: 13px; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card-row-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text-3); white-space: nowrap; padding-left: 12px;
+}
+.card-actions { display: flex; gap: 8px; margin-top: 18px; }
+.card-btn {
+  flex: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 11px 14px; border-radius: 10px;
+  background: var(--primary); color: #fff;
+  border: 1px solid var(--primary);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  transition: transform .15s, box-shadow .15s, opacity .15s;
+}
+[data-theme="dark"] .card-btn { background: var(--accent); color: #003731; border-color: var(--accent); }
+.card-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(20,184,166,0.20); }
+.card-btn.ghost { background: transparent; color: var(--text-1); border-color: var(--outline-soft); }
+.card-btn.ghost:hover { background: var(--container-high); color: var(--text-0); }
+.card-btn svg { width: 13px; height: 13px; }
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+footer {
+  margin-top: 60px;
+  border-top: 1px solid var(--outline-faint);
+  background: var(--container-low);
+  padding: 56px 0 32px;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  gap: 40px;
+  margin-bottom: 40px;
+}
+.footer-about h3 { font-size: 16px; font-weight: 800; margin: 0 0 12px; }
+.footer-about p { font-size: 13px; color: var(--text-2); margin: 0; max-width: 38ch; }
+.footer-col h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-3); margin: 0 0 14px;
+}
+.footer-col ul { list-style: none; padding: 0; margin: 0; }
+.footer-col li { margin: 0 0 10px; }
+.footer-col a {
+  font-size: 13px; color: var(--text-1);
+  transition: color .15s;
+}
+.footer-col a:hover { color: var(--accent-strong); }
+[data-theme="dark"] .footer-col a:hover { color: var(--accent); }
+.footer-bottom {
+  border-top: 1px solid var(--outline-faint);
+  padding-top: 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text-3); letter-spacing: 0.04em;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+@media (max-width: 960px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 32px; }
+  .hero-visual { max-width: 480px; margin: 0 auto; width: 100%; }
+  .hero-stats { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .nav-links { display: none; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .container { padding: 0 20px; }
+  nav.topnav .inner { padding: 12px 20px; gap: 12px; }
+  .hero { padding: 56px 0 24px; }
+  .hero-stats { grid-template-columns: 1fr 1fr; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .footer-bottom { flex-direction: column; gap: 12px; }
+}
+
+.empty-state {
+  text-align: center; padding: 80px 0;
+  color: var(--text-3); font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="inner">
+    <a href="/" class="brand">
+      <span class="logo"></span>
+      ImmunoVerse <span class="sub">Hub</span>
+    </a>
+    <div class="nav-links">
+      <a href="/">Atlas</a>
+      <a href="/hub/" class="current">Hub</a>
+      <a href="/demo/">Demo</a>
+      <a href="/reviewers/">Reviewers</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <svg data-icon="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg data-icon="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+    <a class="cta" href="#datasets">Browse datasets →</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <h1>Accelerate Your <em>Immunopeptidomic</em> Research</h1>
+        <p class="lead">
+          A curated, high-density repository of immunopeptidomic mass-spectrometry data — metadata,
+          accessions, and SLURM download scripts for pan-cancer research. Browse by tumor type,
+          inspect sample-level HLA typing, and grab the exact set of raw files you need to reproduce
+          or extend the analysis.
+        </p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="#datasets">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M12 4v16"/></svg>
+            Getting started
+          </a>
+          <a class="btn-secondary" href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/ImmunoVerse_Hub/" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M21 3l-9 9M5 5h6M5 12v7h14v-6"/></svg>
+            View source on NYU
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <div class="stat-num" id="statCancers">—</div>
+            <div class="stat-label">Cancer types</div>
+          </div>
+          <div>
+            <div class="stat-num" id="statSamples">—</div>
+            <div class="stat-label">MS samples</div>
+          </div>
+          <div>
+            <div class="stat-num" id="statCohorts">—</div>
+            <div class="stat-label">Cohorts</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="hero-panel">
+          <div class="hero-panel-header">
+            <div class="hero-panel-status">
+              <span class="hero-panel-dot"></span>
+              <span class="hero-panel-label">Active sync</span>
+            </div>
+            <span class="hero-panel-node">NODE: IV-HUB-01</span>
+          </div>
+          <div class="hero-panel-bar"><span></span></div>
+          <div class="hero-panel-meta">
+            <span>Mirroring NYU share</span>
+            <span>Daily auto-refresh</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="filter-bar" id="datasets">
+  <div class="container">
+    <div class="filter-bar-inner">
+      <div class="filter-group">
+        <span class="filter-label">Filter datasets:</span>
+        <button class="chip active" data-filter="all">All types</button>
+        <button class="chip" data-filter="Leukemia">Leukemias</button>
+        <button class="chip" data-filter="Lymphoma">Lymphomas</button>
+        <button class="chip" data-filter="Solid">Solid tumors</button>
+        <button class="chip" data-filter="Pediatric">Pediatric</button>
+        <button class="chip" data-filter="CNS">CNS</button>
+        <button class="chip" data-filter="Sarcoma">Sarcoma</button>
+      </div>
+      <div class="sort-wrap">
+        <span class="sort-label">Sort by:</span>
+        <select class="sort-select" id="sortSelect">
+          <option value="name">Name (A→Z)</option>
+          <option value="samples">Sample count</option>
+          <option value="cohorts">Cohort count</option>
+          <option value="hla">HLA diversity</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="cards-section">
+  <div class="container">
+    <div class="cards-grid" id="cardsGrid"></div>
+    <div class="empty-state" id="emptyState" hidden>No datasets match that filter.</div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-about">
+        <h3>ImmunoVerse Hub</h3>
+        <p>Curated immunopeptidomic mass-spectrometry datasets — metadata, accessions, and SLURM download scripts. Companion resource to the ImmunoVerse Atlas.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="/">ImmunoVerse Atlas</a></li>
+          <li><a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/ImmunoVerse_Hub/" target="_blank" rel="noopener">NYU source share</a></li>
+          <li><a href="/#methods">Methods</a></li>
+          <li><a href="/#cite">Cite</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Institution</h4>
+        <ul>
+          <li><a href="https://med.nyu.edu/" target="_blank" rel="noopener">NYU Langone Health</a></li>
+          <li><a href="https://yarmarkovichlab.org/" target="_blank" rel="noopener">Yarmarkovich Lab</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="mailto:matthew.yarmarkovich@nyulangone.org">Contact</a></li>
+          <li><a href="/#cite">Citation</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Yarmarkovich Lab · NYU Langone Health</span>
+      <span id="footerSync">DAILY AUTO-REFRESH FROM NYU SHARE</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Bundled Hub data (regenerated daily by sync_hub.py via GitHub Actions) -->
+<script src="data_js/_index.js"></script>
+
+<script>
+/* =========================================================
+   THEME TOGGLE (persisted)
+   ========================================================= */
+(function () {
+  var KEY = 'iv-hub-theme';
+  var html = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) {}
+  if (saved === 'light' || saved === 'dark') html.setAttribute('data-theme', saved);
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    try { localStorage.setItem(KEY, next); } catch (e) {}
+  });
+})();
+
+/* =========================================================
+   RENDER STATS + GRID FROM IMMUNOVERSE_HUB_INDEX
+   ========================================================= */
+(function () {
+  var data = window.IMMUNOVERSE_HUB_INDEX;
+  if (!data) {
+    document.getElementById('emptyState').hidden = false;
+    document.getElementById('emptyState').textContent = 'Hub data is still being generated. Check back after the next daily refresh.';
+    return;
+  }
+
+  // Hero stats
+  var fmt = function (n) { return (n || 0).toLocaleString(); };
+  document.getElementById('statCancers').textContent = fmt(data.totals.cancers);
+  document.getElementById('statSamples').textContent = fmt(data.totals.samples);
+  document.getElementById('statCohorts').textContent = fmt(data.totals.cohorts);
+
+  var grid = document.getElementById('cardsGrid');
+  var emptyState = document.getElementById('emptyState');
+  var currentFilter = 'all';
+  var currentSort = 'name';
+
+  var SORTERS = {
+    name:    function (a, b) { return a.display.localeCompare(b.display); },
+    samples: function (a, b) { return b.sample_count - a.sample_count; },
+    cohorts: function (a, b) { return b.cohort_count - a.cohort_count; },
+    hla:     function (a, b) { return b.hla_count - a.hla_count; },
+  };
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function cardHtml(c) {
+    var sbatchPath = 'data/raw/' + c.code + '_download.sbatch';
+    var metadataPath = 'data/raw/' + c.code + '_metadata.txt';
+    return '' +
+      '<article class="card">' +
+        '<div class="card-head">' +
+          '<div style="min-width:0">' +
+            '<div class="card-tags">' +
+              '<span class="tag-code">' + escapeHtml(c.code) + '</span>' +
+              '<span class="tag-category">' + escapeHtml(c.category) + '</span>' +
+            '</div>' +
+            '<h3 class="card-title">' + escapeHtml(c.display) + '</h3>' +
+          '</div>' +
+          '<div class="card-icon" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+              '<path d="M21 8v13H3V3h9l4 4h5z"/><path d="M3 7h13"/>' +
+            '</svg>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card-rows">' +
+          '<div class="card-row">' +
+            '<div class="card-row-left">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>' +
+              '<span class="card-row-label">' + escapeHtml(c.code) + '_download.sbatch</span>' +
+            '</div>' +
+            '<span class="card-row-value">SLURM</span>' +
+          '</div>' +
+          '<div class="card-row">' +
+            '<div class="card-row-left">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+              '<span class="card-row-label">' + escapeHtml(c.code) + '_metadata.txt</span>' +
+            '</div>' +
+            '<span class="card-row-value">' + fmt(c.sample_count) + ' rows</span>' +
+          '</div>' +
+          '<div class="card-row">' +
+            '<div class="card-row-left">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>' +
+              '<span class="card-row-label">Cohorts · HLA alleles</span>' +
+            '</div>' +
+            '<span class="card-row-value">' + fmt(c.cohort_count) + ' · ' + fmt(c.hla_count) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card-actions">' +
+          '<a class="card-btn" href="' + sbatchPath + '" download>' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+            'Sbatch' +
+          '</a>' +
+          '<a class="card-btn ghost" href="' + metadataPath + '" download>' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+            'Metadata' +
+          '</a>' +
+        '</div>' +
+      '</article>';
+  }
+
+  function render() {
+    var rows = data.cancers.slice();
+    if (currentFilter !== 'all') {
+      rows = rows.filter(function (c) { return c.category === currentFilter; });
+    }
+    rows.sort(SORTERS[currentSort] || SORTERS.name);
+    if (rows.length === 0) {
+      grid.innerHTML = '';
+      emptyState.hidden = false;
+      return;
+    }
+    emptyState.hidden = true;
+    grid.innerHTML = rows.map(cardHtml).join('');
+  }
+
+  // Filter chip clicks
+  document.querySelectorAll('.chip').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.chip').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      render();
+    });
+  });
+
+  // Sort dropdown
+  document.getElementById('sortSelect').addEventListener('change', function (e) {
+    currentSort = e.target.value;
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
