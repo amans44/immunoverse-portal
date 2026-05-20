@@ -64,6 +64,8 @@ CANCER_DISPLAY = {
     'STAD': 'Stomach Adenocarcinoma',
     'TALL': 'T-cell Acute Lymphoblastic Leukemia',
     'UCEC': 'Uterine Corpus Endometrial Carcinoma',
+    'ependymoma': 'Ependymoma',
+    'meningioma': 'Meningioma',
 }
 
 # Coarse grouping for the filter chips on the Hub. Codes not listed land in "Solid".
@@ -71,10 +73,13 @@ CANCER_CATEGORY = {
     'AML': 'Leukemia', 'BALL': 'Leukemia', 'CLL': 'Leukemia', 'CML': 'Leukemia', 'TALL': 'Leukemia',
     'DLBC': 'Lymphoma', 'FL': 'Lymphoma', 'MCL': 'Lymphoma', 'MM': 'Lymphoma',
     'EWS': 'Sarcoma', 'MESO': 'Sarcoma', 'RT': 'Pediatric', 'NBL': 'Pediatric',
-    'GBM': 'CNS',
+    'GBM': 'CNS', 'ependymoma': 'CNS', 'meningioma': 'CNS',
 }
 
-METADATA_RE = re.compile(r'href="([A-Z0-9]+)_metadata\.txt"')
+# Match mixed-case filenames (TCGA codes are uppercase, but ependymoma/meningioma
+# arrive lowercase from NYU). Keep the original case in the code so paths line up
+# with the actual file URLs.
+METADATA_RE = re.compile(r'href="([A-Za-z0-9]+)_metadata\.txt"')
 
 
 def _fetch_text(url: str) -> str:

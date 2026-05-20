@@ -2,9 +2,9 @@ window.IMMUNOVERSE_HUB_INDEX = {
   "generated_at_utc": null,
   "source_url": "https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/ImmunoVerse_Hub/",
   "totals": {
-    "cancers": 31,
-    "samples": 4177,
-    "cohorts": 144
+    "cancers": 33,
+    "samples": 4276,
+    "cohorts": 147
   },
   "cancers": [
     {
@@ -311,6 +311,35 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "files": {
         "metadata": "data/raw/DLBC_metadata.txt",
         "sbatch": "data/raw/DLBC_download.sbatch"
+      }
+    },
+    {
+      "code": "ependymoma",
+      "display": "Ependymoma",
+      "category": "CNS",
+      "sample_count": 66,
+      "sample_included": 66,
+      "cohort_count": 1,
+      "biology_count": 22,
+      "hla_count": 0,
+      "studies": [
+        "PXD052448"
+      ],
+      "biology": [
+        "EPN-1052",
+        "EPN-1085",
+        "EPN-1092",
+        "EPN-1134",
+        "EPN-115",
+        "EPN-1398",
+        "EPN-1403",
+        "EPN-186",
+        "EPN-199",
+        "EPN-256"
+      ],
+      "files": {
+        "metadata": "data/raw/ependymoma_metadata.txt",
+        "sbatch": "data/raw/ependymoma_download.sbatch"
       }
     },
     {
@@ -630,6 +659,36 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "files": {
         "metadata": "data/raw/MCL_metadata.txt",
         "sbatch": "data/raw/MCL_download.sbatch"
+      }
+    },
+    {
+      "code": "meningioma",
+      "display": "Meningioma",
+      "category": "CNS",
+      "sample_count": 33,
+      "sample_included": 33,
+      "cohort_count": 2,
+      "biology_count": 16,
+      "hla_count": 42,
+      "studies": [
+        "PXD006939",
+        "PXD009925"
+      ],
+      "biology": [
+        "3779-AMM",
+        "3795-BMT",
+        "3803-RE",
+        "3805-RV",
+        "3808-HMC",
+        "3830-NJF",
+        "3849-BR",
+        "3865-DM",
+        "3869-GA",
+        "3911-ME"
+      ],
+      "files": {
+        "metadata": "data/raw/meningioma_metadata.txt",
+        "sbatch": "data/raw/meningioma_download.sbatch"
       }
     },
     {
