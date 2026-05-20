@@ -1,0 +1,6 @@
+study	batch	sample	biology	HLA	special_note
+PXD016060		Seq48142_QE2.raw	P2-human biopsy	"A*24:02,B*58:01,C*07:01"	
+PXD016060		Seq58386_QE3.raw	P2-PDX-p0-1	"A*24:02,B*58:01,C*07:01"	
+PXD016060		Seq58387_QE3.raw	P2-PDX-p0-2	"A*24:02,B*58:01,C*07:01"	
+PXD016060		Seq58388_QE3.raw	P2-PDX-p3-1	"A*24:02,B*58:01,C*07:01"	
+PXD016060		Seq58389_QE3.raw	P2-PDX-p3-1	"A*24:02,B*58:01,C*07:01"	

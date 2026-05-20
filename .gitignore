@@ -9,6 +9,9 @@ __pycache__/
 all_final_enhanced_all.csv
 *_final_enhanced.txt
 *_metadata.txt
+# Hub mirrors NYU metadata into the repo so the /hub download buttons
+# can serve them straight from GitHub Pages — re-allow them here.
+!hub/data/raw/*_metadata.txt
 all_deepimmuno_immunogenicity.txt
 US_HLA_frequency.csv
 nature_cancer_submission_*.docx
