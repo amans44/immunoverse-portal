@@ -18,3 +18,10 @@ nature_cancer_submission_*.docx
 cancer_discovery-*/
 cancer_discovery-*.zip
 dropbox.zip
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
