@@ -4293,7 +4293,10 @@ async function navigateSearchResult(action, data) {
 // Cloudflare Worker proxy that re-hosts NYU figures with CORS headers,
 // so the browser will let JS read the bytes for one-click downloads. Set
 // to '' to disable (figures will fall back to opening in a new tab).
-const IMG_PROXY = 'https://immunoverse-proxy.amansharma-e44.workers.dev/?url=';
+// Broken CORS proxy — left empty so downloadImage falls straight through
+// to "open PNG in new tab" instead of showing the "Fetching figure…" toast.
+// SVG figures now load via <img> directly from NYU (no proxy needed).
+const IMG_PROXY = '';
 
 function _safeFilename(s) {
   return String(s).replace(/[^A-Za-z0-9._\-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 120);
@@ -7337,6 +7340,7 @@ async function openDrawer(r) {
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${percentileUrl}','intensity_percentile')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${ASSET_SVG_BASE}/${code}/${pep}_percentile.svg" alt="Percentile plot for ${pep}"
+           oncontextmenu="return false;"
            onload="this.classList.add('ok')"
            onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"
            onerror="_figFallbackToPng(this, '${percentileUrl}')" />
@@ -7349,6 +7353,7 @@ async function openDrawer(r) {
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${rankAbundanceUrl}','rank_abundance')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${ASSET_SVG_BASE}/${code}/${pep}_rank_abundance.svg" alt="Rank-abundance curve for ${pep}"
+           oncontextmenu="return false;"
            onload="this.classList.add('ok')"
            onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"
            onerror="_figFallbackToPng(this, '${rankAbundanceUrl}')" />
@@ -7361,6 +7366,7 @@ async function openDrawer(r) {
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${spectrumUrl}','ms_spectrum')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${ASSET_SVG_BASE}/${code}/spectrum_${pep}.svg" alt="MS/MS spectrum for ${pep} in ${code}"
+           oncontextmenu="return false;"
            onload="this.classList.add('ok')"
            onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"
            onerror="_spectrumFallbackToPng(this, '${spectrumUrl}')" />
