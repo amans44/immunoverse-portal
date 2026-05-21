@@ -2818,7 +2818,15 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 .search-results {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0; right: 0;
+  /* Dropdown can be wider than the input so users actually see what they're
+     searching. Anchored to the input's left edge; extends rightward up to
+     a hard 560px floor, allowed to grow with the input on wider screens,
+     and clamped to viewport on narrow ones. */
+  left: 0;
+  right: auto;
+  min-width: 100%;
+  width: 560px;
+  max-width: calc(100vw - 32px);
   background: var(--bg-1);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -3002,7 +3010,6 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <a href="#classes">Classes</a>
       <a href="#methods">Methods</a>
       <a href="#downloads">Data</a>
-      <a href="/hub/">Hub</a>
       <a href="#cite">Cite</a>
     </div>
     <div class="live-stat" id="liveStat" aria-label="Live query count" title="Total queries to the atlas">
@@ -3487,6 +3494,7 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
         <a href="#explorer">Explorer</a>
         <a href="#classes">Aberration classes</a>
         <a href="#highlights">Highlights</a>
+        <a href="/hub/">ImmunoVerse Hub</a>
       </div>
       <div>
         <h6>Resources</h6>

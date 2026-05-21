@@ -41,7 +41,7 @@ it works that way*. It has two parts:
 | `/reviewers/` | `reviewers/index.html` | Editor / paper-reviewer access | Same constraint as `/demo/`. |
 | `/hub/` | `hub/index.html` | Curated *unprocessed* immunopeptidomic datasets — metadata + SLURM download scripts. Separate from the Atlas. | Light theme by default, dark toggle (localStorage-persisted). 33 cancers driven by `hub/data_js/_index.js` + per-cancer JS modules. |
 
-Pages share the topnav and link to each other via plain `/`, `/demo/`, `/reviewers/`, `/hub/`. The Hub link sits in the main portal's topnav (`index.html`).
+Pages share the topnav and link to each other via plain `/`, `/demo/`, `/reviewers/`, `/hub/`. The Hub link lives in the **footer "Explore" column** of the main portal (`index.html`) — kept out of the topnav to avoid crowding (search bar was overlapping the brand area when Hub was also a topnav link).
 
 ---
 
@@ -97,9 +97,10 @@ Three layers, in increasing visibility:
 - **Hidden on screens < 560px** to avoid topnav crowding.
 
 ### Global search
-- **Input:** `#globalSearch` in the topnav.
+- **Input:** `#globalSearch` in the topnav. Wrapper `max-width: 460px`.
 - **Driven by:** `data_js/_search_index.js` (pre-built lookup tables for peptides / genes / cancers / HLA alleles).
 - **Live typeahead** with 150 ms debounce. Each completed search bumps the Worker counter; the Cloudflare Worker rate-limits to 1 increment per 3 seconds per IP (TTL stored in KV with 60s minimum).
+- **Results dropdown (`#searchResults`)** is intentionally **wider than the input**: `width: 560px`, `min-width: 100%`, `max-width: calc(100vw - 32px)`. Anchored to the input's left edge, extends rightward. Keeps long peptide/gene labels readable instead of getting truncated.
 
 ### Theme toggle
 - Lives on **`/hub/` only** for now. Light is default; dark is opt-in via localStorage key `iv-hub-theme`.
@@ -225,6 +226,16 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-05-21 — Move Hub link to footer; widen search-results dropdown
+**Why:** Topnav was over-crowded (9 links + search + pill + theme toggle + CTA) and the search input was visually overlapping the brand area. Search-results dropdown was inheriting the input's narrow width, so long peptide/gene labels were getting truncated.
+**What:**
+- Removed `<a href="/hub/">Hub</a>` from the topnav `.links` row.
+- Added `<a href="/hub/">ImmunoVerse Hub</a>` to the footer "Explore" column (alongside Atlas, Explorer, Aberration classes, Highlights).
+- Decoupled `.search-results` width from the input: `width: 560px`, `min-width: 100%`, `max-width: calc(100vw - 32px)`. Anchored to the input's left edge so it extends rightward.
+- Decision (recorded for future me): **kept the search as a visible input, not a magnifying-glass icon.** Search is the primary action on a research portal — hiding it behind a click adds friction for the core use case. If topnav crowding ever returns, narrow the search wrap further rather than collapsing it.
+**Files:** `index.html`.
+**Commit:** (this commit)
 
 ### 2026-05-21 — Add Deno→Cloudflare proxy fallback chain
 **Why:** Single proxy = single point of failure. Adding a fallback chain so PNG downloads (and the legacy interactive-SVG upgrade) stay alive if either proxy goes down.
