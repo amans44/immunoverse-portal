@@ -4293,10 +4293,11 @@ async function navigateSearchResult(action, data) {
 // Cloudflare Worker proxy that re-hosts NYU figures with CORS headers,
 // so the browser will let JS read the bytes for one-click downloads. Set
 // to '' to disable (figures will fall back to opening in a new tab).
-// Broken CORS proxy — left empty so downloadImage falls straight through
-// to "open PNG in new tab" instead of showing the "Fetching figure…" toast.
-// SVG figures now load via <img> directly from NYU (no proxy needed).
-const IMG_PROXY = '';
+// CORS proxy for download flow only — fetches the cross-origin PNG bytes
+// through Deno Deploy (Cloudflare Workers can't reach NYU reliably) so
+// the "PNG" button can trigger a real one-click blob download instead
+// of opening a new tab. SVG figures still render via <img> directly.
+const IMG_PROXY = 'https://immunoverse-proxy.amans44.deno.net/?url=';
 
 function _safeFilename(s) {
   return String(s).replace(/[^A-Za-z0-9._\-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 120);
