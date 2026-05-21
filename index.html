@@ -6141,6 +6141,32 @@ function mountInteractiveSvg(host, svgText, opts) {
   };
 }
 
+// Browser-native SVG-first loader for drawer figures. The <img> onerror
+// handler calls this: try the NYU assets_svg/ URL first; on 404 (or any
+// load failure), swap in the PNG from /assets/. If the PNG also fails,
+// mark the wrap as no-plot. No proxy needed — <img> handles cross-origin
+// images without CORS for both PNG and SVG.
+window._figFallbackToPng = function (img, pngUrl) {
+  if (img.dataset.fellback) {
+    img.parentNode.classList.add('no-plot');
+    img.remove();
+    return;
+  }
+  img.dataset.fellback = '1';
+  img.src = pngUrl;
+};
+
+// Same idea but for the spectrum slot, which has a custom "not available"
+// message instead of the generic no-plot when even the PNG is missing.
+window._spectrumFallbackToPng = function (img, pngUrl) {
+  if (img.dataset.fellback) {
+    img.parentNode.innerHTML = '<div class="no-spectrum">Annotated spectrum not available for this peptide. Spectra are pre-generated for the most recurrent peptides; rare or private peptides may not have a rendered spectrum.<br><a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank">Browse ImmunoVerse data ↗</a></div>';
+    return;
+  }
+  img.dataset.fellback = '1';
+  img.src = pngUrl;
+};
+
 // After openDrawer paints its template, scan for plot-wraps marked with
 // data-svg-kind and try to upgrade each to the interactive viewer. Runs
 // asynchronously so the drawer never blocks on these probes.
@@ -7310,10 +7336,10 @@ async function openDrawer(r) {
     <div class="plot-wrap" data-svg-kind="percentile" data-png-url="${percentileUrl}">
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${percentileUrl}','intensity_percentile')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
-      <img src="${percentileUrl}" alt="Percentile plot for ${pep}"
+      <img src="${ASSET_SVG_BASE}/${code}/${pep}_percentile.svg" alt="Percentile plot for ${pep}"
            onload="this.classList.add('ok')"
            onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"
-           onerror="this.parentNode.classList.add('no-plot');this.remove();" />
+           onerror="_figFallbackToPng(this, '${percentileUrl}')" />
       <div class="plot-caption">Where this peptide ranks within the ${code} immunopeptidome · served from ImmunoVerse</div>
     </div>
 
@@ -7322,10 +7348,10 @@ async function openDrawer(r) {
     <div class="plot-wrap" data-svg-kind="rank_abundance" data-png-url="${rankAbundanceUrl}">
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${rankAbundanceUrl}','rank_abundance')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
-      <img src="${rankAbundanceUrl}" alt="Rank-abundance curve for ${pep}"
+      <img src="${ASSET_SVG_BASE}/${code}/${pep}_rank_abundance.svg" alt="Rank-abundance curve for ${pep}"
            onload="this.classList.add('ok')"
            onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"
-           onerror="this.parentNode.classList.add('no-plot');this.remove();" />
+           onerror="_figFallbackToPng(this, '${rankAbundanceUrl}')" />
       <div class="plot-caption">Abundance rank across ${code} samples that detected this peptide · served from ImmunoVerse</div>
     </div>
 
@@ -7334,10 +7360,10 @@ async function openDrawer(r) {
     <div class="spectrum-wrap" data-svg-kind="spectrum" data-png-url="${spectrumUrl}">
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${spectrumUrl}','ms_spectrum')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
-      <img src="${spectrumUrl}" alt="MS/MS spectrum for ${pep} in ${code}"
+      <img src="${ASSET_SVG_BASE}/${code}/spectrum_${pep}.svg" alt="MS/MS spectrum for ${pep} in ${code}"
            onload="this.classList.add('ok')"
            onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"
-           onerror="this.parentNode.innerHTML='<div class=\\'no-spectrum\\'>Annotated spectrum not available for this peptide. Spectra are pre-generated for the most recurrent peptides; rare or private peptides may not have a rendered spectrum.<br><a href=\\'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/\\' target=\\'_blank\\'>Browse ImmunoVerse data ↗</a></div>';" />
+           onerror="_spectrumFallbackToPng(this, '${spectrumUrl}')" />
       <div class="spectrum-caption">b-ions blue · y-ions red · a-ions green · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>
     </div>
 
