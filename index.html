@@ -2814,7 +2814,15 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   padding: 3px 6px;
   pointer-events: none;
   user-select: none;
+  /* Hidden by default — "Ctrl+K" is wider than the input's right padding
+     reserves, so showing it always would overlap the typed text. Reveal
+     on hover (discoverability for keyboard users), keep hidden while
+     focused so it never overlaps what the user is actively typing. */
+  opacity: 0;
+  transition: opacity .15s ease;
 }
+.search-wrap:hover .search-kbd { opacity: 1; }
+.search-wrap:focus-within .search-kbd { opacity: 0; }
 .search-results {
   position: absolute;
   top: calc(100% + 6px);

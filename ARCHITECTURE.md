@@ -101,6 +101,7 @@ Three layers, in increasing visibility:
 - **Driven by:** `data_js/_search_index.js` (pre-built lookup tables for peptides / genes / cancers / HLA alleles).
 - **Live typeahead** with 150 ms debounce. Each completed search bumps the Worker counter; the Cloudflare Worker rate-limits to 1 increment per 3 seconds per IP (TTL stored in KV with 60s minimum).
 - **Results dropdown (`#searchResults`)** is intentionally **wider than the input**: `width: 560px`, `min-width: 100%`, `max-width: calc(100vw - 32px)`. Anchored to the input's left edge, extends rightward. Keeps long peptide/gene labels readable instead of getting truncated.
+- **`⌘K` / `Ctrl+K` hint badge (`#searchKbd`)** is hidden by default and revealed on `.search-wrap:hover`. Hidden again on `:focus-within` so it never overlaps text the user is actively typing. (Originally it was always visible, but `Ctrl+K` on PC is wider than the input's right padding reserves, so it overlapped typed text.)
 
 ### Theme toggle
 - Lives on **`/hub/` only** for now. Light is default; dark is opt-in via localStorage key `iv-hub-theme`.
@@ -226,6 +227,12 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-05-21 — Hide ⌘K hint badge by default, reveal on hover
+**Why:** The "Ctrl+K" badge on PCs (5+ characters) is wider than the input's reserved right padding (56 px), so it overlapped the rightmost portion of typed text. User couldn't see what they were typing past a certain length.
+**What:** `.search-kbd` now has `opacity: 0` by default; `.search-wrap:hover` reveals it (`opacity: 1`); `.search-wrap:focus-within` keeps it hidden so it never overlaps active typing. Keyboard shortcut still works (the JS `keydown` handler is unchanged) — only the visual hint is hover-gated.
+**Files:** `index.html`.
+**Commit:** (this commit)
 
 ### 2026-05-21 — Move Hub link to footer; widen search-results dropdown
 **Why:** Topnav was over-crowded (9 links + search + pill + theme toggle + CTA) and the search input was visually overlapping the brand area. Search-results dropdown was inheriting the input's narrow width, so long peptide/gene labels were getting truncated.
