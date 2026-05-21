@@ -4290,14 +4290,30 @@ async function navigateSearchResult(action, data) {
 })();
 
 // ============ EXPORT / DOWNLOAD HELPERS ============
-// Cloudflare Worker proxy that re-hosts NYU figures with CORS headers,
-// so the browser will let JS read the bytes for one-click downloads. Set
-// to '' to disable (figures will fall back to opening in a new tab).
-// CORS proxy for download flow only — fetches the cross-origin PNG bytes
-// through Deno Deploy (Cloudflare Workers can't reach NYU reliably) so
-// the "PNG" button can trigger a real one-click blob download instead
-// of opening a new tab. SVG figures still render via <img> directly.
-const IMG_PROXY = 'https://immunoverse-proxy.amans44.deno.net/?url=';
+// CORS proxies (tried in order) for the byte-level download flow. Each
+// re-hosts NYU figures with proper CORS headers so the "PNG" button can
+// trigger a real one-click blob download. _proxiedFetch tries Deno first
+// (most reliable network for NYU), falls back to Cloudflare if Deno is
+// down or rate-limits, returns null if both fail (download then falls
+// through to "open in new tab"). SVG figures still render via <img>
+// directly — these proxies are only used by _fetchImageBlob.
+const IMG_PROXIES = [
+  'https://immunoverse-proxy.amans44.deno.net/?url=',
+  'https://immunoverse-proxy.amansharma-e44.workers.dev/?url=',
+];
+const IMG_PROXY = IMG_PROXIES[0]; // kept for the truthy checks below
+
+async function _proxiedFetch(targetUrl) {
+  for (const proxy of IMG_PROXIES) {
+    try {
+      const r = await fetch(proxy + encodeURIComponent(targetUrl));
+      if (r.ok) return r;
+    } catch (e) {
+      console.warn('proxy fetch failed:', proxy, e);
+    }
+  }
+  return null;
+}
 
 function _safeFilename(s) {
   return String(s).replace(/[^A-Za-z0-9._\-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 120);
@@ -4344,18 +4360,15 @@ function downloadJson(obj, filename) {
   _triggerDownload(new Blob([JSON.stringify(obj, null, 2)], {type: 'application/json;charset=utf-8'}), filename);
 }
 
-// Fetch a NYU asset through the Cloudflare CORS proxy and return a Blob.
-// Returns null if the proxy isn't configured (no IMG_PROXY) or the fetch fails.
+// Fetch a NYU asset through the configured proxy chain and return a Blob.
+// Tries each proxy in IMG_PROXIES in turn; returns null only if every proxy
+// fails (caller then falls back to "open in new tab").
 async function _fetchImageBlob(nyuUrl) {
   if (!IMG_PROXY) return null;
-  try {
-    const r = await fetch(IMG_PROXY + encodeURIComponent(nyuUrl));
-    if (!r.ok) return null;
-    return await r.blob();
-  } catch (e) {
-    console.warn('image proxy fetch failed', e);
-    return null;
-  }
+  const r = await _proxiedFetch(nyuUrl);
+  if (!r) return null;
+  try { return await r.blob(); }
+  catch (e) { console.warn('image proxy blob read failed', e); return null; }
 }
 
 async function downloadImage(nyuUrl, filename) {
@@ -4581,8 +4594,8 @@ async function fetchSvgIfExists(svgUrl) {
 
   const p = (async () => {
     try {
-      const r = await fetch(IMG_PROXY + encodeURIComponent(svgUrl));
-      if (!r.ok) {
+      const r = await _proxiedFetch(svgUrl);
+      if (!r) {
         try { localStorage.setItem(SVG_EXISTS_KEY(svgUrl), JSON.stringify({t: Date.now(), exists: false})); } catch (e) {}
         return null;
       }
