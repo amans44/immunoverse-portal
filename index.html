@@ -2786,17 +2786,43 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--bg-2);
+  /* color and -webkit-text-fill-color both set: some browsers/extensions
+     (e.g. Chrome autofill yellow) override `color` but respect text-fill,
+     so we belt-and-braces it. caret-color makes the cursor visible against
+     the input's dark background — otherwise users can't tell typing is
+     registering. */
   color: var(--text-0);
+  -webkit-text-fill-color: var(--text-0);
+  caret-color: var(--accent-cyan);
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: 14px;
   outline: none;
   transition: border-color .15s, background .15s, box-shadow .15s;
 }
-.search-input::placeholder { color: var(--text-3); }
+.search-input::placeholder { color: var(--text-3); -webkit-text-fill-color: var(--text-3); }
 .search-input:focus {
   border-color: var(--accent-cyan);
   background: var(--bg-1);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-cyan) 18%, transparent);
+  color: var(--text-0);
+  -webkit-text-fill-color: var(--text-0);
+}
+/* Override Chrome's autofill style (yellow bg + invisible text) that
+   sometimes triggers on saved searches. */
+.search-input:-webkit-autofill,
+.search-input:-webkit-autofill:focus,
+.search-input:-webkit-autofill:hover {
+  -webkit-text-fill-color: var(--text-0);
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-2) inset;
+  caret-color: var(--accent-cyan);
+}
+/* Hide the WebKit "x" clear button — it can overlap the typed text on
+   narrow inputs. The escape key + click-outside both already clear focus,
+   and the Esc handler already hides the dropdown. */
+.search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
 }
 .search-kbd {
   position: absolute;

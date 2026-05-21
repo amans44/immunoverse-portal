@@ -228,6 +228,18 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-05-21 — Make typed search text reliably visible
+**Why:** Users reported typing in the global search and seeing the dropdown populate but not seeing their text in the input itself. Likely causes: Chrome autofill yellow-bg style hiding text, `-webkit-text-fill-color` overriding `color`, invisible caret, or the `<input type="search">` clear-button overlapping typed characters.
+**What:** Layered defensive fixes on `.search-input`:
+- Explicit `-webkit-text-fill-color: var(--text-0)` alongside `color` (some browsers/extensions respect one but not the other).
+- `caret-color: var(--accent-cyan)` so the cursor is visible against the input's dark background.
+- Bump `font-size` from 13.5 px → 14 px.
+- Override Chrome's `:-webkit-autofill` style (inset box-shadow + text-fill-color) so saved searches don't render with the yellow/white "you can't see me" combination.
+- Hide the `::-webkit-search-cancel-button` (x) that can overlap typed characters on narrow inputs.
+- Re-assert `color` and `-webkit-text-fill-color` on `:focus` to defeat any focus-state override.
+**Files:** `index.html`.
+**Commit:** (this commit)
+
 ### 2026-05-21 — Hide ⌘K hint badge by default, reveal on hover
 **Why:** The "Ctrl+K" badge on PCs (5+ characters) is wider than the input's reserved right padding (56 px), so it overlapped the rightmost portion of typed text. User couldn't see what they were typing past a certain length.
 **What:** `.search-kbd` now has `opacity: 0` by default; `.search-wrap:hover` reveals it (`opacity: 1`); `.search-wrap:focus-within` keeps it hidden so it never overlaps active typing. Keyboard shortcut still works (the JS `keydown` handler is unchanged) — only the visual hint is hover-gated.
