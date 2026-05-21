@@ -97,7 +97,7 @@ Three layers, in increasing visibility:
 - **Hidden on screens < 560px** to avoid topnav crowding.
 
 ### Global search
-- **Input:** `#globalSearch` in the topnav. Wrapper `max-width: 460px`, **`min-width: 320px`** (hard floor so the flex algorithm can't squeeze it to a sliver when the topnav is crowded — below 960 px viewport, a media query takes over and the search drops to its own full-width row).
+- **Input:** `#globalSearch` in the topnav. **Expand-on-focus pattern:** the wrap takes a fixed `flex: 0 0 220px` slot so neighbors (queries pill, theme toggle, CTA) never shift. The inner `.search-input-row` is `position: absolute` on top of the wrap and grows to `min(520px, calc(100vw - 80px))` on `:focus-within`, overlaying neighbors. Click out → transitions back to 220 px. Below 960 px viewport, a media query resets this and the search drops to its own full-width row (`flex: 1 1 100%; position: relative`).
 - **Driven by:** `data_js/_search_index.js` (pre-built lookup tables for peptides / genes / cancers / HLA alleles).
 - **Live typeahead** with 150 ms debounce. Each completed search bumps the Worker counter; the Cloudflare Worker rate-limits to 1 increment per 3 seconds per IP (TTL stored in KV with 60s minimum).
 - **Results dropdown (`#searchResults`)** is intentionally **wider than the input**: `width: 560px`, `min-width: 100%`, `max-width: calc(100vw - 32px)`. Anchored to the input's left edge, extends rightward. Keeps long peptide/gene labels readable instead of getting truncated.
@@ -227,6 +227,12 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-05-21 — Expand-on-focus search instead of flex-shrink
+**Why:** The previous fix (`min-width: 320px` on `.search-wrap`) prevented the search from squeezing to a sliver, but pushed the "Explore atlas" CTA off the right edge of the topnav on narrow desktop viewports. User wanted the search to behave like a compact button that expands on click without disturbing neighboring topnav items.
+**What:** Switched `.search-wrap` to a **fixed compact slot** (`flex: 0 0 220px`, explicit `height: 38px`). The actual `.search-input-row` is now `position: absolute` inside the wrap with `width: 100%` by default. On `:focus-within`, it grows to `width: min(520px, calc(100vw - 80px))` with a 0.2s ease transition, **overlaying** neighbors instead of pushing them. Click outside → input row collapses back to 220 px. Mobile media query at 960 px resets this so the search still gets its own full-width row.
+**Files:** `index.html`.
+**Commit:** (this commit)
 
 ### 2026-05-21 — Stop the search input from collapsing when topnav is crowded
 **Why:** Users on viewports between ~960 px (the mobile breakpoint) and ~1300 px saw the search input squeezed down to a sliver — only half of the first typed letter was visible. Cause: `.search-wrap` was `flex: 1 1 auto; min-width: 0`, so the flex algorithm freely shrank it to make room for the rest of the topnav.
