@@ -2765,7 +2765,11 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   position: relative;
   flex: 1 1 auto;
   max-width: 460px;
-  min-width: 0;
+  /* Hard floor so flex doesn't squeeze the search to a single letter when
+     the topnav is crowded (links + queries pill + theme toggle + CTA).
+     Below 960px a separate media query takes over and gives the search
+     its own full-width row instead. */
+  min-width: 320px;
 }
 .search-input-row {
   position: relative;

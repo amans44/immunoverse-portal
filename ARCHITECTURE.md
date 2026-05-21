@@ -97,7 +97,7 @@ Three layers, in increasing visibility:
 - **Hidden on screens < 560px** to avoid topnav crowding.
 
 ### Global search
-- **Input:** `#globalSearch` in the topnav. Wrapper `max-width: 460px`.
+- **Input:** `#globalSearch` in the topnav. Wrapper `max-width: 460px`, **`min-width: 320px`** (hard floor so the flex algorithm can't squeeze it to a sliver when the topnav is crowded — below 960 px viewport, a media query takes over and the search drops to its own full-width row).
 - **Driven by:** `data_js/_search_index.js` (pre-built lookup tables for peptides / genes / cancers / HLA alleles).
 - **Live typeahead** with 150 ms debounce. Each completed search bumps the Worker counter; the Cloudflare Worker rate-limits to 1 increment per 3 seconds per IP (TTL stored in KV with 60s minimum).
 - **Results dropdown (`#searchResults`)** is intentionally **wider than the input**: `width: 560px`, `min-width: 100%`, `max-width: calc(100vw - 32px)`. Anchored to the input's left edge, extends rightward. Keeps long peptide/gene labels readable instead of getting truncated.
@@ -227,6 +227,12 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-05-21 — Stop the search input from collapsing when topnav is crowded
+**Why:** Users on viewports between ~960 px (the mobile breakpoint) and ~1300 px saw the search input squeezed down to a sliver — only half of the first typed letter was visible. Cause: `.search-wrap` was `flex: 1 1 auto; min-width: 0`, so the flex algorithm freely shrank it to make room for the rest of the topnav.
+**What:** Set `.search-wrap { min-width: 320px; }`. That guarantees ~228 px of typable text area even on a crowded topnav. Other topnav items have to compress instead, which is the desired tradeoff. Below 960 px the existing media query still takes over and gives the search its own full-width row.
+**Files:** `index.html`.
+**Commit:** (this commit)
 
 ### 2026-05-21 — Make typed search text reliably visible
 **Why:** Users reported typing in the global search and seeing the dropdown populate but not seeing their text in the input itself. Likely causes: Chrome autofill yellow-bg style hiding text, `-webkit-text-fill-color` overriding `color`, invisible caret, or the `<input type="search">` clear-button overlapping typed characters.
