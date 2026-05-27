@@ -153,13 +153,16 @@ nav.topnav {
   border-bottom: 1px solid var(--border);
 }
 nav.topnav .inner {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 14px 32px;
+  padding: 14px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 14px;
+}
+@media (min-width: 1280px) {
+  nav.topnav .inner { gap: 16px; padding: 14px 28px; }
 }
 .brand {
   display: flex;
@@ -3075,9 +3078,145 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
     </button>
+    <!-- Portal auth chip: rendered as "Sign in" text link when no session,
+         or an avatar + dropdown when signed in. JS at bottom decides. -->
+    <a id="ivSignInBtn" class="iv-signin-link" href="login.html" style="display:none;">Sign in</a>
+    <div class="iv-user-menu" id="ivUserMenu" style="display:none;">
+      <button type="button" class="iv-acc-chip" id="ivAccountChip" aria-haspopup="true" aria-expanded="false" title="Your account">
+        <span class="iv-acc-avatar" id="ivAccAvatar">?</span>
+        <span class="iv-acc-name" id="ivAccName">Account</span>
+        <span class="iv-acc-caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="iv-user-dropdown" id="ivUserDropdown" role="menu" hidden>
+        <div class="iv-dd-head">
+          <div class="iv-dd-name" id="ivDdName">…</div>
+          <div class="iv-dd-email" id="ivDdEmail">…</div>
+        </div>
+        <a href="account.html" role="menuitem"><span class="iv-dd-icon">👤</span>Account</a>
+        <a href="account.html#savedSearches" role="menuitem"><span class="iv-dd-icon">★</span>Saved searches</a>
+        <a href="account.html#history" role="menuitem"><span class="iv-dd-icon">⊕</span>Recently viewed</a>
+        <a href="admin.html" role="menuitem" id="ivDdAdmin"><span class="iv-dd-icon">🛡</span>Admin dashboard</a>
+        <button type="button" role="menuitem" id="ivDdFeedback"><span class="iv-dd-icon">💬</span>Send feedback</button>
+        <div class="iv-dd-sep"></div>
+        <button type="button" role="menuitem" id="ivDdSignOut" class="iv-dd-signout"><span class="iv-dd-icon">↩</span>Sign out</button>
+      </div>
+    </div>
     <a class="cta" href="#explorer">Explore atlas →</a>
   </div>
 </nav>
+<style>
+/* Portal auth chip in the nav. Keeps the dark/light theme via the same
+   CSS variables as the rest of the page. Tight by default so it doesn't
+   compete with the Explore atlas CTA for nav width — the name label is
+   only shown on wider viewports. */
+.iv-acc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  padding: 3px 4px 3px 3px;
+  color: var(--text-1);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 0.18s;
+  flex: none;
+}
+.iv-acc-chip:hover { border-color: var(--border-2); color: var(--text-0); }
+.iv-acc-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--grad-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.iv-acc-name {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding-right: 0;
+  transition: max-width 0.2s ease, padding 0.2s ease;
+}
+@media (min-width: 1180px) {
+  .iv-acc-name { max-width: 130px; padding-right: 4px; }
+  .iv-acc-chip { padding: 3px 8px 3px 3px; gap: 8px; }
+}
+.iv-acc-caret { font-size: 10px; color: var(--text-2); transition: transform 0.15s; margin-right: 4px; }
+.iv-acc-chip[aria-expanded="true"] .iv-acc-caret { transform: rotate(180deg); }
+.iv-user-menu { position: relative; flex: none; }
+.iv-user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 240px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 18px 50px rgba(5,8,20,0.55);
+  z-index: 200;
+  backdrop-filter: blur(14px);
+}
+.iv-user-dropdown[hidden] { display: none !important; }
+.iv-dd-head {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.iv-dd-name { font-size: 13.5px; font-weight: 600; color: var(--text-0); }
+.iv-dd-email { font-size: 12px; color: var(--text-2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iv-user-dropdown a,
+.iv-user-dropdown button.iv-dd-signout {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 8px;
+  font-size: 13.5px; color: var(--text-1);
+  text-decoration: none; border: 0; background: transparent;
+  cursor: pointer; font-family: inherit; width: 100%; text-align: left;
+}
+.iv-user-dropdown a:hover, .iv-user-dropdown button.iv-dd-signout:hover {
+  background: var(--bg-3); color: var(--text-0);
+}
+/* Browser default [hidden] { display: none } loses the specificity fight
+   against `.iv-user-dropdown a { display: flex }`, so we override
+   explicitly. */
+.iv-user-dropdown a[hidden],
+.iv-user-dropdown button[hidden] { display: none !important; }
+/* Visual hint for the admin link when the current account can't reach it:
+   muted text + small lock glyph after the label, so users understand why
+   the next click will prompt them to switch accounts. */
+.iv-user-dropdown a[data-needs-elevation] { color: var(--text-2); }
+.iv-user-dropdown a[data-needs-elevation]::after {
+  content: '🔒'; margin-left: auto; opacity: 0.7; font-size: 11px;
+}
+.iv-dd-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; font-size: 13px; color: var(--text-2);
+}
+.iv-dd-sep { height: 1px; background: var(--border); margin: 6px 4px; }
+.iv-dd-signout { color: #f87171 !important; }
+.iv-dd-signout:hover { background: rgba(248,113,113,0.10) !important; color: #f87171 !important; }
+/* Sign-in is a quiet text link, not a CTA — we don't want two big colored
+   buttons competing for attention. */
+.iv-signin-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-1);
+  padding: 8px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  text-decoration: none;
+  flex: none;
+}
+.iv-signin-link:hover { background: var(--bg-3); color: var(--text-0); }
+</style>
 
 <!-- HERO -->
 <section class="hero" id="top">
@@ -3183,6 +3322,9 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
           </button>
           <button class="btn btn-ghost" id="resetBtn" style="padding:9px 14px;font-size:13px;">
             Reset filters
+          </button>
+          <button class="btn btn-ghost" id="saveSearchBtn" style="padding:9px 14px;font-size:13px;" title="Sign in to save this filter as a named search">
+            <span style="margin-right:4px;">★</span> Save this search
           </button>
           <a class="btn btn-primary" id="dlCsv" href="#" style="padding:9px 16px;font-size:13px;" download>Download CSV</a>
         </div>
@@ -3587,6 +3729,189 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
 
 <!-- Compare action bar (floats at bottom when any peptides are selected) -->
 <div class="cmp-bar" id="compareBar"></div>
+
+<!-- ===== Feedback modal ===== -->
+<div id="ivFbBackdrop" class="iv-fb-backdrop" hidden>
+  <div class="iv-fb-card" role="dialog" aria-labelledby="ivFbTitle" aria-modal="true">
+    <button class="iv-fb-close" type="button" aria-label="Close" onclick="ivCloseFeedback()">×</button>
+    <h3 id="ivFbTitle">Send feedback</h3>
+    <p class="iv-fb-lede">Bugs, feature ideas, data issues — anything helps. Goes straight to the team's inbox.</p>
+    <div id="ivFbAlert" class="iv-fb-alert" hidden></div>
+    <form id="ivFbForm" onsubmit="return ivSubmitFeedback(event)">
+      <label class="iv-fb-lbl" for="ivFbType">Type</label>
+      <select id="ivFbType" required>
+        <option value="feedback">General feedback</option>
+        <option value="bug">Bug report</option>
+        <option value="feature">Feature request</option>
+        <option value="data_issue">Data / annotation issue</option>
+        <option value="other">Other</option>
+      </select>
+
+      <div class="iv-fb-row">
+        <div>
+          <label class="iv-fb-lbl" for="ivFbName">Your name</label>
+          <input id="ivFbName" type="text" placeholder="Optional" />
+        </div>
+        <div>
+          <label class="iv-fb-lbl" for="ivFbEmail">Email</label>
+          <input id="ivFbEmail" type="email" required placeholder="you@institute.edu" />
+        </div>
+      </div>
+
+      <label class="iv-fb-lbl" for="ivFbSubject">Subject</label>
+      <input id="ivFbSubject" type="text" required minlength="2" maxlength="200" placeholder="Short summary" />
+
+      <label class="iv-fb-lbl" for="ivFbMessage">Message <span class="iv-fb-counter" id="ivFbCounter">0 / 10 min</span></label>
+      <textarea id="ivFbMessage" rows="5" required minlength="10" maxlength="4000"
+                placeholder="What did you see? What were you expecting? If it's a data issue, paste the cancer code + peptide sequence if you have them." oninput="ivFbUpdateCounter()"></textarea>
+
+      <div class="iv-fb-actions">
+        <button type="button" class="iv-fb-btn ghost" onclick="ivCloseFeedback()">Cancel</button>
+        <button type="submit" class="iv-fb-btn primary" id="ivFbSubmit">Send</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Floating Feedback button (bottom-left, opposite the chatbot widget) -->
+<button id="ivFbFab" class="iv-fb-fab" type="button" onclick="ivOpenFeedback()" aria-label="Send feedback" title="Send feedback">
+  💬
+  <span class="iv-fb-fab-label">Feedback</span>
+</button>
+
+<style>
+/* ===== Feedback modal + FAB ===== */
+.iv-fb-fab {
+  position: fixed;
+  bottom: 22px;
+  left: 22px;
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 10px 12px;
+  border-radius: 9999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-2);
+  color: var(--text-1);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(5,8,20,0.40);
+  transition: all 0.18s ease;
+}
+.iv-fb-fab:hover { color: var(--text-0); border-color: var(--accent-cyan); transform: translateY(-1px); }
+.iv-fb-fab .iv-fb-fab-label { font-weight: 600; }
+@media (max-width: 720px) {
+  .iv-fb-fab .iv-fb-fab-label { display: none; }
+  .iv-fb-fab { padding: 12px; }
+}
+
+.iv-fb-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(5,7,14,0.62);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px;
+  backdrop-filter: blur(4px);
+}
+.iv-fb-backdrop[hidden] { display: none !important; }
+.iv-fb-card {
+  width: 100%; max-width: 540px;
+  max-height: 92vh; overflow-y: auto;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px 28px 22px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+.iv-fb-card h3 { font-size: 20px; margin: 0 0 4px; color: var(--text-0); font-weight: 700; }
+.iv-fb-lede { color: var(--text-2); font-size: 13.5px; margin: 0 0 18px; line-height: 1.55; }
+.iv-fb-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 32px; height: 32px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-2);
+  font-size: 18px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.iv-fb-close:hover { color: var(--text-0); border-color: var(--border-2); }
+.iv-fb-lbl {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin: 12px 0 6px;
+}
+.iv-fb-card input, .iv-fb-card select, .iv-fb-card textarea {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-0);
+  outline: none;
+}
+.iv-fb-card textarea { resize: vertical; min-height: 110px; line-height: 1.5; border-radius: 14px; }
+.iv-fb-card input:focus, .iv-fb-card select:focus, .iv-fb-card textarea:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(34,211,238,0.18);
+}
+.iv-fb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .iv-fb-row { grid-template-columns: 1fr; } }
+.iv-fb-counter {
+  float: right;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+}
+.iv-fb-counter.ok { color: var(--accent-lime, #86efac); }
+.iv-fb-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+  margin-top: 18px;
+}
+.iv-fb-btn {
+  border: 0;
+  border-radius: 9999px;
+  padding: 9px 18px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.iv-fb-btn.primary {
+  background: var(--grad-primary);
+  color: #0a0e1a;
+}
+.iv-fb-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(34,211,238,0.30); }
+.iv-fb-btn.ghost {
+  background: transparent;
+  color: var(--text-1);
+  border: 1px solid var(--border-2);
+}
+.iv-fb-btn.ghost:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.iv-fb-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.iv-fb-alert {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.iv-fb-alert.error   { background: rgba(248,113,113,0.10); border: 1px solid rgba(248,113,113,0.35); color: #f87171; }
+.iv-fb-alert.success { background: rgba(134,239,172,0.10); border: 1px solid rgba(134,239,172,0.40); color: #86efac; }
+</style>
 
 <!-- Compare modal -->
 <div class="drawer-backdrop" id="compareModalBg" onclick="closeCompareModal()"></div>
@@ -6954,7 +7279,7 @@ function ivExtractDiffCandidates(source) {
   return [...seen].slice(0, 8);
 }
 
-async function openDrawer(r) {
+async function openDrawer(r, opts) {
   const body = document.getElementById('drawerBody');
   const code = r[COL.code];
   const pep  = r[COL.pep];
@@ -6963,6 +7288,17 @@ async function openDrawer(r) {
   // through every onclick handler.
   DRAWER_ROW = r;
   DRAWER_CODE = code;
+  // Encode the open peptide into the URL so the link is shareable. Use
+  // pushState (not replace) when opening from a user click so the browser's
+  // back button closes the drawer; skipUrl is passed when the open is itself
+  // *being driven* by a URL change (popstate/deep-link), to avoid recursion.
+  if (!opts || !opts.skipUrl) {
+    try { history.pushState({ drawer: { code, pep } }, '', location.href); } catch(e) {}
+    DRAWER_URL = { code, pep };
+    if (typeof pushUrlState === 'function') pushUrlState();
+  } else {
+    DRAWER_URL = { code, pep };
+  }
   const abund = (r[COL.abund] ?? 0) * 100;
   const score = r[COL.score] || 0;
   const scoreW = Math.min(100, score);
@@ -7258,6 +7594,7 @@ async function openDrawer(r) {
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         ${crossBtn}
         <button class="copy-btn" title="Copy peptide" onclick="navigator.clipboard && navigator.clipboard.writeText('${pep}')">⧉ copy</button>
+        <button class="copy-btn" id="bookmarkPepBtn" data-pep="${pep}" data-code="${code}" data-gene="${(r[COL.gene]||'').replace(/"/g,'')}" data-cls="${r[COL.cls]||''}" title="Sign in to bookmark this peptide to your account">☆ bookmark</button>
         <button class="dl-all-btn" title="Bundle every table, JSON record, and figure for this peptide into one ZIP" onclick="downloadAllFromDrawer(this)">${DL_ICON}<span>Download all</span></button>
       </div>
     </div>
@@ -7532,9 +7869,16 @@ function updateCsvLink(filt) {
   a.download = 'immunoverse_filtered.csv';
 }
 
-function closeDrawer() {
+function closeDrawer(opts) {
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawerBg').classList.remove('open');
+  DRAWER_URL = null;
+  // Skip the URL rewrite when the close was triggered by popstate — the URL
+  // is already correct, and writing again would create a spurious history
+  // entry.
+  if ((!opts || !opts.skipUrl) && typeof pushUrlState === 'function') {
+    pushUrlState();
+  }
 }
 
 // ===== Citation window =====
@@ -7699,6 +8043,10 @@ document.querySelectorAll('nav .links a').forEach(a => {
 });
 
 // ===== URL state for shareable links =====
+// DRAWER_URL holds the {code, pep} of whichever peptide drawer is currently
+// open, so the URL can encode it (`&open=PEPTIDE`) as a deep link distinct
+// from the `pep` filter input above. Cleared on drawer close.
+let DRAWER_URL = null;
 function pushUrlState() {
   const p = new URLSearchParams();
   if (STATE.cancer) p.set('cancer', STATE.cancer);
@@ -7708,6 +8056,12 @@ function pushUrlState() {
   if (STATE.classFilter.size) p.set('class', [...STATE.classFilter].join(','));
   if (STATE.safe) p.set('safe', STATE.safe);
   if (STATE.uniq) p.set('uniq', STATE.uniq);
+  // `open` always carries the cancer code too — the URL must be self-contained
+  // because the page reloads it via loadCancer() before opening the drawer.
+  if (DRAWER_URL && DRAWER_URL.pep) {
+    p.set('open', DRAWER_URL.pep);
+    if (DRAWER_URL.code) p.set('cancer', DRAWER_URL.code);
+  }
   const qs = p.toString();
   const url = qs ? '#explorer?' + qs : location.pathname;
   history.replaceState(null, '', url);
@@ -7725,11 +8079,60 @@ function loadUrlState() {
   if (p.has('class')) { STATE.classFilter = new Set(p.get('class').split(',')); }
   if (p.has('safe')) { STATE.safe = p.get('safe'); document.getElementById('fSafe').value = STATE.safe; }
   if (p.has('uniq')) { STATE.uniq = p.get('uniq'); document.getElementById('fUniq').value = STATE.uniq; }
+  // `open` is consumed by loadAll() after applyFilters runs so the row exists.
+  if (p.has('open')) {
+    const pep = p.get('open');
+    const code = p.get('cancer') || STATE.cancer;
+    if (code && pep) return { openDrawer: { code, pep } };
+  }
   return true;
 }
 // Hook into applyFilters to update URL
 const _origApply = applyFilters;
 applyFilters = function() { _origApply(); pushUrlState(); };
+// Hook into loadAll to honor `&open=PEPTIDE` deep links after first render.
+const _origLoadAll = loadAll;
+loadAll = async function() {
+  await _origLoadAll();
+  try {
+    const hash = location.hash;
+    if (!hash.includes('explorer?')) return;
+    const p = new URLSearchParams(hash.split('?')[1] || '');
+    const pep  = p.get('open');
+    const code = p.get('cancer');
+    if (!pep || !code) return;
+    await loadCancer(code);
+    const row = (DATA_CACHE[code]?.rows || []).find(r => r[COL.pep] === pep);
+    if (row) {
+      if (row[COL.code] !== code) row[COL.code] = code;
+      // skipUrl: the user arrived at this URL already; don't push another
+      // history entry on top of the one the browser created.
+      openDrawer(row, { skipUrl: true });
+    }
+  } catch (e) { console.warn('deep-link drawer open failed', e); }
+};
+// Back-button: when the browser navigates back/forward, sync drawer to URL.
+window.addEventListener('popstate', async () => {
+  const hash = location.hash;
+  const p = hash.includes('explorer?')
+    ? new URLSearchParams(hash.split('?')[1] || '')
+    : new URLSearchParams();
+  const urlPep  = p.get('open');
+  const urlCode = p.get('cancer');
+  const curPep  = DRAWER_URL && DRAWER_URL.pep;
+  if (!urlPep && curPep) {
+    closeDrawer({ skipUrl: true });
+  } else if (urlPep && urlCode && (urlPep !== curPep)) {
+    try {
+      await loadCancer(urlCode);
+      const row = (DATA_CACHE[urlCode]?.rows || []).find(r => r[COL.pep] === urlPep);
+      if (row) {
+        if (row[COL.code] !== urlCode) row[COL.code] = urlCode;
+        openDrawer(row, { skipUrl: true });
+      }
+    } catch(e) { console.warn('popstate drawer sync failed', e); }
+  }
+});
 
 // ===== Animated hero stat counters =====
 (function animateStats() {
@@ -7823,6 +8226,366 @@ applyFilters = function() { _origApply(); pushUrlState(); };
      https://www.immuno-verse.com. -->
 <script>window.IMMUNOVERSE_AGENT_BASE = "https://immunoverse-agent-739605637035.us-central1.run.app";</script>
 <script src="chatbot/chatbot.js" defer></script>
+
+<!-- ===== Portal auth boot: nav chip + peptide-history logging =====
+     This script is fail-soft: if /api/portal/auth/me is unreachable, the
+     page renders exactly as before (anonymous), and openDrawer never tries
+     to write to history. -->
+<script>
+(function () {
+  // Same Cloud Run service that serves auth/. Set window.IMMUNOVERSE_AUTH_BASE
+  // before this script runs to point local dev at http://localhost:8001.
+  window.IMMUNOVERSE_AUTH_BASE = window.IMMUNOVERSE_AUTH_BASE || "https://auth.immunoverse-chat.com";
+  const AUTH = window.IMMUNOVERSE_AUTH_BASE.replace(/\/+$/, '');
+
+  function authedFetch(path, opts) {
+    opts = opts || {};
+    const headers = Object.assign({}, opts.headers || {});
+    try {
+      const tok = sessionStorage.getItem('iv_portal_access');
+      if (tok && !headers.Authorization) headers.Authorization = 'Bearer ' + tok;
+    } catch (e) {}
+    if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+    return fetch(AUTH + path, Object.assign({ credentials: 'include' }, opts, { headers }));
+  }
+
+  function initials(name, email) {
+    const s = (name || email || '?').trim();
+    if (!s) return '?';
+    const parts = s.split(/[\s@.]+/).filter(Boolean);
+    const a = parts[0] ? parts[0][0] : '?';
+    const b = parts.length > 1 ? parts[parts.length-1][0] : '';
+    return (a + b).toUpperCase().slice(0, 2);
+  }
+
+  function showSignIn() {
+    const a = document.getElementById('ivSignInBtn');
+    const m = document.getElementById('ivUserMenu');
+    if (a) a.style.display = '';
+    if (m) m.style.display = 'none';
+  }
+  function showAccount(user) {
+    const a = document.getElementById('ivSignInBtn');
+    const m = document.getElementById('ivUserMenu');
+    if (a) a.style.display = 'none';
+    if (!m) return;
+    m.style.display = '';
+    const display = user.name || user.email.split('@')[0];
+    document.getElementById('ivAccAvatar').textContent = initials(user.name, user.email);
+    document.getElementById('ivAccName').textContent = display;
+    document.getElementById('ivDdName').textContent = display;
+    document.getElementById('ivDdEmail').textContent = user.email;
+    // Admin-dashboard link is shown to every signed-in user. The click
+    // handler (wired below) decides whether to navigate or to bounce to
+    // an admin sign-in. Marking it visually as "admin only" for non-admins
+    // makes the intent obvious before they click.
+    const adm = document.getElementById('ivDdAdmin');
+    if (adm) {
+      if (user.role === 'admin') {
+        adm.removeAttribute('data-needs-elevation');
+        adm.title = 'Portal admin dashboard';
+      } else {
+        adm.setAttribute('data-needs-elevation', '1');
+        adm.title = 'Requires admin sign-in';
+      }
+    }
+  }
+
+  // Dropdown open/close — wired once on first paint.
+  (function initDropdown() {
+    const chip = document.getElementById('ivAccountChip');
+    const dd = document.getElementById('ivUserDropdown');
+    if (!chip || !dd) return;
+    function close() { dd.hidden = true; chip.setAttribute('aria-expanded','false'); }
+    function open()  { dd.hidden = false; chip.setAttribute('aria-expanded','true'); }
+    chip.addEventListener('click', (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      dd.hidden ? open() : close();
+    });
+    document.addEventListener('click', (ev) => {
+      if (!dd.hidden && !dd.contains(ev.target) && ev.target !== chip) close();
+    });
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && !dd.hidden) close();
+    });
+    const out = document.getElementById('ivDdSignOut');
+    if (out) out.addEventListener('click', async () => {
+      try { await authedFetch('/api/portal/auth/logout', { method: 'POST' }); } catch(e) {}
+      try { sessionStorage.removeItem('iv_portal_access'); } catch(e) {}
+      location.reload();
+    });
+
+    // Admin dashboard link — elevate-on-click for non-admins.
+    const adm = document.getElementById('ivDdAdmin');
+    if (adm) {
+      adm.addEventListener('click', async (ev) => {
+        const u = window.__IV_PORTAL_USER;
+        if (u && u.role === 'admin') return;  // let normal navigation happen
+        ev.preventDefault();
+        const yes = confirm(
+          "This account doesn't have admin access.\n\n" +
+          "Sign in with an admin account?\n\n" +
+          "(You'll be signed out of the current account first.)"
+        );
+        if (!yes) return;
+        // Sign out then jump to login with a return-to-admin URL so the
+        // next sign-in lands directly on the dashboard.
+        try { await authedFetch('/api/portal/auth/logout', { method: 'POST' }); } catch(e) {}
+        try { sessionStorage.removeItem('iv_portal_access'); } catch(e) {}
+        location.href = 'login.html?return=' + encodeURIComponent('admin.html');
+      });
+    }
+  })();
+
+  // Try the session. Result is cached on window so openDrawer's wrapper can
+  // read it without re-fetching.
+  authedFetch('/api/portal/auth/me')
+    .then(r => r.ok ? r.json() : null)
+    .then(user => {
+      window.__IV_PORTAL_USER = user || null;
+      if (user) showAccount(user); else showSignIn();
+    })
+    .catch(() => { window.__IV_PORTAL_USER = null; showSignIn(); });
+
+  // ---------- Save-this-search ----------
+  // Build the URL-param dict that account.html's saved-search cards expect.
+  // Keep this in sync with pushUrlState() — it reads the same STATE fields.
+  function snapshotFilterParams() {
+    const p = {};
+    try {
+      if (typeof STATE === 'undefined') return p;
+      if (STATE.cancer) p.cancer = STATE.cancer;
+      if (STATE.pep)    p.pep = STATE.pep;
+      if (STATE.gene)   p.gene = STATE.gene;
+      if (STATE.hla)    p.hla = STATE.hla;
+      if (STATE.safe)   p.safe = STATE.safe;
+      if (STATE.uniq)   p.uniq = STATE.uniq;
+      if (STATE.classFilter && STATE.classFilter.size) {
+        p.class = [...STATE.classFilter].join(',');
+      }
+    } catch(e) {}
+    return p;
+  }
+
+  function ivToast(msg, kind) {
+    let t = document.getElementById('ivToast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'ivToast';
+      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:11px 18px;border-radius:12px;font-size:13.5px;font-weight:500;z-index:9999;box-shadow:0 12px 32px rgba(0,0,0,0.35);transition:opacity 0.2s;backdrop-filter:blur(10px);';
+      document.body.appendChild(t);
+    }
+    const colors = {
+      success: 'background:rgba(134,239,172,0.95);color:#052e16;',
+      error:   'background:rgba(248,113,113,0.95);color:#3f0a0a;',
+      info:    'background:rgba(129,140,248,0.95);color:#1e1b4b;',
+    };
+    t.style.cssText += colors[kind || 'info'];
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(t._h);
+    t._h = setTimeout(() => { t.style.opacity = '0'; }, 2800);
+  }
+  // Expose so the bookmark-button onclick can reach it.
+  window.ivToast = ivToast;
+
+  async function handleSaveSearch() {
+    if (!window.__IV_PORTAL_USER) {
+      const yes = confirm('Sign in to save searches across devices. Go to sign in now?');
+      if (yes) location.href = 'login.html?return=' + encodeURIComponent(location.pathname + location.hash);
+      return;
+    }
+    const params = snapshotFilterParams();
+    if (!Object.keys(params).length) {
+      ivToast('Set at least one filter before saving.', 'error');
+      return;
+    }
+    // Suggest a name based on the active filters.
+    const suggest = [
+      params.cancer && params.cancer,
+      params.gene && ('gene=' + params.gene),
+      params.hla && ('HLA ' + params.hla),
+      params.class && ('class=' + params.class),
+      params.safe && 'safe',
+    ].filter(Boolean).join(' · ') || 'My search';
+    const label = prompt('Name this search:', suggest);
+    if (label === null) return;  // user cancelled
+    if (!label.trim()) { ivToast('Name cannot be empty.', 'error'); return; }
+    try {
+      const r = await authedFetch('/api/portal/saved_searches', {
+        method: 'POST',
+        body: JSON.stringify({ label: label.trim(), params }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.detail || 'Save failed');
+      ivToast('★ Saved · find it under your account', 'success');
+    } catch (err) {
+      ivToast('Could not save: ' + err.message, 'error');
+    }
+  }
+
+  // Wire the Save-this-search button as soon as the DOM is ready.
+  function wireSaveBtn() {
+    const b = document.getElementById('saveSearchBtn');
+    if (!b || b.__wired) return;
+    b.__wired = true;
+    // Update title hint based on auth state.
+    if (window.__IV_PORTAL_USER) b.title = 'Save the current filter to your account';
+    b.addEventListener('click', handleSaveSearch);
+  }
+  document.addEventListener('DOMContentLoaded', wireSaveBtn);
+  window.addEventListener('load', wireSaveBtn);
+
+  // ---------- Bookmark peptide (drawer button) ----------
+  // Lives at document level so it survives the drawer re-rendering each open.
+  document.addEventListener('click', async (ev) => {
+    const b = ev.target.closest('#bookmarkPepBtn');
+    if (!b) return;
+    if (!window.__IV_PORTAL_USER) {
+      const yes = confirm('Sign in to bookmark peptides to your account?');
+      if (yes) location.href = 'login.html?return=' + encodeURIComponent(location.pathname + location.hash);
+      return;
+    }
+    // Auto-history already wrote this peptide on drawer-open, but POSTing
+    // again refreshes the timestamp so it tops the "Recently viewed" list.
+    try {
+      const r = await authedFetch('/api/portal/history', {
+        method: 'POST',
+        body: JSON.stringify({
+          cancer:  b.dataset.code,
+          peptide: b.dataset.pep,
+          gene:    b.dataset.gene || null,
+          cls:     b.dataset.cls || null,
+        }),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      b.textContent = '★ bookmarked';
+      b.disabled = true;
+      ivToast('★ Saved to your account', 'success');
+    } catch (err) {
+      ivToast('Could not bookmark: ' + (err.message || 'error'), 'error');
+    }
+  });
+
+  // ---------- Feedback modal ----------
+  window.ivOpenFeedback = function () {
+    const bd = document.getElementById('ivFbBackdrop');
+    if (!bd) return;
+    // Pre-fill email + name if signed in.
+    const u = window.__IV_PORTAL_USER;
+    if (u) {
+      const e = document.getElementById('ivFbEmail');
+      const n = document.getElementById('ivFbName');
+      if (e && !e.value) e.value = u.email || '';
+      if (n && !n.value) n.value = u.name || '';
+    }
+    document.getElementById('ivFbAlert').hidden = true;
+    bd.hidden = false;
+    // Focus subject for fastest entry.
+    setTimeout(() => { const s = document.getElementById('ivFbSubject'); if (s) s.focus(); }, 30);
+  };
+  window.ivCloseFeedback = function () {
+    const bd = document.getElementById('ivFbBackdrop');
+    if (bd) bd.hidden = true;
+  };
+  window.ivFbUpdateCounter = function () {
+    const ta = document.getElementById('ivFbMessage');
+    const c  = document.getElementById('ivFbCounter');
+    if (!ta || !c) return;
+    const n = (ta.value || '').length;
+    c.textContent = n + ' / 10 min';
+    c.classList.toggle('ok', n >= 10);
+  };
+  window.ivSubmitFeedback = async function (ev) {
+    ev.preventDefault();
+    const alertEl = document.getElementById('ivFbAlert');
+    alertEl.hidden = true;
+    const btn = document.getElementById('ivFbSubmit');
+    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.textContent = 'Sending…';
+    try {
+      const body = {
+        inquiry_type: document.getElementById('ivFbType').value,
+        name:    document.getElementById('ivFbName').value.trim() || null,
+        email:   document.getElementById('ivFbEmail').value.trim(),
+        subject: document.getElementById('ivFbSubject').value.trim(),
+        message: document.getElementById('ivFbMessage').value.trim(),
+        page_url: location.href,
+      };
+      const r = await authedFetch('/api/portal/auth/contact', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.detail || 'Submission failed');
+      // Clear sensitive fields, show success.
+      document.getElementById('ivFbSubject').value = '';
+      document.getElementById('ivFbMessage').value = '';
+      ivFbUpdateCounter();
+      alertEl.textContent = data.message || 'Thanks — message received.';
+      alertEl.className = 'iv-fb-alert success';
+      alertEl.hidden = false;
+      setTimeout(() => ivCloseFeedback(), 1500);
+    } catch (err) {
+      alertEl.textContent = err.message || 'Could not send.';
+      alertEl.className = 'iv-fb-alert error';
+      alertEl.hidden = false;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+    return false;
+  };
+
+  // Esc closes the feedback modal too.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const bd = document.getElementById('ivFbBackdrop');
+      if (bd && !bd.hidden) { e.stopPropagation(); ivCloseFeedback(); }
+    }
+  });
+
+  // Wire "Send feedback" entry point in the user dropdown.
+  document.addEventListener('DOMContentLoaded', () => {
+    const f = document.getElementById('ivDdFeedback');
+    if (f) f.addEventListener('click', () => { ivOpenFeedback(); });
+  });
+
+  // ---------- History logging ----------
+  // Wrap openDrawer so every peptide-view fires a fire-and-forget POST to
+  // /api/portal/history. Anonymous viewers skip it silently.
+  function wrapOpenDrawer() {
+    if (typeof openDrawer !== 'function' || openDrawer.__ivHistoryWrapped) return;
+    const _orig = openDrawer;
+    const wrapped = function(r, opts) {
+      const out = _orig.call(this, r, opts);
+      try {
+        if (window.__IV_PORTAL_USER && r) {
+          const payload = {
+            cancer: r[COL.code],
+            peptide: r[COL.pep],
+            gene: r[COL.gene] || null,
+            cls: r[COL.cls] || null,
+          };
+          // Fire-and-forget; failures must never block drawer rendering.
+          authedFetch('/api/portal/history', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          }).catch(() => {});
+        }
+      } catch (e) { /* swallow */ }
+      return out;
+    };
+    wrapped.__ivHistoryWrapped = true;
+    openDrawer = wrapped;
+  }
+  // The main script defines openDrawer up-front, but in case it hasn't
+  // executed yet (e.g. defer ordering), try once now + once after load.
+  wrapOpenDrawer();
+  window.addEventListener('load', wrapOpenDrawer);
+})();
+</script>
 <script>
 /* Pill displays GoatCounter's all-time visit total (cumulative, never resets).
    The Cloudflare Worker keeps recording action-level counts in the background

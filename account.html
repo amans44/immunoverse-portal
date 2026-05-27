@@ -1,0 +1,1379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Your account — ImmunoVerse Portal</title>
+<meta name="description" content="Your ImmunoVerse account: saved searches, recently viewed peptides, and profile settings." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('iv.theme');
+      if (saved === 'light' || saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch (e) {}
+  })();
+  function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    var next = cur === 'light' ? 'dark' : 'light';
+    if (next === 'dark') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('iv.theme', next); } catch (e) {}
+  }
+</script>
+<style>
+:root {
+  --bg-0: #05070e;
+  --bg-1: #0a0e1a;
+  --bg-2: #0f1424;
+  --bg-3: #151b2e;
+  --bg-card: rgba(20, 26, 45, 0.72);
+  --border: rgba(120, 150, 220, 0.14);
+  --border-2: rgba(120, 150, 220, 0.28);
+  --text-0: #f2f5ff;
+  --text-1: #c8cfe4;
+  --text-2: #8a93ad;
+  --text-3: #5a6380;
+  --primary: #818cf8;
+  --primary-strong: #4953bc;
+  --primary-soft: rgba(129,140,248,0.18);
+  --accent-cyan: #22d3ee;
+  --accent-violet: #a78bfa;
+  --link: #22d3ee;
+  --danger: #f87171;
+  --success: #86efac;
+  --grad-primary: linear-gradient(135deg, #22d3ee 0%, #818cf8 45%, #c084fc 100%);
+  --grad-hero: radial-gradient(900px 600px at 25% 15%, rgba(34,211,238,0.18), transparent 60%),
+               radial-gradient(900px 600px at 85% 25%, rgba(167,139,250,0.22), transparent 60%);
+  --radius: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 9999px;
+  --shadow-lg: 0 20px 60px rgba(5,8,20,0.55), 0 2px 8px rgba(5,8,20,0.4);
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+:root[data-theme="light"] {
+  --bg-0: #f7f9fb;
+  --bg-1: #ffffff;
+  --bg-2: #f0f3fa;
+  --bg-3: #e7ecf6;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --border: rgba(60, 80, 140, 0.14);
+  --border-2: rgba(60, 80, 140, 0.28);
+  --text-0: #0b1220;
+  --text-1: #1f2a44;
+  --text-2: #4a5578;
+  --text-3: #8090b0;
+  --primary: #4953bc;
+  --primary-strong: #2f3aa3;
+  --link: #0369a1;
+  --grad-hero: radial-gradient(900px 600px at 25% 15%, rgba(8,145,178,0.10), transparent 60%),
+               radial-gradient(900px 600px at 85% 25%, rgba(109,40,217,0.10), transparent 60%);
+}
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; }
+body {
+  min-height: 100vh;
+  background: var(--bg-0);
+  background-image: var(--grad-hero);
+  color: var(--text-0);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* Top nav */
+.topnav {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(10,14,26,0.78);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+:root[data-theme="light"] .topnav { background: rgba(255,255,255,0.85); }
+.topnav-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-0);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  background: var(--grad-primary);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.topnav nav { display: flex; gap: 18px; }
+.topnav nav a {
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.18s;
+}
+.topnav nav a:hover { color: var(--text-0); }
+.user-menu { position: relative; }
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 4px 12px 4px 4px;
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+}
+.user-chip:hover { border-color: var(--border-2); }
+.user-chip .caret {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-left: 2px;
+  transition: transform 0.15s;
+}
+.user-chip[aria-expanded="true"] .caret { transform: rotate(180deg); }
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 240px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: var(--shadow-lg);
+  z-index: 60;
+  backdrop-filter: blur(14px);
+}
+.user-dropdown[hidden] { display: none !important; }
+.user-dropdown-head {
+  padding: 10px 12px 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.user-dd-name { font-size: 13.5px; font-weight: 600; color: var(--text-0); }
+.user-dd-email { font-size: 12px; color: var(--text-2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-dropdown a, .user-dropdown button.user-dd-signout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: var(--text-1);
+  text-decoration: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+}
+.user-dropdown a:hover, .user-dropdown button.user-dd-signout:hover {
+  background: var(--bg-2);
+  color: var(--text-0);
+}
+/* Hidden items must stay hidden — .user-dropdown a { display: flex } above
+   wins the specificity fight against [hidden] { display: none } from the UA
+   stylesheet, so we override it here. */
+.user-dropdown a[hidden],
+.user-dropdown button[hidden] { display: none !important; }
+/* Visual hint for the admin link when the current account can't reach it. */
+.user-dropdown a[data-needs-elevation] { color: var(--text-2); }
+.user-dropdown a[data-needs-elevation]::after {
+  content: '🔒'; margin-left: auto; opacity: 0.7; font-size: 11px;
+}
+.user-dropdown .dd-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.user-dropdown-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 4px;
+}
+.user-dd-signout { color: var(--danger) !important; }
+.user-dd-signout:hover { background: rgba(248,113,113,0.10) !important; color: var(--danger) !important; }
+.avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--grad-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+}
+.user-chip-name {
+  font-size: 13px;
+  color: var(--text-1);
+  max-width: 160px;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.theme-toggle-btn {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  flex: none;
+}
+.theme-toggle-btn:hover { border-color: var(--border-2); color: var(--text-0); }
+.theme-toggle-btn .icon-sun  { display: none; }
+.theme-toggle-btn .icon-moon { display: inline; }
+:root[data-theme="light"] .theme-toggle-btn .icon-sun  { display: inline; }
+:root[data-theme="light"] .theme-toggle-btn .icon-moon { display: none; }
+
+main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 28px 64px;
+}
+
+/* Welcome */
+.welcome { margin-bottom: 28px; }
+.welcome h1 {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0 0 4px;
+  color: var(--text-0);
+}
+.welcome p {
+  color: var(--text-2);
+  font-size: 15px;
+  margin: 0;
+}
+
+/* Grid layout */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 8fr 4fr;
+  gap: 24px;
+}
+@media (max-width: 980px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-lg);
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.card-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-0);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.card-head .icon-tag {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.card-head .right-link {
+  font-size: 13px;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+.card-head .right-link:hover { text-decoration: underline; }
+
+/* Saved searches grid */
+.saved-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.search-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.search-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(73,83,188,0.12);
+}
+.search-card-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-0);
+  margin: 0;
+  padding-right: 28px;
+}
+.search-card-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.chip-mini {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  font-size: 11.5px;
+  color: var(--text-1);
+  font-family: var(--mono);
+}
+.search-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: auto;
+}
+.search-card-meta .arrow { color: var(--primary); transition: transform 0.18s; }
+.search-card:hover .arrow { transform: translateX(3px); }
+.search-card-del {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: transparent;
+  border: 0;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.search-card:hover .search-card-del { opacity: 1; }
+.search-card-del:hover { color: var(--danger); background: rgba(248,113,113,0.10); }
+
+.search-empty {
+  border: 2px dashed var(--border-2);
+  border-radius: var(--radius);
+  padding: 28px 18px;
+  text-align: center;
+  color: var(--text-2);
+}
+.search-empty .big { font-size: 22px; margin-bottom: 6px; }
+.search-empty p { margin: 0; font-size: 13px; }
+.search-empty a { color: var(--primary); }
+
+/* History table */
+table.history {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+table.history th {
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+table.history td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-1);
+}
+table.history tr:hover td { background: var(--bg-2); }
+table.history tr:last-child td { border-bottom: 0; }
+.pep-mono { font-family: var(--mono); color: var(--text-0); }
+.cancer-pill {
+  background: var(--primary-soft);
+  color: var(--primary);
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: var(--mono);
+}
+.open-btn {
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-pill);
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+.open-btn:hover { border-color: var(--primary); }
+
+.history-empty {
+  padding: 28px;
+  text-align: center;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+/* Profile panel */
+.stat-card {
+  background: linear-gradient(135deg, var(--primary-strong), var(--primary));
+  color: #fff;
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  margin-bottom: 22px;
+  position: relative;
+  overflow: hidden;
+  border: 0;
+}
+.stat-card h3 { font-size: 16px; margin: 0 0 12px; font-weight: 600; }
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.stat-row .stat-label { font-size: 13px; opacity: 0.88; }
+.stat-row .stat-value { font-family: var(--mono); font-size: 26px; font-weight: 700; }
+.stat-card .blurb { font-size: 12.5px; opacity: 0.78; font-style: italic; margin: 0; }
+.stat-card::after {
+  content: '';
+  position: absolute;
+  right: -30px; bottom: -30px;
+  width: 140px; height: 140px;
+  background: rgba(255,255,255,0.10);
+  border-radius: 50%;
+  filter: blur(30px);
+}
+
+.profile-form .field { margin-bottom: 14px; }
+.profile-form label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin: 0 0 6px 12px;
+}
+.profile-form input,
+.profile-form select {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 10px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-0);
+  outline: none;
+}
+.profile-form input:focus,
+.profile-form select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn {
+  background: var(--primary);
+  color: #fff;
+  border: 0;
+  border-radius: var(--radius-pill);
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn:hover { background: var(--primary-strong); }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border-2);
+  color: var(--text-1);
+}
+.btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+.btn-danger {
+  background: transparent;
+  border: 1px solid rgba(248,113,113,0.40);
+  color: var(--danger);
+}
+.btn-danger:hover { background: rgba(248,113,113,0.10); }
+
+.alert {
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.alert.hidden { display: none; }
+.alert-error { background: rgba(248,113,113,0.10); border: 1px solid rgba(248,113,113,0.35); color: var(--danger); }
+.alert-success { background: rgba(134,239,172,0.10); border: 1px solid rgba(134,239,172,0.40); color: var(--success); }
+
+/* Account-settings collapsible sections */
+.acc-section {
+  border-top: 1px solid var(--border);
+  padding: 14px 0;
+}
+.acc-section:first-of-type { border-top: 0; padding-top: 0; }
+.acc-section > summary {
+  list-style: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-0);
+  padding: 8px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.acc-section > summary::-webkit-details-marker { display: none; }
+.acc-section > summary::after {
+  content: '▸';
+  color: var(--text-3);
+  font-size: 12px;
+  transition: transform 0.18s;
+}
+.acc-section[open] > summary::after { transform: rotate(90deg); }
+.acc-section.danger > summary { color: var(--danger); }
+.acc-section .profile-form { padding-top: 8px; }
+.acc-hint {
+  font-size: 12.5px;
+  color: var(--text-3);
+  margin: 10px 0 0;
+  line-height: 1.5;
+}
+.sessions-list { font-size: 13px; }
+.session-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.session-row:last-child { border-bottom: 0; }
+.session-row .meta { flex: 1; min-width: 0; }
+.session-row .ua {
+  font-weight: 500;
+  color: var(--text-0);
+  word-break: break-word;
+  font-size: 13px;
+}
+.session-row .when {
+  font-size: 11.5px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.session-row .current-tag {
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-left: 8px;
+}
+.session-row .revoke-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  cursor: pointer;
+  flex: none;
+  font-family: inherit;
+}
+.session-row .revoke-btn:hover { color: var(--danger); border-color: rgba(248,113,113,0.40); }
+
+footer.page-footer {
+  border-top: 1px solid var(--border);
+  padding: 22px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1280px;
+  margin: 0 auto;
+  font-size: 13px;
+  color: var(--text-3);
+  flex-wrap: wrap;
+  gap: 14px;
+}
+footer.page-footer a { color: var(--text-2); text-decoration: none; }
+footer.page-footer a:hover { color: var(--text-0); }
+</style>
+</head>
+<body>
+
+<header class="topnav">
+  <div class="topnav-inner">
+    <div style="display:flex; align-items:center; gap:24px;">
+      <a class="brand" href="index.html">ImmunoVerse</a>
+      <nav>
+        <a href="index.html">Atlas</a>
+        <a href="index.html#explorer">Explorer</a>
+        <a href="account.html">Account</a>
+      </nav>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle light / dark mode" title="Toggle theme">
+        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <div class="user-menu" id="userMenu">
+        <button type="button" class="user-chip" id="userChip" aria-haspopup="true" aria-expanded="false">
+          <span class="avatar" id="userAvatar">?</span>
+          <span class="user-chip-name" id="userName">…</span>
+          <span class="caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="user-dropdown" id="userDropdown" role="menu" hidden>
+          <div class="user-dropdown-head">
+            <div class="user-dd-name" id="ddName">…</div>
+            <div class="user-dd-email" id="ddEmail">…</div>
+          </div>
+          <a href="account.html" role="menuitem">
+            <span class="dd-icon">👤</span> Account
+          </a>
+          <a href="account.html#savedSearches" role="menuitem">
+            <span class="dd-icon">★</span> Saved searches
+          </a>
+          <a href="account.html#history" role="menuitem">
+            <span class="dd-icon">⊕</span> Recently viewed
+          </a>
+          <a href="admin.html" role="menuitem" id="ddAdminLink">
+            <span class="dd-icon">🛡</span> Admin dashboard
+          </a>
+          <button type="button" role="menuitem" id="ddFeedback">
+            <span class="dd-icon">💬</span> Send feedback
+          </button>
+          <div class="user-dropdown-sep"></div>
+          <button type="button" role="menuitem" id="ddSignOut" class="user-dd-signout">
+            <span class="dd-icon">↩</span> Sign out
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="welcome">
+  <h1 id="welcomeTitle">Welcome…</h1>
+  <p id="welcomeSub">Loading your activity…</p>
+</section>
+
+<div class="grid-2">
+
+  <div>
+    <!-- ===== Saved Searches ===== -->
+    <div class="card" id="savedSearches">
+      <div class="card-head">
+        <h2><span class="icon-tag">★</span>Saved searches</h2>
+        <a class="right-link" href="index.html#explorer">Open explorer →</a>
+      </div>
+      <div id="savedAlert" class="alert hidden"></div>
+      <div id="savedGrid" class="saved-grid"></div>
+    </div>
+
+    <!-- ===== Recently viewed peptides ===== -->
+    <div class="card" id="history">
+      <div class="card-head">
+        <h2><span class="icon-tag">⊕</span>Recently viewed peptides</h2>
+        <button id="clearHist" class="right-link" style="background:none;border:0;cursor:pointer;font:inherit;">Clear history</button>
+      </div>
+      <div id="historyAlert" class="alert hidden"></div>
+      <div id="historyContainer"></div>
+    </div>
+  </div>
+
+  <aside>
+    <!-- ===== Stat card ===== -->
+    <div class="stat-card">
+      <h3>Your activity</h3>
+      <div class="stat-row"><span class="stat-label">Peptides viewed</span><span class="stat-value" id="statPeptides">—</span></div>
+      <div class="stat-row"><span class="stat-label">Saved searches</span><span class="stat-value" id="statSearches">—</span></div>
+      <p class="blurb">Saved searches and viewed peptides sync across every device you sign in on.</p>
+    </div>
+
+    <!-- ===== Profile ===== -->
+    <div class="card">
+      <div class="card-head"><h2><span class="icon-tag">⚙</span>Profile</h2></div>
+      <div id="profileAlert" class="alert hidden"></div>
+      <form class="profile-form" onsubmit="return saveProfile(event)">
+        <div class="field">
+          <label for="pf-email">Email</label>
+          <input id="pf-email" type="email" disabled style="opacity:0.7;cursor:not-allowed;" />
+        </div>
+        <div class="field">
+          <label for="pf-name">Full name</label>
+          <input id="pf-name" type="text" />
+        </div>
+        <div class="field">
+          <label for="pf-aff">Institution</label>
+          <input id="pf-aff" type="text" />
+        </div>
+        <div class="field">
+          <label for="pf-role">Research role</label>
+          <select id="pf-role">
+            <option value="">Select…</option>
+            <option>Principal Investigator</option>
+            <option>Postdoctoral Fellow</option>
+            <option>Graduate Student</option>
+            <option>Bioinformatician</option>
+            <option>Clinical Researcher</option>
+            <option>Data Scientist</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="pf-int">Primary interest</label>
+          <select id="pf-int">
+            <option value="">Select…</option>
+            <option>HLA Ligandome Analysis</option>
+            <option>Neoantigen Discovery</option>
+            <option>Proteogenomics</option>
+            <option>T-cell Receptor Mapping</option>
+            <option>Non-canonical Antigens</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn" type="submit" id="saveProfileBtn">Save changes</button>
+          <button class="btn btn-ghost" type="button" onclick="signOut()">Sign out</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== Account settings ===== -->
+    <div class="card">
+      <div class="card-head"><h2><span class="icon-tag">🔒</span>Account settings</h2></div>
+
+      <!-- Change password -->
+      <details class="acc-section" open>
+        <summary>Change password</summary>
+        <div id="pwdAlert" class="alert hidden"></div>
+        <form class="profile-form" onsubmit="return changePassword(event)">
+          <div class="field">
+            <label for="cp-current">Current password</label>
+            <input id="cp-current" type="password" autocomplete="current-password" required />
+          </div>
+          <div class="field">
+            <label for="cp-new">New password</label>
+            <input id="cp-new" type="password" minlength="8" autocomplete="new-password" required />
+          </div>
+          <div class="field">
+            <label for="cp-confirm">Confirm new password</label>
+            <input id="cp-confirm" type="password" minlength="8" autocomplete="new-password" required />
+          </div>
+          <button class="btn" type="submit" id="cpSubmit">Update password</button>
+          <p class="acc-hint">Updating your password signs out every other device, but keeps this browser signed in.</p>
+        </form>
+      </details>
+
+      <!-- Sessions -->
+      <details class="acc-section">
+        <summary>Active sessions</summary>
+        <div id="sessionsAlert" class="alert hidden"></div>
+        <div id="sessionsList" class="sessions-list">Loading…</div>
+        <button class="btn btn-ghost" type="button" onclick="revokeAll()" style="margin-top:10px;">Sign out other devices</button>
+      </details>
+
+      <!-- Danger zone -->
+      <details class="acc-section danger">
+        <summary>Delete account</summary>
+        <div id="delAlert" class="alert hidden"></div>
+        <p class="acc-hint" style="color:var(--danger);">
+          Permanent. Deletes your profile, every saved search, and your viewed-peptide history. Cannot be undone.
+        </p>
+        <form class="profile-form" onsubmit="return deleteAccount(event)">
+          <div class="field">
+            <label for="del-pwd">Confirm with your password</label>
+            <input id="del-pwd" type="password" autocomplete="current-password" required />
+          </div>
+          <button class="btn btn-danger" type="submit" id="delSubmit">Delete my account</button>
+        </form>
+      </details>
+    </div>
+  </aside>
+</div>
+
+</main>
+
+<!-- ===== Feedback modal (shared markup with index.html) ===== -->
+<div id="ivFbBackdrop" class="iv-fb-backdrop" hidden>
+  <div class="iv-fb-card" role="dialog" aria-labelledby="ivFbTitle" aria-modal="true">
+    <button class="iv-fb-close" type="button" aria-label="Close" onclick="ivCloseFeedback()">×</button>
+    <h3 id="ivFbTitle">Send feedback</h3>
+    <p class="iv-fb-lede">Bugs, feature ideas, data issues — anything helps. Goes straight to the team.</p>
+    <div id="ivFbAlert" class="iv-fb-alert" hidden></div>
+    <form id="ivFbForm" onsubmit="return ivSubmitFeedback(event)">
+      <label class="iv-fb-lbl" for="ivFbType">Type</label>
+      <select id="ivFbType" required>
+        <option value="feedback">General feedback</option>
+        <option value="bug">Bug report</option>
+        <option value="feature">Feature request</option>
+        <option value="data_issue">Data / annotation issue</option>
+        <option value="other">Other</option>
+      </select>
+      <div class="iv-fb-row">
+        <div>
+          <label class="iv-fb-lbl" for="ivFbName">Your name</label>
+          <input id="ivFbName" type="text" placeholder="Optional" />
+        </div>
+        <div>
+          <label class="iv-fb-lbl" for="ivFbEmail">Email</label>
+          <input id="ivFbEmail" type="email" required />
+        </div>
+      </div>
+      <label class="iv-fb-lbl" for="ivFbSubject">Subject</label>
+      <input id="ivFbSubject" type="text" required minlength="2" maxlength="200" placeholder="Short summary" />
+      <label class="iv-fb-lbl" for="ivFbMessage">Message <span class="iv-fb-counter" id="ivFbCounter">0 / 10 min</span></label>
+      <textarea id="ivFbMessage" rows="5" required minlength="10" maxlength="4000" oninput="ivFbUpdateCounter()"></textarea>
+      <div class="iv-fb-actions">
+        <button type="button" class="iv-fb-btn ghost" onclick="ivCloseFeedback()">Cancel</button>
+        <button type="submit" class="iv-fb-btn primary" id="ivFbSubmit">Send</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+/* Feedback modal — same look-and-feel as index.html */
+.iv-fb-backdrop { position: fixed; inset: 0; background: rgba(5,7,14,0.62); z-index: 200; display:flex; align-items:center; justify-content:center; padding:18px; backdrop-filter: blur(4px); }
+.iv-fb-backdrop[hidden] { display: none !important; }
+.iv-fb-card { width:100%; max-width:540px; max-height:92vh; overflow-y:auto; background: var(--bg-1); border:1px solid var(--border); border-radius:18px; padding:28px 28px 22px; box-shadow: var(--shadow-lg); position:relative; }
+.iv-fb-card h3 { font-size:20px; margin:0 0 4px; color: var(--text-0); font-weight:700; }
+.iv-fb-lede { color: var(--text-2); font-size:13.5px; margin:0 0 18px; line-height:1.55; }
+.iv-fb-close { position:absolute; top:14px; right:14px; width:32px; height:32px; background:transparent; border:1px solid var(--border); border-radius:50%; color: var(--text-2); font-size:18px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+.iv-fb-close:hover { color: var(--text-0); border-color: var(--border-2); }
+.iv-fb-lbl { display:block; font-size:11px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color: var(--text-2); margin:12px 0 6px; }
+.iv-fb-card input, .iv-fb-card select, .iv-fb-card textarea { width:100%; background: var(--bg-2); border:1px solid var(--border); border-radius:12px; padding:11px 14px; font-family:inherit; font-size:14px; color: var(--text-0); outline:none; }
+.iv-fb-card textarea { resize:vertical; min-height:110px; line-height:1.5; border-radius:14px; }
+.iv-fb-card input:focus, .iv-fb-card select:focus, .iv-fb-card textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.iv-fb-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media (max-width: 480px) { .iv-fb-row { grid-template-columns: 1fr; } }
+.iv-fb-counter { float:right; font-size:11px; font-weight:600; color: var(--text-3); letter-spacing:0.04em; }
+.iv-fb-counter.ok { color: var(--success); }
+.iv-fb-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+.iv-fb-btn { border:0; border-radius:9999px; padding:9px 18px; font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; }
+.iv-fb-btn.primary { background: var(--primary); color:#fff; }
+.iv-fb-btn.primary:hover { background: var(--primary-strong); }
+.iv-fb-btn.ghost { background:transparent; color: var(--text-1); border:1px solid var(--border-2); }
+.iv-fb-btn.ghost:hover { border-color: var(--primary); color: var(--primary); }
+.iv-fb-btn[disabled] { opacity:0.5; cursor:not-allowed; }
+.iv-fb-alert { padding:10px 14px; border-radius:12px; font-size:13px; margin-bottom:12px; }
+.iv-fb-alert.error { background: rgba(248,113,113,0.10); border:1px solid rgba(248,113,113,0.35); color: var(--danger); }
+.iv-fb-alert.success { background: rgba(134,239,172,0.10); border:1px solid rgba(134,239,172,0.40); color: var(--success); }
+</style>
+
+<footer class="page-footer">
+  <div>© 2026 ImmunoVerse · A pan-cancer atlas of therapeutic T-cell targets.</div>
+  <div style="display:flex; gap:14px;">
+    <a href="index.html">Explorer</a>
+    <a href="#">Privacy</a>
+    <a href="#">Data Governance</a>
+  </div>
+</footer>
+
+<script>
+window.IMMUNOVERSE_AUTH_BASE = window.IMMUNOVERSE_AUTH_BASE || "https://auth.immunoverse-chat.com";
+const AUTH = window.IMMUNOVERSE_AUTH_BASE.replace(/\/+$/, '');
+
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function alert(boxId, msg, kind) {
+  const el = $(boxId);
+  el.textContent = msg;
+  el.className = 'alert alert-' + (kind || 'error');
+  el.classList.remove('hidden');
+}
+function clearAlert(boxId) { $(boxId).classList.add('hidden'); }
+
+function authedFetch(path, opts) {
+  opts = opts || {};
+  const headers = Object.assign({}, opts.headers || {});
+  // Belt-and-braces: also send the sessionStorage token as Bearer for browsers
+  // that drop cross-site cookies (Safari ITP / locked-down Chrome flags).
+  try {
+    const tok = sessionStorage.getItem('iv_portal_access');
+    if (tok && !headers.Authorization) headers.Authorization = 'Bearer ' + tok;
+  } catch (e) {}
+  if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+  return fetch(AUTH + path, Object.assign({ credentials: 'include' }, opts, { headers }));
+}
+
+function timeAgo(iso) {
+  if (!iso) return '—';
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return '—';
+  const dt = (Date.now() - t) / 1000;
+  if (dt < 60) return 'just now';
+  if (dt < 3600) return Math.round(dt/60) + ' min ago';
+  if (dt < 86400) return Math.round(dt/3600) + ' h ago';
+  if (dt < 86400*7) return Math.round(dt/86400) + ' d ago';
+  return new Date(iso).toLocaleDateString();
+}
+
+function initials(name, email) {
+  const s = (name || email || '?').trim();
+  if (!s) return '?';
+  const parts = s.split(/[\s@.]+/).filter(Boolean);
+  const first = parts[0]?.[0] || '?';
+  const second = parts.length > 1 ? parts[parts.length-1][0] : '';
+  return (first + second).toUpperCase().slice(0, 2);
+}
+
+// ---------- Boot ----------
+let CURRENT_USER = null;
+
+async function boot() {
+  const me = await authedFetch('/api/portal/auth/me');
+  if (!me.ok) {
+    location.replace('login.html?return=' + encodeURIComponent('account.html'));
+    return;
+  }
+  CURRENT_USER = await me.json();
+  paintUser(CURRENT_USER);
+  await Promise.all([loadSaved(), loadHistory(), loadSessions()]);
+}
+
+function paintUser(u) {
+  const display = u.name || u.email.split('@')[0];
+  $('userName').textContent = display;
+  $('userAvatar').textContent = initials(u.name, u.email);
+  $('ddName').textContent = display;
+  $('ddEmail').textContent = u.email;
+  // Admin link is shown to every signed-in user; the click handler decides
+  // whether to navigate or to bounce to admin sign-in.
+  const adm = $('ddAdminLink');
+  if (adm) {
+    if (u.role === 'admin') {
+      adm.removeAttribute('data-needs-elevation');
+      adm.title = 'Portal admin dashboard';
+    } else {
+      adm.setAttribute('data-needs-elevation', '1');
+      adm.title = 'Requires admin sign-in';
+    }
+  }
+  $('welcomeTitle').textContent = 'Welcome back, ' + display.split(' ')[0] + '.';
+  $('welcomeSub').textContent = u.affiliation
+    ? `Signed in as ${u.email} · ${u.affiliation}`
+    : `Signed in as ${u.email}`;
+  // Pre-fill profile form
+  $('pf-email').value = u.email || '';
+  $('pf-name').value = u.name || '';
+  $('pf-aff').value = u.affiliation || '';
+  $('pf-role').value = u.research_role || '';
+  $('pf-int').value = u.primary_interest || '';
+}
+
+// ---------- Saved searches ----------
+
+async function loadSaved() {
+  const grid = $('savedGrid');
+  grid.innerHTML = '<div class="search-empty"><div class="big">…</div><p>Loading saved searches…</p></div>';
+  try {
+    const r = await authedFetch('/api/portal/saved_searches');
+    if (!r.ok) throw new Error('Failed');
+    const items = await r.json();
+    $('statSearches').textContent = items.length;
+    if (!items.length) {
+      grid.innerHTML = `<div class="search-empty">
+        <div class="big">★</div>
+        <p>No saved searches yet. Open the <a href="index.html#explorer">explorer</a>, set a filter, and click the bookmark button to save it here.</p>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = items.map(s => {
+      const url = buildExplorerUrl(s.params || {});
+      const chips = renderParamChips(s.params || {});
+      const last = s.last_run_at ? timeAgo(s.last_run_at) : ('Created ' + timeAgo(s.created_at));
+      return `<div class="search-card" data-id="${esc(s.id)}" data-url="${esc(url)}">
+        <button class="search-card-del" data-del="${esc(s.id)}" title="Delete">×</button>
+        <h3 class="search-card-title">${esc(s.label)}</h3>
+        <div class="search-card-chips">${chips}</div>
+        <div class="search-card-meta"><span>Last run: ${esc(last)}</span><span class="arrow">→</span></div>
+      </div>`;
+    }).join('');
+    // Wire clicks
+    grid.querySelectorAll('.search-card').forEach(card => {
+      card.addEventListener('click', async (ev) => {
+        if (ev.target.matches('[data-del]')) return;
+        const id = card.dataset.id;
+        const url = card.dataset.url;
+        try { await authedFetch('/api/portal/saved_searches/' + id + '/touch', { method: 'POST' }); } catch(e) {}
+        location.href = url;
+      });
+    });
+    grid.querySelectorAll('[data-del]').forEach(b => {
+      b.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        if (!confirm('Delete this saved search?')) return;
+        const id = b.dataset.del;
+        const r = await authedFetch('/api/portal/saved_searches/' + id, { method: 'DELETE' });
+        if (r.ok) loadSaved();
+      });
+    });
+  } catch (err) {
+    alert('savedAlert', 'Failed to load saved searches: ' + err.message, 'error');
+    grid.innerHTML = '';
+  }
+}
+
+function buildExplorerUrl(params) {
+  const p = new URLSearchParams();
+  for (const k of ['cancer','pep','gene','hla','class','safe','uniq','open']) {
+    if (params[k]) p.set(k, params[k]);
+  }
+  const qs = p.toString();
+  return 'index.html' + (qs ? '#explorer?' + qs : '');
+}
+function renderParamChips(params) {
+  const chips = [];
+  for (const [k, v] of Object.entries(params)) {
+    if (!v) continue;
+    chips.push(`<span class="chip-mini">${esc(k)}=${esc(v)}</span>`);
+  }
+  return chips.slice(0, 4).join('');
+}
+
+// ---------- History ----------
+
+async function loadHistory() {
+  const wrap = $('historyContainer');
+  wrap.innerHTML = '<div class="history-empty">Loading…</div>';
+  try {
+    const r = await authedFetch('/api/portal/history?limit=50');
+    if (!r.ok) throw new Error('Failed');
+    const items = await r.json();
+    $('statPeptides').textContent = items.length;
+    if (!items.length) {
+      wrap.innerHTML = `<div class="history-empty">No peptides viewed yet. Open the <a href="index.html#explorer" style="color:var(--primary)">explorer</a> and click any peptide row.</div>`;
+      return;
+    }
+    wrap.innerHTML = `<table class="history">
+      <thead><tr><th>Cancer</th><th>Peptide</th><th>Gene</th><th>Class</th><th>Viewed</th><th></th></tr></thead>
+      <tbody>${items.map(ev => `<tr>
+        <td><span class="cancer-pill">${esc(ev.cancer)}</span></td>
+        <td><span class="pep-mono">${esc(ev.peptide)}</span></td>
+        <td>${esc(ev.gene || '—')}</td>
+        <td>${esc(ev.cls || '—')}</td>
+        <td>${esc(timeAgo(ev.viewed_at))}</td>
+        <td style="text-align:right;">
+          <a class="open-btn" href="index.html#explorer?cancer=${encodeURIComponent(ev.cancer)}&open=${encodeURIComponent(ev.peptide)}">Open →</a>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch (err) {
+    alert('historyAlert', 'Failed to load history: ' + err.message, 'error');
+    wrap.innerHTML = '';
+  }
+}
+
+$('clearHist').addEventListener('click', async () => {
+  if (!confirm('Clear all peptide-view history? This cannot be undone.')) return;
+  const r = await authedFetch('/api/portal/history', { method: 'DELETE' });
+  if (r.ok) loadHistory();
+});
+
+// ---------- Profile ----------
+
+async function saveProfile(ev) {
+  ev.preventDefault();
+  clearAlert('profileAlert');
+  const btn = $('saveProfileBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const r = await authedFetch('/api/portal/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        name: $('pf-name').value.trim() || null,
+        affiliation: $('pf-aff').value.trim() || null,
+        research_role: $('pf-role').value || null,
+        primary_interest: $('pf-int').value || null,
+      }),
+    });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      throw new Error(d.detail || 'Update failed');
+    }
+    const updated = await r.json();
+    CURRENT_USER = updated;
+    paintUser(updated);
+    alert('profileAlert', 'Profile updated.', 'success');
+  } catch (err) {
+    alert('profileAlert', err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save changes';
+  }
+  return false;
+}
+
+async function signOut() {
+  try { await authedFetch('/api/portal/auth/logout', { method: 'POST' }); } catch (e) {}
+  try { sessionStorage.removeItem('iv_portal_access'); } catch (e) {}
+  location.href = 'index.html';
+}
+
+// ---------- Change password ----------
+async function changePassword(ev) {
+  ev.preventDefault();
+  clearAlert('pwdAlert');
+  const cur = $('cp-current').value;
+  const nu  = $('cp-new').value;
+  const cf  = $('cp-confirm').value;
+  if (nu !== cf) { alert('pwdAlert', 'New passwords do not match.', 'error'); return false; }
+  const btn = $('cpSubmit');
+  btn.disabled = true; btn.textContent = 'Updating…';
+  try {
+    const r = await authedFetch('/api/portal/auth/me/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ current_password: cur, new_password: nu, confirm_new_password: cf }),
+    });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      throw new Error(d.detail || 'Update failed');
+    }
+    $('cp-current').value = $('cp-new').value = $('cp-confirm').value = '';
+    alert('pwdAlert', 'Password updated. Other devices have been signed out.', 'success');
+    // Re-fetch session list so the user sees that only their own session remains.
+    loadSessions();
+  } catch (err) {
+    alert('pwdAlert', err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Update password';
+  }
+  return false;
+}
+
+// ---------- Sessions ----------
+async function loadSessions() {
+  const wrap = $('sessionsList');
+  wrap.textContent = 'Loading…';
+  try {
+    const r = await authedFetch('/api/portal/auth/me/sessions');
+    if (!r.ok) throw new Error('Failed to load sessions');
+    const sessions = await r.json();
+    if (!sessions.length) {
+      wrap.innerHTML = '<div class="acc-hint">No active sessions.</div>';
+      return;
+    }
+    wrap.innerHTML = sessions.map(s => {
+      const ua = s.user_agent ? prettyUA(s.user_agent) : 'Unknown browser';
+      const when = s.last_used_at ? 'Last used ' + timeAgo(s.last_used_at) : 'Created ' + timeAgo(s.created_at);
+      const ip = s.ip_address ? ' · ' + esc(s.ip_address) : '';
+      const tag = s.is_current ? '<span class="current-tag">This device</span>' : '';
+      const btn = s.is_current ? '' : `<button class="revoke-btn" data-h="${esc(s.token_hash)}">Sign out</button>`;
+      return `<div class="session-row">
+        <div class="meta">
+          <div class="ua">${esc(ua)} ${tag}</div>
+          <div class="when">${esc(when)}${ip}</div>
+        </div>
+        ${btn}
+      </div>`;
+    }).join('');
+    wrap.querySelectorAll('.revoke-btn').forEach(b => {
+      b.addEventListener('click', async () => {
+        const h = b.dataset.h;
+        const r = await authedFetch('/api/portal/auth/me/sessions/' + h, { method: 'DELETE' });
+        if (r.ok) loadSessions();
+      });
+    });
+  } catch (err) {
+    alert('sessionsAlert', err.message, 'error');
+    wrap.innerHTML = '';
+  }
+}
+
+function prettyUA(ua) {
+  // Best-effort, no library — just pick the readable parts.
+  if (/iPhone|iPad/.test(ua)) return 'iOS · ' + (/Safari/.test(ua) ? 'Safari' : 'Browser');
+  if (/Android/.test(ua)) return 'Android · ' + (/Chrome/.test(ua) ? 'Chrome' : 'Browser');
+  if (/Edg\//.test(ua)) return 'Edge';
+  if (/Chrome\//.test(ua)) return 'Chrome';
+  if (/Firefox\//.test(ua)) return 'Firefox';
+  if (/Safari\//.test(ua)) return 'Safari';
+  return ua.slice(0, 80);
+}
+
+async function revokeAll() {
+  if (!confirm('Sign out every other device? This browser stays signed in.')) return;
+  const r = await authedFetch('/api/portal/auth/me/revoke-all', { method: 'POST' });
+  if (r.ok) loadSessions();
+}
+
+// ---------- Delete account ----------
+async function deleteAccount(ev) {
+  ev.preventDefault();
+  clearAlert('delAlert');
+  if (!confirm("This permanently deletes your account, saved searches, and history. Type DELETE in the next prompt to confirm.")) return false;
+  const typed = prompt('Type DELETE to confirm.');
+  if (typed !== 'DELETE') { alert('delAlert', 'Cancelled — confirmation text did not match.', 'error'); return false; }
+  const btn = $('delSubmit');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  try {
+    const r = await authedFetch('/api/portal/auth/me', {
+      method: 'DELETE',
+      body: JSON.stringify({ password: $('del-pwd').value }),
+    });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      throw new Error(d.detail || 'Delete failed');
+    }
+    try { sessionStorage.removeItem('iv_portal_access'); } catch(e) {}
+    alert('delAlert', 'Account deleted. Redirecting…', 'success');
+    setTimeout(() => { location.href = 'index.html'; }, 1200);
+  } catch (err) {
+    alert('delAlert', err.message, 'error');
+    btn.disabled = false; btn.textContent = 'Delete my account';
+  }
+  return false;
+}
+
+// Make handlers globally accessible (form onsubmit refs them).
+window.signOut = signOut;
+window.saveProfile = saveProfile;
+window.changePassword = changePassword;
+window.deleteAccount = deleteAccount;
+window.revokeAll = revokeAll;
+
+// User-chip dropdown menu — click to toggle, click outside / Esc to close.
+(function () {
+  const chip = $('userChip');
+  const dd = $('userDropdown');
+  if (!chip || !dd) return;
+  function close() { dd.hidden = true; chip.setAttribute('aria-expanded', 'false'); }
+  function open()  { dd.hidden = false; chip.setAttribute('aria-expanded', 'true'); }
+  chip.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    dd.hidden ? open() : close();
+  });
+  document.addEventListener('click', (ev) => {
+    if (!dd.hidden && !dd.contains(ev.target) && ev.target !== chip) close();
+  });
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape' && !dd.hidden) close();
+  });
+  $('ddSignOut').addEventListener('click', signOut);
+  const fb = $('ddFeedback');
+  if (fb) fb.addEventListener('click', () => { close(); ivOpenFeedback(); });
+
+  // Admin dashboard link — elevate-on-click for non-admins.
+  const adm = $('ddAdminLink');
+  if (adm) {
+    adm.addEventListener('click', async (ev) => {
+      if (CURRENT_USER && CURRENT_USER.role === 'admin') return; // let nav happen
+      ev.preventDefault();
+      const yes = confirm(
+        "This account doesn't have admin access.\n\n" +
+        "Sign in with an admin account?\n\n" +
+        "(You'll be signed out of the current account first.)"
+      );
+      if (!yes) return;
+      try { await authedFetch('/api/portal/auth/logout', { method: 'POST' }); } catch(e) {}
+      try { sessionStorage.removeItem('iv_portal_access'); } catch(e) {}
+      location.href = 'login.html?return=' + encodeURIComponent('admin.html');
+    });
+  }
+})();
+
+// ---------- Feedback modal (same JS as index.html) ----------
+window.ivOpenFeedback = function () {
+  const bd = $('ivFbBackdrop');
+  if (!bd) return;
+  if (CURRENT_USER) {
+    if (!$('ivFbEmail').value) $('ivFbEmail').value = CURRENT_USER.email || '';
+    if (!$('ivFbName').value)  $('ivFbName').value  = CURRENT_USER.name  || '';
+  }
+  $('ivFbAlert').hidden = true;
+  bd.hidden = false;
+  setTimeout(() => { const s = $('ivFbSubject'); if (s) s.focus(); }, 30);
+};
+window.ivCloseFeedback = function () {
+  const bd = $('ivFbBackdrop');
+  if (bd) bd.hidden = true;
+};
+window.ivFbUpdateCounter = function () {
+  const ta = $('ivFbMessage'); const c = $('ivFbCounter');
+  if (!ta || !c) return;
+  const n = (ta.value||'').length;
+  c.textContent = n + ' / 10 min';
+  c.classList.toggle('ok', n >= 10);
+};
+window.ivSubmitFeedback = async function (ev) {
+  ev.preventDefault();
+  const alertEl = $('ivFbAlert'); alertEl.hidden = true;
+  const btn = $('ivFbSubmit');
+  btn.disabled = true; const origText = btn.textContent; btn.textContent = 'Sending…';
+  try {
+    const r = await authedFetch('/api/portal/auth/contact', {
+      method: 'POST',
+      body: JSON.stringify({
+        inquiry_type: $('ivFbType').value,
+        name:    $('ivFbName').value.trim() || null,
+        email:   $('ivFbEmail').value.trim(),
+        subject: $('ivFbSubject').value.trim(),
+        message: $('ivFbMessage').value.trim(),
+        page_url: location.href,
+      }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.detail || 'Submission failed');
+    $('ivFbSubject').value = ''; $('ivFbMessage').value = ''; ivFbUpdateCounter();
+    alertEl.textContent = data.message || 'Thanks — message received.';
+    alertEl.className = 'iv-fb-alert success'; alertEl.hidden = false;
+    setTimeout(() => ivCloseFeedback(), 1500);
+  } catch (err) {
+    alertEl.textContent = err.message || 'Could not send.';
+    alertEl.className = 'iv-fb-alert error'; alertEl.hidden = false;
+  } finally {
+    btn.disabled = false; btn.textContent = origText;
+  }
+  return false;
+};
+
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sign in — ImmunoVerse Portal</title>
+<meta name="description" content="Sign in to the ImmunoVerse portal: pan-cancer atlas of therapeutic T-cell targets. Save searches and track viewed peptides across devices." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('iv.theme');
+      if (saved === 'light' || saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch (e) {}
+  })();
+  function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    var next = cur === 'light' ? 'dark' : 'light';
+    if (next === 'dark') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('iv.theme', next); } catch (e) {}
+  }
+</script>
+<style>
+:root {
+  --bg-0: #05070e;
+  --bg-1: #0a0e1a;
+  --bg-2: #0f1424;
+  --bg-3: #151b2e;
+  --bg-card: rgba(20, 26, 45, 0.72);
+  --border: rgba(120, 150, 220, 0.14);
+  --border-2: rgba(120, 150, 220, 0.28);
+  --text-0: #f2f5ff;
+  --text-1: #c8cfe4;
+  --text-2: #8a93ad;
+  --text-3: #5a6380;
+  --accent-cyan: #22d3ee;
+  --accent-violet: #a78bfa;
+  --primary: #818cf8;
+  --primary-strong: #4953bc;
+  --primary-soft: rgba(129,140,248,0.18);
+  --link: #22d3ee;
+  --danger: #f87171;
+  --success: #86efac;
+  --grad-primary: linear-gradient(135deg, #22d3ee 0%, #818cf8 45%, #c084fc 100%);
+  --grad-hero: radial-gradient(900px 600px at 25% 15%, rgba(34,211,238,0.18), transparent 60%),
+               radial-gradient(900px 600px at 85% 25%, rgba(167,139,250,0.22), transparent 60%),
+               radial-gradient(700px 500px at 60% 85%, rgba(244,114,182,0.14), transparent 60%);
+  --shadow-lg: 0 20px 60px rgba(5,8,20,0.55), 0 2px 8px rgba(5,8,20,0.4);
+  --radius: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 9999px;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+:root[data-theme="light"] {
+  --bg-0: #f7f9fb;
+  --bg-1: #ffffff;
+  --bg-2: #f0f3fa;
+  --bg-3: #e7ecf6;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --border: rgba(60, 80, 140, 0.14);
+  --border-2: rgba(60, 80, 140, 0.28);
+  --text-0: #0b1220;
+  --text-1: #1f2a44;
+  --text-2: #4a5578;
+  --text-3: #8090b0;
+  --primary: #4953bc;
+  --primary-strong: #2f3aa3;
+  --primary-soft: rgba(129,140,248,0.18);
+  --link: #0369a1;
+  --grad-primary: linear-gradient(135deg, #0891b2 0%, #6366f1 45%, #9333ea 100%);
+  --grad-hero: radial-gradient(900px 600px at 25% 15%, rgba(8,145,178,0.10), transparent 60%),
+               radial-gradient(900px 600px at 85% 25%, rgba(109,40,217,0.10), transparent 60%);
+  --shadow-lg: 0 20px 60px rgba(15,23,42,0.12), 0 2px 8px rgba(15,23,42,0.08);
+}
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; }
+body {
+  min-height: 100vh;
+  background: var(--bg-0);
+  background-image: var(--grad-hero);
+  color: var(--text-0);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.portal-card {
+  width: 100%;
+  max-width: 1180px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  min-height: 720px;
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(14px);
+}
+@media (max-width: 880px) {
+  .portal-card { grid-template-columns: 1fr; min-height: auto; }
+  .brand-panel { display: none !important; }
+}
+
+/* ===== Left brand panel ===== */
+.brand-panel {
+  position: relative;
+  background:
+    radial-gradient(700px 500px at 30% 20%, rgba(167,139,250,0.45), transparent 65%),
+    radial-gradient(600px 400px at 80% 70%, rgba(34,211,238,0.30), transparent 65%),
+    linear-gradient(160deg, #2f3aa3 0%, #4953bc 60%, #6366f1 100%);
+  color: #f8f9ff;
+  padding: 44px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+.brand-panel::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url('QYNPIRTTF_portal.svg') center/cover no-repeat;
+  opacity: 0.14;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.brand-panel > * { position: relative; z-index: 1; }
+.brand-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 12px;
+}
+.brand-tagline {
+  font-size: 16px;
+  line-height: 1.55;
+  max-width: 320px;
+  opacity: 0.88;
+  margin: 0;
+}
+.brand-feature {
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 18px;
+  padding: 18px 20px;
+  max-width: 340px;
+}
+.brand-feature .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,0.16);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+.brand-feature h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+.brand-feature p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+  opacity: 0.82;
+}
+
+/* ===== Right form panel ===== */
+.form-panel {
+  padding: 44px 48px;
+  background: var(--bg-1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.form-panel-inner {
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+}
+.form-header { margin-bottom: 28px; }
+.form-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 6px;
+  color: var(--text-0);
+}
+.form-header p {
+  font-size: 14px;
+  color: var(--text-2);
+  margin: 0;
+}
+
+/* Tabs */
+.tab-strip {
+  display: inline-flex;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 4px;
+  margin-bottom: 24px;
+}
+.tab-strip button {
+  background: transparent;
+  border: 0;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.tab-strip button.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(73,83,188,0.25);
+}
+
+/* Fields */
+.field { margin-bottom: 14px; }
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+@media (max-width: 520px) {
+  .field-row { grid-template-columns: 1fr; }
+  .form-panel { padding: 32px 24px; }
+}
+.label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin: 0 0 6px 14px;
+}
+.input, select.input {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 12px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-0);
+  transition: all 0.18s ease;
+  outline: none;
+}
+.input::placeholder { color: var(--text-3); }
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path fill='%238a93ad' d='M6 8L0 0h12z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-size: 10px;
+  padding-right: 40px;
+}
+.input-row {
+  position: relative;
+}
+.input-row .toggle-pwd {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: 0;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+  line-height: 1;
+}
+.input-row .toggle-pwd:hover { color: var(--text-1); }
+
+/* SSO + divider */
+.sso-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-pill);
+  padding: 12px 18px;
+  color: var(--text-0);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.sso-btn:hover { background: var(--bg-3); }
+.sso-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 18px 0;
+}
+.divider hr {
+  flex: 1;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+.divider span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+/* Submit */
+.submit-btn {
+  width: 100%;
+  background: var(--primary);
+  color: #fff;
+  border: 0;
+  border-radius: var(--radius-pill);
+  padding: 14px 18px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  margin-top: 10px;
+  box-shadow: 0 8px 22px rgba(73,83,188,0.30);
+}
+.submit-btn:hover:not([disabled]) {
+  background: var(--primary-strong);
+  transform: translateY(-1px);
+}
+.submit-btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Alerts */
+.alert {
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.alert.hidden { display: none; }
+.alert-error {
+  background: rgba(248,113,113,0.10);
+  border: 1px solid rgba(248,113,113,0.35);
+  color: var(--danger);
+}
+.alert-success {
+  background: rgba(134,239,172,0.10);
+  border: 1px solid rgba(134,239,172,0.40);
+  color: var(--success);
+}
+.alert-info {
+  background: var(--primary-soft);
+  border: 1px solid var(--border-2);
+  color: var(--text-1);
+}
+
+/* Footer */
+.form-footer {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.form-footer p {
+  font-size: 12px;
+  color: var(--text-3);
+  margin: 0;
+  flex: 1 1 220px;
+}
+.form-footer .links {
+  display: flex;
+  gap: 14px;
+}
+.form-footer a {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--primary);
+  text-decoration: none;
+}
+.form-footer a:hover { text-decoration: underline; }
+
+.muted-link {
+  color: var(--text-2);
+  font-size: 13px;
+  text-decoration: none;
+}
+.muted-link:hover { color: var(--text-0); }
+.muted-link.primary { color: var(--primary); }
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+  text-decoration: none;
+  margin-bottom: 24px;
+}
+.back-link:hover { color: var(--text-0); }
+
+/* Floating theme toggle in the top-right of the page. */
+.theme-fab {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 80;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  cursor: pointer;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  transition: all 0.18s ease;
+}
+.theme-fab:hover { border-color: var(--border-2); color: var(--text-0); transform: scale(1.05); }
+.theme-fab .icon-sun  { display: none; }
+.theme-fab .icon-moon { display: inline; }
+:root[data-theme="light"] .theme-fab .icon-sun  { display: inline; }
+:root[data-theme="light"] .theme-fab .icon-moon { display: none; }
+
+/* ===== Institutional / Individual sub-tabs (within Create account) ===== */
+.sub-tab-strip {
+  display: inline-flex;
+  border-bottom: 1px solid var(--border);
+  width: 100%;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+.sub-tab-strip button {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 2px 10px;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color 0.18s, border-color 0.18s;
+}
+.sub-tab-strip button.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* Hint banner showing which path a typed email belongs to. */
+.email-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  border: 1px solid var(--border-2);
+  color: var(--text-1);
+  margin: 0 0 14px;
+}
+.email-hint.warn {
+  background: rgba(251,191,36,0.10);
+  border-color: rgba(251,191,36,0.40);
+  color: #fbbf24;
+}
+:root[data-theme="light"] .email-hint.warn { color: #b45309; background: rgba(251,191,36,0.10); border-color: rgba(180,83,9,0.30); }
+.email-hint .h-icon { flex: none; font-size: 16px; line-height: 1.2; }
+.email-hint b { color: var(--text-0); }
+
+/* Reason textarea used by individual / request-access flow */
+.field textarea.input {
+  border-radius: 16px;
+  padding: 12px 18px;
+  min-height: 120px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.reason-counter {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  float: right;
+  margin-right: 14px;
+}
+.reason-counter.ok { color: var(--success); }
+</style>
+</head>
+<body>
+
+<button class="theme-fab" onclick="toggleTheme()" aria-label="Toggle light / dark mode" title="Toggle theme">
+  <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+  <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+</button>
+
+<main class="portal-card">
+
+  <!-- ===== Left: brand panel ===== -->
+  <section class="brand-panel" aria-hidden="true">
+    <div>
+      <h2 class="brand-title">ImmunoVerse</h2>
+      <p class="brand-tagline">
+        Advancing cancer immunotherapy through high-precision immunopeptidomics
+        across 21 cancer types and 16,687 tumor-specific T-cell targets.
+      </p>
+    </div>
+    <div class="brand-feature">
+      <span class="icon">🔒</span>
+      <h3>Your atlas, saved.</h3>
+      <p>
+        Bookmark filtered views of the explorer, track every peptide you open,
+        and pick up across devices. Stored against your account in compliance
+        with academic data-governance norms.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== Right: form panel ===== -->
+  <section class="form-panel">
+    <div class="form-panel-inner">
+
+      <a href="index.html" class="back-link">← Back to explorer</a>
+
+      <div class="form-header">
+        <h1 id="formTitle">Sign in</h1>
+        <p id="formSub">Welcome back — your saved searches and viewed peptides are waiting.</p>
+      </div>
+
+      <div class="tab-strip" role="tablist">
+        <button id="tabSignin" class="active" onclick="switchMode('signin')" type="button">Sign in</button>
+        <button id="tabCreate" onclick="switchMode('register')" type="button">Create account</button>
+      </div>
+
+      <div id="alert" class="alert hidden" role="alert"></div>
+
+      <!-- Sign in form -->
+      <form id="signinForm" onsubmit="return handleSignin(event)">
+        <button type="button" class="sso-btn" disabled title="Coming soon">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continue with Google SSO
+        </button>
+        <div class="divider"><hr><span>or with email</span><hr></div>
+
+        <div class="field">
+          <label class="label" for="si-email">Email</label>
+          <input id="si-email" class="input" name="email" type="email" autocomplete="email" placeholder="you@institute.edu" required />
+        </div>
+        <div class="field">
+          <label class="label" for="si-password">Password</label>
+          <div class="input-row">
+            <input id="si-password" class="input" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+            <button type="button" class="toggle-pwd" onclick="togglePwd('si-password')" aria-label="Show password">👁</button>
+          </div>
+        </div>
+
+        <button id="signinSubmit" type="submit" class="submit-btn">Sign in</button>
+
+        <p style="text-align:center; margin: 16px 0 0;">
+          <a class="muted-link" href="#" onclick="switchMode('register'); return false;">New here? Create an account →</a>
+          <span style="color:var(--text-3); margin: 0 8px;">·</span>
+          <a class="muted-link" href="#" onclick="switchMode('register'); pickSubTab('individual'); return false;">Need access?</a>
+        </p>
+      </form>
+
+      <!-- Register form -->
+      <form id="registerForm" onsubmit="return handleRegister(event)" style="display:none;">
+
+        <!-- Institutional vs Individual sub-tabs -->
+        <div class="sub-tab-strip" role="tablist">
+          <button type="button" id="subTabInst" class="active" onclick="pickSubTab('institutional')">Institutional</button>
+          <button type="button" id="subTabIndiv" onclick="pickSubTab('individual')">Individual</button>
+        </div>
+
+        <div id="emailHint" class="email-hint" style="display:none;"></div>
+
+        <div class="field">
+          <label class="label" for="rg-name">Full name</label>
+          <input id="rg-name" class="input" name="name" type="text" autocomplete="name" placeholder="Dr. Sarah Jenkins" required />
+        </div>
+        <div class="field-row">
+          <div>
+            <label class="label" for="rg-email"><span id="rg-emailLabel">Institutional email</span></label>
+            <input id="rg-email" class="input" name="email" type="email" autocomplete="email" placeholder="s.jenkins@institute.edu" required />
+          </div>
+          <div>
+            <label class="label" for="rg-affiliation">Institution</label>
+            <input id="rg-affiliation" class="input" name="affiliation" type="text" autocomplete="organization" placeholder="MSKCC" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label class="label" for="rg-role">Research role</label>
+            <select id="rg-role" class="input" name="research_role">
+              <option value="">Select…</option>
+              <option>Principal Investigator</option>
+              <option>Postdoctoral Fellow</option>
+              <option>Graduate Student</option>
+              <option>Bioinformatician</option>
+              <option>Clinical Researcher</option>
+              <option>Industry</option>
+              <option>Clinician</option>
+              <option>Data Scientist</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="rg-interest">Primary interest</label>
+            <select id="rg-interest" class="input" name="primary_interest">
+              <option value="">Select…</option>
+              <option>HLA Ligandome Analysis</option>
+              <option>Neoantigen Discovery</option>
+              <option>Proteogenomics</option>
+              <option>T-cell Receptor Mapping</option>
+              <option>Non-canonical Antigens</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Password block (only shown for institutional flow) -->
+        <div id="passwordBlock">
+          <div class="field-row">
+            <div>
+              <label class="label" for="rg-password">Password</label>
+              <input id="rg-password" class="input" name="password" type="password" autocomplete="new-password" placeholder="At least 8 characters" minlength="8" />
+            </div>
+            <div>
+              <label class="label" for="rg-confirm">Confirm password</label>
+              <input id="rg-confirm" class="input" name="confirm_password" type="password" autocomplete="new-password" placeholder="Re-enter" minlength="8" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Reason block (only shown for individual flow) -->
+        <div id="reasonBlock" style="display:none;">
+          <div class="field">
+            <label class="label" for="rg-reason">
+              Reason for access
+              <span id="reasonCounter" class="reason-counter">0 / 80 min</span>
+            </label>
+            <textarea id="rg-reason" class="input" rows="4" minlength="80"
+              placeholder="What are you working on? Which datasets or analyses do you hope to use? (80 character minimum)"
+              oninput="updateReasonCounter(this)"></textarea>
+          </div>
+        </div>
+
+        <button id="registerSubmit" type="submit" class="submit-btn">Create account</button>
+
+        <p style="text-align:center; margin: 16px 0 0;">
+          <a class="muted-link" href="#" onclick="switchMode('signin'); return false;">Already have an account? Sign in →</a>
+        </p>
+      </form>
+
+      <div class="form-footer">
+        <p>© 2026 ImmunoVerse. All academic usage subject to IRB protocol compliance.</p>
+        <div class="links">
+          <a href="#">Privacy</a>
+          <a href="#">Data Governance</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+// Where the portal_auth API lives. Override at deploy time if you split
+// the auth service onto its own domain.
+window.IMMUNOVERSE_AUTH_BASE = window.IMMUNOVERSE_AUTH_BASE || "https://auth.immunoverse-chat.com";
+
+const AUTH = window.IMMUNOVERSE_AUTH_BASE.replace(/\/+$/, '');
+const RETURN_TO = (new URLSearchParams(location.search)).get('return') || 'account.html';
+
+// Already signed in? Jump straight to the account dashboard so users don't
+// stare at a login form when they're already logged in.
+(async function checkSession() {
+  try {
+    const r = await fetch(AUTH + '/api/portal/auth/me', { credentials: 'include' });
+    if (r.ok) location.replace(RETURN_TO);
+  } catch (e) { /* offline / first visit — fine */ }
+})();
+
+function $(id) { return document.getElementById(id); }
+
+function showAlert(msg, kind) {
+  const el = $('alert');
+  el.textContent = msg;
+  el.className = 'alert alert-' + (kind || 'error');
+  el.classList.remove('hidden');
+}
+function hideAlert() { $('alert').classList.add('hidden'); }
+
+function setLoading(btnId, label) {
+  const b = $(btnId);
+  if (!b) return;
+  b.disabled = true;
+  b.dataset.orig = b.textContent;
+  b.textContent = label;
+}
+function clearLoading(btnId) {
+  const b = $(btnId);
+  if (!b) return;
+  b.disabled = false;
+  if (b.dataset.orig) { b.textContent = b.dataset.orig; delete b.dataset.orig; }
+}
+
+function togglePwd(id) {
+  const el = $(id);
+  if (!el) return;
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+function switchMode(mode) {
+  const isSignin = mode === 'signin';
+  $('signinForm').style.display = isSignin ? '' : 'none';
+  $('registerForm').style.display = isSignin ? 'none' : '';
+  $('tabSignin').classList.toggle('active', isSignin);
+  $('tabCreate').classList.toggle('active', !isSignin);
+  $('formTitle').textContent = isSignin ? 'Sign in' : (SUB_TAB === 'individual' ? 'Request access' : 'Create account');
+  $('formSub').textContent = isSignin
+    ? 'Welcome back — your saved searches and viewed peptides are waiting.'
+    : (SUB_TAB === 'individual'
+        ? "Independent researchers, clinicians, and industry — tell us about your work and we'll review within 1–2 business days."
+        : 'Open a portal account to bookmark searches and track viewed peptides across devices.');
+  hideAlert();
+}
+
+// Institutional vs Individual sub-tab inside the Create-account form.
+// 'institutional' → POST /register (instant access for partner domains).
+// 'individual'    → POST /request-access (admin reviews, no password needed yet).
+let SUB_TAB = 'institutional';
+const INST_REGEX = /\.(edu|gov)(\.[a-z]{2})?$|\.ac\.[a-z]{2}$|\.edu\.[a-z]{2}$|@(nyulangone|mskcc|broadinstitute|sanger|embl|nih|cancer|fredhutch|dana-farber|ludwigcancerresearch|wellcome|chuv|dtu|immunoverse-chat)\./i;
+
+function pickSubTab(which) {
+  SUB_TAB = which;
+  const isInst = which === 'institutional';
+  $('subTabInst').classList.toggle('active', isInst);
+  $('subTabIndiv').classList.toggle('active', !isInst);
+  // Toggle which conditional blocks are visible + required.
+  $('passwordBlock').style.display = isInst ? '' : 'none';
+  $('reasonBlock').style.display = isInst ? 'none' : '';
+  $('rg-password').required = isInst;
+  $('rg-confirm').required = isInst;
+  $('rg-reason').required = !isInst;
+  $('rg-affiliation').required = !isInst;
+  $('rg-role').required = !isInst;
+  $('rg-emailLabel').textContent = isInst ? 'Institutional email' : 'Email';
+  $('rg-email').placeholder = isInst ? 's.jenkins@institute.edu' : 'you@example.com';
+  $('registerSubmit').textContent = isInst ? 'Create account' : 'Submit access request';
+  $('formTitle').textContent = isInst ? 'Create account' : 'Request access';
+  $('formSub').textContent = isInst
+    ? 'Open a portal account to bookmark searches and track viewed peptides across devices.'
+    : "Independent researchers, clinicians, and industry — tell us about your work and we'll review within 1–2 business days.";
+  // Re-evaluate hint for the typed email.
+  refreshEmailHint();
+}
+
+function updateReasonCounter(el) {
+  const n = (el.value || '').length;
+  const c = $('reasonCounter');
+  if (!c) return;
+  c.textContent = n + ' / 80 min';
+  c.classList.toggle('ok', n >= 80);
+}
+
+function refreshEmailHint() {
+  const hint = $('emailHint');
+  const email = ($('rg-email').value || '').toLowerCase().trim();
+  if (!email || !email.includes('@')) { hint.style.display = 'none'; return; }
+  const isInst = INST_REGEX.test(email);
+  hint.style.display = '';
+  if (SUB_TAB === 'institutional' && !isInst) {
+    hint.className = 'email-hint warn';
+    hint.innerHTML = `<span class="h-icon">⚠</span><div><b>${esc(email.split('@')[1])}</b> doesn't look like a recognized institutional domain. You can <a href="#" onclick="pickSubTab('individual');return false;" style="color:inherit;text-decoration:underline;">switch to individual access</a> (manual review), or continue and we'll keep the account pending until an admin reviews it.</div>`;
+  } else if (SUB_TAB === 'institutional' && isInst) {
+    hint.className = 'email-hint';
+    hint.innerHTML = `<span class="h-icon">✓</span><div><b>${esc(email.split('@')[1])}</b> recognized as institutional — your account will be active right after sign-up.</div>`;
+  } else if (SUB_TAB === 'individual' && isInst) {
+    hint.className = 'email-hint';
+    hint.innerHTML = `<span class="h-icon">💡</span><div>Heads up: <b>${esc(email.split('@')[1])}</b> looks institutional — you can <a href="#" onclick="pickSubTab('institutional');return false;" style="color:inherit;text-decoration:underline;">skip the queue</a> and get instant access by registering directly.</div>`;
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
+function esc(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Wire the email hint after the form is set up.
+document.addEventListener('DOMContentLoaded', () => {
+  const e = $('rg-email');
+  if (e) e.addEventListener('input', refreshEmailHint);
+});
+
+async function handleSignin(ev) {
+  ev.preventDefault();
+  hideAlert();
+  setLoading('signinSubmit', 'Signing in…');
+  try {
+    const res = await fetch(AUTH + '/api/portal/auth/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: $('si-email').value.trim(),
+        password: $('si-password').value,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const detail = data.detail || 'Sign-in failed.';
+      // 403 + "awaiting approval" → swap to the pending screen instead of a
+      // red error toast, since the user's account is just not active yet.
+      if (res.status === 403 && /awaiting approval/i.test(detail)) {
+        showPending('Your account is awaiting admin review.');
+      } else {
+        showAlert(detail, 'error');
+      }
+      clearLoading('signinSubmit');
+      return false;
+    }
+    // The browser stored the cookie; persist the access token as a fallback
+    // so cross-site cookie-less browsers (Safari ITP) can still authenticate
+    // via the Authorization: Bearer header.
+    try { sessionStorage.setItem('iv_portal_access', data.access_token); } catch(e) {}
+    location.href = RETURN_TO;
+  } catch (err) {
+    showAlert('Network error: ' + err.message, 'error');
+    clearLoading('signinSubmit');
+  }
+  return false;
+}
+
+async function handleRegister(ev) {
+  ev.preventDefault();
+  hideAlert();
+
+  if (SUB_TAB === 'individual') {
+    return submitAccessRequest();
+  }
+  // Institutional flow — same form as before.
+  if ($('rg-password').value !== $('rg-confirm').value) {
+    showAlert('Passwords do not match.', 'error');
+    return false;
+  }
+  setLoading('registerSubmit', 'Creating account…');
+  try {
+    const res = await fetch(AUTH + '/api/portal/auth/register', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: $('rg-email').value.trim(),
+        name: $('rg-name').value.trim(),
+        affiliation: $('rg-affiliation').value.trim() || null,
+        research_role: $('rg-role').value || null,
+        primary_interest: $('rg-interest').value || null,
+        password: $('rg-password').value,
+        confirm_password: $('rg-confirm').value,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showAlert(data.detail || 'Registration failed.', 'error');
+      clearLoading('registerSubmit');
+      return false;
+    }
+    if (data.tokens && data.tokens.access_token) {
+      try { sessionStorage.setItem('iv_portal_access', data.tokens.access_token); } catch(e) {}
+    }
+    // If institutional → auto_approved, go straight to dashboard. If not (the
+    // backend accepted a non-institutional email and made the account
+    // pending), show the pending screen instead.
+    if (data.auto_approved) {
+      location.href = RETURN_TO;
+    } else {
+      showPending(data.message || 'Account pending review.');
+      clearLoading('registerSubmit');
+    }
+  } catch (err) {
+    showAlert('Network error: ' + err.message, 'error');
+    clearLoading('registerSubmit');
+  }
+  return false;
+}
+
+async function submitAccessRequest() {
+  if (($('rg-reason').value || '').trim().length < 80) {
+    showAlert('Please describe your use case in at least 80 characters.', 'error');
+    return false;
+  }
+  if (!$('rg-affiliation').value.trim()) {
+    showAlert('Affiliation is required for individual access requests.', 'error');
+    return false;
+  }
+  if (!$('rg-role').value) {
+    showAlert('Please pick a research role.', 'error');
+    return false;
+  }
+  setLoading('registerSubmit', 'Submitting…');
+  try {
+    const res = await fetch(AUTH + '/api/portal/auth/request-access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: $('rg-email').value.trim(),
+        name: $('rg-name').value.trim(),
+        affiliation: $('rg-affiliation').value.trim(),
+        role_type: $('rg-role').value,
+        reason: $('rg-reason').value.trim(),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showAlert(data.detail || 'Submission failed.', 'error');
+      clearLoading('registerSubmit');
+      return false;
+    }
+    showPending(data.message || 'Request submitted. We will get back to you.');
+    clearLoading('registerSubmit');
+  } catch (err) {
+    showAlert('Network error: ' + err.message, 'error');
+    clearLoading('registerSubmit');
+  }
+  return false;
+}
+
+function showPending(msg) {
+  // Replace both forms with a friendly "your request is pending" message.
+  $('signinForm').style.display = 'none';
+  $('registerForm').style.display = 'none';
+  const sub = $('formSub');
+  $('formTitle').textContent = "You're on the list";
+  sub.textContent = '';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding: 22px 18px; border-radius: 16px; background: var(--primary-soft); border: 1px solid var(--border-2); margin-top: 16px;';
+  wrap.innerHTML = `<div style="font-size:18px;margin-bottom:8px;">📨 ${esc(msg)}</div>
+    <p style="margin:0 0 12px;color:var(--text-2);font-size:13.5px;line-height:1.55;">
+      We'll email <b>${esc($('rg-email').value || 'you')}</b> as soon as an admin reviews your request — typically 1–2 business days.
+      In the meantime you can keep using the public atlas without an account.
+    </p>
+    <a class="muted-link primary" href="index.html">← Back to the atlas</a>`;
+  // Append below the tab strip
+  const parent = document.querySelector('.form-panel-inner');
+  // Remove tab strip + alert so the pending message is the only content visible
+  const ts = parent.querySelector('.tab-strip'); if (ts) ts.style.display = 'none';
+  parent.appendChild(wrap);
+}
+</script>
+</body>
+</html>
