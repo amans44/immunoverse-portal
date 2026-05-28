@@ -373,6 +373,29 @@ main {
   margin-top: 4px;
   line-height: 1.45;
   word-break: break-word;
+  cursor: text;
+  transition: background 0.15s;
+}
+.search-card-remark:hover {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+.search-card-add-remark {
+  margin-top: 4px;
+  align-self: flex-start;
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-3);
+  font-family: inherit;
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.search-card-add-remark:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
 }
 .search-card-meta {
   display: flex;
@@ -1035,14 +1058,19 @@ function paintUser(u) {
 // searches. Each card also surfaces the optional `params._remark` note the
 // user typed when they bookmarked it.
 
+// Stash full saved-item objects keyed by id so the Edit-remark handler can
+// recover the original label + params without re-hitting the server.
+const SAVED_ITEMS_BY_ID = {};
+
 function renderSavedCard(s) {
+  SAVED_ITEMS_BY_ID[s.id] = s;
   const url = buildExplorerUrl(s.params || {});
   const chips = renderParamChips(s.params || {});
   const last = s.last_run_at ? timeAgo(s.last_run_at) : ('Created ' + timeAgo(s.created_at));
   const remark = (s.params && s.params._remark) ? s.params._remark : '';
   const remarkHtml = remark
-    ? `<div class="search-card-remark" title="Your note for future reference">📝 ${esc(remark)}</div>`
-    : '';
+    ? `<div class="search-card-remark" data-edit-remark="${esc(s.id)}" title="Click to edit your note">📝 ${esc(remark)}</div>`
+    : `<button type="button" class="search-card-add-remark" data-edit-remark="${esc(s.id)}" title="Add a note for future reference">+ Add remark</button>`;
   return `<div class="search-card" data-id="${esc(s.id)}" data-url="${esc(url)}">
     <button class="search-card-del" data-del="${esc(s.id)}" title="Delete">×</button>
     <h3 class="search-card-title">${esc(s.label)}</h3>
@@ -1052,10 +1080,40 @@ function renderSavedCard(s) {
   </div>`;
 }
 
+// "Edit remark" UX: prompt for new text (pre-filled with current value),
+// DELETE the old saved_search, POST a new one with same label + params but
+// the updated _remark. We use delete+recreate because the backend doesn't
+// expose a PATCH/PUT for saved_searches — the only mutating endpoints we
+// see are POST (create), DELETE, and POST /touch. The trade-off is a fresh
+// created_at timestamp, which is fine for this UX.
+async function editSavedRemark(id, reload) {
+  const item = SAVED_ITEMS_BY_ID[id];
+  if (!item) return;
+  const current = (item.params && item.params._remark) ? item.params._remark : '';
+  const next = prompt('Remark / note for future reference (leave blank to clear):', current);
+  if (next === null) return;  // user cancelled
+  const newParams = Object.assign({}, item.params || {});
+  if (next.trim()) newParams._remark = next.trim();
+  else delete newParams._remark;
+  try {
+    const del = await authedFetch('/api/portal/saved_searches/' + id, { method: 'DELETE' });
+    if (!del.ok) throw new Error('Delete failed');
+    const cre = await authedFetch('/api/portal/saved_searches', {
+      method: 'POST',
+      body: JSON.stringify({ label: item.label, params: newParams }),
+    });
+    if (!cre.ok) throw new Error('Recreate failed');
+    reload();
+  } catch (e) {
+    alert('Could not update remark: ' + (e.message || e));
+  }
+}
+
 function wireSavedCardClicks(grid, reload) {
   grid.querySelectorAll('.search-card').forEach(card => {
     card.addEventListener('click', async (ev) => {
       if (ev.target.matches('[data-del]')) return;
+      if (ev.target.matches('[data-edit-remark]') || ev.target.closest('[data-edit-remark]')) return;
       const id = card.dataset.id;
       const url = card.dataset.url;
       try { await authedFetch('/api/portal/saved_searches/' + id + '/touch', { method: 'POST' }); } catch(e) {}
@@ -1069,6 +1127,13 @@ function wireSavedCardClicks(grid, reload) {
       const id = b.dataset.del;
       const r = await authedFetch('/api/portal/saved_searches/' + id, { method: 'DELETE' });
       if (r.ok) reload();
+    });
+  });
+  grid.querySelectorAll('[data-edit-remark]').forEach(el => {
+    el.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      const id = el.dataset.editRemark;
+      await editSavedRemark(id, reload);
     });
   });
 }

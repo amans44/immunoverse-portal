@@ -258,6 +258,17 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-05-28 — Editable remarks on saved peptides and saved filter searches
+**Why:** Aman wanted users to be able to edit the remark on any saved item from the account page (not just at creation time), so they can refine their notes later.
+**What:**
+- `account.html` `renderSavedCard()` now renders the existing remark with `data-edit-remark="<id>"` (click to edit) and, for cards without a remark, renders a dashed "+ Add remark" button with the same data-attribute.
+- New `editSavedRemark(id, reload)` helper: prompts for the new remark (pre-filled with the current value), then DELETEs the existing `saved_searches` entry and POSTs a fresh one with the same `label` + `params` but updated `_remark`. Backend doesn't expose PATCH/PUT, so delete+recreate is the workaround. Side effect: `created_at` resets, but for this UX that's fine.
+- New module-level `SAVED_ITEMS_BY_ID` cache so the edit handler can recover the original label + params without an extra round-trip.
+- `wireSavedCardClicks()` also wires `[data-edit-remark]` clicks and stops them propagating to the card's "Open" navigation.
+- New `.search-card-add-remark` button style (dashed border, primary tint on hover) and a `cursor: text` + hover state on `.search-card-remark`.
+**Files:** `account.html`.
+**Commit:** (pending — will batch with the next push).
+
 ### 2026-05-28 — Deep-link fix + Saved peptides section + responsive topnav
 **Why:** Three user-reported issues hit in one pass.
 1. **Deep-link `#explorer?cancer=X&open=PEPTIDE` was opening the cancer view but never the peptide drawer.** Root cause: `loadAll` called `applyFilters()` which is hooked to call `pushUrlState()`, and `pushUrlState` rebuilds the URL from `STATE` + `DRAWER_URL` — DRAWER_URL was null at that point, so `open=` was stripped before the wrapper at the end of `loadAll` could read it. The "Open" link in account.html for both saved searches and recently-viewed history was therefore broken.
