@@ -5019,8 +5019,14 @@ function downloadAllFromDrawer(btnEl) {
 // to the existing PNG silently when the SVG doesn't exist.
 const ASSET_SVG_BASE = 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/assets_svg';
 const SVG_FETCH_CACHE = new Map();           // url -> Promise<string|null>
-const SVG_EXISTS_KEY = u => 'svgexist:' + u;
-const SVG_EXISTS_TTL = 12 * 3600 * 1000;     // 12h
+// Bumping the cache-key prefix invalidates every stale localStorage entry
+// (so e.g. peptides whose SVG was cached as "exists:false" while the proxy
+// was broken get re-probed cleanly once it's working again). Increment the
+// suffix whenever the proxy chain or NYU asset-tree changes shape.
+const SVG_EXISTS_KEY = u => 'svgexist:v2:' + u;
+const SVG_EXISTS_TTL = 3600 * 1000;          // 1h — short enough that any
+                                              // future proxy hiccup self-heals
+                                              // within an hour instead of 12.
 async function fetchSvgIfExists(svgUrl) {
   if (!IMG_PROXY) return null;
   if (SVG_FETCH_CACHE.has(svgUrl)) return SVG_FETCH_CACHE.get(svgUrl);

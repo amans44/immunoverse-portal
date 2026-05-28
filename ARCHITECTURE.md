@@ -258,6 +258,15 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-05-28 — Invalidate stale SVG-exists localStorage cache
+**Why:** User reported only one NBL peptide (`QYNPIRTTF`) was rendering the interactive SVG upgrade — the rest were just showing the static `<img>` (which looks similar but lacks hover tooltips, color-filter chips, zoom). Root cause: `fetchSvgIfExists` writes a `localStorage` entry keyed `svgexist:<url>` storing `exists: false` (with 12 h TTL) when a proxy fetch fails. While the proxy was broken earlier, many peptide-percentile URLs got cached as `exists: false`. The proxy works now, but those entries are still in localStorage and short-circuit the upgrade for 12 h.
+**What:**
+- Bumped the cache-key prefix from `svgexist:` to `svgexist:v2:` so every stale entry becomes invisible to the new code; next drawer-open triggers a fresh probe via `_proxiedFetch`. Any peptide whose SVG is actually available will now get the interactive upgrade.
+- Reduced `SVG_EXISTS_TTL` from 12 h → 1 h so any future proxy hiccup self-heals within an hour instead of staying broken for half a day.
+**Convention:** future proxy or NYU asset-tree changes that might affect SVG-existence verdicts should bump the cache key suffix (`v2` → `v3`, etc.) so users don't have to wait out the TTL.
+**Files:** `index.html`.
+**Commit:** (this commit).
+
 ### 2026-05-28 — Editable remarks on saved peptides and saved filter searches
 **Why:** Aman wanted users to be able to edit the remark on any saved item from the account page (not just at creation time), so they can refine their notes later.
 **What:**
