@@ -5596,27 +5596,40 @@ function _ivExtractMplHeatmap(svgEl) {
     return out;
   };
 
-  // Find the axes that contains both HLAs and tissue labels — that's the
-  // heatmap. Score each axes by (#hlas × #tissues); pick the highest.
+  // matplotlib splits the percentile figure across multiple subplots that
+  // share axes: the HEATMAP subplot has HLA tick labels on its Y-axis,
+  // and the PER-TISSUE SCATTER subplot below it has tissue tick labels
+  // on its X-axis (which the heatmap visually inherits). Older code
+  // picked ONE axes group by score (#hlas × #tissues), but for peptides
+  // like NBL/RYYSALRHY the per-tissue scatter wins (1×30 > 4×0) and the
+  // real heatmap axes got ignored. Fix: pick HLA-source and tissue-
+  // source axes INDEPENDENTLY (whichever has the most of each kind of
+  // tick label).
   const axesEls = [...svgEl.querySelectorAll('g[id^="axes_"]')];
-  let best = null, bestScore = 0;
+  const isTissueCandidate = (cmt) =>
+    !IV_HLA_RX.test(cmt) && !/^[\d.]+$/.test(cmt) && !/[*;]/.test(cmt)
+    && cmt.length >= 3 && cmt.length <= 30
+    && !['tumor', 'percentile'].includes(cmt) && !IV_PEPTIDE_RX.test(cmt);
+
+  let hlaAxesTx = null, hlaAxesCount = 0;
+  let tissueAxesTx = null, tissueAxesCount = 0;
   for (const ax of axesEls) {
     const tx = readTexts(ax);
     const nHla = tx.filter(t => IV_HLA_RX.test(t.cmt)).length;
-    const nTissue = tx.filter(t =>
-      !IV_HLA_RX.test(t.cmt) && !/^[\d.]+$/.test(t.cmt) && !/[*;]/.test(t.cmt)
-      && t.cmt.length >= 3 && t.cmt.length <= 30
-      && !['tumor', 'percentile'].includes(t.cmt) && !IV_PEPTIDE_RX.test(t.cmt)
-    ).length;
-    const score = nHla * nTissue;
-    if (score > bestScore) { bestScore = score; best = { ax, tx }; }
+    const nTissue = tx.filter(t => isTissueCandidate(t.cmt)).length;
+    if (nHla > hlaAxesCount) { hlaAxesCount = nHla; hlaAxesTx = tx; }
+    if (nTissue > tissueAxesCount) { tissueAxesCount = nTissue; tissueAxesTx = tx; }
   }
-  if (!best) return null;
-  const allTexts = best.tx;
+  // Need at least one axes-text source to proceed. If neither HLA nor
+  // tissue axes was found, legend-union HLAs below may still rescue us.
+  const allTexts = (hlaAxesTx || []).concat(
+    tissueAxesTx && tissueAxesTx !== hlaAxesTx ? tissueAxesTx : []
+  );
 
-  // HLA labels: pattern-matched, dedup, sort by Y (top-to-bottom).
+  // HLAs come from the axes that had the most HLA tick labels (the real
+  // heatmap subplot). Their Y positions are the matrix-row positions.
   const hlaSeen = new Map();
-  allTexts.forEach(t => {
+  (hlaAxesTx || []).forEach(t => {
     if (IV_HLA_RX.test(t.cmt) && !hlaSeen.has(t.cmt)) hlaSeen.set(t.cmt, t.y);
   });
   const hlas = [...hlaSeen.keys()]
@@ -5650,22 +5663,22 @@ function _ivExtractMplHeatmap(svgEl) {
   // heatmap; peptides whose SVG truly has zero HLAs fall through.
   if (hlas.length < 1) return null;
 
-  // Tissue labels: dedup, sort by X (left-to-right).
+  // Tissue labels come from the axes that has the most tissue-like
+  // tick labels (per-tissue scatter subplot whose X-axis the heatmap
+  // shares). Their X positions are the matrix-column positions.
   const tissueSeen = new Map();
-  allTexts.forEach(t => {
-    if (IV_HLA_RX.test(t.cmt) || /^[\d.]+$/.test(t.cmt) || /[*;]/.test(t.cmt)) return;
-    if (t.cmt.length < 3 || t.cmt.length > 30) return;
-    if (['tumor', 'percentile'].includes(t.cmt) || IV_PEPTIDE_RX.test(t.cmt)) return;
+  (tissueAxesTx || []).forEach(t => {
+    if (!isTissueCandidate(t.cmt)) return;
     if (!tissueSeen.has(t.cmt)) tissueSeen.set(t.cmt, t.x);
   });
   const tissues = [...tissueSeen.keys()]
     .map(name => ({ name, x: tissueSeen.get(name) }))
     .sort((a, b) => a.x - b.x);
-  // Same relaxation rationale as the HLA threshold above. Single-tissue
-  // figures still render as a meaningful single-cell strip.
+  // Single-tissue figures still render as a meaningful single-cell strip.
   if (tissues.length < 1) return null;
 
-  // Cell values: integer comments anywhere in the chosen axes.
+  // Cell values: integer comments pooled from both HLA-source and
+  // tissue-source axes (matplotlib may stick them in either subplot).
   const cellTexts = allTexts.filter(t => /^\d+$/.test(t.cmt))
     .map(t => ({ value: parseInt(t.cmt, 10), x: t.x, y: t.y }));
 

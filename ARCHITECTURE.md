@@ -258,6 +258,15 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-05-28 — Extract heatmap HLAs and tissues from independent axes (architecture fix)
+**Why:** After the previous legend-union fix, NBL/`RYYSALRHY` showed all 4 HLA rows in the heatmap but the X-axis tissue names disappeared. Root cause: matplotlib splits the percentile figure across multiple `<g id="axes_N">` subplots that share an X-axis — the HEATMAP subplot (`axes_3`) carries the HLA y-tick labels, the PER-TISSUE SCATTER subplot below it (`axes_2`) carries the tissue x-tick labels. The old extractor picked ONE axes by score (#HLAs × #tissues). For RYYSALRHY that was `axes_2` (1×30 = 30 vs `axes_3`'s 4×0 = 0), so HLAs only came from `axes_2` and the heatmap rendered with the wrong row count.
+**What:** Replaced the single "best axes" choice with **two independent picks**:
+  - `hlaAxesTx` = axes with the most HLA-pattern tick labels (the real heatmap).
+  - `tissueAxesTx` = axes with the most tissue-shape tick labels (the per-tissue scatter).
+HLAs + their Y positions come from `hlaAxesTx`; tissues + their X positions come from `tissueAxesTx`. Cell-value integer texts are pooled from both. This matches matplotlib's actual subplot architecture instead of assuming everything lives in one axes group.
+**Files:** `index.html`.
+**Commit:** (this commit).
+
 ### 2026-05-28 — Scifi heatmap rows reflect the full legend (predicted + observed HLAs)
 **Why:** User reported peptides like NBL/`RYYSALRHY` rendered with 4 HLA chips in the legend but only 1 HLA row in the heatmap below. Cause: the matplotlib heatmap axes only contains HLA-rows that have actual MS *detection* data — the other 3 HLAs in the legend are predicted binders without data, so matplotlib doesn't draw rows for them. Visually inconsistent with the legend chip count.
 **What:** `_ivExtractMplHeatmap` now collects HLAs from **both** sources: the heatmap axes (data-rows, with real Y positions) AND the legend group (single-allele or semicolon-joined). Legend-only HLAs are appended with `y: Infinity` so the matrix-cell snap-to-nearest-row logic never assigns data cells to them — they render as empty rows with the row label visible. Result: every HLA in the legend gets a row in the heatmap, even if it has no detection cells.
