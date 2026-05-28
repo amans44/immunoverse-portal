@@ -3009,7 +3009,36 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   vertical-align: 1px;
 }
 
-/* Responsive */
+/* ===================== TOPNAV RESPONSIVE BREAKPOINTS =====================
+   Sign-in chip and "Explore atlas" CTA must stay visible at every viewport
+   width — Aman's requirement. We progressively hide / shrink the rest as
+   the viewport gets narrower:
+
+     ≥1280px : full topnav (brand · search · links · queries pill · theme · sign-in · CTA)
+     <1280px : tighten gaps, hide queries label (label shows " Queries" text)
+     <1180px : hide queries pill entirely (decorative)
+     <1100px : reduce CTA padding, shrink theme toggle
+     <960px  : links collapse to hamburger, search drops to its own row
+                — sign-in chip and CTA STAY in the first row, not in hamburger
+     <520px  : hide theme toggle (kept in hamburger? — no, just drop it),
+                shrink brand subtitle, ultra-tight padding
+   ========================================================================= */
+
+@media (max-width: 1279px) {
+  nav.topnav .inner { gap: 14px; padding: 12px 24px; }
+  .live-stat .live-label { display: none; }
+}
+@media (max-width: 1179px) {
+  .live-stat { display: none; }
+  nav .links a { padding: 8px 11px; font-size: 13.5px; }
+}
+@media (max-width: 1099px) {
+  nav .cta { padding: 8px 16px; font-size: 13px; }
+  .theme-toggle { width: 34px; height: 34px; }
+  nav .links a { padding: 7px 9px; font-size: 13px; }
+}
+
+/* Responsive layout below 960px — links collapse, search wraps. */
 @media (max-width: 960px) {
   .hero .hero-grid { grid-template-columns: 1fr; gap: 20px; }
   .hero-stats { grid-template-columns: repeat(4, 1fr); }
@@ -3037,6 +3066,17 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   }
   nav .links.open { display: flex; }
   nav .links a { padding: 10px 14px; font-size: 15px; }
+  /* Sign-in chip + CTA explicitly kept out of the hamburger so users can
+     always sign in / jump to the explorer without opening any menu. */
+}
+@media (max-width: 520px) {
+  nav.topnav .inner { gap: 8px; padding: 10px 14px; }
+  .brand { font-size: 15px; }
+  .brand .sub { display: none; }
+  .theme-toggle { width: 32px; height: 32px; }
+  nav .cta { padding: 7px 12px; font-size: 12.5px; }
+  .iv-acc-chip .iv-acc-name { display: none; }
+  .iv-signin-link { font-size: 13px; padding: 6px 10px; }
 }
 @media (max-width: 640px) {
   .container { padding: 0 20px; }
@@ -8167,20 +8207,31 @@ function loadUrlState() {
 const _origApply = applyFilters;
 applyFilters = function() { _origApply(); pushUrlState(); };
 // Hook into loadAll to honor `&open=PEPTIDE` deep links after first render.
+// IMPORTANT: capture the open= and cancer= params from the URL *before*
+// _origLoadAll runs. applyFilters() inside it calls pushUrlState() which
+// rebuilds the URL from STATE + DRAWER_URL, and DRAWER_URL is still null
+// at that point — so `open=` gets stripped from location.hash before this
+// wrapper would otherwise read it. Stash them first; use the stash after.
 const _origLoadAll = loadAll;
 loadAll = async function() {
-  await _origLoadAll();
+  let _deepLinkPep = null, _deepLinkCode = null;
   try {
     const hash = location.hash;
-    if (!hash.includes('explorer?')) return;
-    const p = new URLSearchParams(hash.split('?')[1] || '');
-    const pep  = p.get('open');
-    const code = p.get('cancer');
-    if (!pep || !code) return;
-    await loadCancer(code);
-    const row = (DATA_CACHE[code]?.rows || []).find(r => r[COL.pep] === pep);
+    if (hash.includes('explorer?')) {
+      const p = new URLSearchParams(hash.split('?')[1] || '');
+      _deepLinkPep  = p.get('open');
+      _deepLinkCode = p.get('cancer');
+    }
+  } catch (e) {}
+
+  await _origLoadAll();
+
+  try {
+    if (!_deepLinkPep || !_deepLinkCode) return;
+    await loadCancer(_deepLinkCode);
+    const row = (DATA_CACHE[_deepLinkCode]?.rows || []).find(r => r[COL.pep] === _deepLinkPep);
     if (row) {
-      if (row[COL.code] !== code) row[COL.code] = code;
+      if (row[COL.code] !== _deepLinkCode) row[COL.code] = _deepLinkCode;
       // skipUrl: the user arrived at this URL already; don't push another
       // history entry on top of the one the browser created.
       openDrawer(row, { skipUrl: true });
@@ -8501,6 +8552,8 @@ window.addEventListener('popstate', async () => {
     const label = prompt('Name this search:', suggest);
     if (label === null) return;  // user cancelled
     if (!label.trim()) { ivToast('Name cannot be empty.', 'error'); return; }
+    const remark = prompt('Optional remark / note for future reference (leave blank to skip):', '') || '';
+    if (remark.trim()) params._remark = remark.trim();
     try {
       const r = await authedFetch('/api/portal/saved_searches', {
         method: 'POST',
@@ -8528,6 +8581,11 @@ window.addEventListener('popstate', async () => {
 
   // ---------- Bookmark peptide (drawer button) ----------
   // Lives at document level so it survives the drawer re-rendering each open.
+  // Bookmarks go into /api/portal/saved_searches as a peptide-flavored entry
+  // (params include `pep` and `open` so account.html can split them out into
+  // a dedicated "★ Saved peptides" section and the "Open" link deep-links
+  // straight to the drawer). Auto-history already records the visit on
+  // drawer-open, so we don't double-write to /history here.
   document.addEventListener('click', async (ev) => {
     const b = ev.target.closest('#bookmarkPepBtn');
     if (!b) return;
@@ -8536,22 +8594,27 @@ window.addEventListener('popstate', async () => {
       if (yes) location.href = 'login.html?return=' + encodeURIComponent(location.pathname + location.hash);
       return;
     }
-    // Auto-history already wrote this peptide on drawer-open, but POSTing
-    // again refreshes the timestamp so it tops the "Recently viewed" list.
+    const defaultLabel = '★ ' + b.dataset.pep + ' · ' + b.dataset.code;
+    const label = prompt('Label for this bookmark:', defaultLabel);
+    if (label === null) return;  // user cancelled
+    const remark = prompt('Optional remark / note for future reference (leave blank to skip):', '') || '';
+    const params = {
+      cancer: b.dataset.code,
+      pep:    b.dataset.pep,
+      // include `open` so the saved-search "Open" link deep-links to the drawer
+      open:   b.dataset.pep,
+    };
+    if (b.dataset.gene) params.gene = b.dataset.gene;
+    if (remark.trim()) params._remark = remark.trim();
     try {
-      const r = await authedFetch('/api/portal/history', {
+      const r = await authedFetch('/api/portal/saved_searches', {
         method: 'POST',
-        body: JSON.stringify({
-          cancer:  b.dataset.code,
-          peptide: b.dataset.pep,
-          gene:    b.dataset.gene || null,
-          cls:     b.dataset.cls || null,
-        }),
+        body: JSON.stringify({ label: (label.trim() || defaultLabel), params }),
       });
       if (!r.ok) throw new Error(await r.text());
       b.textContent = '★ bookmarked';
       b.disabled = true;
-      ivToast('★ Saved to your account', 'success');
+      ivToast('★ Saved · find it under your account → Saved peptides', 'success');
     } catch (err) {
       ivToast('Could not bookmark: ' + (err.message || 'error'), 'error');
     }

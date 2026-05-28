@@ -258,6 +258,27 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-05-28 — Deep-link fix + Saved peptides section + responsive topnav
+**Why:** Three user-reported issues hit in one pass.
+1. **Deep-link `#explorer?cancer=X&open=PEPTIDE` was opening the cancer view but never the peptide drawer.** Root cause: `loadAll` called `applyFilters()` which is hooked to call `pushUrlState()`, and `pushUrlState` rebuilds the URL from `STATE` + `DRAWER_URL` — DRAWER_URL was null at that point, so `open=` was stripped before the wrapper at the end of `loadAll` could read it. The "Open" link in account.html for both saved searches and recently-viewed history was therefore broken.
+2. **Bookmarked peptides landed in "Recently viewed", not a "Saved peptides" section.** The bookmark button POSTed to `/api/portal/history` — same endpoint as auto-history — so all it really did was refresh the timestamp. There was no separate Saved peptides UI.
+3. **Topnav overflowed on 960–1280 px laptops/tablets.** Search bar, queries pill, theme toggle, sign-in chip, and CTA all competed for the same row and the right-most items got pushed off-screen.
+
+**What:**
+1. **Deep-link** (`index.html` near line 8170): capture `cancer` and `open` from `location.hash` into local vars *before* `_origLoadAll` runs, then use the captured values afterward. Single-file, ~10-line change.
+2. **Saved peptides:**
+   - Bookmark button (`index.html` near line 8542) now POSTs to `/api/portal/saved_searches` with `params: { cancer, pep, open, gene?, _remark? }` and a user-supplied label + optional remark. Prompts for both on click.
+   - "Save this search" button also now prompts for an optional remark and stores it as `params._remark`.
+   - `account.html` adds a new `<div id="savedPeptides">` card above the existing `<div id="savedSearches">` card. `loadSaved()` fetches once from `/api/portal/saved_searches`, splits results by `s.params.pep` presence into peptide-grid vs filter-grid, renders both with the new `renderSavedCard()` helper.
+   - Each card surfaces `params._remark` (when present) inside a `.search-card-remark` block (📝 prefix, primary-tinted left border).
+   - `renderParamChips` skips keys starting with `_` so `_remark` doesn't show as a chip.
+3. **Topnav responsive layering** (`index.html` CSS): new breakpoints at 1280, 1180, 1100, 960, 520 px. Each step hides/shrinks one decorative element. **`#ivSignInBtn` (or `#ivUserMenu`) and `nav .cta` ("Explore atlas") stay visible at every width** — they're outside `.links` so the hamburger collapse below 960 px doesn't swallow them.
+
+**Tradeoff to note:** Issue 2 stores `_remark` inside `params`. If the auth backend strictly validates which `params` keys it accepts, it may strip `_remark` server-side — in which case bookmarks would still work but the remark would silently vanish. From the spec we can see, `saved_searches` stores `params` as a JSON blob, so this should pass through fine. Flagging it here in case it ever needs a backend-side schema update.
+
+**Files:** `index.html`, `account.html`.
+**Commit:** (pending — Aman wants to test locally first before pushing).
+
 ### 2026-05-28 — Skip auth fetch for anonymous visitors (stops Chrome LNA prompt)
 **Why:** Every page load was firing `fetch('https://auth.immunoverse-chat.com/api/portal/auth/me', { credentials: 'include' })` to check session state, even for anonymous visitors who had never signed in. This credentialed cross-origin fetch was tripping **Chrome's Local Network Access permission prompt** ("immuno-verse.com wants to Access other devices on your local network") — users would dismiss/block it without understanding, and it would visually appear at the same moment a peptide drawer was opening, so users conflated the prompt with the figures and walked away thinking "no plots for this peptide."
 **What:** Gated the page-load `/auth/me` probe behind a `sessionStorage.getItem('iv_portal_access')` check. Anonymous visitors (no token) → `__IV_PORTAL_USER = null; showSignIn()` is called immediately, no network fetch. Visitors with a stored token (i.e., who've previously signed in) still hit `/auth/me` as before. Drawer-open history POST is also unaffected because it's already gated on `window.__IV_PORTAL_USER`.

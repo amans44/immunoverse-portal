@@ -363,6 +363,17 @@ main {
   color: var(--text-1);
   font-family: var(--mono);
 }
+.search-card-remark {
+  font-size: 12.5px;
+  color: var(--text-2);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border-left: 2px solid var(--primary);
+  padding: 6px 10px;
+  border-radius: 0 6px 6px 0;
+  margin-top: 4px;
+  line-height: 1.45;
+  word-break: break-word;
+}
 .search-card-meta {
   display: flex;
   align-items: center;
@@ -704,10 +715,20 @@ footer.page-footer a:hover { color: var(--text-0); }
 <div class="grid-2">
 
   <div>
-    <!-- ===== Saved Searches ===== -->
+    <!-- ===== Saved Peptides (entries with a `pep` param) ===== -->
+    <div class="card" id="savedPeptides">
+      <div class="card-head">
+        <h2><span class="icon-tag">★</span>Saved peptides</h2>
+        <a class="right-link" href="index.html#explorer">Open explorer →</a>
+      </div>
+      <div id="savedPeptidesAlert" class="alert hidden"></div>
+      <div id="savedPeptidesGrid" class="saved-grid"></div>
+    </div>
+
+    <!-- ===== Saved Filter Searches (entries without a `pep` param) ===== -->
     <div class="card" id="savedSearches">
       <div class="card-head">
-        <h2><span class="icon-tag">★</span>Saved searches</h2>
+        <h2><span class="icon-tag">★</span>Saved filter searches</h2>
         <a class="right-link" href="index.html#explorer">Open explorer →</a>
       </div>
       <div id="savedAlert" class="alert hidden"></div>
@@ -1008,56 +1029,86 @@ function paintUser(u) {
   $('pf-int').value = u.primary_interest || '';
 }
 
-// ---------- Saved searches ----------
+// ---------- Saved searches + Saved peptides ----------
+// Both come from /api/portal/saved_searches, but we split them on display:
+// entries whose `params.pep` is set are Saved peptides; the rest are filter
+// searches. Each card also surfaces the optional `params._remark` note the
+// user typed when they bookmarked it.
+
+function renderSavedCard(s) {
+  const url = buildExplorerUrl(s.params || {});
+  const chips = renderParamChips(s.params || {});
+  const last = s.last_run_at ? timeAgo(s.last_run_at) : ('Created ' + timeAgo(s.created_at));
+  const remark = (s.params && s.params._remark) ? s.params._remark : '';
+  const remarkHtml = remark
+    ? `<div class="search-card-remark" title="Your note for future reference">📝 ${esc(remark)}</div>`
+    : '';
+  return `<div class="search-card" data-id="${esc(s.id)}" data-url="${esc(url)}">
+    <button class="search-card-del" data-del="${esc(s.id)}" title="Delete">×</button>
+    <h3 class="search-card-title">${esc(s.label)}</h3>
+    <div class="search-card-chips">${chips}</div>
+    ${remarkHtml}
+    <div class="search-card-meta"><span>Last run: ${esc(last)}</span><span class="arrow">→</span></div>
+  </div>`;
+}
+
+function wireSavedCardClicks(grid, reload) {
+  grid.querySelectorAll('.search-card').forEach(card => {
+    card.addEventListener('click', async (ev) => {
+      if (ev.target.matches('[data-del]')) return;
+      const id = card.dataset.id;
+      const url = card.dataset.url;
+      try { await authedFetch('/api/portal/saved_searches/' + id + '/touch', { method: 'POST' }); } catch(e) {}
+      location.href = url;
+    });
+  });
+  grid.querySelectorAll('[data-del]').forEach(b => {
+    b.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      if (!confirm('Delete this saved item?')) return;
+      const id = b.dataset.del;
+      const r = await authedFetch('/api/portal/saved_searches/' + id, { method: 'DELETE' });
+      if (r.ok) reload();
+    });
+  });
+}
 
 async function loadSaved() {
-  const grid = $('savedGrid');
-  grid.innerHTML = '<div class="search-empty"><div class="big">…</div><p>Loading saved searches…</p></div>';
+  const filterGrid  = $('savedGrid');           // saved filter searches
+  const peptideGrid = $('savedPeptidesGrid');   // saved peptides (have params.pep)
+  if (peptideGrid) peptideGrid.innerHTML = '<div class="search-empty"><div class="big">…</div><p>Loading saved peptides…</p></div>';
+  filterGrid.innerHTML = '<div class="search-empty"><div class="big">…</div><p>Loading saved searches…</p></div>';
   try {
     const r = await authedFetch('/api/portal/saved_searches');
     if (!r.ok) throw new Error('Failed');
     const items = await r.json();
     $('statSearches').textContent = items.length;
-    if (!items.length) {
-      grid.innerHTML = `<div class="search-empty">
-        <div class="big">★</div>
-        <p>No saved searches yet. Open the <a href="index.html#explorer">explorer</a>, set a filter, and click the bookmark button to save it here.</p>
-      </div>`;
-      return;
+
+    // Split: peptides have params.pep, filter searches don't.
+    const peptides = items.filter(s => s.params && s.params.pep);
+    const filters  = items.filter(s => !(s.params && s.params.pep));
+
+    if (peptideGrid) {
+      peptideGrid.innerHTML = peptides.length
+        ? peptides.map(renderSavedCard).join('')
+        : `<div class="search-empty">
+            <div class="big">★</div>
+            <p>No saved peptides yet. Open the <a href="index.html#explorer">explorer</a>, click any peptide row, then click <em>☆ bookmark</em> in the drawer.</p>
+          </div>`;
+      wireSavedCardClicks(peptideGrid, loadSaved);
     }
-    grid.innerHTML = items.map(s => {
-      const url = buildExplorerUrl(s.params || {});
-      const chips = renderParamChips(s.params || {});
-      const last = s.last_run_at ? timeAgo(s.last_run_at) : ('Created ' + timeAgo(s.created_at));
-      return `<div class="search-card" data-id="${esc(s.id)}" data-url="${esc(url)}">
-        <button class="search-card-del" data-del="${esc(s.id)}" title="Delete">×</button>
-        <h3 class="search-card-title">${esc(s.label)}</h3>
-        <div class="search-card-chips">${chips}</div>
-        <div class="search-card-meta"><span>Last run: ${esc(last)}</span><span class="arrow">→</span></div>
-      </div>`;
-    }).join('');
-    // Wire clicks
-    grid.querySelectorAll('.search-card').forEach(card => {
-      card.addEventListener('click', async (ev) => {
-        if (ev.target.matches('[data-del]')) return;
-        const id = card.dataset.id;
-        const url = card.dataset.url;
-        try { await authedFetch('/api/portal/saved_searches/' + id + '/touch', { method: 'POST' }); } catch(e) {}
-        location.href = url;
-      });
-    });
-    grid.querySelectorAll('[data-del]').forEach(b => {
-      b.addEventListener('click', async (ev) => {
-        ev.stopPropagation();
-        if (!confirm('Delete this saved search?')) return;
-        const id = b.dataset.del;
-        const r = await authedFetch('/api/portal/saved_searches/' + id, { method: 'DELETE' });
-        if (r.ok) loadSaved();
-      });
-    });
+
+    filterGrid.innerHTML = filters.length
+      ? filters.map(renderSavedCard).join('')
+      : `<div class="search-empty">
+          <div class="big">★</div>
+          <p>No saved filter searches yet. Open the <a href="index.html#explorer">explorer</a>, set a filter, and click the <em>★ Save this search</em> button.</p>
+        </div>`;
+    wireSavedCardClicks(filterGrid, loadSaved);
   } catch (err) {
-    alert('savedAlert', 'Failed to load saved searches: ' + err.message, 'error');
-    grid.innerHTML = '';
+    alert('savedAlert', 'Failed to load saved items: ' + err.message, 'error');
+    filterGrid.innerHTML = '';
+    if (peptideGrid) peptideGrid.innerHTML = '';
   }
 }
 
@@ -1073,6 +1124,7 @@ function renderParamChips(params) {
   const chips = [];
   for (const [k, v] of Object.entries(params)) {
     if (!v) continue;
+    if (k.startsWith('_')) continue;  // hide internal fields like _remark
     chips.push(`<span class="chip-mini">${esc(k)}=${esc(v)}</span>`);
   }
   return chips.slice(0, 4).join('');
