@@ -1724,6 +1724,21 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .dl-figure-btn.iv-back-to-svg:hover {
   background: rgba(34, 211, 238, 0.30);
 }
+/* Rank-abundance PNG ↔ SVG toggle. Sits left of the PNG-download button.
+   Stays visible (opacity 1, not just on hover) so users discover the
+   option to load the higher-resolution SVG version. Hidden until
+   _probeAndShowSvgToggle confirms the SVG actually exists at NYU. */
+.dl-figure-btn.svg-toggle-btn {
+  right: 140px;
+  opacity: 1;
+  background: rgba(34, 211, 238, 0.18);
+  border-color: rgba(34, 211, 238, 0.45);
+  color: #22d3ee;
+}
+.dl-figure-btn.svg-toggle-btn:hover {
+  background: rgba(34, 211, 238, 0.30);
+}
+.dl-figure-btn.svg-toggle-btn[hidden] { display: none; }
 
 /* Tiny inline download chip — sits next to a section title's text. */
 .dl-inline-btn {
@@ -6571,6 +6586,44 @@ window._spectrumFallbackToPng = function (img, pngUrl) {
   img.src = pngUrl;
 };
 
+// Probe whether an SVG version of a figure exists at NYU, and reveal the
+// "SVG" toggle button inside the given plot-wrap if it does. Used by the
+// rank-abundance plot, which defaults to PNG (smaller) and only shows the
+// SVG-toggle when the high-res version is actually available.
+window._probeAndShowSvgToggle = function (wrap) {
+  if (!wrap) return;
+  var svgUrl = wrap.dataset.svgUrl;
+  var btn = wrap.querySelector('.svg-toggle-btn');
+  if (!svgUrl || !btn) return;
+  var probe = new Image();
+  probe.onload = function () { btn.hidden = false; };
+  probe.onerror = function () { /* leave hidden */ };
+  probe.src = svgUrl;
+};
+
+// Toggle the rank-abundance figure between its PNG and SVG sources in
+// place. The button label flips so the user knows what they'll see next.
+// PNG download button is unaffected (always downloads the PNG).
+window.toggleRankAbundanceSvg = function (btn) {
+  var wrap = btn.closest('.plot-wrap');
+  if (!wrap) return;
+  var img = wrap.querySelector('img');
+  if (!img) return;
+  var pngUrl = wrap.dataset.pngUrl;
+  var svgUrl = wrap.dataset.svgUrl;
+  if (btn.dataset.state === 'svg') {
+    img.src = pngUrl;
+    btn.dataset.state = 'png';
+    btn.textContent = 'SVG';
+    btn.title = 'Switch to higher-resolution SVG view';
+  } else {
+    img.src = svgUrl;
+    btn.dataset.state = 'svg';
+    btn.textContent = 'PNG';
+    btn.title = 'Switch back to PNG view';
+  }
+};
+
 // After openDrawer paints its template, scan for plot-wraps marked with
 // data-svg-kind and try to upgrade each to the interactive viewer. Runs
 // asynchronously so the drawer never blocks on these probes.
@@ -7624,55 +7677,11 @@ async function openDrawer(r, opts) {
       <div class="gbar"><div class="lbl">DepMap essentiality</div><div class="track"><div class="fill fill-dep" style="width:${Math.max(0, Math.min(100, (-(r[COL.depmap]||0))*50+50)).toFixed(0)}%"></div></div><div class="v">${r[COL.depmap]!=null ? r[COL.depmap].toFixed(2) : '—'}</div></div>
     </div>
 
-    ${intensBlock ? `
-    <div class="section-title" data-tip="Raw mass spectrometry signal intensity for this peptide across individual immunopeptidome samples. Higher intensity = more copies of this peptide are being presented on the tumor cell surface in that sample. Consistent detection across multiple samples supports the peptide as a shared (not private) target.">Per-sample MS intensity (top ${Math.min(intens.length,10)})</div>
-    <div class="section-subtitle">Normalized MS intensity in the individual patient samples that detected this peptide — consistent high bars across samples indicate a shared, robustly presented target.</div>
-    ${intensBlock}` : ''}
-
-    <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples${bind.length ? `<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadObservedHlaCsv()">${DL_ICON}<span>CSV</span></button>` : ''}</div>
-    <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, DeepImmuno score, and per-patient recurrence.</div>
-    <div class="bind-wrap">
-      <table class="bind-table">
-        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th><th>Immuno.</th><th>#Det/#Tot</th><th>Recur.</th></tr></thead>
-        <tbody>${bindRows}</tbody>
-      </table>
-      <div class="bind-legend">
-        <span class="bind-cat bind-sb">SB</span> strong binder (rank ≤ 0.5%)
-        <span class="bind-cat bind-wb">WB</span> weak binder (rank ≤ 2%)
-        · Immuno. = DeepImmuno immunogenicity score
-        · Recur. = #Detected / #Total patients with this HLA
-      </div>
-    </div>
-
-    ${bind.length ? (() => {
-        const sbAlleles = bindSorted.filter(b => (b[3]||'').toUpperCase() === 'SB');
-        const wbAlleles = bindSorted.filter(b => (b[3]||'').toUpperCase() === 'WB');
-        const allBinders = [...sbAlleles, ...wbAlleles];
-        const covSB = sbAlleles.length ? 1 - sbAlleles.reduce((p, b) => p * (1 - (hlaFreq(b[0]) || 0)), 1) : 0;
-        const covAll = allBinders.length ? 1 - allBinders.reduce((p, b) => p * (1 - (hlaFreq(b[0]) || 0)), 1) : 0;
-        const totalDetected = bind.reduce((s, b) => s + (b[4] || 0), 0);
-        return `<div class="section-title" data-tip="Estimates what percentage of the US population could be targeted through this peptide, based on how common the presenting HLA alleles are. Higher coverage = more patients who could benefit from a therapy targeting this peptide.">Population coverage estimate</div>
-    <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;color:var(--text-1);line-height:1.6;">
-      <b style="color:var(--accent-cyan)">${(covAll * 100).toFixed(1)}%</b> of the US population carries at least one presenting allele (strong + weak binders).`
-          + (sbAlleles.length ? ` <b style="color:var(--accent-lime)">${(covSB * 100).toFixed(1)}%</b> carry a strong-binding allele.` : '')
-          + `<br>Detected across <b style="color:var(--text-0)">${totalDetected}</b> immunopeptidome sample(s) total.
-    </div>`;
-      })() : ''}
-
-    ${addqRows ? `
-    <div class="section-title" data-tip="Predicted binding across a broad panel of HLA alleles using NetMHCpan 4.1, beyond only the alleles observed in the immunopeptidome samples. Useful for assessing whether this peptide could be presented by additional HLA alleles in the broader population.">Extended NetMHCpan 4.1 prediction panel<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadExtendedPanelCsv()">${DL_ICON}<span>CSV</span></button></div>
-    <div class="section-subtitle">Predicted binding across a wider allele panel — alleles beyond those observed empirically, to estimate reach across the broader patient population.</div>
-    <div class="bind-wrap">
-      <table class="bind-table">
-        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th></tr></thead>
-        <tbody>${addqRows}</tbody>
-      </table>
-      <div class="bind-legend">Top ${Math.min(addq.length, 12)} of ${addq.length} allele predictions, sorted by rank (tightest binders first).</div>
-    </div>` : ''}
-
-    ${atlas.length ? `<div class="section-title" data-tip="Normal-tissue HLA presentation reported in the HLA Ligand Atlas. Consider this a flag of off-tumor risk for any tissues listed; an empty list is not a safety claim on its own.">Normal-tissue safety</div>
-    ${safetyBlock}` : ''}
-
+    <!-- ============ EXPRESSION + PLOTS (moved up, May 2026) ============ -->
+    <!-- Aman's request: plots sit right under Presentation metrics so
+         readers see the figures before diving into the data tables.
+         Tables (intensity, binding, coverage, panel, safety) now come
+         AFTER the plots. -->
     <div class="section-title" data-tip="Compares the gene's RNA expression in tumor versus normal tissue (TPM from TCGA tumor and GTEx normal). A wide window (tumor >> normal) means the gene is highly overexpressed in cancer — ideal for therapeutic targeting with minimal risk to healthy tissue.">Expression window (RNA · TPM)</div>
     <div class="section-subtitle">Tumor (TCGA median) versus the single most-expressing GTEx normal tissue — the bigger the gap, the safer the therapeutic window.</div>
     <div class="bars">
@@ -7760,19 +7769,8 @@ async function openDrawer(r, opts) {
       <div class="plot-caption">Where this peptide ranks within the ${code} immunopeptidome · served from ImmunoVerse</div>
     </div>
 
-    <div class="section-title" data-tip="Rank-abundance curve showing how this peptide's detection frequency (PSM count) compares across the immunopeptidome samples where it was found. A peptide appearing at high abundance across many samples is a strong shared target candidate.">PSM rank-abundance curve</div>
-    <div class="section-subtitle">The peptide's abundance rank in every patient sample that detected it — a flat curve near the top means consistent high abundance across patients.</div>
-    <div class="plot-wrap" data-svg-kind="rank_abundance" data-png-url="${rankAbundanceUrl}">
-      <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${rankAbundanceUrl}','rank_abundance')">${DL_ICON}PNG</button>
-      <button class="expand-btn" onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
-      <img src="${ASSET_SVG_BASE}/${code}/${pep}_rank_abundance.svg" alt="Rank-abundance curve for ${pep}"
-           oncontextmenu="return false;"
-           onload="this.classList.add('ok')"
-           onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"
-           onerror="_figFallbackToPng(this, '${rankAbundanceUrl}')" />
-      <div class="plot-caption">Abundance rank across ${code} samples that detected this peptide · served from ImmunoVerse</div>
-    </div>
-
+    <!-- MS/MS spectrum: SVG-first via <img>, PNG fallback if NYU doesn't
+         have an SVG for this peptide. Unchanged from before. -->
     <div class="section-title" data-tip="The annotated tandem mass spectrum (MS/MS) confirming this peptide's identity. Blue = b-ions (N-terminal fragments), red = y-ions (C-terminal fragments), green = a-ions. A well-matched spectrum with many fragment ions gives high confidence that this exact peptide sequence was detected on HLA.">MS/MS spectrum</div>
     <div class="section-subtitle">The annotated fragmentation spectrum used to identify this peptide — blue b-ions (N-terminal), red y-ions (C-terminal), green a-ions. Dense matching peaks confirm the sequence.</div>
     <div class="spectrum-wrap" data-svg-kind="spectrum" data-png-url="${spectrumUrl}">
@@ -7785,6 +7783,76 @@ async function openDrawer(r, opts) {
            onerror="_spectrumFallbackToPng(this, '${spectrumUrl}')" />
       <div class="spectrum-caption">b-ions blue · y-ions red · a-ions green · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>
     </div>
+
+    <!-- PSM rank-abundance: PNG by default because the SVG version is large
+         (often 400–600 KB). A "SVG" toggle button appears only when an
+         SVG exists at NYU (probed by _probeAndShowSvgToggle below); the
+         user can switch PNG ↔ SVG in place. No data-svg-kind so the auto
+         _upgradeFiguresToSvg pass leaves this one alone. PNG download
+         button still downloads the PNG regardless of the current view. -->
+    <div class="section-title" data-tip="Rank-abundance curve showing how this peptide's detection frequency (PSM count) compares across the immunopeptidome samples where it was found. A peptide appearing at high abundance across many samples is a strong shared target candidate.">PSM rank-abundance curve</div>
+    <div class="section-subtitle">The peptide's abundance rank in every patient sample that detected it — a flat curve near the top means consistent high abundance across patients.</div>
+    <div class="plot-wrap" data-png-url="${rankAbundanceUrl}" data-svg-url="${ASSET_SVG_BASE}/${code}/${pep}_rank_abundance.svg">
+      <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${rankAbundanceUrl}','rank_abundance')">${DL_ICON}PNG</button>
+      <button class="dl-figure-btn svg-toggle-btn" data-state="png" hidden title="Switch to higher-resolution SVG view" onclick="toggleRankAbundanceSvg(this)">SVG</button>
+      <button class="expand-btn" onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
+      <img src="${rankAbundanceUrl}" alt="Rank-abundance curve for ${pep}"
+           oncontextmenu="return false;"
+           onload="this.classList.add('ok')"
+           onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"
+           onerror="this.parentNode.classList.add('no-plot');this.remove();" />
+      <div class="plot-caption">Abundance rank across ${code} samples that detected this peptide · served from ImmunoVerse</div>
+    </div>
+
+    <!-- ============ DATA TABLES (moved below the plots, May 2026) ============ -->
+    ${intensBlock ? `
+    <div class="section-title" data-tip="Raw mass spectrometry signal intensity for this peptide across individual immunopeptidome samples. Higher intensity = more copies of this peptide are being presented on the tumor cell surface in that sample. Consistent detection across multiple samples supports the peptide as a shared (not private) target.">Per-sample MS intensity (top ${Math.min(intens.length,10)})</div>
+    <div class="section-subtitle">Normalized MS intensity in the individual patient samples that detected this peptide — consistent high bars across samples indicate a shared, robustly presented target.</div>
+    ${intensBlock}` : ''}
+
+    <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples${bind.length ? `<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadObservedHlaCsv()">${DL_ICON}<span>CSV</span></button>` : ''}</div>
+    <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, DeepImmuno score, and per-patient recurrence.</div>
+    <div class="bind-wrap">
+      <table class="bind-table">
+        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th><th>Immuno.</th><th>#Det/#Tot</th><th>Recur.</th></tr></thead>
+        <tbody>${bindRows}</tbody>
+      </table>
+      <div class="bind-legend">
+        <span class="bind-cat bind-sb">SB</span> strong binder (rank ≤ 0.5%)
+        <span class="bind-cat bind-wb">WB</span> weak binder (rank ≤ 2%)
+        · Immuno. = DeepImmuno immunogenicity score
+        · Recur. = #Detected / #Total patients with this HLA
+      </div>
+    </div>
+
+    ${bind.length ? (() => {
+        const sbAlleles = bindSorted.filter(b => (b[3]||'').toUpperCase() === 'SB');
+        const wbAlleles = bindSorted.filter(b => (b[3]||'').toUpperCase() === 'WB');
+        const allBinders = [...sbAlleles, ...wbAlleles];
+        const covSB = sbAlleles.length ? 1 - sbAlleles.reduce((p, b) => p * (1 - (hlaFreq(b[0]) || 0)), 1) : 0;
+        const covAll = allBinders.length ? 1 - allBinders.reduce((p, b) => p * (1 - (hlaFreq(b[0]) || 0)), 1) : 0;
+        const totalDetected = bind.reduce((s, b) => s + (b[4] || 0), 0);
+        return `<div class="section-title" data-tip="Estimates what percentage of the US population could be targeted through this peptide, based on how common the presenting HLA alleles are. Higher coverage = more patients who could benefit from a therapy targeting this peptide.">Population coverage estimate</div>
+    <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;color:var(--text-1);line-height:1.6;">
+      <b style="color:var(--accent-cyan)">${(covAll * 100).toFixed(1)}%</b> of the US population carries at least one presenting allele (strong + weak binders).`
+          + (sbAlleles.length ? ` <b style="color:var(--accent-lime)">${(covSB * 100).toFixed(1)}%</b> carry a strong-binding allele.` : '')
+          + `<br>Detected across <b style="color:var(--text-0)">${totalDetected}</b> immunopeptidome sample(s) total.
+    </div>`;
+      })() : ''}
+
+    ${addqRows ? `
+    <div class="section-title" data-tip="Predicted binding across a broad panel of HLA alleles using NetMHCpan 4.1, beyond only the alleles observed in the immunopeptidome samples. Useful for assessing whether this peptide could be presented by additional HLA alleles in the broader population.">Extended NetMHCpan 4.1 prediction panel<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadExtendedPanelCsv()">${DL_ICON}<span>CSV</span></button></div>
+    <div class="section-subtitle">Predicted binding across a wider allele panel — alleles beyond those observed empirically, to estimate reach across the broader patient population.</div>
+    <div class="bind-wrap">
+      <table class="bind-table">
+        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th></tr></thead>
+        <tbody>${addqRows}</tbody>
+      </table>
+      <div class="bind-legend">Top ${Math.min(addq.length, 12)} of ${addq.length} allele predictions, sorted by rank (tightest binders first).</div>
+    </div>` : ''}
+
+    ${atlas.length ? `<div class="section-title" data-tip="Normal-tissue HLA presentation reported in the HLA Ligand Atlas. Consider this a flag of off-tumor risk for any tissues listed; an empty list is not a safety claim on its own.">Normal-tissue safety</div>
+    ${safetyBlock}` : ''}
 
     <div class="section-title" data-tip="An automated assessment of this peptide's therapeutic potential based on its recurrence, expression window, essentiality, safety profile, and molecular class. Summarizes the key factors a researcher would consider when prioritizing this target for TCR-T, CAR-T, bispecific, or vaccine development.">Therapeutic interpretation</div>
     <p style="font-size:12.5px; color:var(--text-1); line-height:1.65; margin:0;">${interp(r)}</p>
@@ -7800,6 +7868,14 @@ async function openDrawer(r, opts) {
   // with the interactive viewer when one exists. Runs after the drawer
   // is fully rendered so the static figure paints first and never blocks.
   _upgradeFiguresToSvg(body, code, pep);
+
+  // Rank-abundance plot defaults to PNG and exposes a manual "SVG" toggle
+  // button. Probe whether the SVG version actually exists at NYU; if it
+  // loads cleanly, un-hide the button so the user can opt into the
+  // higher-resolution view. If the SVG isn't there, the button stays
+  // hidden and the PNG is the only option.
+  var rankWrap = body.querySelector('.plot-wrap[data-svg-url]');
+  if (rankWrap) _probeAndShowSvgToggle(rankWrap);
 }
 
 function windowInterp(tumor, normal) {
@@ -8339,13 +8415,27 @@ window.addEventListener('popstate', async () => {
 
   // Try the session. Result is cached on window so openDrawer's wrapper can
   // read it without re-fetching.
-  authedFetch('/api/portal/auth/me')
-    .then(r => r.ok ? r.json() : null)
-    .then(user => {
-      window.__IV_PORTAL_USER = user || null;
-      if (user) showAccount(user); else showSignIn();
-    })
-    .catch(() => { window.__IV_PORTAL_USER = null; showSignIn(); });
+  //
+  // Skip the page-load auth probe for anonymous visitors so Chrome's
+  // "Local Network Access" permission prompt doesn't fire on every visit
+  // (the credentialed cross-origin fetch to auth.immunoverse-chat.com was
+  // tripping Chrome's LNA heuristic and users would dismiss the prompt
+  // thinking it was about figures). Users who have signed in have a token
+  // in sessionStorage — we only call /auth/me when there's a reason to.
+  var _ivStoredToken = null;
+  try { _ivStoredToken = sessionStorage.getItem('iv_portal_access'); } catch (e) {}
+  if (_ivStoredToken) {
+    authedFetch('/api/portal/auth/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(user => {
+        window.__IV_PORTAL_USER = user || null;
+        if (user) showAccount(user); else showSignIn();
+      })
+      .catch(() => { window.__IV_PORTAL_USER = null; showSignIn(); });
+  } else {
+    window.__IV_PORTAL_USER = null;
+    showSignIn();
+  }
 
   // ---------- Save-this-search ----------
   // Build the URL-param dict that account.html's saved-search cards expect.

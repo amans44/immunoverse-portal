@@ -113,13 +113,43 @@ Three layers, in increasing visibility:
 
 **Only `index.html` has the SVG-first rendering path. `demo/index.html` and `reviewers/index.html` still use the original PNG-first path** — they were intentionally pinned at user's request because they were perceived to be working as before.
 
-### Render chain (main `index.html` only)
+### Drawer section order (main `index.html`)
 
-For each of the three drawer plots (percentile, rank-abundance, spectrum):
+Top-to-bottom, the peptide drawer now lays out as:
 
-1. The `<img>` `src` is set to the **SVG URL** at NYU: `{ASSET_SVG_BASE}/{code}/{pep}_{kind}.svg` (or `spectrum_{pep}.svg`). Browser loads it cross-origin via `<img>` — **no proxy needed for display**.
-2. If the SVG returns 404 (peptide has no SVG yet), `onerror` fires → calls `_figFallbackToPng(this, pngUrl)` which swaps `src` to the PNG at `{ASSET_BASE}/{code}_{pep}_{kind}.png`.
-3. If the PNG also 404s, second `onerror` triggers → wrap gets `.no-plot` class and the `<img>` is removed (spectrum has a custom "Annotated spectrum not available" message via `_spectrumFallbackToPng`).
+1. **Drawer header** — peptide, copy/bookmark/Download-all buttons
+2. **Pill row** — aa count, PSMs, abundance, recurrence, etc.
+3. **`heroCallout`** — includes the collapsible "Show raw annotation" details
+4. **Presentation metrics** — four-bar at-a-glance score block
+5. **Expression window (RNA · TPM)** — tumor median vs max GTEx normal
+6. **Gene expression boxplot** *(or splice/TE/chimeric differential plot for non-canonical rows)*
+7. **Peptide intensity percentile** plot — SVG-first
+8. **MS/MS spectrum** plot — SVG-first
+9. **PSM rank-abundance** plot — **PNG-first** with optional "SVG" toggle
+10. **Per-sample MS intensity** (table-like bar block) — `intensBlock`
+11. **Per-HLA binding — observed samples** (table)
+12. **Population coverage estimate** (data block)
+13. **Extended NetMHCpan 4.1 panel** (table)
+14. **Normal-tissue safety** (table)
+15. **Therapeutic interpretation** (paragraph)
+16. **Cross-references** (external links)
+
+Plots cluster directly under the Expression window so readers see the figures first; the data tables that used to sit between them and the plots now appear below the plots.
+
+### Render chain — percentile and spectrum (SVG-first)
+
+For both plots, the `<img>` `src` is set to the **SVG URL** at NYU: `{ASSET_SVG_BASE}/{code}/{pep}_{kind}.svg` (or `spectrum_{pep}.svg`). Browser loads it cross-origin via `<img>` — **no proxy needed for display**.
+- If the SVG returns 404 (peptide has no SVG yet), `onerror` fires → calls `_figFallbackToPng(this, pngUrl)` which swaps `src` to the PNG at `{ASSET_BASE}/{code}_{pep}_{kind}.png`.
+- If the PNG also 404s, second `onerror` triggers → wrap gets `.no-plot` class and the `<img>` is removed (spectrum has a custom "Annotated spectrum not available" message via `_spectrumFallbackToPng`).
+
+### Render chain — rank-abundance (PNG-first with manual SVG toggle)
+
+Rank-abundance SVGs are noticeably larger than the corresponding PNGs (often 400–600 KB), so this plot defaults to **PNG**.
+- `<img>` `src` = `{rankAbundanceUrl}` (the PNG) on initial render.
+- A small "SVG" button sits left of the PNG-download button, **hidden by default**.
+- After drawer renders, `_probeAndShowSvgToggle(wrap)` creates a hidden `Image()` with `src = wrap.dataset.svgUrl`. On `load`, the button un-hides; on `error`, it stays hidden — so the toggle only appears when an SVG actually exists for this peptide.
+- Click button → `toggleRankAbundanceSvg(btn)` swaps `<img src>` from PNG↔SVG in place, and flips the button label ("SVG" → "PNG" → "SVG" …). PNG download button always downloads the PNG regardless of the current view. **No SVG download** is offered through the UI.
+- The wrap does **not** carry `data-svg-kind`, so the auto `_upgradeFiguresToSvg` pass leaves rank-abundance alone (otherwise the PNG would be replaced by the interactive SVG, defeating the PNG-default behavior).
 
 ### Why this approach
 - **`<img src=SVG>` cross-origin works without CORS** because `<img>` tags don't read pixel bytes from JS.
@@ -227,6 +257,23 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-05-28 — Skip auth fetch for anonymous visitors (stops Chrome LNA prompt)
+**Why:** Every page load was firing `fetch('https://auth.immunoverse-chat.com/api/portal/auth/me', { credentials: 'include' })` to check session state, even for anonymous visitors who had never signed in. This credentialed cross-origin fetch was tripping **Chrome's Local Network Access permission prompt** ("immuno-verse.com wants to Access other devices on your local network") — users would dismiss/block it without understanding, and it would visually appear at the same moment a peptide drawer was opening, so users conflated the prompt with the figures and walked away thinking "no plots for this peptide."
+**What:** Gated the page-load `/auth/me` probe behind a `sessionStorage.getItem('iv_portal_access')` check. Anonymous visitors (no token) → `__IV_PORTAL_USER = null; showSignIn()` is called immediately, no network fetch. Visitors with a stored token (i.e., who've previously signed in) still hit `/auth/me` as before. Drawer-open history POST is also unaffected because it's already gated on `window.__IV_PORTAL_USER`.
+**Tradeoff:** if any user is logged in via cookie only (no token in sessionStorage), they'll see "Sign in" on a new tab even though their session is still valid server-side. From the current code, `authedFetch` uses the stored token as a Bearer header, so this is unlikely to affect anyone in practice — but flagged here so future-me knows.
+**Files:** `index.html`.
+**Commit:** (pending — Aman wants to test locally first before pushing).
+
+### 2026-05-28 — Drawer plots before tables; rank-abundance PNG-first with SVG toggle
+**Why:** Aman asked for the peptide drawer to surface the figures first (right under Presentation metrics) before the data tables, since plots are the most visually communicative summary. Rank-abundance specifically defaults to PNG because its SVG is much larger (often 400–600 KB) — adding a manual "SVG" toggle so users who want the high-res version can opt in, without paying the load cost up-front for every drawer open.
+**What:**
+- **New section order** (top→bottom): drawer header → pill row → heroCallout → Presentation metrics → Expression window → Gene expression / differential plot → Peptide intensity percentile (SVG-first) → MS/MS spectrum (SVG-first) → PSM rank-abundance (PNG-first + SVG toggle) → Per-sample MS intensity → Per-HLA binding → Population coverage → Extended NetMHCpan panel → Normal-tissue safety → Therapeutic interpretation → Cross-references.
+- **Rank-abundance becomes PNG-default.** `<img src>` now starts with the PNG URL. The wrap drops `data-svg-kind` so `_upgradeFiguresToSvg` skips it (no auto-promotion to interactive SVG). New `<button class="svg-toggle-btn">` sits left of the PNG-download button, hidden until `_probeAndShowSvgToggle` confirms the SVG exists at NYU. Click → `toggleRankAbundanceSvg` swaps `<img src>` in place and flips the button label. PNG download button always downloads PNG; SVG download is never offered.
+- Two new JS helpers near `_figFallbackToPng`: `_probeAndShowSvgToggle(wrap)` and `toggleRankAbundanceSvg(btn)`.
+- New CSS rule `.dl-figure-btn.svg-toggle-btn` (same positioning + cyan tint as `.iv-back-to-svg`) plus `[hidden] { display: none }` so the SDK's `hidden` attr cooperates with the absolute positioning.
+**Files:** `index.html`.
+**Commit:** (pending — Aman wants to test locally first before pushing).
 
 ### 2026-05-21 — Expand-on-focus search instead of flex-shrink
 **Why:** The previous fix (`min-width: 320px` on `.search-wrap`) prevented the search from squeezing to a sliver, but pushed the "Explore atlas" CTA off the right edge of the topnav on narrow desktop viewports. User wanted the search to behave like a compact button that expands on click without disturbing neighboring topnav items.
