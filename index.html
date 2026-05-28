@@ -5622,10 +5622,32 @@ function _ivExtractMplHeatmap(svgEl) {
   const hlas = [...hlaSeen.keys()]
     .map(name => ({ name, y: hlaSeen.get(name) }))
     .sort((a, b) => a.y - b.y);
-  // Relaxed from `< 2` to `< 1` so peptides detected on a single HLA
-  // (e.g. NBL/RYLPSSVFL with only A*24:02) still get the interactive
-  // scifi figure as a single-row heatmap, instead of falling through
-  // to the static themed-matplotlib path.
+
+  // Pull HLAs from the legend group too. The heatmap-axes tick labels only
+  // include HLAs that have actual MS detection data; the legend lists ALL
+  // HLAs of interest for this peptide (including predicted binders with
+  // no data). For visual consistency with the legend chips, append any
+  // legend-only HLAs as extra rows — they end up as empty rows in the
+  // matrix because no data cells map to them (their `y` is Infinity).
+  const dataHlaNames = new Set(hlas.map(h => h.name));
+  svgEl.querySelectorAll('g[id^="legend_"] g[id^="text_"]').forEach(t => {
+    let cmt = '';
+    for (const c of t.childNodes) { if (c.nodeType === 8) { cmt = c.nodeValue.trim(); break; } }
+    if (!cmt) return;
+    // A legend label is either a single HLA (`A*24:02`) or a semicolon-
+    // joined set (`A*24:02;B*18:01`). Split and accept each token.
+    cmt.split(';').forEach(tok => {
+      const name = tok.trim();
+      if (IV_HLA_RX.test(name) && !dataHlaNames.has(name)) {
+        dataHlaNames.add(name);
+        hlas.push({ name, y: Infinity });  // sorted after all data HLAs
+      }
+    });
+  });
+
+  // Need at least one HLA from either source. Single-HLA peptides
+  // (e.g. NBL/RYLPSSVFL with only A*24:02) still render as a one-row
+  // heatmap; peptides whose SVG truly has zero HLAs fall through.
   if (hlas.length < 1) return null;
 
   // Tissue labels: dedup, sort by X (left-to-right).

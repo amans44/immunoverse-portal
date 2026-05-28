@@ -258,6 +258,13 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-05-28 — Scifi heatmap rows reflect the full legend (predicted + observed HLAs)
+**Why:** User reported peptides like NBL/`RYYSALRHY` rendered with 4 HLA chips in the legend but only 1 HLA row in the heatmap below. Cause: the matplotlib heatmap axes only contains HLA-rows that have actual MS *detection* data — the other 3 HLAs in the legend are predicted binders without data, so matplotlib doesn't draw rows for them. Visually inconsistent with the legend chip count.
+**What:** `_ivExtractMplHeatmap` now collects HLAs from **both** sources: the heatmap axes (data-rows, with real Y positions) AND the legend group (single-allele or semicolon-joined). Legend-only HLAs are appended with `y: Infinity` so the matrix-cell snap-to-nearest-row logic never assigns data cells to them — they render as empty rows with the row label visible. Result: every HLA in the legend gets a row in the heatmap, even if it has no detection cells.
+**Trade-off recorded:** the heatmap now visually includes "candidate" HLAs without data. A reader could interpret this as "tested but no detection" when it's actually "predicted binder, MS may or may not have tested it." If that becomes a documentation problem, swap empty rows for a faint "no data" pattern instead of plain empty.
+**Files:** `index.html`.
+**Commit:** (this commit).
+
 ### 2026-05-28 — Scifi-figure legend accepts single-allele category labels
 **Why:** After the previous fix landed, peptides like NBL/`RPAPPGAWV` and NBL/`IVLTNLPNR` rendered their interactive figure WITH dots but WITHOUT legend chips — console showed "no legends extracted". Root cause: the legend-collection filter in `_ivExtractMplScatter` required `;` in the comment (`!/[;]/.test(cmt)`), which meant only semicolon-separated multi-allele category labels (`A*24:02;B*18:01`) made the cut. Single-allele labels (`B*15:01`, `A*23:01`, etc.) got dropped, leaving `categories` empty even though the legend group clearly contained valid HLA entries.
 **What:** Replaced the semicolon test with a new `HLA_CAT_RX = /^[A-DG]\*\d{2}:\d{2}/` (no `$` anchor, so it still passes for semicolon-joined sets — the regex just checks the comment *starts* with an HLA token). Multi-allele peptides keep working; single-allele peptides now produce legend chips too. `_ivHlaCategoryColor`'s `split(';')` is already safe for single-token labels (`'B*15:01'.split(';')` → `['B*15:01']`).
