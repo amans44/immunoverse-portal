@@ -5702,7 +5702,11 @@ function _ivExtractMplHeatmap(svgEl) {
 
   return {
     hlas: hlas.map(h => h.name),
-    tissues: tissues.map(t => t.cmt),
+    // tissues array was already mapped to `{ name, x }` objects above —
+    // the previous code returned `t.cmt` (undefined) by mistake. With
+    // the dual-axes extractor this would surface as "undefined" tissue
+    // labels even on peptides like QYNPIRTTF that used to work.
+    tissues: tissues.map(t => t.name),
     matrix,
     maxVal: Math.max(1, ...cellTexts.map(c => c.value)),
   };

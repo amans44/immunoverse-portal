@@ -258,6 +258,12 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-05-28 — Fix `tissues.map(t => t.cmt)` → `t.name` (latent bug surfaced by the dual-axes fix)
+**Why:** After the dual-axes extractor landed, even peptides that used to work (QYNPIRTTF) showed "undefined" instead of tissue names on the X-axis. Latent bug in the return statement: `tissues` were already mapped to `{ name, x }` objects further up, but the return read `t.cmt` — undefined for every tissue. The old single-axes code happened to plumb `cmt`-shaped objects through some paths so the bug was hidden; the new clean split surfaced it.
+**What:** Changed `tissues: tissues.map(t => t.cmt)` → `tissues: tissues.map(t => t.name)`. Single-character fix. HLAs were already returned correctly via `h.name`.
+**Files:** `index.html`.
+**Commit:** (this commit).
+
 ### 2026-05-28 — Extract heatmap HLAs and tissues from independent axes (architecture fix)
 **Why:** After the previous legend-union fix, NBL/`RYYSALRHY` showed all 4 HLA rows in the heatmap but the X-axis tissue names disappeared. Root cause: matplotlib splits the percentile figure across multiple `<g id="axes_N">` subplots that share an X-axis — the HEATMAP subplot (`axes_3`) carries the HLA y-tick labels, the PER-TISSUE SCATTER subplot below it (`axes_2`) carries the tissue x-tick labels. The old extractor picked ONE axes by score (#HLAs × #tissues). For RYYSALRHY that was `axes_2` (1×30 = 30 vs `axes_3`'s 4×0 = 0), so HLAs only came from `axes_2` and the heatmap rendered with the wrong row count.
 **What:** Replaced the single "best axes" choice with **two independent picks**:
