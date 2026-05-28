@@ -5622,7 +5622,11 @@ function _ivExtractMplHeatmap(svgEl) {
   const hlas = [...hlaSeen.keys()]
     .map(name => ({ name, y: hlaSeen.get(name) }))
     .sort((a, b) => a.y - b.y);
-  if (hlas.length < 2) return null;
+  // Relaxed from `< 2` to `< 1` so peptides detected on a single HLA
+  // (e.g. NBL/RYLPSSVFL with only A*24:02) still get the interactive
+  // scifi figure as a single-row heatmap, instead of falling through
+  // to the static themed-matplotlib path.
+  if (hlas.length < 1) return null;
 
   // Tissue labels: dedup, sort by X (left-to-right).
   const tissueSeen = new Map();
@@ -5635,7 +5639,9 @@ function _ivExtractMplHeatmap(svgEl) {
   const tissues = [...tissueSeen.keys()]
     .map(name => ({ name, x: tissueSeen.get(name) }))
     .sort((a, b) => a.x - b.x);
-  if (tissues.length < 5) return null;
+  // Same relaxation rationale as the HLA threshold above. Single-tissue
+  // figures still render as a meaningful single-cell strip.
+  if (tissues.length < 1) return null;
 
   // Cell values: integer comments anywhere in the chosen axes.
   const cellTexts = allTexts.filter(t => /^\d+$/.test(t.cmt))
@@ -5694,9 +5700,18 @@ function _ivExtractMplScatter(svgEl) {
     if (!xy) return;
     tickYs[parseFloat(cmt)] = xy[1];
   });
-  // Need at least the 0.0 and 1.0 ticks to back-compute percentile.
-  if (!(0 in tickYs) || !(1 in tickYs)) return null;
-  const yPx0 = tickYs[0], yPx1 = tickYs[1];
+  // Need at least two distinct tick labels to back-compute percentile.
+  // Originally this hardcoded `0.0` and `1.0`, but peptides whose data
+  // never reaches percentile 1.0 get a matplotlib Y-axis that only goes
+  // up to (say) 0.7, so the 1.0 tick is absent and the scifi figure was
+  // bailing out for them. Use whichever min/max numeric ticks ARE
+  // present and interpolate from there.
+  const tickValues = Object.keys(tickYs).map(parseFloat).sort((a, b) => a - b);
+  if (tickValues.length < 2) return null;
+  const vMin = tickValues[0];                  // smallest tick label, e.g. 0.0
+  const vMax = tickValues[tickValues.length - 1]; // largest tick label, e.g. 0.7 or 1.0
+  const yPxMin = tickYs[vMin];                 // pixel Y for vMin
+  const yPxMax = tickYs[vMax];                 // pixel Y for vMax
 
   // Tumor scatter dots: each PathCollection_N is one HLA category. matplotlib
   // versions vary in how they nest <use> markers — sometimes direct children
@@ -5728,7 +5743,10 @@ function _ivExtractMplScatter(svgEl) {
       if (!isFinite(yPx)) return;
       const mplColor = fill.toLowerCase();
       const scifiColor = IV_MPL_TO_SCIFI[mplColor] || mplColor;
-      const pct = (yPx - yPx0) / (yPx1 - yPx0);
+      // Linear interpolation using whatever min/max tick labels exist
+      // (rather than hardcoded 0/1). Inverted: matplotlib pixel-Y
+      // decreases as the data value increases.
+      const pct = vMin + (vMax - vMin) * (yPxMin - yPx) / (yPxMin - yPxMax);
       tumorDots.push({ pct: Math.max(0, Math.min(1, pct)), color: scifiColor, cat: pcIdx });
     });
     pcIdx++;
@@ -5761,7 +5779,7 @@ function _ivExtractMplScatter(svgEl) {
       // Skip marker-symbol definitions which sit at (0,0).
       if (cx < 5 || cy < 5) return;
       const scifiColor = IV_MPL_TO_SCIFI[stroke] || stroke;
-      const pct = (cy - yPx0) / (yPx1 - yPx0);
+      const pct = vMin + (vMax - vMin) * (yPxMin - cy) / (yPxMin - yPxMax);
       // Find which legend category this color maps to.
       let cat = -1;
       for (let i = 0; i < IV_SCIFI_PALETTE.length; i++) {

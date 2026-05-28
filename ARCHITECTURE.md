@@ -258,6 +258,16 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-05-28 — Scifi-figure extractors handle low-HLA + non-1.0 Y-axis peptides
+**Why:** Users found a string of NBL peptides whose drawer fell through to the static themed-matplotlib rendering instead of the interactive scifi composition (RYLPSSVFL, RYYSALRHY, ETASNEVVY, KVYADTGLY, WASLPGPSM, and "many more"). Two independent extractor bailouts were at fault:
+1. `_ivExtractMplHeatmap` hard-bailed when `hlas.length < 2` or `tissues.length < 5`. Single-HLA peptides like RYLPSSVFL (only `A*24:02`) were filtered out.
+2. `_ivExtractMplScatter` required *both* `0.0` AND `1.0` Y-axis tick labels to back-compute percentile. Peptides whose data never reaches 1.0 get matplotlib Y-axes capped at lower values (RYYSALRHY's tops out at 0.7), so the 1.0 tick is absent and the function returned null.
+**What:**
+1. **Heatmap:** dropped thresholds to `hlas.length < 1` and `tissues.length < 1` — single-row/column heatmaps still render meaningfully.
+2. **Scatter:** replaced the hardcoded `(0,1)` tick check with "pick whichever numeric ticks are actually present, sort, use min & max". The pct calculation became a generalized linear interpolation `vMin + (vMax - vMin) * (yPxMin - yPx) / (yPxMin - yPxMax)` so peptides with truncated Y-axes still produce correctly-scaled percentile values.
+**Files:** `index.html`.
+**Commit:** (this commit).
+
 ### 2026-05-28 — Invalidate stale SVG-exists localStorage cache
 **Why:** User reported only one NBL peptide (`QYNPIRTTF`) was rendering the interactive SVG upgrade — the rest were just showing the static `<img>` (which looks similar but lacks hover tooltips, color-filter chips, zoom). Root cause: `fetchSvgIfExists` writes a `localStorage` entry keyed `svgexist:<url>` storing `exists: false` (with 12 h TTL) when a proxy fetch fails. While the proxy was broken earlier, many peptide-percentile URLs got cached as `exists: false`. The proxy works now, but those entries are still in localStorage and short-circuit the upgrade for 12 h.
 **What:**
