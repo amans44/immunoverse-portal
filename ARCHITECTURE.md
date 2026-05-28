@@ -258,6 +258,12 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-05-28 — Scifi-figure legend accepts single-allele category labels
+**Why:** After the previous fix landed, peptides like NBL/`RPAPPGAWV` and NBL/`IVLTNLPNR` rendered their interactive figure WITH dots but WITHOUT legend chips — console showed "no legends extracted". Root cause: the legend-collection filter in `_ivExtractMplScatter` required `;` in the comment (`!/[;]/.test(cmt)`), which meant only semicolon-separated multi-allele category labels (`A*24:02;B*18:01`) made the cut. Single-allele labels (`B*15:01`, `A*23:01`, etc.) got dropped, leaving `categories` empty even though the legend group clearly contained valid HLA entries.
+**What:** Replaced the semicolon test with a new `HLA_CAT_RX = /^[A-DG]\*\d{2}:\d{2}/` (no `$` anchor, so it still passes for semicolon-joined sets — the regex just checks the comment *starts* with an HLA token). Multi-allele peptides keep working; single-allele peptides now produce legend chips too. `_ivHlaCategoryColor`'s `split(';')` is already safe for single-token labels (`'B*15:01'.split(';')` → `['B*15:01']`).
+**Files:** `index.html`.
+**Commit:** (this commit).
+
 ### 2026-05-28 — Scifi-figure extractors handle low-HLA + non-1.0 Y-axis peptides
 **Why:** Users found a string of NBL peptides whose drawer fell through to the static themed-matplotlib rendering instead of the interactive scifi composition (RYLPSSVFL, RYYSALRHY, ETASNEVVY, KVYADTGLY, WASLPGPSM, and "many more"). Two independent extractor bailouts were at fault:
 1. `_ivExtractMplHeatmap` hard-bailed when `hlas.length < 2` or `tissues.length < 5`. Single-HLA peptides like RYLPSSVFL (only `A*24:02`) were filtered out.

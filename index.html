@@ -5794,13 +5794,19 @@ function _ivExtractMplScatter(svgEl) {
     });
   }
 
-  // Legend HLA-category strings: text comments anywhere with `;` separator.
+  // Legend HLA-category strings. A category label is either a single HLA
+  // (`A*24:02`) or a semicolon-separated set (`A*24:02;B*18:01`). The
+  // previous filter required `;`, which silently dropped every peptide
+  // whose legend was made up entirely of single-allele rows (RPAPPGAWV,
+  // IVLTNLPNR, etc.) — they'd render with dots but no legend chips.
+  // Accept anything starting with an HLA token instead.
+  const HLA_CAT_RX = /^[A-DG]\*\d{2}:\d{2}/;
   const cats = [];
   const seen = new Set();
   svgEl.querySelectorAll('g[id^="legend_"] g[id^="text_"]').forEach(t => {
     let cmt = '';
     for (const c of t.childNodes) { if (c.nodeType === 8) { cmt = c.nodeValue.trim(); break; } }
-    if (!cmt || !/[;]/.test(cmt) || seen.has(cmt)) return;
+    if (!cmt || !HLA_CAT_RX.test(cmt) || seen.has(cmt)) return;
     seen.add(cmt);
     cats.push(cmt);
   });
