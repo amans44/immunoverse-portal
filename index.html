@@ -7099,6 +7099,12 @@ async function openCompareModal() {
   const keys = [...COMPARE];
   const rows = keys.map(compareRowFromKey).filter(Boolean);
   if (rows.length < 2) return;
+  // Sync the URL with the active comparison so the user can share or
+  // bookmark this view (e.g. for re-opening from account → Saved
+  // comparisons → Open). pushUrlState uses replaceState so no extra
+  // history entry is added.
+  COMPARE_URL = keys.slice();
+  if (typeof pushUrlState === 'function') pushUrlState();
   // Lazy-load detail for each involved cancer so pathogen/variant panels work.
   const codes = [...new Set(rows.map(r => r[COL.code]))];
   await Promise.all(codes.map(c => loadDetail(c)));
@@ -7392,6 +7398,11 @@ async function openCompareModal() {
 function closeCompareModal() {
   document.getElementById('compareModal').classList.remove('open');
   document.getElementById('compareModalBg').classList.remove('open');
+  // Clear COMPARE_URL and re-sync the URL so `compare=` drops off
+  // when the modal closes. Otherwise the URL would still encode a
+  // comparison that is no longer visible.
+  COMPARE_URL = null;
+  if (typeof pushUrlState === 'function') pushUrlState();
 }
 
 async function loadDetail(code) {
@@ -7464,7 +7475,14 @@ async function openDrawer(r, opts) {
     DRAWER_URL = { code, pep };
     if (typeof pushUrlState === 'function') pushUrlState();
   } else {
+    // skipUrl is set when the drawer-open is driven by a URL change
+    // (popstate / deep-link from saved peptide). We skip the pushState
+    // call so we don't add a duplicate history entry, but we STILL run
+    // pushUrlState so the URL params (open=PEPTIDE&cancer=CODE) get
+    // written back via replaceState — otherwise the URL ends up with
+    // just `cancer=` and the user can't share or copy the link.
     DRAWER_URL = { code, pep };
+    if (typeof pushUrlState === 'function') pushUrlState();
   }
   const abund = (r[COL.abund] ?? 0) * 100;
   const score = r[COL.score] || 0;
@@ -8237,6 +8255,10 @@ document.querySelectorAll('nav .links a').forEach(a => {
 // open, so the URL can encode it (`&open=PEPTIDE`) as a deep link distinct
 // from the `pep` filter input above. Cleared on drawer close.
 let DRAWER_URL = null;
+// COMPARE_URL holds the active comparison's `pep::code` list when the
+// compare modal is open, so pushUrlState can encode it as `compare=…`
+// and the user can share / bookmark the URL. Cleared on modal close.
+let COMPARE_URL = null;
 function pushUrlState() {
   const p = new URLSearchParams();
   if (STATE.cancer) p.set('cancer', STATE.cancer);
@@ -8251,6 +8273,11 @@ function pushUrlState() {
   if (DRAWER_URL && DRAWER_URL.pep) {
     p.set('open', DRAWER_URL.pep);
     if (DRAWER_URL.code) p.set('cancer', DRAWER_URL.code);
+  }
+  // `compare` encodes the full pep::code key list when the comparison
+  // modal is open. Matches the deep-link branch in loadAll's wrapper.
+  if (COMPARE_URL && COMPARE_URL.length >= 2) {
+    p.set('compare', COMPARE_URL.join(','));
   }
   const qs = p.toString();
   const url = qs ? '#explorer?' + qs : location.pathname;

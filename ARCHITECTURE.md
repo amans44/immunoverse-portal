@@ -258,6 +258,18 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-05-29 — Make deep-linked drawer / comparison URLs shareable (sync URL on skipUrl path)
+**Why:** When the user clicked "Open →" on a saved peptide (or visited a peptide from "Recently viewed", or shared a `&open=PEPTIDE` URL with a colleague), the drawer opened correctly but the URL stayed as `#explorer?cancer=NBL` — the `&open=PEPTIDE` part was missing. Same for saved comparisons: clicking Open rebuilt the COMPARE set and showed the modal, but `compare=…` was gone from the URL. Result: users couldn't copy + share the URL of the thing they were looking at.
+**Root cause (drawer):** `openDrawer(row, { skipUrl: true })` from the deep-link handler set `DRAWER_URL` but skipped *both* `history.pushState` AND `pushUrlState()`. The `pushState` skip was intentional (no duplicate back-button entry), but skipping `pushUrlState` meant the URL params never got re-synced after `applyFilters` stripped them earlier in `loadAll`.
+**Root cause (comparison):** `pushUrlState` had no concept of the comparison modal state, so even when the modal was open the URL never encoded the active `pep::code` set.
+**What:**
+1. **`openDrawer` skipUrl branch** now also calls `pushUrlState()` — this uses `replaceState`, so no extra history entry, just URL-param sync. Deep-linked drawers (saved peptides, recent peptides, shared URLs) now produce `?cancer=NBL&open=QYNPIRTTF`.
+2. **New `COMPARE_URL` global** mirrors `DRAWER_URL` semantics: holds the active `[pep::code, …]` array when the comparison modal is open, `null` otherwise.
+3. **`pushUrlState` emits `compare=`** when `COMPARE_URL` is set with ≥2 keys.
+4. **`openCompareModal`** assigns `COMPARE_URL` from the active `COMPARE` set and calls `pushUrlState()` right after rendering. **`closeCompareModal`** clears it and re-syncs.
+**Files:** `index.html`.
+**Commit:** (this commit).
+
 ### 2026-05-29 — Saved comparisons (third saved-search bucket)
 **Why:** Aman asked to bring the "Saved comparisons" item from the marketing copy into reality, alongside the already-shipping Saved peptides and Saved filter searches. Frank specifically asked about it.
 **What:**
