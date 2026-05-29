@@ -969,6 +969,18 @@ footer.page-footer a:hover { color: var(--text-0); }
 </footer>
 
 <script>
+// Dev override (localhost-only) — see login.html for the rationale.
+(function () {
+  try {
+    var qp = new URLSearchParams(location.search).get('authbase');
+    if (qp === 'clear') { localStorage.removeItem('iv_dev_authbase'); }
+    else if (qp && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(qp.replace(/\/+$/, ''))) {
+      localStorage.setItem('iv_dev_authbase', qp.replace(/\/+$/, ''));
+    }
+    var dev = localStorage.getItem('iv_dev_authbase');
+    if (dev) window.IMMUNOVERSE_AUTH_BASE = dev;
+  } catch (e) {}
+})();
 window.IMMUNOVERSE_AUTH_BASE = window.IMMUNOVERSE_AUTH_BASE || "https://auth.immunoverse-chat.com";
 const AUTH = window.IMMUNOVERSE_AUTH_BASE.replace(/\/+$/, '');
 

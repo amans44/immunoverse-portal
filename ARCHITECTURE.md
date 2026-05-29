@@ -24,6 +24,7 @@ it works that way*. It has two parts:
 - [Analytics stack](#analytics-stack)
 - [Visible UI elements](#visible-ui-elements)
 - [Figure rendering (drawer)](#figure-rendering-drawer)
+- [Authentication & accounts](#authentication--accounts)
 - [CORS proxies](#cors-proxies)
 - [Cloudflare Workers](#cloudflare-workers)
 - [External services & URLs](#external-services--urls)
@@ -173,6 +174,52 @@ Rank-abundance SVGs are noticeably larger than the corresponding PNGs (often 400
 
 ---
 
+## Authentication & accounts
+
+The portal's account system (sign-in, sign-up, saved searches, peptide history,
+admin console) is served by a **separate backend**, not by these static pages.
+
+- **Frontend pages (this repo):** `login.html` (sign in / create account / request
+  access), `account.html` (profile, saved items, sessions, change password),
+  `admin.html` (admin console — users, access requests, inquiries, admin
+  allow-list), and `reset.html` (forgot-password + set-password-after-approval).
+  All call the backend via `window.IMMUNOVERSE_AUTH_BASE` (default
+  `https://auth.immunoverse-chat.com`). For local testing they accept a
+  localhost-only `?authbase=http://localhost:PORT` override (persisted in
+  `localStorage` as `iv_dev_authbase`; `?authbase=clear` resets it).
+- **Backend (sibling repo `immunoVerse_agent`, package `portal_auth/`):** FastAPI
+  + Firestore, deployed to Cloud Run service **`auth-service`** (project
+  `immunoverse-chat`, us-central1). JWT (HS256, `ns:"portal"` claim) in
+  cross-site cookies `iv_portal_access` / `iv_portal_refresh`; bcrypt passwords.
+  Collections are `portal_*` (e.g. `portal_users`, `portal_access_requests`,
+  `portal_password_reset_tokens`, `portal_deleted_users`).
+- **Access model:** institutional emails (`.edu`/`.ac.*`/partner list in
+  `auth/domain_check.py`) auto-activate on register; individuals submit an
+  access request that an admin approves. Admin allow-list via
+  `PORTAL_ADMIN_EMAILS` env + `portal_admin_allow_list` collection.
+- **Password flows:**
+  - *Forgot password* — `POST /api/portal/auth/reset-password` (emails a
+    one-time link) → user lands on `reset.html?token=…` → `POST
+    /reset-password/confirm`.
+  - *Set password after approval* — approving an access request issues the same
+    kind of token (`purpose:"setup"`, 24 h) and emails a set-password link; the
+    admin response also surfaces the link + a one-time password as a fallback.
+  - Tokens live in `portal_password_reset_tokens` (sha256-hashed); confirming
+    activates a pending account and revokes all old sessions.
+- **Admin user deletion (soft-delete + archive):** `DELETE
+  /api/portal/admin/users/{id}` snapshots the user (and their saved searches /
+  peptide history) into `portal_deleted_users`, then removes them from
+  `portal_users` so the email is free to register fresh later. The admin keeps
+  the archive permanently; a later registration under the same email is flagged
+  `previously_deleted` in the user list, and `GET /api/portal/admin/deleted-users`
+  shows the archive with a `reregistered` flag. Admins can't delete themselves
+  or another admin (demote first).
+- **Email delivery:** `portal_auth/email.py` is provider-agnostic. Today the live
+  service has **no mail provider configured**, so reset/approval links fall back
+  to the server console + the admin-surfaced link. Plugging in Resend/SendGrid/
+  SMTP later is a config change (intended from address: `noreply@immuno-verse.com`,
+  which needs DNS access to that domain — currently pending).
+
 ## CORS proxies
 
 The portal needs to read the *bytes* of NYU figures in two cases:
@@ -257,6 +304,45 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-05-29 — Portal auth fixes: forgot-password, set-password-after-approval, admin soft-delete
+**Why:** Three reported gaps. (1) Approved individual users had no way to set a
+password — approval minted a one-time password returned only in the admin API
+response, never delivered, with no set-password page. (2) Admins could only
+suspend, never delete a user. (3) No "forgot password" anywhere on the portal.
+**What:**
+- **Backend (`immunoVerse_agent/portal_auth/`):**
+  - New `PortalPasswordResetToken` model (`portal_password_reset_tokens`,
+    `purpose` = `reset` | `setup`) and `PortalDeletedUser` archive model
+    (`portal_deleted_users`).
+  - New endpoints `POST /api/portal/auth/reset-password` and
+    `/reset-password/confirm`. Confirm sets the password, activates a pending
+    account, revokes all sessions, consumes the token.
+  - `approve_request` now also issues a `setup` token + emails a set-password
+    link and returns `set_password_url` + `email_sent` alongside the existing
+    OTP fallback ("Both" behaviour).
+  - New `DELETE /api/portal/admin/users/{id}` (soft-delete: archive user +
+    subcollections to `portal_deleted_users`, free the email) and `GET
+    /api/portal/admin/deleted-users`. `list_users` flags `previously_deleted`.
+  - New provider-agnostic `portal_auth/email.py` (`send_portal_password_email`),
+    console fallback when no mail provider is set; from `noreply@immuno-verse.com`.
+- **Frontend (this repo):**
+  - New `reset.html` (request-reset form when no `?token`, set-password form when
+    a token is present).
+  - `login.html` — added a "Forgot password?" link to the sign-in form.
+  - `admin.html` — added a **Delete** button on non-admin user rows (confirm +
+    optional reason) and a "↺ returning" badge for `previously_deleted` users.
+  - All four auth pages gained a localhost-only `?authbase=` dev override.
+**Verified:** offline test against the in-memory Firestore mock — all flows pass
+(approve→set-password→login, forgot-password→login, delete→archive→re-register→
+flag, admin self-delete blocked). Browser/live test pending.
+**Email caveat:** prod `auth-service` has no mail provider yet, so reset/approval
+links are delivered via the admin-shown link + one-time password until
+Resend/SendGrid + `immuno-verse.com` DNS are set up.
+**Files:** `reset.html`, `login.html`, `admin.html`, `account.html`,
+`ARCHITECTURE.md` (portal); `portal_auth/models.py`, `schemas.py`, `routes.py`,
+`admin_routes.py`, `email.py` (agent repo).
+**Commit:** (pending).
 
 ### 2026-05-29 — Make deep-linked drawer / comparison URLs shareable (sync URL on skipUrl path)
 **Why:** When the user clicked "Open →" on a saved peptide (or visited a peptide from "Recently viewed", or shared a `&open=PEPTIDE` URL with a colleague), the drawer opened correctly but the URL stayed as `#explorer?cancer=NBL` — the `&open=PEPTIDE` part was missing. Same for saved comparisons: clicking Open rebuilt the COMPARE set and showed the modal, but `compare=…` was gone from the URL. Result: users couldn't copy + share the URL of the thing they were looking at.
