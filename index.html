@@ -3972,6 +3972,11 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
 <div class="drawer-backdrop" id="compareModalBg" onclick="closeCompareModal()"></div>
 <aside class="compare-modal" id="compareModal" aria-hidden="true">
   <button class="close" onclick="closeCompareModal()">×</button>
+  <!-- "Save this comparison" sits in the top-right next to the close button.
+       JS at saveCompareBtn:click prompts for label + optional remark and
+       POSTs to /api/portal/saved_searches with params.compare_keys set, so
+       the entry lands under account.html → ★ Saved comparisons. -->
+  <button class="copy-btn" id="saveCompareBtn" style="position:absolute; top:14px; right:50px; padding:4px 10px;" title="Sign in to save this comparison to your account" onclick="handleSaveComparison()">★ Save this comparison</button>
   <h3 style="margin:0 0 4px">Peptide comparison</h3>
   <p style="color:var(--text-2);font-size:13px;margin:0 0 18px">Side-by-side attribute comparison. Pathogen and mutation rows pull from the detail files; every other row comes from the main table.</p>
   <div id="compareModalBody"></div>
@@ -8275,37 +8280,54 @@ function loadUrlState() {
 // Hook into applyFilters to update URL
 const _origApply = applyFilters;
 applyFilters = function() { _origApply(); pushUrlState(); };
-// Hook into loadAll to honor `&open=PEPTIDE` deep links after first render.
-// IMPORTANT: capture the open= and cancer= params from the URL *before*
-// _origLoadAll runs. applyFilters() inside it calls pushUrlState() which
-// rebuilds the URL from STATE + DRAWER_URL, and DRAWER_URL is still null
-// at that point — so `open=` gets stripped from location.hash before this
-// wrapper would otherwise read it. Stash them first; use the stash after.
+// Hook into loadAll to honor `&open=PEPTIDE` and `&compare=PEP::CODE,…` deep
+// links after first render. IMPORTANT: capture the params from the URL
+// *before* _origLoadAll runs. applyFilters() inside it calls pushUrlState()
+// which rebuilds the URL from STATE + DRAWER_URL, and DRAWER_URL is still
+// null at that point — so deep-link params get stripped from location.hash
+// before this wrapper would otherwise read them. Stash them first; use the
+// stash after.
 const _origLoadAll = loadAll;
 loadAll = async function() {
-  let _deepLinkPep = null, _deepLinkCode = null;
+  let _deepLinkPep = null, _deepLinkCode = null, _deepLinkCompare = null;
   try {
     const hash = location.hash;
     if (hash.includes('explorer?')) {
       const p = new URLSearchParams(hash.split('?')[1] || '');
-      _deepLinkPep  = p.get('open');
-      _deepLinkCode = p.get('cancer');
+      _deepLinkPep     = p.get('open');
+      _deepLinkCode    = p.get('cancer');
+      _deepLinkCompare = p.get('compare');  // "PEP1::CODE1,PEP2::CODE2,…"
     }
   } catch (e) {}
 
   await _origLoadAll();
 
+  // (a) Single-peptide drawer deep link.
   try {
-    if (!_deepLinkPep || !_deepLinkCode) return;
-    await loadCancer(_deepLinkCode);
-    const row = (DATA_CACHE[_deepLinkCode]?.rows || []).find(r => r[COL.pep] === _deepLinkPep);
-    if (row) {
-      if (row[COL.code] !== _deepLinkCode) row[COL.code] = _deepLinkCode;
-      // skipUrl: the user arrived at this URL already; don't push another
-      // history entry on top of the one the browser created.
-      openDrawer(row, { skipUrl: true });
+    if (_deepLinkPep && _deepLinkCode) {
+      await loadCancer(_deepLinkCode);
+      const row = (DATA_CACHE[_deepLinkCode]?.rows || []).find(r => r[COL.pep] === _deepLinkPep);
+      if (row) {
+        if (row[COL.code] !== _deepLinkCode) row[COL.code] = _deepLinkCode;
+        openDrawer(row, { skipUrl: true });
+      }
     }
   } catch (e) { console.warn('deep-link drawer open failed', e); }
+
+  // (b) Multi-peptide comparison deep link. Rebuild the COMPARE set from
+  // the URL's "PEP::CODE,PEP::CODE,…" list, lazy-load the cancers we
+  // need, then open the modal.
+  try {
+    if (!_deepLinkCompare) return;
+    const keys = _deepLinkCompare.split(',').map(s => s.trim()).filter(Boolean);
+    if (keys.length < 2) return;
+    COMPARE.clear();
+    keys.forEach(k => COMPARE.add(k));
+    const codes = [...new Set(keys.map(k => k.split('::')[1]).filter(Boolean))];
+    await Promise.all(codes.map(c => loadCancer(c)));
+    renderCompareBar();
+    openCompareModal();
+  } catch (e) { console.warn('deep-link comparison open failed', e); }
 };
 // Back-button: when the browser navigates back/forward, sync drawer to URL.
 window.addEventListener('popstate', async () => {
@@ -8647,6 +8669,47 @@ window.addEventListener('popstate', async () => {
   }
   document.addEventListener('DOMContentLoaded', wireSaveBtn);
   window.addEventListener('load', wireSaveBtn);
+
+  // ---------- Save this comparison (compare modal button) ----------
+  // The compare modal shows a side-by-side of every pep::code pair in the
+  // COMPARE set. Saving = persisting that set so the user can re-open the
+  // same comparison later. We POST to /api/portal/saved_searches with
+  // params.compare_keys = "PEP1::CODE1,PEP2::CODE2,…" — account.html
+  // detects this and routes the entry into the "★ Saved comparisons" card.
+  // Loading is handled by the deep-link branch in loadAll's wrapper below
+  // (URL `#explorer?compare=PEP::CODE,…`).
+  window.handleSaveComparison = async function () {
+    if (!window.__IV_PORTAL_USER) {
+      const yes = confirm('Sign in to save comparisons to your account?');
+      if (yes) location.href = 'login.html?return=' + encodeURIComponent(location.pathname + location.hash);
+      return;
+    }
+    if (!COMPARE || COMPARE.size < 2) {
+      ivToast('Add at least 2 peptide/cancer pairs to compare before saving.', 'error');
+      return;
+    }
+    const keys = [...COMPARE];                        // ["PEP::CODE", …]
+    // Build a sensible default label: peptide(s) + cancer count.
+    const peps = [...new Set(keys.map(k => k.split('::')[0]))];
+    const defaultLabel = peps.length === 1
+      ? `★ ${peps[0]} across ${keys.length} cancers`
+      : `★ ${peps.length} peptides × ${keys.length} entries`;
+    const label = prompt('Label for this saved comparison:', defaultLabel);
+    if (label === null) return;
+    const remark = prompt('Optional remark / note for future reference (leave blank to skip):', '') || '';
+    const params = { compare_keys: keys.join(',') };
+    if (remark.trim()) params._remark = remark.trim();
+    try {
+      const r = await authedFetch('/api/portal/saved_searches', {
+        method: 'POST',
+        body: JSON.stringify({ label: (label.trim() || defaultLabel), params }),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      ivToast('★ Saved · find it under your account → Saved comparisons', 'success');
+    } catch (err) {
+      ivToast('Could not save: ' + (err.message || 'error'), 'error');
+    }
+  };
 
   // ---------- Bookmark peptide (drawer button) ----------
   // Lives at document level so it survives the drawer re-rendering each open.

@@ -748,7 +748,17 @@ footer.page-footer a:hover { color: var(--text-0); }
       <div id="savedPeptidesGrid" class="saved-grid"></div>
     </div>
 
-    <!-- ===== Saved Filter Searches (entries without a `pep` param) ===== -->
+    <!-- ===== Saved Comparisons (entries with a `compare_keys` param) ===== -->
+    <div class="card" id="savedComparisons">
+      <div class="card-head">
+        <h2><span class="icon-tag">★</span>Saved comparisons</h2>
+        <a class="right-link" href="index.html#explorer">Open explorer →</a>
+      </div>
+      <div id="savedComparisonsAlert" class="alert hidden"></div>
+      <div id="savedComparisonsGrid" class="saved-grid"></div>
+    </div>
+
+    <!-- ===== Saved Filter Searches (entries without `pep` or `compare_keys`) ===== -->
     <div class="card" id="savedSearches">
       <div class="card-head">
         <h2><span class="icon-tag">★</span>Saved filter searches</h2>
@@ -1139,9 +1149,11 @@ function wireSavedCardClicks(grid, reload) {
 }
 
 async function loadSaved() {
-  const filterGrid  = $('savedGrid');           // saved filter searches
-  const peptideGrid = $('savedPeptidesGrid');   // saved peptides (have params.pep)
-  if (peptideGrid) peptideGrid.innerHTML = '<div class="search-empty"><div class="big">…</div><p>Loading saved peptides…</p></div>';
+  const filterGrid     = $('savedGrid');                // saved filter searches
+  const peptideGrid    = $('savedPeptidesGrid');        // saved peptides (params.pep)
+  const comparisonGrid = $('savedComparisonsGrid');     // saved comparisons (params.compare_keys)
+  if (peptideGrid)    peptideGrid.innerHTML    = '<div class="search-empty"><div class="big">…</div><p>Loading saved peptides…</p></div>';
+  if (comparisonGrid) comparisonGrid.innerHTML = '<div class="search-empty"><div class="big">…</div><p>Loading saved comparisons…</p></div>';
   filterGrid.innerHTML = '<div class="search-empty"><div class="big">…</div><p>Loading saved searches…</p></div>';
   try {
     const r = await authedFetch('/api/portal/saved_searches');
@@ -1149,9 +1161,11 @@ async function loadSaved() {
     const items = await r.json();
     $('statSearches').textContent = items.length;
 
-    // Split: peptides have params.pep, filter searches don't.
-    const peptides = items.filter(s => s.params && s.params.pep);
-    const filters  = items.filter(s => !(s.params && s.params.pep));
+    // Three-way split, in priority order so an entry only lands in one
+    // bucket: comparison (has compare_keys) > peptide (has pep) > filter.
+    const comparisons = items.filter(s => s.params && s.params.compare_keys);
+    const peptides    = items.filter(s => s.params && s.params.pep && !s.params.compare_keys);
+    const filters     = items.filter(s => !(s.params && (s.params.pep || s.params.compare_keys)));
 
     if (peptideGrid) {
       peptideGrid.innerHTML = peptides.length
@@ -1161,6 +1175,16 @@ async function loadSaved() {
             <p>No saved peptides yet. Open the <a href="index.html#explorer">explorer</a>, click any peptide row, then click <em>☆ bookmark</em> in the drawer.</p>
           </div>`;
       wireSavedCardClicks(peptideGrid, loadSaved);
+    }
+
+    if (comparisonGrid) {
+      comparisonGrid.innerHTML = comparisons.length
+        ? comparisons.map(renderSavedCard).join('')
+        : `<div class="search-empty">
+            <div class="big">★</div>
+            <p>No saved comparisons yet. Open the <a href="index.html#explorer">explorer</a>, click <em>⇄ compare across cancers</em> in a peptide drawer, then click <em>★ Save this comparison</em> in the comparison modal.</p>
+          </div>`;
+      wireSavedCardClicks(comparisonGrid, loadSaved);
     }
 
     filterGrid.innerHTML = filters.length
@@ -1173,7 +1197,8 @@ async function loadSaved() {
   } catch (err) {
     alert('savedAlert', 'Failed to load saved items: ' + err.message, 'error');
     filterGrid.innerHTML = '';
-    if (peptideGrid) peptideGrid.innerHTML = '';
+    if (peptideGrid)    peptideGrid.innerHTML    = '';
+    if (comparisonGrid) comparisonGrid.innerHTML = '';
   }
 }
 
@@ -1182,11 +1207,28 @@ function buildExplorerUrl(params) {
   for (const k of ['cancer','pep','gene','hla','class','safe','uniq','open']) {
     if (params[k]) p.set(k, params[k]);
   }
+  // Saved comparisons carry their full pep::code list in compare_keys; the
+  // explorer's deep-link handler reads `?compare=` to rebuild the COMPARE
+  // set and open the comparison modal.
+  if (params.compare_keys) p.set('compare', params.compare_keys);
   const qs = p.toString();
   return 'index.html' + (qs ? '#explorer?' + qs : '');
 }
 function renderParamChips(params) {
   const chips = [];
+  // Saved comparisons get a summary chip instead of dumping the raw
+  // "PEP1::CODE1,PEP2::CODE2,…" string. We show "N pep × M cancer" and,
+  // if there's only one peptide, the peptide sequence itself.
+  if (params.compare_keys) {
+    const keys = String(params.compare_keys).split(',').filter(Boolean);
+    const peps  = new Set(keys.map(k => k.split('::')[0]));
+    const codes = new Set(keys.map(k => k.split('::')[1]).filter(Boolean));
+    chips.push(`<span class="chip-mini">${peps.size} pep × ${codes.size} cancer</span>`);
+    if (peps.size === 1) {
+      chips.push(`<span class="chip-mini">pep=${esc([...peps][0])}</span>`);
+    }
+    return chips.slice(0, 4).join('');
+  }
   for (const [k, v] of Object.entries(params)) {
     if (!v) continue;
     if (k.startsWith('_')) continue;  // hide internal fields like _remark

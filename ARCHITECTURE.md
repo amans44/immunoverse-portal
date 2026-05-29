@@ -258,6 +258,22 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-05-29 — Saved comparisons (third saved-search bucket)
+**Why:** Aman asked to bring the "Saved comparisons" item from the marketing copy into reality, alongside the already-shipping Saved peptides and Saved filter searches. Frank specifically asked about it.
+**What:**
+- **Compare modal** gets a new `★ Save this comparison` button in the top-right next to the close `×`. `handleSaveComparison()` prompts for label + optional remark, then POSTs to `/api/portal/saved_searches` with `params: { compare_keys: "PEP1::CODE1,PEP2::CODE2,…", _remark? }`.
+- **Backend: no changes.** Same `saved_searches` collection, just a new shape of `params`.
+- **`account.html`** splits saved entries into THREE priority-ordered buckets:
+  - comparison (has `compare_keys`) — new `★ Saved comparisons` card above the existing two
+  - peptide (has `pep` and not `compare_keys`)
+  - filter search (neither)
+  `renderParamChips` gets a special case for comparisons: shows `N pep × M cancer` + (if one peptide) `pep=…`, rather than dumping the raw key list.
+- **`buildExplorerUrl`** emits `compare=` for entries that carry `compare_keys`. Result URL: `#explorer?compare=PEP1::CODE1,PEP2::CODE2,…`.
+- **Deep-link**: `loadAll`'s wrapper in `index.html` captures `compare` alongside `open`/`cancer` before `applyFilters` strips it; after the original `loadAll` returns, parses the keys, repopulates the `COMPARE` set, lazy-loads each involved cancer, calls `renderCompareBar()`, opens the modal.
+- **Remark editing** works for free — `editSavedRemark` operates on the whole `saved_searches` collection regardless of which bucket it ended up in.
+**Files:** `index.html`, `account.html`.
+**Commit:** (this commit).
+
 ### 2026-05-28 — Fix `tissues.map(t => t.cmt)` → `t.name` (latent bug surfaced by the dual-axes fix)
 **Why:** After the dual-axes extractor landed, even peptides that used to work (QYNPIRTTF) showed "undefined" instead of tissue names on the X-axis. Latent bug in the return statement: `tissues` were already mapped to `{ name, x }` objects further up, but the return read `t.cmt` — undefined for every tissue. The old single-axes code happened to plumb `cmt`-shaped objects through some paths so the bug was hidden; the new clean split surfaced it.
 **What:** Changed `tissues: tissues.map(t => t.cmt)` → `tissues: tissues.map(t => t.name)`. Single-character fix. HLAs were already returned correctly via `h.name`.
