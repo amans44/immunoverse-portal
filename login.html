@@ -622,8 +622,8 @@ select.input {
 
         <!-- Institutional vs Individual sub-tabs -->
         <div class="sub-tab-strip" role="tablist">
-          <button type="button" id="subTabInst" class="active" onclick="pickSubTab('institutional')">Institutional</button>
-          <button type="button" id="subTabIndiv" onclick="pickSubTab('individual')">Individual</button>
+          <button type="button" id="subTabInst" class="active" onclick="pickSubTab('institutional')">Academic</button>
+          <button type="button" id="subTabIndiv" onclick="pickSubTab('individual')">Non-academic</button>
         </div>
 
         <div id="emailHint" class="email-hint" style="display:none;"></div>
@@ -634,7 +634,7 @@ select.input {
         </div>
         <div class="field-row">
           <div>
-            <label class="label" for="rg-email"><span id="rg-emailLabel">Institutional email</span></label>
+            <label class="label" for="rg-email"><span id="rg-emailLabel">Academic email</span></label>
             <input id="rg-email" class="input" name="email" type="email" autocomplete="email" placeholder="s.jenkins@institute.edu" required />
           </div>
           <div>
@@ -814,7 +814,7 @@ function pickSubTab(which) {
   $('rg-reason').required = !isInst;
   $('rg-affiliation').required = !isInst;
   $('rg-role').required = !isInst;
-  $('rg-emailLabel').textContent = isInst ? 'Institutional email' : 'Email';
+  $('rg-emailLabel').textContent = isInst ? 'Academic email' : 'Email';
   $('rg-email').placeholder = isInst ? 's.jenkins@institute.edu' : 'you@example.com';
   $('registerSubmit').textContent = isInst ? 'Create account' : 'Submit access request';
   $('formTitle').textContent = isInst ? 'Create account' : 'Request access';
@@ -841,13 +841,13 @@ function refreshEmailHint() {
   hint.style.display = '';
   if (SUB_TAB === 'institutional' && !isInst) {
     hint.className = 'email-hint warn';
-    hint.innerHTML = `<span class="h-icon">⚠</span><div><b>${esc(email.split('@')[1])}</b> doesn't look like a recognized institutional domain. You can <a href="#" onclick="pickSubTab('individual');return false;" style="color:inherit;text-decoration:underline;">switch to individual access</a> (manual review), or continue and we'll keep the account pending until an admin reviews it.</div>`;
+    hint.innerHTML = `<span class="h-icon">⚠</span><div><b>${esc(email.split('@')[1])}</b> doesn't look like a recognized academic domain. You can <a href="#" onclick="pickSubTab('individual');return false;" style="color:inherit;text-decoration:underline;">switch to non-academic access</a> (manual review), or continue and we'll keep the account pending until an admin reviews it.</div>`;
   } else if (SUB_TAB === 'institutional' && isInst) {
     hint.className = 'email-hint';
-    hint.innerHTML = `<span class="h-icon">✓</span><div><b>${esc(email.split('@')[1])}</b> recognized as institutional — your account will be active right after sign-up.</div>`;
+    hint.innerHTML = `<span class="h-icon">✓</span><div><b>${esc(email.split('@')[1])}</b> recognized as academic — your account will be active right after sign-up.</div>`;
   } else if (SUB_TAB === 'individual' && isInst) {
     hint.className = 'email-hint';
-    hint.innerHTML = `<span class="h-icon">💡</span><div>Heads up: <b>${esc(email.split('@')[1])}</b> looks institutional — you can <a href="#" onclick="pickSubTab('institutional');return false;" style="color:inherit;text-decoration:underline;">skip the queue</a> and get instant access by registering directly.</div>`;
+    hint.innerHTML = `<span class="h-icon">💡</span><div>Heads up: <b>${esc(email.split('@')[1])}</b> looks academic — you can <a href="#" onclick="pickSubTab('institutional');return false;" style="color:inherit;text-decoration:underline;">skip the queue</a> and get instant access by registering directly.</div>`;
   } else {
     hint.style.display = 'none';
   }
@@ -959,7 +959,7 @@ async function submitAccessRequest() {
     return false;
   }
   if (!$('rg-affiliation').value.trim()) {
-    showAlert('Affiliation is required for individual access requests.', 'error');
+    showAlert('Affiliation is required for non-academic access requests.', 'error');
     return false;
   }
   if (!$('rg-role').value) {

@@ -700,7 +700,7 @@ async function loadUsers() {
           </div>
           <div class="email-mono">${esc(u.email)}</div>
         </td>
-        <td><span class="tag tag-${u.access_type === 'institutional' ? 'inst' : 'indiv'}">${esc(u.access_type)}</span></td>
+        <td><span class="tag tag-${u.access_type === 'institutional' ? 'inst' : 'indiv'}">${u.access_type === 'institutional' ? 'academic' : 'non-academic'}</span></td>
         <td><span class="tag tag-${esc(u.status)}">${esc(u.status)}</span></td>
         <td>${u.role === 'admin' ? '<span class="tag tag-admin">admin</span>' : esc(u.role)}</td>
         <td>${esc(u.affiliation||'—')}</td>
