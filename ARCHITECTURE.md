@@ -190,7 +190,7 @@ admin console) is served by a **separate backend**, not by these static pages.
   Run's own URL, not blocked by NYU, no DNS needed) →
   **`https://auth.immuno-verse.com`** (optional same-site host, needs a DNS record
   on the portal domain) → **`https://auth.immunoverse-chat.com`** (legacy fallback,
-  sinkholed at NYU) → **`https://immunoverse-auth.deno.dev`** (Deno Deploy reverse
+  sinkholed at NYU) → **`https://immunoverse-auth.amans44.deno.net`** (Deno Deploy reverse
   proxy, last-resort backstop — `deno.dev` stays reachable on networks that block
   the custom domains). The Deno proxy source is version-controlled at
   `deno-auth-proxy/main.ts` (fixed upstream + `/api/portal/` prefix + portal-only
@@ -380,7 +380,7 @@ stays in the chain as an optional nicer same-site host; `auth.immunoverse-chat.c
 is the legacy last resort. CORS already allows the `immuno-verse.com` origin
 regardless of which auth host serves, and cross-site cookies (SameSite=none) +
 the localStorage bearer token authenticate across hosts. Also added a **4th-tier
-Deno Deploy reverse proxy** (`https://immunoverse-auth.deno.dev`) as a
+Deno Deploy reverse proxy** (`https://immunoverse-auth.amans44.deno.net`) as a
 guaranteed-reachable backstop; its source is version-controlled at
 `deno-auth-proxy/main.ts` (deploy via `deno-auth-proxy/README.md`). Requires a
 one-time `deployctl deploy --project=immunoverse-auth` to go live; until then the

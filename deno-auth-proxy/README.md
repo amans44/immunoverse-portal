@@ -7,7 +7,7 @@ It is the **4th-tier fallback** in the frontend's `IV_AUTH_BASES` chain:
 1. https://auth-service-739605637035.us-central1.run.app   (Cloud Run, primary)
 2. https://auth.immuno-verse.com                            (optional same-site host)
 3. https://auth.immunoverse-chat.com                        (legacy)
-4. https://immunoverse-auth.deno.dev                        (THIS proxy)
+4. https://immunoverse-auth.amans44.deno.net                (THIS proxy)
 ```
 
 It exists because some networks (e.g. NYU's Palo Alto firewall) DNS-sinkhole
@@ -19,30 +19,29 @@ It is **not** an open proxy: fixed `UPSTREAM`, fixed `/api/portal/` path prefix,
 CORS only for the portal's own origins. (Contrast the image proxy, which takes
 `?url=` and whose source unfortunately lives only in a dashboard.)
 
-## Deploy (one-time)
+## Deploy (one-time) — Deno Deploy **Playground**
 
-**Option A — `deployctl` (CLI):**
-```bash
-# install once: deno install -gArf jsr:@deno/deployctl
-deployctl deploy --project=immunoverse-auth --prod main.ts
-```
-Name the project **`immunoverse-auth`** so the URL matches what the frontend
-expects: `https://immunoverse-auth.deno.dev`.
+This org (`amans44`) deploys via Playgrounds (same as the existing
+`immunoverse-proxy`), so apps live at `<name>.amans44.deno.net`.
 
-**Option B — dashboard:** https://dash.deno.com → New Project → name it
-`immunoverse-auth` → paste `main.ts` (or link this repo path) → Deploy.
+1. Deno Deploy dashboard → **New Playground**.
+2. Delete the starter code, paste the entire contents of `main.ts`.
+3. **Rename** the playground/project to **`immunoverse-auth`** (so the URL is
+   `https://immunoverse-auth.amans44.deno.net`, which the frontend expects).
+4. Playgrounds deploy on save — done.
 
 ## After deploying — verify
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://immunoverse-auth.deno.dev/healthz   # 200
-curl -s -o /dev/null -w "%{http_code}\n" https://immunoverse-auth.deno.dev/api/portal/auth/me   # 401 = reachable+wired
+curl https://immunoverse-auth.amans44.deno.net/healthz                 # -> ok
+curl -s -o /dev/null -w "%{http_code}\n" \
+     https://immunoverse-auth.amans44.deno.net/api/portal/auth/me       # -> 401 (reachable + wired)
 ```
 
 ## If your deployed URL differs
-The frontend hardcodes `https://immunoverse-auth.deno.dev` in `IV_AUTH_BASES`
-(in `index.html`, `login.html`, `account.html`, `admin.html`, `reset.html`). If
-your Deno project resolves to a different host (e.g. `…​.deno.net`), update that
-one string in those files (and re-run `sync_reviewers.py`).
+The frontend hardcodes `https://immunoverse-auth.amans44.deno.net` in
+`IV_AUTH_BASES` (in `index.html`, `login.html`, `account.html`, `admin.html`,
+`reset.html`). If your playground keeps a different name/host, update that one
+string in those files and re-run `sync_reviewers.py`.
 
 ## Changing the upstream
 If the Cloud Run service URL ever changes, edit `UPSTREAM` at the top of
