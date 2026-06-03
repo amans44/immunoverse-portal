@@ -262,12 +262,15 @@ admin console) is served by a **separate backend**, not by these static pages.
     "Log in to another account"; "Create account".
   - *First-time* (no remembered account) → **"Welcome to ImmunoVerse"** + "Log in"
     / "Create account" (no card).
-  `maybeShowWelcomeBack()` would auto-show it on signed-out homepage load
-  (dismissible via ✕ / backdrop / Esc; `sessionStorage iv_wb_dismissed` stops
-  re-nagging; suppressed under `/reviewers/`) — but this auto-show is **gated by
-  `IV_GATING_ENABLED` and currently OFF**, so no popup appears for anonymous
-  visitors. The modal markup/JS stays in place for when gating is re-enabled.
-  `window.ivOpenAuthGate()` can still open it on demand (no-ops if signed in).
+  `maybeShowWelcomeBack()` auto-shows it on signed-out homepage load, controlled
+  by its OWN flag **`window.IV_WELCOME_MODAL_ENABLED` (currently TRUE)** — NOT by
+  `IV_GATING_ENABLED`. So with locking OFF but the modal ON, anonymous visitors
+  get a **soft, dismissible sign-up nudge** while every cancer stays open (the
+  first-timer copy is benefits-based — "save searches and track viewed peptides
+  — or keep exploring" — not "to explore", since nothing is locked). Dismissible
+  via ✕ / backdrop / Esc; `sessionStorage iv_wb_dismissed` stops re-nagging per
+  tab; suppressed under `/reviewers/`. Set `IV_WELCOME_MODAL_ENABLED = false` to
+  remove the popup. `window.ivOpenAuthGate()` still opens it on demand.
   "Create account" deep-links to `login.html#create`.
 - **Access model:** institutional emails (`.edu`/`.ac.*`/partner list in
   `auth/domain_check.py`) auto-activate on register; individuals submit an
@@ -380,6 +383,24 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-03 — Freeze /reviewers/ + keep the Welcome popup as a soft sign-up nudge
+**Why:** (1) `/reviewers/` must stay independent + login-free for paper reviewers,
+unaffected by main-site changes. (2) Cancers stay unlocked, but we still want the
+Welcome popup as a gentle "create an account" reminder.
+**What:**
+- **Reviewers frozen:** reverted `reviewers/index.html` + `reviewers/chatbot/` to
+  pristine (zero gating/auth code), set `sync_reviewers.py` `COPY_INDEX = False`
+  and dropped `chatbot/` from `MIRRORS`. Only data (`data_js/`, `data/`,
+  `pancancer_image.png`) is still mirrored, so reviewers stay data-current with no
+  UI changes leaking in.
+- **Welcome modal decoupled from gating:** new `window.IV_WELCOME_MODAL_ENABLED =
+  true` (separate from `IV_GATING_ENABLED = false`). `maybeShowWelcomeBack()` now
+  keys off the modal flag, so the dismissible popup shows as a sign-up nudge while
+  all cancers remain open. First-timer subtitle reworded to benefits-based copy
+  (no "to explore", since nothing is locked).
+**Files touched:** `index.html`, `sync_reviewers.py`, `reviewers/index.html` +
+`reviewers/chatbot/chatbot.js` (reverted), `ARCHITECTURE.md`. Commit SHA: _pending_.
 
 ### 2026-06-03 — Disable cancer locking behind a feature flag (keep the code, don't gate the public)
 **Why:** Decision to NOT lock cancers publicly until the login system is hardened

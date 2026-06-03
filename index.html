@@ -4256,6 +4256,10 @@ function geneSearchTerms(input) {
 // — and the Welcome modal auto-show — is dormant while this is false. Flip to
 // true (here AND set window.IV_GATING_ENABLED below) to re-enable in one place.
 window.IV_GATING_ENABLED = false;
+// Independent of gating: show the dismissible "Welcome / create an account" popup
+// to anonymous homepage visitors as a SOFT nudge to sign up — cancers stay fully
+// open, nothing is locked. Set false to remove the popup entirely.
+window.IV_WELCOME_MODAL_ENABLED = true;
 // `__IV_SIGNED_IN` is seeded optimistically from token presence (no network) and
 // corrected by the auth boot script's /auth/me result, which calls
 // ivApplyLockState() if it flipped. Clicking anything locked opens the sign-in
@@ -8861,7 +8865,7 @@ window.addEventListener('popstate', async () => {
       if (other) other.textContent = 'Log in to another account';
     } else {
       if (title) title.textContent = 'Welcome to ImmunoVerse';
-      if (sub)   sub.textContent   = 'Sign in or create an account to explore all 21 cancers.';
+      if (sub)   sub.textContent   = 'Create a free account to save searches and track viewed peptides — or keep exploring.';
       if (card)  card.style.display = 'none';
       if (orDiv) orDiv.style.display = 'none';
       if (other) other.textContent = 'Log in';
@@ -8912,11 +8916,11 @@ window.addEventListener('popstate', async () => {
     document.body.style.overflow = 'hidden';
   }
   // Auto-greeting on homepage load (signed-out only) — dismissible, once per tab.
-  // Gated by the IV_GATING_ENABLED feature flag (currently OFF — no auto popup
-  // for anonymous visitors) and suppressed on the ungated /reviewers/ mirror.
-  // ivOpenAuthGate() can still open the modal on demand regardless of this.
+  // Controlled by IV_WELCOME_MODAL_ENABLED (the soft sign-up nudge), NOT by
+  // gating — so it shows even though cancers are open. Suppressed on the
+  // /reviewers/ mirror. ivOpenAuthGate() can still open it on demand.
   function maybeShowWelcomeBack() {
-    if (!window.IV_GATING_ENABLED) return;
+    if (!window.IV_WELCOME_MODAL_ENABLED) return;
     if (/\/reviewers\//.test(location.pathname)) return;
     try { if (sessionStorage.getItem('iv_wb_dismissed') === '1') return; } catch (e) {}
     _ivShowAuthModal();
