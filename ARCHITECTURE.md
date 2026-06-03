@@ -184,10 +184,22 @@ admin console) is served by a **separate backend**, not by these static pages.
   access), `account.html` (profile, saved items, sessions, change password),
   `admin.html` (admin console — users, access requests, inquiries, admin
   allow-list), and `reset.html` (forgot-password + set-password-after-approval).
-  All call the backend via `window.IMMUNOVERSE_AUTH_BASE` (default
-  `https://auth.immunoverse-chat.com`). For local testing they accept a
-  localhost-only `?authbase=http://localhost:PORT` override (persisted in
-  `localStorage` as `iv_dev_authbase`; `?authbase=clear` resets it).
+  All call the backend through an **auth endpoint fallback chain** `IV_AUTH_BASES`
+  (in every auth page + `index.html`): **`https://auth.immuno-verse.com`** (primary,
+  the portal's own domain) → **`https://auth.immunoverse-chat.com`** (fallback).
+  `ivAuthFetch(path, opts)` tries each base in order; a network/DNS failure on one
+  (exactly what NYU's DNS-sinkhole of `immunoverse-chat.com` produces) falls
+  through to the next, while any HTTP response counts as "reached". The winning
+  base is cached per session in `sessionStorage.iv_auth_base`. **Why:** the lab is
+  at NYU, whose Palo Alto firewall DNS-sinkholes `immunoverse-chat.com` — serving
+  auth from an `immuno-verse.com` subdomain keeps login working on NYU's network.
+  Override the order with `window.IMMUNOVERSE_AUTH_BASES = [...]`; a localhost-only
+  `?authbase=http://localhost:PORT` override still wins (persisted in `localStorage`
+  as `iv_dev_authbase`; `?authbase=clear` resets it). Cookies stay **host-only**
+  (`PORTAL_AUTH_COOKIE_DOMAIN` unset) so each auth host sets its own; the
+  localStorage bearer token authenticates across the fallback. **Requires** a Cloud
+  Run domain mapping for `auth.immuno-verse.com` + a `CNAME → ghs.googlehosted.com`
+  at the immuno-verse.com DNS (see `deploy/gcp/deploy_auth.sh`).
 - **Backend (sibling repo `immunoVerse_agent`, package `portal_auth/`):** FastAPI
   + Firestore, deployed to Cloud Run service **`auth-service`** (project
   `immunoverse-chat`, us-central1). JWT (HS256, `ns:"portal"` claim) in
@@ -346,6 +358,41 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-03 — Auth endpoint fallback chain: auth.immuno-verse.com primary, chat domain fallback
+**Why:** NYU's network (Palo Alto firewall, DNS Security) **DNS-sinkholes
+`immunoverse-chat.com`** — confirmed: on NYU WiFi all `*.immunoverse-chat.com`
+names resolve to `sinkhole.paloaltonetworks.com`, while Google `8.8.8.8` returns
+the real `ghs.googlehosted.com` (Cloud Run) and a direct-IP HTTPS request to the
+service succeeds. So the service is fine; the *domain* is blocked on NYU's
+network. Since the lab is at NYU and the portal's login + locking depend on
+`auth.immunoverse-chat.com`, sign-in is broken on NYU WiFi. Fix: serve auth from
+the portal's own (un-sinkholed) domain, with the chat domain as a fallback —
+same idea as the `IMG_PROXIES` Deno→Cloudflare chain, applied to auth.
+**What:**
+- Every auth-calling page (`index.html`, `login.html`, `account.html`,
+  `admin.html`, `reset.html`) now resolves an ordered `IV_AUTH_BASES`
+  (`auth.immuno-verse.com` → `auth.immunoverse-chat.com`) and routes all auth
+  requests through `ivAuthFetch(path, opts)`, which tries each base, falls through
+  on network/DNS failure (not on HTTP status), and caches the winning base in
+  `sessionStorage.iv_auth_base`. Replaced all `fetch(AUTH + …)` call sites.
+- The localhost `?authbase=` dev override still wins (collapses the chain to one
+  base). Order is overridable via `window.IMMUNOVERSE_AUTH_BASES`.
+- Backend `deploy/gcp/deploy_auth.sh` (sibling repo): added
+  `https://www.immuno-verse.com` to CORS and documented the
+  `auth.immuno-verse.com` domain-mapping step. Cookies stay host-only
+  (`PORTAL_AUTH_COOKIE_DOMAIN` unset) so both auth hosts work; bearer token covers
+  the fallback path.
+- Re-ran `sync_reviewers.py`.
+**Manual infra still required (one-time):** `gcloud beta run domain-mappings
+create --service=auth-service --domain=auth.immuno-verse.com --region=us-central1`,
+then add the printed `CNAME auth → ghs.googlehosted.com` at the immuno-verse.com
+DNS registrar. Until that's live the primary base fast-fails and the chat-domain
+fallback is used (unchanged behaviour off-NYU).
+**Files touched:** `index.html`, `login.html`, `account.html`, `admin.html`,
+`reset.html` (+ regenerated `reviewers/index.html`),
+`immunoVerse_agent/deploy/gcp/deploy_auth.sh`, `ARCHITECTURE.md`.
+Commit SHA: _pending_.
 
 ### 2026-06-03 — Lock 20 of 21 cancers behind sign-in (NBL free) + first-time-visitor gate modal
 **Why:** Make the atlas account-gated: anonymous visitors get a free taste (NBL)

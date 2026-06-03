@@ -484,8 +484,32 @@ footer.page-footer a:hover { color: var(--text-0); }
     if (dev) window.IMMUNOVERSE_AUTH_BASE = dev;
   } catch (e) {}
 })();
-window.IMMUNOVERSE_AUTH_BASE = window.IMMUNOVERSE_AUTH_BASE || "https://auth.immunoverse-chat.com";
-const AUTH = window.IMMUNOVERSE_AUTH_BASE.replace(/\/+$/, '');
+// Auth endpoint fallback chain: portal's own domain first (auth.immuno-verse.com),
+// chat domain as fallback. A localhost dev override above wins outright.
+const IV_AUTH_BASES = (
+  window.IMMUNOVERSE_AUTH_BASES ? window.IMMUNOVERSE_AUTH_BASES :
+  window.IMMUNOVERSE_AUTH_BASE ? [window.IMMUNOVERSE_AUTH_BASE] :
+  ['https://auth.immuno-verse.com', 'https://auth.immunoverse-chat.com']
+).map(s => String(s).replace(/\/+$/, ''));
+const AUTH = IV_AUTH_BASES[0];
+let _ivAuthBase = null;
+try { _ivAuthBase = sessionStorage.getItem('iv_auth_base'); } catch (e) {}
+if (_ivAuthBase && IV_AUTH_BASES.indexOf(_ivAuthBase) === -1) _ivAuthBase = null;
+async function ivAuthFetch(path, opts) {
+  const ordered = _ivAuthBase
+    ? [_ivAuthBase].concat(IV_AUTH_BASES.filter(b => b !== _ivAuthBase))
+    : IV_AUTH_BASES.slice();
+  let lastErr;
+  for (let i = 0; i < ordered.length; i++) {
+    try {
+      const res = await fetch(ordered[i] + path, opts);
+      _ivAuthBase = ordered[i];
+      try { sessionStorage.setItem('iv_auth_base', ordered[i]); } catch (e) {}
+      return res;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('auth endpoints unreachable');
+}
 
 function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -514,7 +538,7 @@ function ivClearTokens() { try { localStorage.removeItem('iv_portal_access'); lo
 async function ivTryRefresh() {
   let stored = null; try { stored = localStorage.getItem('iv_portal_refresh'); } catch (e) {}
   try {
-    const r = await fetch(AUTH + '/api/portal/auth/refresh', {
+    const r = await ivAuthFetch('/api/portal/auth/refresh', {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(stored ? { refresh_token: stored } : {}),
@@ -537,7 +561,7 @@ function authedFetch(path, opts) {
     if (tok && !headers.Authorization) headers.Authorization = 'Bearer ' + tok;
   } catch (e) {}
   if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
-  return fetch(AUTH + path, Object.assign({ credentials: 'include' }, opts, { headers }));
+  return ivAuthFetch(path, Object.assign({ credentials: 'include' }, opts, { headers }));
 }
 
 // ---------- Boot ----------

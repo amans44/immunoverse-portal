@@ -8657,8 +8657,40 @@ window.addEventListener('popstate', async () => {
 (function () {
   // Same Cloud Run service that serves auth/. Set window.IMMUNOVERSE_AUTH_BASE
   // before this script runs to point local dev at http://localhost:8001.
-  window.IMMUNOVERSE_AUTH_BASE = window.IMMUNOVERSE_AUTH_BASE || "https://auth.immunoverse-chat.com";
-  const AUTH = window.IMMUNOVERSE_AUTH_BASE.replace(/\/+$/, '');
+  // ---- Auth endpoint fallback chain ---------------------------------------
+  // Primary on the portal's OWN domain (auth.immuno-verse.com), with the chat
+  // domain as fallback. NYU's network DNS-sinkholes immunoverse-chat.com, so
+  // serving auth from an immuno-verse.com subdomain keeps login working there;
+  // the chat domain stays as a backstop. A network/DNS failure on one base
+  // (which is exactly what a sinkhole produces) falls through to the next; an
+  // HTTP response of any status counts as "reached". The winning base is cached
+  // per-session so we don't re-probe a dead one. Mirrors the IMG_PROXIES chain.
+  // Override order via window.IMMUNOVERSE_AUTH_BASES = [...] before this script.
+  const IV_AUTH_BASES = (
+    window.IMMUNOVERSE_AUTH_BASES ? window.IMMUNOVERSE_AUTH_BASES :
+    window.IMMUNOVERSE_AUTH_BASE ? [window.IMMUNOVERSE_AUTH_BASE] :
+    ['https://auth.immuno-verse.com', 'https://auth.immunoverse-chat.com']
+  ).map(s => String(s).replace(/\/+$/, ''));
+  const AUTH = IV_AUTH_BASES[0];  // back-compat for any direct string use
+  let _ivAuthBase = null;
+  try { _ivAuthBase = sessionStorage.getItem('iv_auth_base'); } catch (e) {}
+  if (_ivAuthBase && IV_AUTH_BASES.indexOf(_ivAuthBase) === -1) _ivAuthBase = null;
+  async function ivAuthFetch(path, opts) {
+    const ordered = _ivAuthBase
+      ? [_ivAuthBase].concat(IV_AUTH_BASES.filter(b => b !== _ivAuthBase))
+      : IV_AUTH_BASES.slice();
+    let lastErr;
+    for (let i = 0; i < ordered.length; i++) {
+      try {
+        const res = await fetch(ordered[i] + path, opts);
+        _ivAuthBase = ordered[i];
+        try { sessionStorage.setItem('iv_auth_base', ordered[i]); } catch (e) {}
+        return res;
+      } catch (e) { lastErr = e; }  // network/DNS failure → try next base
+    }
+    throw lastErr || new Error('auth endpoints unreachable');
+  }
+  window.ivAuthFetch = ivAuthFetch;
 
   // ---- Session token helpers ----------------------------------------------
   // Tokens live in localStorage (NOT sessionStorage) so a signed-in session is
@@ -8681,7 +8713,7 @@ window.addEventListener('popstate', async () => {
     let stored = null;
     try { stored = localStorage.getItem('iv_portal_refresh'); } catch (e) {}
     try {
-      const r = await fetch(AUTH + '/api/portal/auth/refresh', {
+      const r = await ivAuthFetch('/api/portal/auth/refresh', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -8704,7 +8736,7 @@ window.addEventListener('popstate', async () => {
       if (tok && !headers.Authorization) headers.Authorization = 'Bearer ' + tok;
     } catch (e) {}
     if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
-    return fetch(AUTH + path, Object.assign({ credentials: 'include' }, opts, { headers }));
+    return ivAuthFetch(path, Object.assign({ credentials: 'include' }, opts, { headers }));
   }
 
   function initials(name, email) {

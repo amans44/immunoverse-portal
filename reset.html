@@ -164,8 +164,32 @@ h1 { font-size: 24px; margin: 0 0 8px; }
     if (dev) window.IMMUNOVERSE_AUTH_BASE = dev;
   } catch (e) {}
 })();
-window.IMMUNOVERSE_AUTH_BASE = window.IMMUNOVERSE_AUTH_BASE || "https://auth.immunoverse-chat.com";
-const AUTH = window.IMMUNOVERSE_AUTH_BASE.replace(/\/+$/, '');
+// Auth endpoint fallback chain: portal's own domain first (auth.immuno-verse.com),
+// chat domain as fallback. A localhost dev override above wins outright.
+const IV_AUTH_BASES = (
+  window.IMMUNOVERSE_AUTH_BASES ? window.IMMUNOVERSE_AUTH_BASES :
+  window.IMMUNOVERSE_AUTH_BASE ? [window.IMMUNOVERSE_AUTH_BASE] :
+  ['https://auth.immuno-verse.com', 'https://auth.immunoverse-chat.com']
+).map(s => String(s).replace(/\/+$/, ''));
+const AUTH = IV_AUTH_BASES[0];
+let _ivAuthBase = null;
+try { _ivAuthBase = sessionStorage.getItem('iv_auth_base'); } catch (e) {}
+if (_ivAuthBase && IV_AUTH_BASES.indexOf(_ivAuthBase) === -1) _ivAuthBase = null;
+async function ivAuthFetch(path, opts) {
+  const ordered = _ivAuthBase
+    ? [_ivAuthBase].concat(IV_AUTH_BASES.filter(b => b !== _ivAuthBase))
+    : IV_AUTH_BASES.slice();
+  let lastErr;
+  for (let i = 0; i < ordered.length; i++) {
+    try {
+      const res = await fetch(ordered[i] + path, opts);
+      _ivAuthBase = ordered[i];
+      try { sessionStorage.setItem('iv_auth_base', ordered[i]); } catch (e) {}
+      return res;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('auth endpoints unreachable');
+}
 const TOKEN = (new URLSearchParams(location.search)).get('token') || '';
 
 function $(id) { return document.getElementById(id); }
@@ -200,7 +224,7 @@ async function handleRequest(ev) {
   hideAlert();
   setLoading('requestSubmit', 'Sending…');
   try {
-    const res = await fetch(AUTH + '/api/portal/auth/reset-password', {
+    const res = await ivAuthFetch('/api/portal/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: $('rq-email').value.trim() }),
@@ -230,7 +254,7 @@ async function handleSet(ev) {
   }
   setLoading('setSubmit', 'Saving…');
   try {
-    const res = await fetch(AUTH + '/api/portal/auth/reset-password/confirm', {
+    const res = await ivAuthFetch('/api/portal/auth/reset-password/confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

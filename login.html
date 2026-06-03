@@ -736,9 +736,35 @@ select.input {
     if (dev) window.IMMUNOVERSE_AUTH_BASE = dev;
   } catch (e) {}
 })();
-window.IMMUNOVERSE_AUTH_BASE = window.IMMUNOVERSE_AUTH_BASE || "https://auth.immunoverse-chat.com";
-
-const AUTH = window.IMMUNOVERSE_AUTH_BASE.replace(/\/+$/, '');
+// Auth endpoint fallback chain: portal's own (un-sinkholed) domain first, chat
+// domain as fallback (NYU DNS-sinkholes immunoverse-chat.com). A localhost dev
+// override set above (window.IMMUNOVERSE_AUTH_BASE) wins outright. Network/DNS
+// failure on one base falls through to the next; the winning base is cached
+// per-session in sessionStorage.iv_auth_base.
+const IV_AUTH_BASES = (
+  window.IMMUNOVERSE_AUTH_BASES ? window.IMMUNOVERSE_AUTH_BASES :
+  window.IMMUNOVERSE_AUTH_BASE ? [window.IMMUNOVERSE_AUTH_BASE] :
+  ['https://auth.immuno-verse.com', 'https://auth.immunoverse-chat.com']
+).map(s => String(s).replace(/\/+$/, ''));
+const AUTH = IV_AUTH_BASES[0];
+let _ivAuthBase = null;
+try { _ivAuthBase = sessionStorage.getItem('iv_auth_base'); } catch (e) {}
+if (_ivAuthBase && IV_AUTH_BASES.indexOf(_ivAuthBase) === -1) _ivAuthBase = null;
+async function ivAuthFetch(path, opts) {
+  const ordered = _ivAuthBase
+    ? [_ivAuthBase].concat(IV_AUTH_BASES.filter(b => b !== _ivAuthBase))
+    : IV_AUTH_BASES.slice();
+  let lastErr;
+  for (let i = 0; i < ordered.length; i++) {
+    try {
+      const res = await fetch(ordered[i] + path, opts);
+      _ivAuthBase = ordered[i];
+      try { sessionStorage.setItem('iv_auth_base', ordered[i]); } catch (e) {}
+      return res;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('auth endpoints unreachable');
+}
 const RETURN_TO = (new URLSearchParams(location.search)).get('return') || 'account.html';
 
 // Already signed in? Jump straight to the destination so users don't stare at
@@ -751,11 +777,11 @@ const RETURN_TO = (new URLSearchParams(location.search)).get('return') || 'accou
     return tok ? { Authorization: 'Bearer ' + tok } : {};
   }
   try {
-    let r = await fetch(AUTH + '/api/portal/auth/me', { credentials: 'include', headers: bearer() });
+    let r = await ivAuthFetch('/api/portal/auth/me', { credentials: 'include', headers: bearer() });
     if (r.ok) { location.replace(RETURN_TO); return; }
     // Access token expired → try one silent refresh against the refresh token.
     let stored = null; try { stored = localStorage.getItem('iv_portal_refresh'); } catch (e) {}
-    const rf = await fetch(AUTH + '/api/portal/auth/refresh', {
+    const rf = await ivAuthFetch('/api/portal/auth/refresh', {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(stored ? { refresh_token: stored } : {}),
@@ -903,7 +929,7 @@ async function handleSignin(ev) {
   hideAlert();
   setLoading('signinSubmit', 'Signing in…');
   try {
-    const res = await fetch(AUTH + '/api/portal/auth/login', {
+    const res = await ivAuthFetch('/api/portal/auth/login', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -957,7 +983,7 @@ async function handleRegister(ev) {
   }
   setLoading('registerSubmit', 'Creating account…');
   try {
-    const res = await fetch(AUTH + '/api/portal/auth/register', {
+    const res = await ivAuthFetch('/api/portal/auth/register', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -1014,7 +1040,7 @@ async function submitAccessRequest() {
   }
   setLoading('registerSubmit', 'Submitting…');
   try {
-    const res = await fetch(AUTH + '/api/portal/auth/request-access', {
+    const res = await ivAuthFetch('/api/portal/auth/request-access', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
