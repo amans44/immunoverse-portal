@@ -185,8 +185,12 @@ admin console) is served by a **separate backend**, not by these static pages.
   `admin.html` (admin console — users, access requests, inquiries, admin
   allow-list), and `reset.html` (forgot-password + set-password-after-approval).
   All call the backend through an **auth endpoint fallback chain** `IV_AUTH_BASES`
-  (in every auth page + `index.html`): **`https://auth.immuno-verse.com`** (primary,
-  the portal's own domain) → **`https://auth.immunoverse-chat.com`** (fallback).
+  (in every auth page + `index.html`):
+  **`https://auth-service-739605637035.us-central1.run.app`** (primary — Cloud
+  Run's own URL, not blocked by NYU, no DNS needed) →
+  **`https://auth.immuno-verse.com`** (optional same-site host, needs a DNS record
+  on the portal domain) → **`https://auth.immunoverse-chat.com`** (legacy fallback,
+  sinkholed at NYU).
   `ivAuthFetch(path, opts)` tries each base in order; a network/DNS failure on one
   (exactly what NYU's DNS-sinkhole of `immunoverse-chat.com` produces) falls
   through to the next, while any HTTP response counts as "reached". The winning
@@ -359,7 +363,19 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
-### 2026-06-03 — Auth endpoint fallback chain: auth.immuno-verse.com primary, chat domain fallback
+### 2026-06-03 — Auth endpoint fallback chain (Cloud Run run.app primary — fixes NYU login, no DNS needed)
+**Update:** the primary base is the auth service's own
+`https://auth-service-739605637035.us-central1.run.app` Cloud Run URL. Verified on
+NYU WiFi it returns 401 (reachable) while `immunoverse-chat.com` is sinkholed — so
+`run.app` (and `deno.net`) are NOT blocked; only `immunoverse-chat.com` is. This
+needs **no custom domain, no DNS, no redeploy** — it works the moment the frontend
+is published. `auth.immuno-verse.com` (needs a DNS record from the domain owner)
+stays in the chain as an optional nicer same-site host; `auth.immunoverse-chat.com`
+is the legacy last resort. CORS already allows the `immuno-verse.com` origin
+regardless of which auth host serves, and cross-site cookies (SameSite=none) +
+the localStorage bearer token authenticate across hosts.
+
+
 **Why:** NYU's network (Palo Alto firewall, DNS Security) **DNS-sinkholes
 `immunoverse-chat.com`** — confirmed: on NYU WiFi all `*.immunoverse-chat.com`
 names resolve to `sinkhole.paloaltonetworks.com`, while Google `8.8.8.8` returns

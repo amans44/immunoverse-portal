@@ -169,7 +169,7 @@ h1 { font-size: 24px; margin: 0 0 8px; }
 const IV_AUTH_BASES = (
   window.IMMUNOVERSE_AUTH_BASES ? window.IMMUNOVERSE_AUTH_BASES :
   window.IMMUNOVERSE_AUTH_BASE ? [window.IMMUNOVERSE_AUTH_BASE] :
-  ['https://auth.immuno-verse.com', 'https://auth.immunoverse-chat.com']
+  ['https://auth-service-739605637035.us-central1.run.app', 'https://auth.immuno-verse.com', 'https://auth.immunoverse-chat.com']
 ).map(s => String(s).replace(/\/+$/, ''));
 const AUTH = IV_AUTH_BASES[0];
 let _ivAuthBase = null;

@@ -8658,18 +8658,20 @@ window.addEventListener('popstate', async () => {
   // Same Cloud Run service that serves auth/. Set window.IMMUNOVERSE_AUTH_BASE
   // before this script runs to point local dev at http://localhost:8001.
   // ---- Auth endpoint fallback chain ---------------------------------------
-  // Primary on the portal's OWN domain (auth.immuno-verse.com), with the chat
-  // domain as fallback. NYU's network DNS-sinkholes immunoverse-chat.com, so
-  // serving auth from an immuno-verse.com subdomain keeps login working there;
-  // the chat domain stays as a backstop. A network/DNS failure on one base
-  // (which is exactly what a sinkhole produces) falls through to the next; an
-  // HTTP response of any status counts as "reached". The winning base is cached
-  // per-session so we don't re-probe a dead one. Mirrors the IMG_PROXIES chain.
+  // NYU's network DNS-sinkholes immunoverse-chat.com (Palo Alto firewall), which
+  // would break login on campus. Cloud Run's own *.run.app URL is NOT blocked
+  // (verified on NYU WiFi: 401 = reachable), needs no DNS/custom domain, and is
+  // already live — so it's the PRIMARY base. auth.immuno-verse.com (same-site,
+  // nicer, but needs a DNS record on the portal's domain) is an optional second,
+  // and the legacy auth.immunoverse-chat.com is the last fallback. A network/DNS
+  // failure on one base (exactly what a sinkhole produces) falls through to the
+  // next; any HTTP status counts as "reached". The winning base is cached per
+  // session so we don't re-probe a dead one. Mirrors the IMG_PROXIES chain.
   // Override order via window.IMMUNOVERSE_AUTH_BASES = [...] before this script.
   const IV_AUTH_BASES = (
     window.IMMUNOVERSE_AUTH_BASES ? window.IMMUNOVERSE_AUTH_BASES :
     window.IMMUNOVERSE_AUTH_BASE ? [window.IMMUNOVERSE_AUTH_BASE] :
-    ['https://auth.immuno-verse.com', 'https://auth.immunoverse-chat.com']
+    ['https://auth-service-739605637035.us-central1.run.app', 'https://auth.immuno-verse.com', 'https://auth.immunoverse-chat.com']
   ).map(s => String(s).replace(/\/+$/, ''));
   const AUTH = IV_AUTH_BASES[0];  // back-compat for any direct string use
   let _ivAuthBase = null;
