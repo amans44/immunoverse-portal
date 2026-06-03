@@ -153,16 +153,13 @@ nav.topnav {
   border-bottom: 1px solid var(--border);
 }
 nav.topnav .inner {
-  max-width: 1600px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 14px 24px;
+  padding: 14px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-}
-@media (min-width: 1280px) {
-  nav.topnav .inner { gap: 16px; padding: 14px 28px; }
+  gap: 24px;
 }
 .brand {
   display: flex;
@@ -204,66 +201,16 @@ nav .links a {
 }
 nav .links a:hover { background: var(--bg-3); color: var(--text-0); }
 nav .cta {
-  padding: 9px 22px;
+  padding: 9px 18px;
   background: var(--grad-primary);
   color: #0a0e1a;
   border-radius: 10px;
   font-weight: 600;
   font-size: 14px;
-  white-space: nowrap;
   box-shadow: 0 4px 20px rgba(34,211,238,0.25);
   transition: transform .15s, box-shadow .15s;
 }
 nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211,238,0.4); color: #0a0e1a; }
-
-/* Live visitor counter pill (fed by GoatCounter) */
-.live-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 5px 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--bg-1) 60%, transparent);
-  white-space: nowrap;
-  flex: none;
-}
-.live-stat .live-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #22d3ee;
-  box-shadow: 0 0 0 0 rgba(34,211,238,0.55);
-  animation: livePulse 2s infinite;
-  flex: none;
-}
-@keyframes livePulse {
-  0%   { box-shadow: 0 0 0 0 rgba(34,211,238,0.55); }
-  70%  { box-shadow: 0 0 0 7px rgba(34,211,238,0); }
-  100% { box-shadow: 0 0 0 0 rgba(34,211,238,0); }
-}
-.live-stat .live-num {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--text-0);
-  font-variant-numeric: tabular-nums;
-}
-.live-stat .live-label {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  color: var(--text-2);
-  text-transform: uppercase;
-}
-@media (max-width: 980px) {
-  .live-stat .live-label { display: none; }
-}
-@media (max-width: 560px) {
-  .live-stat { display: none; }
-}
 
 /* ===================== HERO ===================== */
 .hero {
@@ -1724,21 +1671,6 @@ table.atlas.compact td:nth-child(10) { display: none; }
 .dl-figure-btn.iv-back-to-svg:hover {
   background: rgba(34, 211, 238, 0.30);
 }
-/* Rank-abundance PNG ↔ SVG toggle. Sits left of the PNG-download button.
-   Stays visible (opacity 1, not just on hover) so users discover the
-   option to load the higher-resolution SVG version. Hidden until
-   _probeAndShowSvgToggle confirms the SVG actually exists at NYU. */
-.dl-figure-btn.svg-toggle-btn {
-  right: 140px;
-  opacity: 1;
-  background: rgba(34, 211, 238, 0.18);
-  border-color: rgba(34, 211, 238, 0.45);
-  color: #22d3ee;
-}
-.dl-figure-btn.svg-toggle-btn:hover {
-  background: rgba(34, 211, 238, 0.30);
-}
-.dl-figure-btn.svg-toggle-btn[hidden] { display: none; }
 
 /* Tiny inline download chip — sits next to a section title's text. */
 .dl-inline-btn {
@@ -2779,31 +2711,16 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 }
 
 /* ===================== GLOBAL SEARCH ===================== */
-/* Expand-on-focus pattern: the wrap takes a fixed compact slot in the
-   topnav (220px) so neighbors (queries pill, theme toggle, CTA) never
-   shift. The actual input-row is position:absolute on top of the wrap
-   and grows to ~520px on :focus-within, overlaying neighbors. Click out
-   and it transitions back to 220px. Below 960px the mobile media query
-   below resets this and gives the search its own full-width row. */
 .search-wrap {
   position: relative;
-  flex: 0 0 220px;
-  height: 38px;
+  flex: 1 1 auto;
+  max-width: 460px;
+  min-width: 0;
 }
 .search-input-row {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  position: relative;
   display: flex;
   align-items: center;
-  transition: width 0.2s ease;
-  z-index: 50;
-}
-.search-wrap:focus-within .search-input-row {
-  width: min(520px, calc(100vw - 80px));
-  z-index: 60;
 }
 .search-input-row svg.search-icon {
   position: absolute;
@@ -2819,43 +2736,17 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--bg-2);
-  /* color and -webkit-text-fill-color both set: some browsers/extensions
-     (e.g. Chrome autofill yellow) override `color` but respect text-fill,
-     so we belt-and-braces it. caret-color makes the cursor visible against
-     the input's dark background — otherwise users can't tell typing is
-     registering. */
   color: var(--text-0);
-  -webkit-text-fill-color: var(--text-0);
-  caret-color: var(--accent-cyan);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13.5px;
   outline: none;
   transition: border-color .15s, background .15s, box-shadow .15s;
 }
-.search-input::placeholder { color: var(--text-3); -webkit-text-fill-color: var(--text-3); }
+.search-input::placeholder { color: var(--text-3); }
 .search-input:focus {
   border-color: var(--accent-cyan);
   background: var(--bg-1);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-cyan) 18%, transparent);
-  color: var(--text-0);
-  -webkit-text-fill-color: var(--text-0);
-}
-/* Override Chrome's autofill style (yellow bg + invisible text) that
-   sometimes triggers on saved searches. */
-.search-input:-webkit-autofill,
-.search-input:-webkit-autofill:focus,
-.search-input:-webkit-autofill:hover {
-  -webkit-text-fill-color: var(--text-0);
-  -webkit-box-shadow: 0 0 0 1000px var(--bg-2) inset;
-  caret-color: var(--accent-cyan);
-}
-/* Hide the WebKit "x" clear button — it can overlap the typed text on
-   narrow inputs. The escape key + click-outside both already clear focus,
-   and the Esc handler already hides the dropdown. */
-.search-input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  appearance: none;
-  display: none;
 }
 .search-kbd {
   position: absolute;
@@ -2873,27 +2764,11 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   padding: 3px 6px;
   pointer-events: none;
   user-select: none;
-  /* Hidden by default — "Ctrl+K" is wider than the input's right padding
-     reserves, so showing it always would overlap the typed text. Reveal
-     on hover (discoverability for keyboard users), keep hidden while
-     focused so it never overlaps what the user is actively typing. */
-  opacity: 0;
-  transition: opacity .15s ease;
 }
-.search-wrap:hover .search-kbd { opacity: 1; }
-.search-wrap:focus-within .search-kbd { opacity: 0; }
 .search-results {
   position: absolute;
   top: calc(100% + 6px);
-  /* Dropdown can be wider than the input so users actually see what they're
-     searching. Anchored to the input's left edge; extends rightward up to
-     a hard 560px floor, allowed to grow with the input on wider screens,
-     and clamped to viewport on narrow ones. */
-  left: 0;
-  right: auto;
-  min-width: 100%;
-  width: 560px;
-  max-width: calc(100vw - 32px);
+  left: 0; right: 0;
   background: var(--bg-1);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -3009,48 +2884,14 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   vertical-align: 1px;
 }
 
-/* ===================== TOPNAV RESPONSIVE BREAKPOINTS =====================
-   Sign-in chip and "Explore atlas" CTA must stay visible at every viewport
-   width — Aman's requirement. We progressively hide / shrink the rest as
-   the viewport gets narrower:
-
-     ≥1280px : full topnav (brand · search · links · queries pill · theme · sign-in · CTA)
-     <1280px : tighten gaps, hide queries label (label shows " Queries" text)
-     <1180px : hide queries pill entirely (decorative)
-     <1100px : reduce CTA padding, shrink theme toggle
-     <960px  : links collapse to hamburger, search drops to its own row
-                — sign-in chip and CTA STAY in the first row, not in hamburger
-     <520px  : hide theme toggle (kept in hamburger? — no, just drop it),
-                shrink brand subtitle, ultra-tight padding
-   ========================================================================= */
-
-@media (max-width: 1279px) {
-  nav.topnav .inner { gap: 14px; padding: 12px 24px; }
-  .live-stat .live-label { display: none; }
-}
-@media (max-width: 1179px) {
-  .live-stat { display: none; }
-  nav .links a { padding: 8px 11px; font-size: 13.5px; }
-}
-@media (max-width: 1099px) {
-  nav .cta { padding: 8px 16px; font-size: 13px; }
-  .theme-toggle { width: 34px; height: 34px; }
-  nav .links a { padding: 7px 9px; font-size: 13px; }
-}
-
-/* Responsive layout below 960px — links collapse, search wraps. */
+/* Responsive */
 @media (max-width: 960px) {
   .hero .hero-grid { grid-template-columns: 1fr; gap: 20px; }
   .hero-stats { grid-template-columns: repeat(4, 1fr); }
   .filters { grid-template-columns: 1fr 1fr; }
   footer.ftr .cols { grid-template-columns: 1fr 1fr; }
   .nav-toggle { display: block; }
-  .search-wrap { max-width: none; order: 3; flex-basis: 100%; margin-top: 8px; flex: 1 1 100%; height: auto; }
-  /* Mobile: search has its own full-width row, so undo the desktop
-     expand-on-focus pattern (no overlay needed when there's nothing
-     to overlay with). */
-  .search-input-row { position: relative; width: 100%; }
-  .search-wrap:focus-within .search-input-row { width: 100%; }
+  .search-wrap { max-width: none; order: 3; flex-basis: 100%; margin-top: 8px; }
   .search-kbd { display: none; }
   nav .links {
     display: none;
@@ -3066,17 +2907,6 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   }
   nav .links.open { display: flex; }
   nav .links a { padding: 10px 14px; font-size: 15px; }
-  /* Sign-in chip + CTA explicitly kept out of the hamburger so users can
-     always sign in / jump to the explorer without opening any menu. */
-}
-@media (max-width: 520px) {
-  nav.topnav .inner { gap: 8px; padding: 10px 14px; }
-  .brand { font-size: 15px; }
-  .brand .sub { display: none; }
-  .theme-toggle { width: 32px; height: 32px; }
-  nav .cta { padding: 7px 12px; font-size: 12.5px; }
-  .iv-acc-chip .iv-acc-name { display: none; }
-  .iv-signin-link { font-size: 13px; padding: 6px 10px; }
 }
 @media (max-width: 640px) {
   .container { padding: 0 20px; }
@@ -3124,157 +2954,13 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <a href="#downloads">Data</a>
       <a href="#cite">Cite</a>
     </div>
-    <!-- Live query counter: hidden by default; revealed only for signed-in
-         admins by the auth bootstrap below (showAccount). Anonymous and
-         non-admin visitors never see it. Query counting still runs for all. -->
-    <div class="live-stat" id="liveStat" aria-label="Live query count" title="Total queries to the atlas" style="display:none;">
-      <span class="live-dot" aria-hidden="true"></span>
-      <span class="live-num" id="liveVisitors">—</span>
-      <span class="live-label">Queries</span>
-    </div>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode" title="Toggle theme" onclick="toggleTheme()">
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
     </button>
-    <!-- Portal auth chip: rendered as "Sign in" text link when no session,
-         or an avatar + dropdown when signed in. JS at bottom decides. -->
-    <a id="ivSignInBtn" class="iv-signin-link" href="login.html" style="display:none;">Sign in</a>
-    <div class="iv-user-menu" id="ivUserMenu" style="display:none;">
-      <button type="button" class="iv-acc-chip" id="ivAccountChip" aria-haspopup="true" aria-expanded="false" title="Your account">
-        <span class="iv-acc-avatar" id="ivAccAvatar">?</span>
-        <span class="iv-acc-name" id="ivAccName">Account</span>
-        <span class="iv-acc-caret" aria-hidden="true">▾</span>
-      </button>
-      <div class="iv-user-dropdown" id="ivUserDropdown" role="menu" hidden>
-        <div class="iv-dd-head">
-          <div class="iv-dd-name" id="ivDdName">…</div>
-          <div class="iv-dd-email" id="ivDdEmail">…</div>
-        </div>
-        <a href="account.html" role="menuitem"><span class="iv-dd-icon">👤</span>Account</a>
-        <a href="account.html#savedSearches" role="menuitem"><span class="iv-dd-icon">★</span>Saved searches</a>
-        <a href="account.html#history" role="menuitem"><span class="iv-dd-icon">⊕</span>Recently viewed</a>
-        <a href="admin.html" role="menuitem" id="ivDdAdmin"><span class="iv-dd-icon">🛡</span>Admin dashboard</a>
-        <button type="button" role="menuitem" id="ivDdFeedback"><span class="iv-dd-icon">💬</span>Send feedback</button>
-        <div class="iv-dd-sep"></div>
-        <button type="button" role="menuitem" id="ivDdSignOut" class="iv-dd-signout"><span class="iv-dd-icon">↩</span>Sign out</button>
-      </div>
-    </div>
     <a class="cta" href="#explorer">Explore atlas →</a>
   </div>
 </nav>
-<style>
-/* Portal auth chip in the nav. Keeps the dark/light theme via the same
-   CSS variables as the rest of the page. Tight by default so it doesn't
-   compete with the Explore atlas CTA for nav width — the name label is
-   only shown on wider viewports. */
-.iv-acc-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 9999px;
-  padding: 3px 4px 3px 3px;
-  color: var(--text-1);
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 500;
-  transition: border-color 0.18s;
-  flex: none;
-}
-.iv-acc-chip:hover { border-color: var(--border-2); color: var(--text-0); }
-.iv-acc-avatar {
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  background: var(--grad-primary);
-  color: #fff;
-  font-weight: 700;
-  font-size: 11px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-}
-.iv-acc-name {
-  max-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  padding-right: 0;
-  transition: max-width 0.2s ease, padding 0.2s ease;
-}
-@media (min-width: 1180px) {
-  .iv-acc-name { max-width: 130px; padding-right: 4px; }
-  .iv-acc-chip { padding: 3px 8px 3px 3px; gap: 8px; }
-}
-.iv-acc-caret { font-size: 10px; color: var(--text-2); transition: transform 0.15s; margin-right: 4px; }
-.iv-acc-chip[aria-expanded="true"] .iv-acc-caret { transform: rotate(180deg); }
-.iv-user-menu { position: relative; flex: none; }
-.iv-user-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 240px;
-  background: var(--bg-1);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 6px;
-  box-shadow: 0 18px 50px rgba(5,8,20,0.55);
-  z-index: 200;
-  backdrop-filter: blur(14px);
-}
-.iv-user-dropdown[hidden] { display: none !important; }
-.iv-dd-head {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 4px;
-}
-.iv-dd-name { font-size: 13.5px; font-weight: 600; color: var(--text-0); }
-.iv-dd-email { font-size: 12px; color: var(--text-2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.iv-user-dropdown a,
-.iv-user-dropdown button.iv-dd-signout {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px; border-radius: 8px;
-  font-size: 13.5px; color: var(--text-1);
-  text-decoration: none; border: 0; background: transparent;
-  cursor: pointer; font-family: inherit; width: 100%; text-align: left;
-}
-.iv-user-dropdown a:hover, .iv-user-dropdown button.iv-dd-signout:hover {
-  background: var(--bg-3); color: var(--text-0);
-}
-/* Browser default [hidden] { display: none } loses the specificity fight
-   against `.iv-user-dropdown a { display: flex }`, so we override
-   explicitly. */
-.iv-user-dropdown a[hidden],
-.iv-user-dropdown button[hidden] { display: none !important; }
-/* Visual hint for the admin link when the current account can't reach it:
-   muted text + small lock glyph after the label, so users understand why
-   the next click will prompt them to switch accounts. */
-.iv-user-dropdown a[data-needs-elevation] { color: var(--text-2); }
-.iv-user-dropdown a[data-needs-elevation]::after {
-  content: '🔒'; margin-left: auto; opacity: 0.7; font-size: 11px;
-}
-.iv-dd-icon {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; font-size: 13px; color: var(--text-2);
-}
-.iv-dd-sep { height: 1px; background: var(--border); margin: 6px 4px; }
-.iv-dd-signout { color: #f87171 !important; }
-.iv-dd-signout:hover { background: rgba(248,113,113,0.10) !important; color: #f87171 !important; }
-/* Sign-in is a quiet text link, not a CTA — we don't want two big colored
-   buttons competing for attention. */
-.iv-signin-link {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-1);
-  padding: 8px 12px;
-  border-radius: 8px;
-  white-space: nowrap;
-  text-decoration: none;
-  flex: none;
-}
-.iv-signin-link:hover { background: var(--bg-3); color: var(--text-0); }
-</style>
 
 <!-- HERO -->
 <section class="hero" id="top">
@@ -3380,9 +3066,6 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
           </button>
           <button class="btn btn-ghost" id="resetBtn" style="padding:9px 14px;font-size:13px;">
             Reset filters
-          </button>
-          <button class="btn btn-ghost" id="saveSearchBtn" style="padding:9px 14px;font-size:13px;" title="Sign in to save this filter as a named search">
-            <span style="margin-right:4px;">★</span> Save this search
           </button>
           <a class="btn btn-primary" id="dlCsv" href="#" style="padding:9px 16px;font-size:13px;" download>Download CSV</a>
         </div>
@@ -3539,7 +3222,7 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
   <div class="container">
     <div class="section-head">
       <div class="kicker">All 21 cancers</div>
-      <h2>21 cancers · 26,603 ranked candidate targets</h2>
+      <h2>21 cancers · 340,000+ ranked candidate targets</h2>
       <p>Each tile's donut (<b>NC</b> = non-canonical) shows the fraction of the repertoire from <b style="color:var(--accent-violet)">non-canonical</b> sources — splicing, cryptic ORFs, retroelements, mutations, fusions, microbial. Click a tile to filter the explorer above.</p>
     </div>
     <div style="margin: 6px 0 12px; display: flex; align-items: baseline; justify-content: space-between;">
@@ -3748,7 +3431,6 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
         <a href="#explorer">Explorer</a>
         <a href="#classes">Aberration classes</a>
         <a href="#highlights">Highlights</a>
-        <a href="/hub/">ImmunoVerse Hub</a>
       </div>
       <div>
         <h6>Resources</h6>
@@ -3788,318 +3470,10 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
 <!-- Compare action bar (floats at bottom when any peptides are selected) -->
 <div class="cmp-bar" id="compareBar"></div>
 
-<!-- ===== Feedback modal ===== -->
-<div id="ivFbBackdrop" class="iv-fb-backdrop" hidden>
-  <div class="iv-fb-card" role="dialog" aria-labelledby="ivFbTitle" aria-modal="true">
-    <button class="iv-fb-close" type="button" aria-label="Close" onclick="ivCloseFeedback()">×</button>
-    <h3 id="ivFbTitle">Send feedback</h3>
-    <p class="iv-fb-lede">Bugs, feature ideas, data issues — anything helps. Goes straight to the team's inbox.</p>
-    <div id="ivFbAlert" class="iv-fb-alert" hidden></div>
-    <form id="ivFbForm" onsubmit="return ivSubmitFeedback(event)">
-      <label class="iv-fb-lbl" for="ivFbType">Type</label>
-      <select id="ivFbType" required>
-        <option value="feedback">General feedback</option>
-        <option value="bug">Bug report</option>
-        <option value="feature">Feature request</option>
-        <option value="data_issue">Data / annotation issue</option>
-        <option value="other">Other</option>
-      </select>
-
-      <div class="iv-fb-row">
-        <div>
-          <label class="iv-fb-lbl" for="ivFbName">Your name</label>
-          <input id="ivFbName" type="text" placeholder="Optional" />
-        </div>
-        <div>
-          <label class="iv-fb-lbl" for="ivFbEmail">Email</label>
-          <input id="ivFbEmail" type="email" required placeholder="you@institute.edu" />
-        </div>
-      </div>
-
-      <label class="iv-fb-lbl" for="ivFbSubject">Subject</label>
-      <input id="ivFbSubject" type="text" required minlength="2" maxlength="200" placeholder="Short summary" />
-
-      <label class="iv-fb-lbl" for="ivFbMessage">Message <span class="iv-fb-counter" id="ivFbCounter">0 / 10 min</span></label>
-      <textarea id="ivFbMessage" rows="5" required minlength="10" maxlength="4000"
-                placeholder="What did you see? What were you expecting? If it's a data issue, paste the cancer code + peptide sequence if you have them." oninput="ivFbUpdateCounter()"></textarea>
-
-      <div class="iv-fb-actions">
-        <button type="button" class="iv-fb-btn ghost" onclick="ivCloseFeedback()">Cancel</button>
-        <button type="submit" class="iv-fb-btn primary" id="ivFbSubmit">Send</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Floating Feedback button (bottom-left, opposite the chatbot widget) -->
-<button id="ivFbFab" class="iv-fb-fab" type="button" onclick="ivOpenFeedback()" aria-label="Send feedback" title="Send feedback">
-  💬
-  <span class="iv-fb-fab-label">Feedback</span>
-</button>
-
-<!-- ===== Welcome-back modal (ChatGPT-style account picker, dismissible) =====
-     Shown on homepage load to a returning, signed-out visitor who has a
-     remembered account in localStorage. Markup is filled + wired by
-     maybeShowWelcomeBack() in the portal auth boot script. -->
-<div id="ivWbBackdrop" class="iv-wb-backdrop" hidden>
-  <div class="iv-wb-card" role="dialog" aria-labelledby="ivWbTitle" aria-modal="true">
-    <button class="iv-wb-close" type="button" aria-label="Close" id="ivWbClose">×</button>
-    <h2 id="ivWbTitle" class="iv-wb-title">Welcome back</h2>
-    <p id="ivWbSub" class="iv-wb-sub">Choose an account to continue.</p>
-
-    <button type="button" class="iv-wb-acct" id="ivWbAcct" title="Continue with this account">
-      <span class="iv-wb-avatar" id="ivWbAvatar" aria-hidden="true">?</span>
-      <span class="iv-wb-acct-text">
-        <span class="iv-wb-acct-name" id="ivWbName">—</span>
-        <span class="iv-wb-acct-email" id="ivWbEmail">—</span>
-      </span>
-      <span class="iv-wb-forget" id="ivWbForget" role="button" tabindex="0" aria-label="Forget this account" title="Forget this account">×</span>
-    </button>
-
-    <div class="iv-wb-or"><span>OR</span></div>
-
-    <a class="iv-wb-btn" id="ivWbLoginOther" href="login.html">Log in to another account</a>
-    <a class="iv-wb-btn" id="ivWbCreate" href="login.html#create">Create account</a>
-  </div>
-</div>
-<style>
-/* ===== Welcome-back modal ===== */
-.iv-wb-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(5,7,14,0.72);
-  z-index: 300;
-  display: flex; align-items: center; justify-content: center;
-  padding: 18px;
-  backdrop-filter: blur(6px);
-}
-.iv-wb-backdrop[hidden] { display: none !important; }
-.iv-wb-card {
-  width: 100%; max-width: 460px;
-  background: var(--bg-1);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 40px 34px 30px;
-  box-shadow: var(--shadow-lg);
-  position: relative;
-  text-align: center;
-}
-.iv-wb-close {
-  position: absolute; top: 16px; right: 16px;
-  width: 34px; height: 34px;
-  background: transparent; border: 0;
-  color: var(--text-2); font-size: 24px; line-height: 1;
-  cursor: pointer; border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.iv-wb-close:hover { color: var(--text-0); background: var(--bg-2); }
-.iv-wb-title { font-size: 34px; font-weight: 700; color: var(--text-0); margin: 6px 0 10px; letter-spacing: -0.01em; }
-.iv-wb-sub   { color: var(--text-2); font-size: 15px; margin: 0 0 26px; }
-.iv-wb-acct {
-  display: flex; align-items: center; gap: 16px;
-  width: 100%; text-align: left;
-  background: transparent;
-  border: 1px solid var(--border-2);
-  border-radius: 14px;
-  padding: 14px 16px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.iv-wb-acct:hover { border-color: var(--accent-cyan); background: var(--bg-2); }
-.iv-wb-avatar {
-  flex: none; width: 48px; height: 48px; border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 16px; color: #06281f;
-  background: var(--grad-primary);
-}
-.iv-wb-acct-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.iv-wb-acct-name  { font-weight: 700; font-size: 16px; color: var(--text-0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.iv-wb-acct-email { font-size: 13.5px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.iv-wb-forget {
-  flex: none; width: 28px; height: 28px; border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center;
-  color: var(--text-3); font-size: 18px; cursor: pointer;
-}
-.iv-wb-forget:hover { color: var(--text-0); background: rgba(255,255,255,0.08); }
-.iv-wb-or {
-  display: flex; align-items: center; gap: 14px;
-  color: var(--text-3); font-size: 12px; font-weight: 600; letter-spacing: 0.1em;
-  margin: 22px 2px;
-}
-.iv-wb-or::before, .iv-wb-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-.iv-wb-btn {
-  display: block; width: 100%; box-sizing: border-box; text-align: center;
-  background: transparent;
-  border: 1px solid var(--border-2);
-  border-radius: 9999px;
-  padding: 13px 18px;
-  font-family: inherit; font-size: 15px; font-weight: 600;
-  color: var(--text-0); cursor: pointer; text-decoration: none;
-  transition: all 0.15s ease;
-}
-.iv-wb-btn + .iv-wb-btn { margin-top: 12px; }
-.iv-wb-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
-@media (max-width: 480px) {
-  .iv-wb-title { font-size: 28px; }
-  .iv-wb-card { padding: 34px 22px 24px; }
-}
-
-/* ===== Locked-cancer affordances (signed-out visitors) ===== */
-.ctile.ctile-locked { position: relative; filter: grayscale(0.8) brightness(0.78); cursor: pointer; }
-.ctile.ctile-locked:hover { filter: grayscale(0.4) brightness(0.95); }
-.ctile-lockbadge {
-  position: absolute; top: 8px; right: 8px;
-  background: rgba(15,18,28,0.9); color: #fbbf24;
-  font-size: 10px; font-weight: 600; padding: 3px 7px;
-  border-radius: 999px; border: 1px solid rgba(251,191,36,0.45);
-  letter-spacing: 0.3px; z-index: 2;
-}
-a.dl-locked { filter: grayscale(0.8) brightness(0.82); }
-a.dl-locked .sz { color: #fbbf24; }
-</style>
-
-<style>
-/* ===== Feedback modal + FAB ===== */
-.iv-fb-fab {
-  position: fixed;
-  bottom: 22px;
-  left: 22px;
-  z-index: 80;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px 10px 12px;
-  border-radius: 9999px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-2);
-  color: var(--text-1);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 10px 30px rgba(5,8,20,0.40);
-  transition: all 0.18s ease;
-}
-.iv-fb-fab:hover { color: var(--text-0); border-color: var(--accent-cyan); transform: translateY(-1px); }
-.iv-fb-fab .iv-fb-fab-label { font-weight: 600; }
-@media (max-width: 720px) {
-  .iv-fb-fab .iv-fb-fab-label { display: none; }
-  .iv-fb-fab { padding: 12px; }
-}
-
-.iv-fb-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(5,7,14,0.62);
-  z-index: 200;
-  display: flex; align-items: center; justify-content: center;
-  padding: 18px;
-  backdrop-filter: blur(4px);
-}
-.iv-fb-backdrop[hidden] { display: none !important; }
-.iv-fb-card {
-  width: 100%; max-width: 540px;
-  max-height: 92vh; overflow-y: auto;
-  background: var(--bg-1);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 28px 28px 22px;
-  box-shadow: var(--shadow-lg);
-  position: relative;
-}
-.iv-fb-card h3 { font-size: 20px; margin: 0 0 4px; color: var(--text-0); font-weight: 700; }
-.iv-fb-lede { color: var(--text-2); font-size: 13.5px; margin: 0 0 18px; line-height: 1.55; }
-.iv-fb-close {
-  position: absolute;
-  top: 14px; right: 14px;
-  width: 32px; height: 32px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  color: var(--text-2);
-  font-size: 18px;
-  cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.iv-fb-close:hover { color: var(--text-0); border-color: var(--border-2); }
-.iv-fb-lbl {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-2);
-  margin: 12px 0 6px;
-}
-.iv-fb-card input, .iv-fb-card select, .iv-fb-card textarea {
-  width: 100%;
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 11px 14px;
-  font-family: inherit;
-  font-size: 14px;
-  color: var(--text-0);
-  outline: none;
-}
-.iv-fb-card textarea { resize: vertical; min-height: 110px; line-height: 1.5; border-radius: 14px; }
-.iv-fb-card input:focus, .iv-fb-card select:focus, .iv-fb-card textarea:focus {
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 3px rgba(34,211,238,0.18);
-}
-.iv-fb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media (max-width: 480px) { .iv-fb-row { grid-template-columns: 1fr; } }
-.iv-fb-counter {
-  float: right;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-  letter-spacing: 0.04em;
-}
-.iv-fb-counter.ok { color: var(--accent-lime, #86efac); }
-.iv-fb-actions {
-  display: flex; gap: 10px; justify-content: flex-end;
-  margin-top: 18px;
-}
-.iv-fb-btn {
-  border: 0;
-  border-radius: 9999px;
-  padding: 9px 18px;
-  font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.iv-fb-btn.primary {
-  background: var(--grad-primary);
-  color: #0a0e1a;
-}
-.iv-fb-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(34,211,238,0.30); }
-.iv-fb-btn.ghost {
-  background: transparent;
-  color: var(--text-1);
-  border: 1px solid var(--border-2);
-}
-.iv-fb-btn.ghost:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
-.iv-fb-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
-.iv-fb-alert {
-  padding: 10px 14px;
-  border-radius: 12px;
-  font-size: 13px;
-  margin-bottom: 12px;
-}
-.iv-fb-alert.error   { background: rgba(248,113,113,0.10); border: 1px solid rgba(248,113,113,0.35); color: #f87171; }
-.iv-fb-alert.success { background: rgba(134,239,172,0.10); border: 1px solid rgba(134,239,172,0.40); color: #86efac; }
-</style>
-
 <!-- Compare modal -->
 <div class="drawer-backdrop" id="compareModalBg" onclick="closeCompareModal()"></div>
 <aside class="compare-modal" id="compareModal" aria-hidden="true">
   <button class="close" onclick="closeCompareModal()">×</button>
-  <!-- "Save this comparison" sits in the top-right next to the close button.
-       JS at saveCompareBtn:click prompts for label + optional remark and
-       POSTs to /api/portal/saved_searches with params.compare_keys set, so
-       the entry lands under account.html → ★ Saved comparisons. -->
-  <button class="copy-btn" id="saveCompareBtn" style="position:absolute; top:14px; right:50px; padding:4px 10px;" title="Sign in to save this comparison to your account" onclick="handleSaveComparison()">★ Save this comparison</button>
   <h3 style="margin:0 0 4px">Peptide comparison</h3>
   <p style="color:var(--text-2);font-size:13px;margin:0 0 18px">Side-by-side attribute comparison. Pathogen and mutation rows pull from the detail files; every other row comes from the main table.</p>
   <div id="compareModalBody"></div>
@@ -4248,41 +3622,6 @@ function geneSearchTerms(input) {
   return aliases.includes(s) ? aliases : [s, ...aliases];
 }
 
-// ============ ACCESS GATING ============
-// FEATURE FLAG — gating is currently OFF. When ON, anonymous / signed-out
-// visitors get NBL only (ANON_UNLOCKED) and the other 20 cancers are locked
-// behind sign-in, with the homepage Welcome/sign-in modal. It is disabled for
-// now (no public locking until the login system is hardened). Everything below
-// — and the Welcome modal auto-show — is dormant while this is false. Flip to
-// true (here AND set window.IV_GATING_ENABLED below) to re-enable in one place.
-window.IV_GATING_ENABLED = false;
-// `__IV_SIGNED_IN` is seeded optimistically from token presence (no network) and
-// corrected by the auth boot script's /auth/me result, which calls
-// ivApplyLockState() if it flipped. Clicking anything locked opens the sign-in
-// gate (window.ivOpenAuthGate, defined in the auth boot script).
-const ANON_UNLOCKED = new Set(['NBL']);
-// The /reviewers/ mirror is intentionally ungated (self-contained copy for
-// reviewers who have no account) — never lock anything when served from there.
-const IV_BYPASS_LOCK = /\/reviewers\//.test(location.pathname);
-window.__IV_SIGNED_IN = (function () { try { return !!localStorage.getItem('iv_portal_access'); } catch (e) { return false; } })();
-function isLocked(code) {
-  if (!window.IV_GATING_ENABLED) return false;   // gating disabled → everything open
-  return !IV_BYPASS_LOCK && !window.__IV_SIGNED_IN && !ANON_UNLOCKED.has(code);
-}
-function openAuthGate() { if (typeof window.ivOpenAuthGate === 'function') window.ivOpenAuthGate(); else location.href = 'login.html?return=' + encodeURIComponent(location.pathname + location.hash); }
-// Re-render every access-sensitive surface + reload the explorer for the new
-// access level. Called when /auth/me resolves to a different signed-in state.
-window.ivApplyLockState = function () {
-  if (!window.IV_GATING_ENABLED) return;   // gating off → nothing depends on sign-in state
-  const summary = window.__PD__ && window.__PD__['_summary'];
-  if (!summary) return;
-  try { renderCancerGrid(summary); } catch (e) {}
-  try { populateCancerSelect(); } catch (e) {}
-  try { renderDownloadGrid(summary); } catch (e) {}
-  try { renderBodyMap(summary); } catch (e) {}
-  try { if (typeof loadAll === 'function') loadAll(); } catch (e) {}
-};
-
 // ============ LOAD SUMMARY ============
 // Uses <script> tag loading (not fetch) so the portal works when opened directly
 // as a local file (file://) as well as when served over HTTP.
@@ -4340,11 +3679,8 @@ function renderCancerGrid(summary) {
     // Build class breakdown tooltip
     const breakdown = CLASS_ORDER.filter(k => (c.classes[k]||0) > 0)
       .map(k => `${CLASS_LABELS[k]}: ${(c.classes[k]||0).toLocaleString()}`).join(' · ');
-    const locked = isLocked(c.code);
-    const tileTitle = locked ? `Sign in to explore ${c.name}` : `${c.name} — ${breakdown}`;
     return `
-      <button class="ctile${locked ? ' ctile-locked' : ''}" onclick="selectCancer('${c.code}')" title="${tileTitle}">
-        ${locked ? '<div class="ctile-lockbadge">🔒 Sign in</div>' : ''}
+      <button class="ctile" onclick="selectCancer('${c.code}')" title="${c.name} — ${breakdown}">
         <div class="tile-head">
           <div class="code">${c.code}</div>
           <span class="group">${c.group}</span>
@@ -4503,25 +3839,17 @@ function renderClassChips(summary) {
 
 function populateCancerSelect() {
   const sel = document.getElementById('fCancer');
-  sel.innerHTML = '<option value="">All cancers</option>' + CANCERS.map(c => {
-    const lk = isLocked(c.code);
-    return `<option value="${c.code}"${lk ? ' disabled' : ''}>${c.code} — ${c.name}${lk ? ' 🔒' : ''}</option>`;
-  }).join('');
+  sel.innerHTML = '<option value="">All cancers</option>' + CANCERS.map(c => `<option value="${c.code}">${c.code} — ${c.name}</option>`).join('');
 }
 
 function renderDownloadGrid(summary) {
   const el = document.getElementById('dlGrid');
-  el.innerHTML = summary.cancers.map(c => {
-    const meta = `<div><b>${c.code}</b><div style="font-size:11px;color:var(--text-2);margin-top:1px;">${c.name}</div></div>`;
-    if (isLocked(c.code)) {
-      return `<a class="dl-locked" href="javascript:void(0)" onclick="openAuthGate()" title="Sign in to download">
-        ${meta}<span class="sz">🔒</span>
-      </a>`;
-    }
-    return `<a href="data/${c.code}.json" download>
-      ${meta}<span class="sz">${c.count.toLocaleString()}</span>
-    </a>`;
-  }).join('');
+  el.innerHTML = summary.cancers.map(c => `
+    <a href="data/${c.code}.json" download>
+      <div><b>${c.code}</b><div style="font-size:11px;color:var(--text-2);margin-top:1px;">${c.name}</div></div>
+      <span class="sz">${c.count.toLocaleString()}</span>
+    </a>
+  `).join('');
 }
 
 function toggleClass(k, scroll) {
@@ -4545,12 +3873,9 @@ async function loadCancer(code) {
 }
 
 async function loadAll() {
-  // Concurrently load the cancers this viewer may see. Signed-out visitors get
-  // NBL only (the other 20 are locked); signed-in users get all 21 (~60 MB).
-  const toLoad = CANCERS.filter(c => !isLocked(c.code));
-  const sizeHint = toLoad.length > 1 ? `${toLoad.length} cancer tables (~60 MB)` : `${toLoad.length} cancer table`;
-  document.getElementById('atlasBody').innerHTML = `<tr><td colspan="12" class="loader">Loading ${sizeHint}…</td></tr>`;
-  const all = await Promise.all(toLoad.map(c => loadCancer(c.code)));
+  // Concurrently load all cancers; ~60 MB total with per-HLA binding records
+  document.getElementById('atlasBody').innerHTML = '<tr><td colspan="12" class="loader">Loading 21 cancer tables (~60 MB)…</td></tr>';
+  const all = await Promise.all(CANCERS.map(c => loadCancer(c.code)));
   const rows = [];
   all.forEach(d => {
     d.rows.forEach(r => {
@@ -4568,7 +3893,6 @@ async function loadAll() {
 }
 
 async function selectCancer(code) {
-  if (isLocked(code)) { openAuthGate(); return; }   // locked → prompt sign-in
   STATE.cancer = code;
   document.getElementById('fCancer').value = code;
   document.getElementById('expTitle').textContent = code + ' — ' + (CANCERS.find(c => c.code===code)?.name || '');
@@ -4801,12 +4125,6 @@ function renderSearchResults(g, q) {
 
 async function navigateSearchResult(action, data) {
   const close = () => { document.getElementById('searchResults').hidden = true; };
-  // A hit that resolves to a specific locked cancer (a peptide or a cancer tile)
-  // must not reveal locked data — prompt sign-in instead. Gene/HLA/class hits
-  // filter the explorer, which for signed-out visitors only holds NBL anyway.
-  if ((action === 'peptide' || action === 'cancer') && data.code && isLocked(data.code)) {
-    close(); openAuthGate(); return;
-  }
   const clearCancerScopedFilters = () => {
     STATE.cancer = ''; document.getElementById('fCancer').value = '';
     STATE.pep = ''; const fp = document.getElementById('fPep'); if (fp) fp.value = '';
@@ -4867,7 +4185,6 @@ async function navigateSearchResult(action, data) {
   const runSearch = async () => {
     const q = input.value.trim();
     if (q.length < 2) { results.hidden = true; return; }
-    if (typeof window.__bumpQueryCounter === 'function') window.__bumpQueryCounter();
     if (!IDX_CACHE) {
       results.innerHTML = `<div class="search-empty">Loading search index…</div>`;
       results.hidden = false;
@@ -4896,7 +4213,6 @@ async function navigateSearchResult(action, data) {
     const item = e.target.closest('.search-item');
     if (!item) return;
     navigateSearchResult(item.dataset.action, {...item.dataset});
-    if (typeof window.__bumpQueryCounter === 'function') window.__bumpQueryCounter();
   });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.search-wrap')) results.hidden = true;
@@ -4916,30 +4232,10 @@ async function navigateSearchResult(action, data) {
 })();
 
 // ============ EXPORT / DOWNLOAD HELPERS ============
-// CORS proxies (tried in order) for the byte-level download flow. Each
-// re-hosts NYU figures with proper CORS headers so the "PNG" button can
-// trigger a real one-click blob download. _proxiedFetch tries Deno first
-// (most reliable network for NYU), falls back to Cloudflare if Deno is
-// down or rate-limits, returns null if both fail (download then falls
-// through to "open in new tab"). SVG figures still render via <img>
-// directly — these proxies are only used by _fetchImageBlob.
-const IMG_PROXIES = [
-  'https://immunoverse-proxy.amans44.deno.net/?url=',
-  'https://immunoverse-proxy.amansharma-e44.workers.dev/?url=',
-];
-const IMG_PROXY = IMG_PROXIES[0]; // kept for the truthy checks below
-
-async function _proxiedFetch(targetUrl) {
-  for (const proxy of IMG_PROXIES) {
-    try {
-      const r = await fetch(proxy + encodeURIComponent(targetUrl));
-      if (r.ok) return r;
-    } catch (e) {
-      console.warn('proxy fetch failed:', proxy, e);
-    }
-  }
-  return null;
-}
+// Cloudflare Worker proxy that re-hosts NYU figures with CORS headers,
+// so the browser will let JS read the bytes for one-click downloads. Set
+// to '' to disable (figures will fall back to opening in a new tab).
+const IMG_PROXY = 'https://immunoverse-proxy.amansharma-e44.workers.dev/?url=';
 
 function _safeFilename(s) {
   return String(s).replace(/[^A-Za-z0-9._\-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 120);
@@ -4986,15 +4282,18 @@ function downloadJson(obj, filename) {
   _triggerDownload(new Blob([JSON.stringify(obj, null, 2)], {type: 'application/json;charset=utf-8'}), filename);
 }
 
-// Fetch a NYU asset through the configured proxy chain and return a Blob.
-// Tries each proxy in IMG_PROXIES in turn; returns null only if every proxy
-// fails (caller then falls back to "open in new tab").
+// Fetch a NYU asset through the Cloudflare CORS proxy and return a Blob.
+// Returns null if the proxy isn't configured (no IMG_PROXY) or the fetch fails.
 async function _fetchImageBlob(nyuUrl) {
   if (!IMG_PROXY) return null;
-  const r = await _proxiedFetch(nyuUrl);
-  if (!r) return null;
-  try { return await r.blob(); }
-  catch (e) { console.warn('image proxy blob read failed', e); return null; }
+  try {
+    const r = await fetch(IMG_PROXY + encodeURIComponent(nyuUrl));
+    if (!r.ok) return null;
+    return await r.blob();
+  } catch (e) {
+    console.warn('image proxy fetch failed', e);
+    return null;
+  }
 }
 
 async function downloadImage(nyuUrl, filename) {
@@ -5203,14 +4502,8 @@ function downloadAllFromDrawer(btnEl) {
 // to the existing PNG silently when the SVG doesn't exist.
 const ASSET_SVG_BASE = 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/assets_svg';
 const SVG_FETCH_CACHE = new Map();           // url -> Promise<string|null>
-// Bumping the cache-key prefix invalidates every stale localStorage entry
-// (so e.g. peptides whose SVG was cached as "exists:false" while the proxy
-// was broken get re-probed cleanly once it's working again). Increment the
-// suffix whenever the proxy chain or NYU asset-tree changes shape.
-const SVG_EXISTS_KEY = u => 'svgexist:v2:' + u;
-const SVG_EXISTS_TTL = 3600 * 1000;          // 1h — short enough that any
-                                              // future proxy hiccup self-heals
-                                              // within an hour instead of 12.
+const SVG_EXISTS_KEY = u => 'svgexist:' + u;
+const SVG_EXISTS_TTL = 12 * 3600 * 1000;     // 12h
 async function fetchSvgIfExists(svgUrl) {
   if (!IMG_PROXY) return null;
   if (SVG_FETCH_CACHE.has(svgUrl)) return SVG_FETCH_CACHE.get(svgUrl);
@@ -5226,8 +4519,8 @@ async function fetchSvgIfExists(svgUrl) {
 
   const p = (async () => {
     try {
-      const r = await _proxiedFetch(svgUrl);
-      if (!r) {
+      const r = await fetch(IMG_PROXY + encodeURIComponent(svgUrl));
+      if (!r.ok) {
         try { localStorage.setItem(SVG_EXISTS_KEY(svgUrl), JSON.stringify({t: Date.now(), exists: false})); } catch (e) {}
         return null;
       }
@@ -5780,89 +5073,48 @@ function _ivExtractMplHeatmap(svgEl) {
     return out;
   };
 
-  // matplotlib splits the percentile figure across multiple subplots that
-  // share axes: the HEATMAP subplot has HLA tick labels on its Y-axis,
-  // and the PER-TISSUE SCATTER subplot below it has tissue tick labels
-  // on its X-axis (which the heatmap visually inherits). Older code
-  // picked ONE axes group by score (#hlas × #tissues), but for peptides
-  // like NBL/RYYSALRHY the per-tissue scatter wins (1×30 > 4×0) and the
-  // real heatmap axes got ignored. Fix: pick HLA-source and tissue-
-  // source axes INDEPENDENTLY (whichever has the most of each kind of
-  // tick label).
+  // Find the axes that contains both HLAs and tissue labels — that's the
+  // heatmap. Score each axes by (#hlas × #tissues); pick the highest.
   const axesEls = [...svgEl.querySelectorAll('g[id^="axes_"]')];
-  const isTissueCandidate = (cmt) =>
-    !IV_HLA_RX.test(cmt) && !/^[\d.]+$/.test(cmt) && !/[*;]/.test(cmt)
-    && cmt.length >= 3 && cmt.length <= 30
-    && !['tumor', 'percentile'].includes(cmt) && !IV_PEPTIDE_RX.test(cmt);
-
-  let hlaAxesTx = null, hlaAxesCount = 0;
-  let tissueAxesTx = null, tissueAxesCount = 0;
+  let best = null, bestScore = 0;
   for (const ax of axesEls) {
     const tx = readTexts(ax);
     const nHla = tx.filter(t => IV_HLA_RX.test(t.cmt)).length;
-    const nTissue = tx.filter(t => isTissueCandidate(t.cmt)).length;
-    if (nHla > hlaAxesCount) { hlaAxesCount = nHla; hlaAxesTx = tx; }
-    if (nTissue > tissueAxesCount) { tissueAxesCount = nTissue; tissueAxesTx = tx; }
+    const nTissue = tx.filter(t =>
+      !IV_HLA_RX.test(t.cmt) && !/^[\d.]+$/.test(t.cmt) && !/[*;]/.test(t.cmt)
+      && t.cmt.length >= 3 && t.cmt.length <= 30
+      && !['tumor', 'percentile'].includes(t.cmt) && !IV_PEPTIDE_RX.test(t.cmt)
+    ).length;
+    const score = nHla * nTissue;
+    if (score > bestScore) { bestScore = score; best = { ax, tx }; }
   }
-  // Need at least one axes-text source to proceed. If neither HLA nor
-  // tissue axes was found, legend-union HLAs below may still rescue us.
-  const allTexts = (hlaAxesTx || []).concat(
-    tissueAxesTx && tissueAxesTx !== hlaAxesTx ? tissueAxesTx : []
-  );
+  if (!best) return null;
+  const allTexts = best.tx;
 
-  // HLAs come from the axes that had the most HLA tick labels (the real
-  // heatmap subplot). Their Y positions are the matrix-row positions.
+  // HLA labels: pattern-matched, dedup, sort by Y (top-to-bottom).
   const hlaSeen = new Map();
-  (hlaAxesTx || []).forEach(t => {
+  allTexts.forEach(t => {
     if (IV_HLA_RX.test(t.cmt) && !hlaSeen.has(t.cmt)) hlaSeen.set(t.cmt, t.y);
   });
   const hlas = [...hlaSeen.keys()]
     .map(name => ({ name, y: hlaSeen.get(name) }))
     .sort((a, b) => a.y - b.y);
+  if (hlas.length < 2) return null;
 
-  // Pull HLAs from the legend group too. The heatmap-axes tick labels only
-  // include HLAs that have actual MS detection data; the legend lists ALL
-  // HLAs of interest for this peptide (including predicted binders with
-  // no data). For visual consistency with the legend chips, append any
-  // legend-only HLAs as extra rows — they end up as empty rows in the
-  // matrix because no data cells map to them (their `y` is Infinity).
-  const dataHlaNames = new Set(hlas.map(h => h.name));
-  svgEl.querySelectorAll('g[id^="legend_"] g[id^="text_"]').forEach(t => {
-    let cmt = '';
-    for (const c of t.childNodes) { if (c.nodeType === 8) { cmt = c.nodeValue.trim(); break; } }
-    if (!cmt) return;
-    // A legend label is either a single HLA (`A*24:02`) or a semicolon-
-    // joined set (`A*24:02;B*18:01`). Split and accept each token.
-    cmt.split(';').forEach(tok => {
-      const name = tok.trim();
-      if (IV_HLA_RX.test(name) && !dataHlaNames.has(name)) {
-        dataHlaNames.add(name);
-        hlas.push({ name, y: Infinity });  // sorted after all data HLAs
-      }
-    });
-  });
-
-  // Need at least one HLA from either source. Single-HLA peptides
-  // (e.g. NBL/RYLPSSVFL with only A*24:02) still render as a one-row
-  // heatmap; peptides whose SVG truly has zero HLAs fall through.
-  if (hlas.length < 1) return null;
-
-  // Tissue labels come from the axes that has the most tissue-like
-  // tick labels (per-tissue scatter subplot whose X-axis the heatmap
-  // shares). Their X positions are the matrix-column positions.
+  // Tissue labels: dedup, sort by X (left-to-right).
   const tissueSeen = new Map();
-  (tissueAxesTx || []).forEach(t => {
-    if (!isTissueCandidate(t.cmt)) return;
+  allTexts.forEach(t => {
+    if (IV_HLA_RX.test(t.cmt) || /^[\d.]+$/.test(t.cmt) || /[*;]/.test(t.cmt)) return;
+    if (t.cmt.length < 3 || t.cmt.length > 30) return;
+    if (['tumor', 'percentile'].includes(t.cmt) || IV_PEPTIDE_RX.test(t.cmt)) return;
     if (!tissueSeen.has(t.cmt)) tissueSeen.set(t.cmt, t.x);
   });
   const tissues = [...tissueSeen.keys()]
     .map(name => ({ name, x: tissueSeen.get(name) }))
     .sort((a, b) => a.x - b.x);
-  // Single-tissue figures still render as a meaningful single-cell strip.
-  if (tissues.length < 1) return null;
+  if (tissues.length < 5) return null;
 
-  // Cell values: integer comments pooled from both HLA-source and
-  // tissue-source axes (matplotlib may stick them in either subplot).
+  // Cell values: integer comments anywhere in the chosen axes.
   const cellTexts = allTexts.filter(t => /^\d+$/.test(t.cmt))
     .map(t => ({ value: parseInt(t.cmt, 10), x: t.x, y: t.y }));
 
@@ -5886,11 +5138,7 @@ function _ivExtractMplHeatmap(svgEl) {
 
   return {
     hlas: hlas.map(h => h.name),
-    // tissues array was already mapped to `{ name, x }` objects above —
-    // the previous code returned `t.cmt` (undefined) by mistake. With
-    // the dual-axes extractor this would surface as "undefined" tissue
-    // labels even on peptides like QYNPIRTTF that used to work.
-    tissues: tissues.map(t => t.name),
+    tissues: tissues.map(t => t.cmt),
     matrix,
     maxVal: Math.max(1, ...cellTexts.map(c => c.value)),
   };
@@ -5923,18 +5171,9 @@ function _ivExtractMplScatter(svgEl) {
     if (!xy) return;
     tickYs[parseFloat(cmt)] = xy[1];
   });
-  // Need at least two distinct tick labels to back-compute percentile.
-  // Originally this hardcoded `0.0` and `1.0`, but peptides whose data
-  // never reaches percentile 1.0 get a matplotlib Y-axis that only goes
-  // up to (say) 0.7, so the 1.0 tick is absent and the scifi figure was
-  // bailing out for them. Use whichever min/max numeric ticks ARE
-  // present and interpolate from there.
-  const tickValues = Object.keys(tickYs).map(parseFloat).sort((a, b) => a - b);
-  if (tickValues.length < 2) return null;
-  const vMin = tickValues[0];                  // smallest tick label, e.g. 0.0
-  const vMax = tickValues[tickValues.length - 1]; // largest tick label, e.g. 0.7 or 1.0
-  const yPxMin = tickYs[vMin];                 // pixel Y for vMin
-  const yPxMax = tickYs[vMax];                 // pixel Y for vMax
+  // Need at least the 0.0 and 1.0 ticks to back-compute percentile.
+  if (!(0 in tickYs) || !(1 in tickYs)) return null;
+  const yPx0 = tickYs[0], yPx1 = tickYs[1];
 
   // Tumor scatter dots: each PathCollection_N is one HLA category. matplotlib
   // versions vary in how they nest <use> markers — sometimes direct children
@@ -5966,10 +5205,7 @@ function _ivExtractMplScatter(svgEl) {
       if (!isFinite(yPx)) return;
       const mplColor = fill.toLowerCase();
       const scifiColor = IV_MPL_TO_SCIFI[mplColor] || mplColor;
-      // Linear interpolation using whatever min/max tick labels exist
-      // (rather than hardcoded 0/1). Inverted: matplotlib pixel-Y
-      // decreases as the data value increases.
-      const pct = vMin + (vMax - vMin) * (yPxMin - yPx) / (yPxMin - yPxMax);
+      const pct = (yPx - yPx0) / (yPx1 - yPx0);
       tumorDots.push({ pct: Math.max(0, Math.min(1, pct)), color: scifiColor, cat: pcIdx });
     });
     pcIdx++;
@@ -6002,7 +5238,7 @@ function _ivExtractMplScatter(svgEl) {
       // Skip marker-symbol definitions which sit at (0,0).
       if (cx < 5 || cy < 5) return;
       const scifiColor = IV_MPL_TO_SCIFI[stroke] || stroke;
-      const pct = vMin + (vMax - vMin) * (yPxMin - cy) / (yPxMin - yPxMax);
+      const pct = (cy - yPx0) / (yPx1 - yPx0);
       // Find which legend category this color maps to.
       let cat = -1;
       for (let i = 0; i < IV_SCIFI_PALETTE.length; i++) {
@@ -6017,19 +5253,13 @@ function _ivExtractMplScatter(svgEl) {
     });
   }
 
-  // Legend HLA-category strings. A category label is either a single HLA
-  // (`A*24:02`) or a semicolon-separated set (`A*24:02;B*18:01`). The
-  // previous filter required `;`, which silently dropped every peptide
-  // whose legend was made up entirely of single-allele rows (RPAPPGAWV,
-  // IVLTNLPNR, etc.) — they'd render with dots but no legend chips.
-  // Accept anything starting with an HLA token instead.
-  const HLA_CAT_RX = /^[A-DG]\*\d{2}:\d{2}/;
+  // Legend HLA-category strings: text comments anywhere with `;` separator.
   const cats = [];
   const seen = new Set();
   svgEl.querySelectorAll('g[id^="legend_"] g[id^="text_"]').forEach(t => {
     let cmt = '';
     for (const c of t.childNodes) { if (c.nodeType === 8) { cmt = c.nodeValue.trim(); break; } }
-    if (!cmt || !HLA_CAT_RX.test(cmt) || seen.has(cmt)) return;
+    if (!cmt || !/[;]/.test(cmt) || seen.has(cmt)) return;
     seen.add(cmt);
     cats.push(cmt);
   });
@@ -6853,70 +6083,6 @@ function mountInteractiveSvg(host, svgText, opts) {
   };
 }
 
-// Browser-native SVG-first loader for drawer figures. The <img> onerror
-// handler calls this: try the NYU assets_svg/ URL first; on 404 (or any
-// load failure), swap in the PNG from /assets/. If the PNG also fails,
-// mark the wrap as no-plot. No proxy needed — <img> handles cross-origin
-// images without CORS for both PNG and SVG.
-window._figFallbackToPng = function (img, pngUrl) {
-  if (img.dataset.fellback) {
-    img.parentNode.classList.add('no-plot');
-    img.remove();
-    return;
-  }
-  img.dataset.fellback = '1';
-  img.src = pngUrl;
-};
-
-// Same idea but for the spectrum slot, which has a custom "not available"
-// message instead of the generic no-plot when even the PNG is missing.
-window._spectrumFallbackToPng = function (img, pngUrl) {
-  if (img.dataset.fellback) {
-    img.parentNode.innerHTML = '<div class="no-spectrum">Annotated spectrum not available for this peptide. Spectra are pre-generated for the most recurrent peptides; rare or private peptides may not have a rendered spectrum.<br><a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank">Browse ImmunoVerse data ↗</a></div>';
-    return;
-  }
-  img.dataset.fellback = '1';
-  img.src = pngUrl;
-};
-
-// Probe whether an SVG version of a figure exists at NYU, and reveal the
-// "SVG" toggle button inside the given plot-wrap if it does. Used by the
-// rank-abundance plot, which defaults to PNG (smaller) and only shows the
-// SVG-toggle when the high-res version is actually available.
-window._probeAndShowSvgToggle = function (wrap) {
-  if (!wrap) return;
-  var svgUrl = wrap.dataset.svgUrl;
-  var btn = wrap.querySelector('.svg-toggle-btn');
-  if (!svgUrl || !btn) return;
-  var probe = new Image();
-  probe.onload = function () { btn.hidden = false; };
-  probe.onerror = function () { /* leave hidden */ };
-  probe.src = svgUrl;
-};
-
-// Toggle the rank-abundance figure between its PNG and SVG sources in
-// place. The button label flips so the user knows what they'll see next.
-// PNG download button is unaffected (always downloads the PNG).
-window.toggleRankAbundanceSvg = function (btn) {
-  var wrap = btn.closest('.plot-wrap');
-  if (!wrap) return;
-  var img = wrap.querySelector('img');
-  if (!img) return;
-  var pngUrl = wrap.dataset.pngUrl;
-  var svgUrl = wrap.dataset.svgUrl;
-  if (btn.dataset.state === 'svg') {
-    img.src = pngUrl;
-    btn.dataset.state = 'png';
-    btn.textContent = 'SVG';
-    btn.title = 'Switch to higher-resolution SVG view';
-  } else {
-    img.src = svgUrl;
-    btn.dataset.state = 'svg';
-    btn.textContent = 'PNG';
-    btn.title = 'Switch back to PNG view';
-  }
-};
-
 // After openDrawer paints its template, scan for plot-wraps marked with
 // data-svg-kind and try to upgrade each to the interactive viewer. Runs
 // asynchronously so the drawer never blocks on these probes.
@@ -7278,12 +6444,6 @@ async function openCompareModal() {
   const keys = [...COMPARE];
   const rows = keys.map(compareRowFromKey).filter(Boolean);
   if (rows.length < 2) return;
-  // Sync the URL with the active comparison so the user can share or
-  // bookmark this view (e.g. for re-opening from account → Saved
-  // comparisons → Open). pushUrlState uses replaceState so no extra
-  // history entry is added.
-  COMPARE_URL = keys.slice();
-  if (typeof pushUrlState === 'function') pushUrlState();
   // Lazy-load detail for each involved cancer so pathogen/variant panels work.
   const codes = [...new Set(rows.map(r => r[COL.code]))];
   await Promise.all(codes.map(c => loadDetail(c)));
@@ -7577,11 +6737,6 @@ async function openCompareModal() {
 function closeCompareModal() {
   document.getElementById('compareModal').classList.remove('open');
   document.getElementById('compareModalBg').classList.remove('open');
-  // Clear COMPARE_URL and re-sync the URL so `compare=` drops off
-  // when the modal closes. Otherwise the URL would still encode a
-  // comparison that is no longer visible.
-  COMPARE_URL = null;
-  if (typeof pushUrlState === 'function') pushUrlState();
 }
 
 async function loadDetail(code) {
@@ -7636,7 +6791,7 @@ function ivExtractDiffCandidates(source) {
   return [...seen].slice(0, 8);
 }
 
-async function openDrawer(r, opts) {
+async function openDrawer(r) {
   const body = document.getElementById('drawerBody');
   const code = r[COL.code];
   const pep  = r[COL.pep];
@@ -7645,24 +6800,6 @@ async function openDrawer(r, opts) {
   // through every onclick handler.
   DRAWER_ROW = r;
   DRAWER_CODE = code;
-  // Encode the open peptide into the URL so the link is shareable. Use
-  // pushState (not replace) when opening from a user click so the browser's
-  // back button closes the drawer; skipUrl is passed when the open is itself
-  // *being driven* by a URL change (popstate/deep-link), to avoid recursion.
-  if (!opts || !opts.skipUrl) {
-    try { history.pushState({ drawer: { code, pep } }, '', location.href); } catch(e) {}
-    DRAWER_URL = { code, pep };
-    if (typeof pushUrlState === 'function') pushUrlState();
-  } else {
-    // skipUrl is set when the drawer-open is driven by a URL change
-    // (popstate / deep-link from saved peptide). We skip the pushState
-    // call so we don't add a duplicate history entry, but we STILL run
-    // pushUrlState so the URL params (open=PEPTIDE&cancer=CODE) get
-    // written back via replaceState — otherwise the URL ends up with
-    // just `cancer=` and the user can't share or copy the link.
-    DRAWER_URL = { code, pep };
-    if (typeof pushUrlState === 'function') pushUrlState();
-  }
   const abund = (r[COL.abund] ?? 0) * 100;
   const score = r[COL.score] || 0;
   const scoreW = Math.min(100, score);
@@ -7958,7 +7095,6 @@ async function openDrawer(r, opts) {
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         ${crossBtn}
         <button class="copy-btn" title="Copy peptide" onclick="navigator.clipboard && navigator.clipboard.writeText('${pep}')">⧉ copy</button>
-        <button class="copy-btn" id="bookmarkPepBtn" data-pep="${pep}" data-code="${code}" data-gene="${(r[COL.gene]||'').replace(/"/g,'')}" data-cls="${r[COL.cls]||''}" title="Sign in to bookmark this peptide to your account">☆ bookmark</button>
         <button class="dl-all-btn" title="Bundle every table, JSON record, and figure for this peptide into one ZIP" onclick="downloadAllFromDrawer(this)">${DL_ICON}<span>Download all</span></button>
       </div>
     </div>
@@ -7988,11 +7124,55 @@ async function openDrawer(r, opts) {
       <div class="gbar"><div class="lbl">DepMap essentiality</div><div class="track"><div class="fill fill-dep" style="width:${Math.max(0, Math.min(100, (-(r[COL.depmap]||0))*50+50)).toFixed(0)}%"></div></div><div class="v">${r[COL.depmap]!=null ? r[COL.depmap].toFixed(2) : '—'}</div></div>
     </div>
 
-    <!-- ============ EXPRESSION + PLOTS (moved up, May 2026) ============ -->
-    <!-- Aman's request: plots sit right under Presentation metrics so
-         readers see the figures before diving into the data tables.
-         Tables (intensity, binding, coverage, panel, safety) now come
-         AFTER the plots. -->
+    ${intensBlock ? `
+    <div class="section-title" data-tip="Raw mass spectrometry signal intensity for this peptide across individual immunopeptidome samples. Higher intensity = more copies of this peptide are being presented on the tumor cell surface in that sample. Consistent detection across multiple samples supports the peptide as a shared (not private) target.">Per-sample MS intensity (top ${Math.min(intens.length,10)})</div>
+    <div class="section-subtitle">Normalized MS intensity in the individual patient samples that detected this peptide — consistent high bars across samples indicate a shared, robustly presented target.</div>
+    ${intensBlock}` : ''}
+
+    <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples${bind.length ? `<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadObservedHlaCsv()">${DL_ICON}<span>CSV</span></button>` : ''}</div>
+    <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, DeepImmuno score, and per-patient recurrence.</div>
+    <div class="bind-wrap">
+      <table class="bind-table">
+        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th><th>Immuno.</th><th>#Det/#Tot</th><th>Recur.</th></tr></thead>
+        <tbody>${bindRows}</tbody>
+      </table>
+      <div class="bind-legend">
+        <span class="bind-cat bind-sb">SB</span> strong binder (rank ≤ 0.5%)
+        <span class="bind-cat bind-wb">WB</span> weak binder (rank ≤ 2%)
+        · Immuno. = DeepImmuno immunogenicity score
+        · Recur. = #Detected / #Total patients with this HLA
+      </div>
+    </div>
+
+    ${bind.length ? (() => {
+        const sbAlleles = bindSorted.filter(b => (b[3]||'').toUpperCase() === 'SB');
+        const wbAlleles = bindSorted.filter(b => (b[3]||'').toUpperCase() === 'WB');
+        const allBinders = [...sbAlleles, ...wbAlleles];
+        const covSB = sbAlleles.length ? 1 - sbAlleles.reduce((p, b) => p * (1 - (hlaFreq(b[0]) || 0)), 1) : 0;
+        const covAll = allBinders.length ? 1 - allBinders.reduce((p, b) => p * (1 - (hlaFreq(b[0]) || 0)), 1) : 0;
+        const totalDetected = bind.reduce((s, b) => s + (b[4] || 0), 0);
+        return `<div class="section-title" data-tip="Estimates what percentage of the US population could be targeted through this peptide, based on how common the presenting HLA alleles are. Higher coverage = more patients who could benefit from a therapy targeting this peptide.">Population coverage estimate</div>
+    <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;color:var(--text-1);line-height:1.6;">
+      <b style="color:var(--accent-cyan)">${(covAll * 100).toFixed(1)}%</b> of the US population carries at least one presenting allele (strong + weak binders).`
+          + (sbAlleles.length ? ` <b style="color:var(--accent-lime)">${(covSB * 100).toFixed(1)}%</b> carry a strong-binding allele.` : '')
+          + `<br>Detected across <b style="color:var(--text-0)">${totalDetected}</b> immunopeptidome sample(s) total.
+    </div>`;
+      })() : ''}
+
+    ${addqRows ? `
+    <div class="section-title" data-tip="Predicted binding across a broad panel of HLA alleles using NetMHCpan 4.1, beyond only the alleles observed in the immunopeptidome samples. Useful for assessing whether this peptide could be presented by additional HLA alleles in the broader population.">Extended NetMHCpan 4.1 prediction panel<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadExtendedPanelCsv()">${DL_ICON}<span>CSV</span></button></div>
+    <div class="section-subtitle">Predicted binding across a wider allele panel — alleles beyond those observed empirically, to estimate reach across the broader patient population.</div>
+    <div class="bind-wrap">
+      <table class="bind-table">
+        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th></tr></thead>
+        <tbody>${addqRows}</tbody>
+      </table>
+      <div class="bind-legend">Top ${Math.min(addq.length, 12)} of ${addq.length} allele predictions, sorted by rank (tightest binders first).</div>
+    </div>` : ''}
+
+    ${atlas.length ? `<div class="section-title" data-tip="Normal-tissue HLA presentation reported in the HLA Ligand Atlas. Consider this a flag of off-tumor risk for any tissues listed; an empty list is not a safety claim on its own.">Normal-tissue safety</div>
+    ${safetyBlock}` : ''}
+
     <div class="section-title" data-tip="Compares the gene's RNA expression in tumor versus normal tissue (TPM from TCGA tumor and GTEx normal). A wide window (tumor >> normal) means the gene is highly overexpressed in cancer — ideal for therapeutic targeting with minimal risk to healthy tissue.">Expression window (RNA · TPM)</div>
     <div class="section-subtitle">Tumor (TCGA median) versus the single most-expressing GTEx normal tissue — the bigger the gap, the safer the therapeutic window.</div>
     <div class="bars">
@@ -8072,98 +7252,36 @@ async function openDrawer(r, opts) {
     <div class="plot-wrap" data-svg-kind="percentile" data-png-url="${percentileUrl}">
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${percentileUrl}','intensity_percentile')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
-      <img src="${ASSET_SVG_BASE}/${code}/${pep}_percentile.svg" alt="Percentile plot for ${pep}"
-           oncontextmenu="return false;"
+      <img src="${percentileUrl}" alt="Percentile plot for ${pep}"
            onload="this.classList.add('ok')"
            onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"
-           onerror="_figFallbackToPng(this, '${percentileUrl}')" />
+           onerror="this.parentNode.classList.add('no-plot');this.remove();" />
       <div class="plot-caption">Where this peptide ranks within the ${code} immunopeptidome · served from ImmunoVerse</div>
     </div>
 
-    <!-- MS/MS spectrum: SVG-first via <img>, PNG fallback if NYU doesn't
-         have an SVG for this peptide. Unchanged from before. -->
-    <div class="section-title" data-tip="The annotated tandem mass spectrum (MS/MS) confirming this peptide's identity. Blue = b-ions (N-terminal fragments), red = y-ions (C-terminal fragments), green = a-ions. A well-matched spectrum with many fragment ions gives high confidence that this exact peptide sequence was detected on HLA.">MS/MS spectrum</div>
-    <div class="section-subtitle">The annotated fragmentation spectrum used to identify this peptide — blue b-ions (N-terminal), red y-ions (C-terminal), green a-ions. Dense matching peaks confirm the sequence.</div>
-    <div class="spectrum-wrap" data-svg-kind="spectrum" data-png-url="${spectrumUrl}">
-      <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${spectrumUrl}','ms_spectrum')">${DL_ICON}PNG</button>
-      <button class="expand-btn" onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
-      <img src="${ASSET_SVG_BASE}/${code}/spectrum_${pep}.svg" alt="MS/MS spectrum for ${pep} in ${code}"
-           oncontextmenu="return false;"
-           onload="this.classList.add('ok')"
-           onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"
-           onerror="_spectrumFallbackToPng(this, '${spectrumUrl}')" />
-      <div class="spectrum-caption">b-ions blue · y-ions red · a-ions green · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>
-    </div>
-
-    <!-- PSM rank-abundance: PNG by default because the SVG version is large
-         (often 400–600 KB). A "SVG" toggle button appears only when an
-         SVG exists at NYU (probed by _probeAndShowSvgToggle below); the
-         user can switch PNG ↔ SVG in place. No data-svg-kind so the auto
-         _upgradeFiguresToSvg pass leaves this one alone. PNG download
-         button still downloads the PNG regardless of the current view. -->
     <div class="section-title" data-tip="Rank-abundance curve showing how this peptide's detection frequency (PSM count) compares across the immunopeptidome samples where it was found. A peptide appearing at high abundance across many samples is a strong shared target candidate.">PSM rank-abundance curve</div>
     <div class="section-subtitle">The peptide's abundance rank in every patient sample that detected it — a flat curve near the top means consistent high abundance across patients.</div>
-    <div class="plot-wrap" data-png-url="${rankAbundanceUrl}" data-svg-url="${ASSET_SVG_BASE}/${code}/${pep}_rank_abundance.svg">
+    <div class="plot-wrap" data-svg-kind="rank_abundance" data-png-url="${rankAbundanceUrl}">
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${rankAbundanceUrl}','rank_abundance')">${DL_ICON}PNG</button>
-      <button class="dl-figure-btn svg-toggle-btn" data-state="png" hidden title="Switch to higher-resolution SVG view" onclick="toggleRankAbundanceSvg(this)">SVG</button>
       <button class="expand-btn" onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
       <img src="${rankAbundanceUrl}" alt="Rank-abundance curve for ${pep}"
-           oncontextmenu="return false;"
            onload="this.classList.add('ok')"
            onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"
            onerror="this.parentNode.classList.add('no-plot');this.remove();" />
       <div class="plot-caption">Abundance rank across ${code} samples that detected this peptide · served from ImmunoVerse</div>
     </div>
 
-    <!-- ============ DATA TABLES (moved below the plots, May 2026) ============ -->
-    ${intensBlock ? `
-    <div class="section-title" data-tip="Raw mass spectrometry signal intensity for this peptide across individual immunopeptidome samples. Higher intensity = more copies of this peptide are being presented on the tumor cell surface in that sample. Consistent detection across multiple samples supports the peptide as a shared (not private) target.">Per-sample MS intensity (top ${Math.min(intens.length,10)})</div>
-    <div class="section-subtitle">Normalized MS intensity in the individual patient samples that detected this peptide — consistent high bars across samples indicate a shared, robustly presented target.</div>
-    ${intensBlock}` : ''}
-
-    <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples${bind.length ? `<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadObservedHlaCsv()">${DL_ICON}<span>CSV</span></button>` : ''}</div>
-    <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, DeepImmuno score, and per-patient recurrence.</div>
-    <div class="bind-wrap">
-      <table class="bind-table">
-        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th><th>Immuno.</th><th>#Det/#Tot</th><th>Recur.</th></tr></thead>
-        <tbody>${bindRows}</tbody>
-      </table>
-      <div class="bind-legend">
-        <span class="bind-cat bind-sb">SB</span> strong binder (rank ≤ 0.5%)
-        <span class="bind-cat bind-wb">WB</span> weak binder (rank ≤ 2%)
-        · Immuno. = DeepImmuno immunogenicity score
-        · Recur. = #Detected / #Total patients with this HLA
-      </div>
+    <div class="section-title" data-tip="The annotated tandem mass spectrum (MS/MS) confirming this peptide's identity. Blue = b-ions (N-terminal fragments), red = y-ions (C-terminal fragments), green = a-ions. A well-matched spectrum with many fragment ions gives high confidence that this exact peptide sequence was detected on HLA.">MS/MS spectrum</div>
+    <div class="section-subtitle">The annotated fragmentation spectrum used to identify this peptide — blue b-ions (N-terminal), red y-ions (C-terminal), green a-ions. Dense matching peaks confirm the sequence.</div>
+    <div class="spectrum-wrap" data-svg-kind="spectrum" data-png-url="${spectrumUrl}">
+      <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${spectrumUrl}','ms_spectrum')">${DL_ICON}PNG</button>
+      <button class="expand-btn" onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
+      <img src="${spectrumUrl}" alt="MS/MS spectrum for ${pep} in ${code}"
+           onload="this.classList.add('ok')"
+           onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"
+           onerror="this.parentNode.innerHTML='<div class=\\'no-spectrum\\'>Annotated spectrum not available for this peptide. Spectra are pre-generated for the most recurrent peptides; rare or private peptides may not have a rendered spectrum.<br><a href=\\'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/\\' target=\\'_blank\\'>Browse ImmunoVerse data ↗</a></div>';" />
+      <div class="spectrum-caption">b-ions blue · y-ions red · a-ions green · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>
     </div>
-
-    ${bind.length ? (() => {
-        const sbAlleles = bindSorted.filter(b => (b[3]||'').toUpperCase() === 'SB');
-        const wbAlleles = bindSorted.filter(b => (b[3]||'').toUpperCase() === 'WB');
-        const allBinders = [...sbAlleles, ...wbAlleles];
-        const covSB = sbAlleles.length ? 1 - sbAlleles.reduce((p, b) => p * (1 - (hlaFreq(b[0]) || 0)), 1) : 0;
-        const covAll = allBinders.length ? 1 - allBinders.reduce((p, b) => p * (1 - (hlaFreq(b[0]) || 0)), 1) : 0;
-        const totalDetected = bind.reduce((s, b) => s + (b[4] || 0), 0);
-        return `<div class="section-title" data-tip="Estimates what percentage of the US population could be targeted through this peptide, based on how common the presenting HLA alleles are. Higher coverage = more patients who could benefit from a therapy targeting this peptide.">Population coverage estimate</div>
-    <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;color:var(--text-1);line-height:1.6;">
-      <b style="color:var(--accent-cyan)">${(covAll * 100).toFixed(1)}%</b> of the US population carries at least one presenting allele (strong + weak binders).`
-          + (sbAlleles.length ? ` <b style="color:var(--accent-lime)">${(covSB * 100).toFixed(1)}%</b> carry a strong-binding allele.` : '')
-          + `<br>Detected across <b style="color:var(--text-0)">${totalDetected}</b> immunopeptidome sample(s) total.
-    </div>`;
-      })() : ''}
-
-    ${addqRows ? `
-    <div class="section-title" data-tip="Predicted binding across a broad panel of HLA alleles using NetMHCpan 4.1, beyond only the alleles observed in the immunopeptidome samples. Useful for assessing whether this peptide could be presented by additional HLA alleles in the broader population.">Extended NetMHCpan 4.1 prediction panel<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadExtendedPanelCsv()">${DL_ICON}<span>CSV</span></button></div>
-    <div class="section-subtitle">Predicted binding across a wider allele panel — alleles beyond those observed empirically, to estimate reach across the broader patient population.</div>
-    <div class="bind-wrap">
-      <table class="bind-table">
-        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th></tr></thead>
-        <tbody>${addqRows}</tbody>
-      </table>
-      <div class="bind-legend">Top ${Math.min(addq.length, 12)} of ${addq.length} allele predictions, sorted by rank (tightest binders first).</div>
-    </div>` : ''}
-
-    ${atlas.length ? `<div class="section-title" data-tip="Normal-tissue HLA presentation reported in the HLA Ligand Atlas. Consider this a flag of off-tumor risk for any tissues listed; an empty list is not a safety claim on its own.">Normal-tissue safety</div>
-    ${safetyBlock}` : ''}
 
     <div class="section-title" data-tip="An automated assessment of this peptide's therapeutic potential based on its recurrence, expression window, essentiality, safety profile, and molecular class. Summarizes the key factors a researcher would consider when prioritizing this target for TCR-T, CAR-T, bispecific, or vaccine development.">Therapeutic interpretation</div>
     <p style="font-size:12.5px; color:var(--text-1); line-height:1.65; margin:0;">${interp(r)}</p>
@@ -8179,14 +7297,6 @@ async function openDrawer(r, opts) {
   // with the interactive viewer when one exists. Runs after the drawer
   // is fully rendered so the static figure paints first and never blocks.
   _upgradeFiguresToSvg(body, code, pep);
-
-  // Rank-abundance plot defaults to PNG and exposes a manual "SVG" toggle
-  // button. Probe whether the SVG version actually exists at NYU; if it
-  // loads cleanly, un-hide the button so the user can opt into the
-  // higher-resolution view. If the SVG isn't there, the button stays
-  // hidden and the PNG is the only option.
-  var rankWrap = body.querySelector('.plot-wrap[data-svg-url]');
-  if (rankWrap) _probeAndShowSvgToggle(rankWrap);
 }
 
 function windowInterp(tumor, normal) {
@@ -8256,16 +7366,9 @@ function updateCsvLink(filt) {
   a.download = 'immunoverse_filtered.csv';
 }
 
-function closeDrawer(opts) {
+function closeDrawer() {
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawerBg').classList.remove('open');
-  DRAWER_URL = null;
-  // Skip the URL rewrite when the close was triggered by popstate — the URL
-  // is already correct, and writing again would create a spurious history
-  // entry.
-  if ((!opts || !opts.skipUrl) && typeof pushUrlState === 'function') {
-    pushUrlState();
-  }
 }
 
 // ===== Citation window =====
@@ -8358,11 +7461,7 @@ document.addEventListener('keydown', e => {
 });
 
 // ============ EVENT BINDING ============
-document.getElementById('fCancer').addEventListener('change', e => {
-  const v = e.target.value;
-  if (v && isLocked(v)) { e.target.value = STATE.cancer || ''; openAuthGate(); return; }  // belt-and-braces (options are disabled)
-  STATE.cancer = v; STATE.page = 1; applyFilters();
-});
+document.getElementById('fCancer').addEventListener('change', e => { STATE.cancer = e.target.value; STATE.page = 1; applyFilters(); });
 document.getElementById('fPep').addEventListener('input', e => { STATE.pep = e.target.value; STATE.page = 1; applyFilters(); });
 document.getElementById('fGene').addEventListener('input', e => { STATE.gene = e.target.value; STATE.page = 1; applyFilters(); });
 document.getElementById('fHla').addEventListener('input', e => { STATE.hla = e.target.value; STATE.page = 1; applyFilters(); });
@@ -8434,14 +7533,6 @@ document.querySelectorAll('nav .links a').forEach(a => {
 });
 
 // ===== URL state for shareable links =====
-// DRAWER_URL holds the {code, pep} of whichever peptide drawer is currently
-// open, so the URL can encode it (`&open=PEPTIDE`) as a deep link distinct
-// from the `pep` filter input above. Cleared on drawer close.
-let DRAWER_URL = null;
-// COMPARE_URL holds the active comparison's `pep::code` list when the
-// compare modal is open, so pushUrlState can encode it as `compare=…`
-// and the user can share / bookmark the URL. Cleared on modal close.
-let COMPARE_URL = null;
 function pushUrlState() {
   const p = new URLSearchParams();
   if (STATE.cancer) p.set('cancer', STATE.cancer);
@@ -8451,17 +7542,6 @@ function pushUrlState() {
   if (STATE.classFilter.size) p.set('class', [...STATE.classFilter].join(','));
   if (STATE.safe) p.set('safe', STATE.safe);
   if (STATE.uniq) p.set('uniq', STATE.uniq);
-  // `open` always carries the cancer code too — the URL must be self-contained
-  // because the page reloads it via loadCancer() before opening the drawer.
-  if (DRAWER_URL && DRAWER_URL.pep) {
-    p.set('open', DRAWER_URL.pep);
-    if (DRAWER_URL.code) p.set('cancer', DRAWER_URL.code);
-  }
-  // `compare` encodes the full pep::code key list when the comparison
-  // modal is open. Matches the deep-link branch in loadAll's wrapper.
-  if (COMPARE_URL && COMPARE_URL.length >= 2) {
-    p.set('compare', COMPARE_URL.join(','));
-  }
   const qs = p.toString();
   const url = qs ? '#explorer?' + qs : location.pathname;
   history.replaceState(null, '', url);
@@ -8479,92 +7559,11 @@ function loadUrlState() {
   if (p.has('class')) { STATE.classFilter = new Set(p.get('class').split(',')); }
   if (p.has('safe')) { STATE.safe = p.get('safe'); document.getElementById('fSafe').value = STATE.safe; }
   if (p.has('uniq')) { STATE.uniq = p.get('uniq'); document.getElementById('fUniq').value = STATE.uniq; }
-  // `open` is consumed by loadAll() after applyFilters runs so the row exists.
-  if (p.has('open')) {
-    const pep = p.get('open');
-    const code = p.get('cancer') || STATE.cancer;
-    if (code && pep) return { openDrawer: { code, pep } };
-  }
   return true;
 }
 // Hook into applyFilters to update URL
 const _origApply = applyFilters;
 applyFilters = function() { _origApply(); pushUrlState(); };
-// Hook into loadAll to honor `&open=PEPTIDE` and `&compare=PEP::CODE,…` deep
-// links after first render. IMPORTANT: capture the params from the URL
-// *before* _origLoadAll runs. applyFilters() inside it calls pushUrlState()
-// which rebuilds the URL from STATE + DRAWER_URL, and DRAWER_URL is still
-// null at that point — so deep-link params get stripped from location.hash
-// before this wrapper would otherwise read them. Stash them first; use the
-// stash after.
-const _origLoadAll = loadAll;
-loadAll = async function() {
-  let _deepLinkPep = null, _deepLinkCode = null, _deepLinkCompare = null;
-  try {
-    const hash = location.hash;
-    if (hash.includes('explorer?')) {
-      const p = new URLSearchParams(hash.split('?')[1] || '');
-      _deepLinkPep     = p.get('open');
-      _deepLinkCode    = p.get('cancer');
-      _deepLinkCompare = p.get('compare');  // "PEP1::CODE1,PEP2::CODE2,…"
-    }
-  } catch (e) {}
-
-  await _origLoadAll();
-
-  // (a) Single-peptide drawer deep link.
-  try {
-    if (_deepLinkPep && _deepLinkCode && isLocked(_deepLinkCode)) {
-      openAuthGate();          // crafted link into a locked cancer → prompt sign-in
-    } else if (_deepLinkPep && _deepLinkCode) {
-      await loadCancer(_deepLinkCode);
-      const row = (DATA_CACHE[_deepLinkCode]?.rows || []).find(r => r[COL.pep] === _deepLinkPep);
-      if (row) {
-        if (row[COL.code] !== _deepLinkCode) row[COL.code] = _deepLinkCode;
-        openDrawer(row, { skipUrl: true });
-      }
-    }
-  } catch (e) { console.warn('deep-link drawer open failed', e); }
-
-  // (b) Multi-peptide comparison deep link. Rebuild the COMPARE set from
-  // the URL's "PEP::CODE,PEP::CODE,…" list, lazy-load the cancers we
-  // need, then open the modal.
-  try {
-    if (!_deepLinkCompare) return;
-    const keys = _deepLinkCompare.split(',').map(s => s.trim()).filter(Boolean);
-    if (keys.length < 2) return;
-    COMPARE.clear();
-    keys.forEach(k => COMPARE.add(k));
-    const codes = [...new Set(keys.map(k => k.split('::')[1]).filter(Boolean))];
-    if (codes.some(c => isLocked(c))) { COMPARE.clear(); openAuthGate(); return; }  // any locked cancer → prompt sign-in
-    await Promise.all(codes.map(c => loadCancer(c)));
-    renderCompareBar();
-    openCompareModal();
-  } catch (e) { console.warn('deep-link comparison open failed', e); }
-};
-// Back-button: when the browser navigates back/forward, sync drawer to URL.
-window.addEventListener('popstate', async () => {
-  const hash = location.hash;
-  const p = hash.includes('explorer?')
-    ? new URLSearchParams(hash.split('?')[1] || '')
-    : new URLSearchParams();
-  const urlPep  = p.get('open');
-  const urlCode = p.get('cancer');
-  const curPep  = DRAWER_URL && DRAWER_URL.pep;
-  if (!urlPep && curPep) {
-    closeDrawer({ skipUrl: true });
-  } else if (urlPep && urlCode && (urlPep !== curPep)) {
-    if (isLocked(urlCode)) { openAuthGate(); return; }   // locked cancer → prompt sign-in
-    try {
-      await loadCancer(urlCode);
-      const row = (DATA_CACHE[urlCode]?.rows || []).find(r => r[COL.pep] === urlPep);
-      if (row) {
-        if (row[COL.code] !== urlCode) row[COL.code] = urlCode;
-        openDrawer(row, { skipUrl: true });
-      }
-    } catch(e) { console.warn('popstate drawer sync failed', e); }
-  }
-});
 
 // ===== Animated hero stat counters =====
 (function animateStats() {
@@ -8652,695 +7651,10 @@ window.addEventListener('popstate', async () => {
 </script>
 
 <!-- ImmunoVerse Portal Chatbot widget (floating bottom-right).
-     IMMUNOVERSE_AGENT_BASE points at the FastAPI agent hosted on Google Cloud
-     Run (private repo: amans44/ImmunoVerse_Chat_AgenticAI). The agent's
-     CORS_ORIGINS env var includes https://immuno-verse.com and
-     https://www.immuno-verse.com. -->
-<script>window.IMMUNOVERSE_AGENT_BASE = "https://immunoverse-agent-739605637035.us-central1.run.app";</script>
+     IMMUNOVERSE_AGENT_BASE points at the FastAPI agent hosted on Render
+     (private repo: amans44/ImmunoVerse_Chat_AgenticAI). The agent's
+     CORS_ORIGINS env var must include https://immuno-verse.com. -->
+<script>window.IMMUNOVERSE_AGENT_BASE = "https://immunoverse-agent.onrender.com";</script>
 <script src="chatbot/chatbot.js" defer></script>
-
-<!-- ===== Portal auth boot: nav chip + peptide-history logging =====
-     This script is fail-soft: if /api/portal/auth/me is unreachable, the
-     page renders exactly as before (anonymous), and openDrawer never tries
-     to write to history. -->
-<script>
-(function () {
-  // Same Cloud Run service that serves auth/. Set window.IMMUNOVERSE_AUTH_BASE
-  // before this script runs to point local dev at http://localhost:8001.
-  // ---- Auth endpoint fallback chain ---------------------------------------
-  // NYU's network DNS-sinkholes immunoverse-chat.com (Palo Alto firewall), which
-  // would break login on campus. Cloud Run's own *.run.app URL is NOT blocked
-  // (verified on NYU WiFi: 401 = reachable), needs no DNS/custom domain, and is
-  // already live — so it's the PRIMARY base. auth.immuno-verse.com (same-site,
-  // nicer, but needs a DNS record on the portal's domain) is an optional second,
-  // and the legacy auth.immunoverse-chat.com is the last fallback. A network/DNS
-  // failure on one base (exactly what a sinkhole produces) falls through to the
-  // next; any HTTP status counts as "reached". The winning base is cached per
-  // session so we don't re-probe a dead one. Mirrors the IMG_PROXIES chain.
-  // Override order via window.IMMUNOVERSE_AUTH_BASES = [...] before this script.
-  const IV_AUTH_BASES = (
-    window.IMMUNOVERSE_AUTH_BASES ? window.IMMUNOVERSE_AUTH_BASES :
-    window.IMMUNOVERSE_AUTH_BASE ? [window.IMMUNOVERSE_AUTH_BASE] :
-    ['https://auth-service-739605637035.us-central1.run.app', 'https://auth.immuno-verse.com', 'https://auth.immunoverse-chat.com', 'https://immunoverse-auth.amans44.deno.net']
-  ).map(s => String(s).replace(/\/+$/, ''));
-  const AUTH = IV_AUTH_BASES[0];  // back-compat for any direct string use
-  let _ivAuthBase = null;
-  try { _ivAuthBase = sessionStorage.getItem('iv_auth_base'); } catch (e) {}
-  if (_ivAuthBase && IV_AUTH_BASES.indexOf(_ivAuthBase) === -1) _ivAuthBase = null;
-  async function ivAuthFetch(path, opts) {
-    const ordered = _ivAuthBase
-      ? [_ivAuthBase].concat(IV_AUTH_BASES.filter(b => b !== _ivAuthBase))
-      : IV_AUTH_BASES.slice();
-    let lastErr;
-    for (let i = 0; i < ordered.length; i++) {
-      try {
-        const res = await fetch(ordered[i] + path, opts);
-        _ivAuthBase = ordered[i];
-        try { sessionStorage.setItem('iv_auth_base', ordered[i]); } catch (e) {}
-        return res;
-      } catch (e) { lastErr = e; }  // network/DNS failure → try next base
-    }
-    throw lastErr || new Error('auth endpoints unreachable');
-  }
-  window.ivAuthFetch = ivAuthFetch;
-
-  // ---- Session token helpers ----------------------------------------------
-  // Tokens live in localStorage (NOT sessionStorage) so a signed-in session is
-  // shared across tabs and survives closing/reopening the browser — the user
-  // stays signed in until they explicitly sign out or the 30-day refresh token
-  // lapses. The httpOnly cookies remain the primary credential; these are the
-  // cross-site (Safari ITP) bearer fallback.
-  function ivGetToken()    { try { return localStorage.getItem('iv_portal_access'); } catch (e) { return null; } }
-  function ivSetTokens(d)  {
-    try {
-      if (d && d.access_token)  localStorage.setItem('iv_portal_access',  d.access_token);
-      if (d && d.refresh_token) localStorage.setItem('iv_portal_refresh', d.refresh_token);
-    } catch (e) {}
-  }
-  function ivClearTokens() { try { localStorage.removeItem('iv_portal_access'); localStorage.removeItem('iv_portal_refresh'); } catch (e) {} }
-  // Trade the refresh token (cookie and/or localStorage fallback) for a fresh
-  // access token. Returns true on success. Rotating refresh on the backend also
-  // resets the 30-day clock — so any active use keeps the session alive.
-  async function ivTryRefresh() {
-    let stored = null;
-    try { stored = localStorage.getItem('iv_portal_refresh'); } catch (e) {}
-    try {
-      const r = await ivAuthFetch('/api/portal/auth/refresh', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(stored ? { refresh_token: stored } : {}),
-      });
-      if (!r.ok) return false;
-      const d = await r.json().catch(() => ({}));
-      ivSetTokens(d);
-      return true;
-    } catch (e) { return false; }
-  }
-  // Expose for the chatbot widget / other inline scripts that need the token.
-  window.ivAuthSession = { getToken: ivGetToken, setTokens: ivSetTokens, clear: ivClearTokens, refresh: ivTryRefresh };
-
-  function authedFetch(path, opts) {
-    opts = opts || {};
-    const headers = Object.assign({}, opts.headers || {});
-    try {
-      const tok = ivGetToken();
-      if (tok && !headers.Authorization) headers.Authorization = 'Bearer ' + tok;
-    } catch (e) {}
-    if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
-    return ivAuthFetch(path, Object.assign({ credentials: 'include' }, opts, { headers }));
-  }
-
-  function initials(name, email) {
-    const s = (name || email || '?').trim();
-    if (!s) return '?';
-    const parts = s.split(/[\s@.]+/).filter(Boolean);
-    const a = parts[0] ? parts[0][0] : '?';
-    const b = parts.length > 1 ? parts[parts.length-1][0] : '';
-    return (a + b).toUpperCase().slice(0, 2);
-  }
-
-  // The live-query pill is admin-only. Pass the signed-in user (or null) and it
-  // reveals the pill ONLY for admins. Clearing the inline style (rather than
-  // forcing a value) lets the responsive @media rules still hide it on narrow
-  // viewports, matching the original behaviour.
-  function setQueriesPillVisible(user) {
-    const pill = document.getElementById('liveStat');
-    if (!pill) return;
-    pill.style.display = (user && user.role === 'admin') ? '' : 'none';
-  }
-
-  function showSignIn() {
-    const a = document.getElementById('ivSignInBtn');
-    const m = document.getElementById('ivUserMenu');
-    if (a) a.style.display = '';
-    if (m) m.style.display = 'none';
-    setQueriesPillVisible(null);
-  }
-  function showAccount(user) {
-    const a = document.getElementById('ivSignInBtn');
-    const m = document.getElementById('ivUserMenu');
-    if (a) a.style.display = 'none';
-    if (!m) return;
-    m.style.display = '';
-    const display = user.name || user.email.split('@')[0];
-    document.getElementById('ivAccAvatar').textContent = initials(user.name, user.email);
-    document.getElementById('ivAccName').textContent = display;
-    document.getElementById('ivDdName').textContent = display;
-    document.getElementById('ivDdEmail').textContent = user.email;
-    // Admin-dashboard link is shown to every signed-in user. The click
-    // handler (wired below) decides whether to navigate or to bounce to
-    // an admin sign-in. Marking it visually as "admin only" for non-admins
-    // makes the intent obvious before they click.
-    const adm = document.getElementById('ivDdAdmin');
-    if (adm) {
-      if (user.role === 'admin') {
-        adm.removeAttribute('data-needs-elevation');
-        adm.title = 'Portal admin dashboard';
-      } else {
-        adm.setAttribute('data-needs-elevation', '1');
-        adm.title = 'Requires admin sign-in';
-      }
-    }
-    // Live-query pill is admin-only — reveal it here, hide for non-admins.
-    setQueriesPillVisible(user);
-    // Remember this account for the ChatGPT-style "Welcome back" modal. Kept in
-    // localStorage even after sign-out so a returning visitor sees their account
-    // pre-listed; only the card's ✕ (forget) or a different login clears it.
-    rememberAccount(user);
-  }
-
-  // ---- Remembered account (for the Welcome-back modal) --------------------
-  var IV_LAST_ACCT_KEY = 'iv_portal_last_account';
-  function rememberAccount(user) {
-    if (!user || !user.email) return;
-    try {
-      localStorage.setItem(IV_LAST_ACCT_KEY, JSON.stringify({
-        name: user.name || '', email: user.email,
-      }));
-    } catch (e) {}
-  }
-  function getRememberedAccount() {
-    try {
-      var raw = localStorage.getItem(IV_LAST_ACCT_KEY);
-      if (!raw) return null;
-      var a = JSON.parse(raw);
-      return (a && a.email) ? a : null;
-    } catch (e) { return null; }
-  }
-  function forgetAccount() { try { localStorage.removeItem(IV_LAST_ACCT_KEY); } catch (e) {} }
-
-  // ---- Welcome / auth-gate modal ------------------------------------------
-  // Two faces of the same modal:
-  //   • remembered account  → "Welcome back" + account card (ChatGPT-style)
-  //   • first-time visitor   → "Welcome to ImmunoVerse" + Log in / Create
-  var _ivWbWired = false;
-  function ivCloseWelcomeBack() {
-    var bd = document.getElementById('ivWbBackdrop');
-    if (bd) bd.hidden = true;
-    document.body.style.overflow = '';
-    // Don't auto-nag again in this tab once dismissed; clicking a locked cancer
-    // still re-opens it (ivOpenAuthGate ignores this flag).
-    try { sessionStorage.setItem('iv_wb_dismissed', '1'); } catch (e) {}
-  }
-  function ivFillAuthModal() {
-    var acct  = getRememberedAccount();
-    var title = document.getElementById('ivWbTitle');
-    var sub   = document.getElementById('ivWbSub');
-    var card  = document.getElementById('ivWbAcct');
-    var orDiv = document.querySelector('#ivWbBackdrop .iv-wb-or');
-    var other = document.getElementById('ivWbLoginOther');
-    if (acct) {
-      if (title) title.textContent = 'Welcome back';
-      if (sub)   sub.textContent   = 'Choose an account to continue.';
-      if (card)  card.style.display = '';
-      if (orDiv) orDiv.style.display = '';
-      document.getElementById('ivWbName').textContent  = acct.name || acct.email.split('@')[0];
-      document.getElementById('ivWbEmail').textContent = acct.email;
-      document.getElementById('ivWbAvatar').textContent = initials(acct.name, acct.email);
-      if (other) other.textContent = 'Log in to another account';
-    } else {
-      if (title) title.textContent = 'Welcome to ImmunoVerse';
-      if (sub)   sub.textContent   = 'Sign in or create an account to explore all 21 cancers.';
-      if (card)  card.style.display = 'none';
-      if (orDiv) orDiv.style.display = 'none';
-      if (other) other.textContent = 'Log in';
-    }
-  }
-  function _ivWireWelcomeBack() {
-    if (_ivWbWired) return;
-    _ivWbWired = true;
-    var here = location.pathname + location.hash;
-    var close    = document.getElementById('ivWbClose');
-    var backdrop = document.getElementById('ivWbBackdrop');
-    var acctBtn  = document.getElementById('ivWbAcct');
-    var forget   = document.getElementById('ivWbForget');
-    var other    = document.getElementById('ivWbLoginOther');
-    var create   = document.getElementById('ivWbCreate');
-
-    if (close)    close.addEventListener('click', ivCloseWelcomeBack);
-    if (backdrop) backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) ivCloseWelcomeBack(); });
-    document.addEventListener('keydown', function (ev) {
-      var bd = document.getElementById('ivWbBackdrop');
-      if (ev.key === 'Escape' && bd && !bd.hidden) ivCloseWelcomeBack();
-    });
-    // Continue with the remembered account → login with the email prefilled.
-    if (acctBtn) acctBtn.addEventListener('click', function () {
-      var a = getRememberedAccount();
-      var email = a ? a.email : '';
-      location.href = 'login.html?email=' + encodeURIComponent(email) + '&return=' + encodeURIComponent(here);
-    });
-    // ✕ on the card → forget the remembered account (don't trigger the card click).
-    if (forget) {
-      function doForget(ev) {
-        ev.stopPropagation(); ev.preventDefault();
-        forgetAccount();
-        ivFillAuthModal();   // collapse to the first-time-visitor layout
-      }
-      forget.addEventListener('click', doForget);
-      forget.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') doForget(ev); });
-    }
-    if (other)  other.setAttribute('href',  'login.html?return=' + encodeURIComponent(here));
-    if (create) create.setAttribute('href', 'login.html?return=' + encodeURIComponent(here) + '#create');
-  }
-  function _ivShowAuthModal() {
-    var bd = document.getElementById('ivWbBackdrop');
-    if (!bd) return;
-    ivFillAuthModal();
-    _ivWireWelcomeBack();
-    bd.hidden = false;
-    document.body.style.overflow = 'hidden';
-  }
-  // Auto-greeting on homepage load (signed-out only) — dismissible, once per tab.
-  // Gated by the IV_GATING_ENABLED feature flag (currently OFF — no auto popup
-  // for anonymous visitors) and suppressed on the ungated /reviewers/ mirror.
-  // ivOpenAuthGate() can still open the modal on demand regardless of this.
-  function maybeShowWelcomeBack() {
-    if (!window.IV_GATING_ENABLED) return;
-    if (/\/reviewers\//.test(location.pathname)) return;
-    try { if (sessionStorage.getItem('iv_wb_dismissed') === '1') return; } catch (e) {}
-    _ivShowAuthModal();
-  }
-  // On-demand gate (e.g. clicking a locked cancer) — always opens, ignores the
-  // per-tab dismissed flag. Exposed so the main app's locking can call it.
-  window.ivOpenAuthGate = function () {
-    // A signed-in user should never be gated; no-op defensively.
-    if (window.__IV_PORTAL_USER) return;
-    _ivShowAuthModal();
-  };
-
-  // Dropdown open/close — wired once on first paint.
-  (function initDropdown() {
-    const chip = document.getElementById('ivAccountChip');
-    const dd = document.getElementById('ivUserDropdown');
-    if (!chip || !dd) return;
-    function close() { dd.hidden = true; chip.setAttribute('aria-expanded','false'); }
-    function open()  { dd.hidden = false; chip.setAttribute('aria-expanded','true'); }
-    chip.addEventListener('click', (ev) => {
-      ev.preventDefault(); ev.stopPropagation();
-      dd.hidden ? open() : close();
-    });
-    document.addEventListener('click', (ev) => {
-      if (!dd.hidden && !dd.contains(ev.target) && ev.target !== chip) close();
-    });
-    document.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Escape' && !dd.hidden) close();
-    });
-    const out = document.getElementById('ivDdSignOut');
-    if (out) out.addEventListener('click', async () => {
-      try { await authedFetch('/api/portal/auth/logout', { method: 'POST' }); } catch(e) {}
-      ivClearTokens();
-      location.reload();
-    });
-
-    // Admin dashboard link — elevate-on-click for non-admins.
-    const adm = document.getElementById('ivDdAdmin');
-    if (adm) {
-      adm.addEventListener('click', async (ev) => {
-        const u = window.__IV_PORTAL_USER;
-        if (u && u.role === 'admin') return;  // let normal navigation happen
-        ev.preventDefault();
-        const yes = confirm(
-          "This account doesn't have admin access.\n\n" +
-          "Sign in with an admin account?\n\n" +
-          "(You'll be signed out of the current account first.)"
-        );
-        if (!yes) return;
-        // Sign out then jump to login with a return-to-admin URL so the
-        // next sign-in lands directly on the dashboard.
-        try { await authedFetch('/api/portal/auth/logout', { method: 'POST' }); } catch(e) {}
-        ivClearTokens();
-        location.href = 'login.html?return=' + encodeURIComponent('admin.html');
-      });
-    }
-  })();
-
-  // Try the session. Result is cached on window so openDrawer's wrapper can
-  // read it without re-fetching.
-  //
-  // Skip the page-load auth probe for anonymous visitors so Chrome's
-  // "Local Network Access" permission prompt doesn't fire on every visit
-  // (the credentialed cross-origin fetch to auth.immunoverse-chat.com was
-  // tripping Chrome's LNA heuristic and users would dismiss the prompt
-  // thinking it was about figures). Users who have signed in have a token
-  // in localStorage — we only call /auth/me when there's a reason to.
-  //
-  // On a 401 (access token expired but the 30-day refresh token may still be
-  // valid) we silently /refresh once and retry — that's what keeps a user
-  // signed in across days/tabs/restarts without re-entering a password.
-  async function ivResolveSession() {
-    let r = await authedFetch('/api/portal/auth/me');
-    if (r.status === 401 && await ivTryRefresh()) {
-      r = await authedFetch('/api/portal/auth/me');
-    }
-    return r.ok ? r.json() : null;
-  }
-
-  // Reconcile the optimistic lock state (set synchronously from token presence)
-  // with the authoritative /auth/me result. If it flipped, re-apply locking so
-  // the grid/explorer/downloads reflect the real access level.
-  function ivSyncSignedIn(signedIn) {
-    var was = window.__IV_SIGNED_IN;
-    window.__IV_SIGNED_IN = !!signedIn;
-    if (was !== window.__IV_SIGNED_IN && typeof window.ivApplyLockState === 'function') {
-      window.ivApplyLockState();
-    }
-  }
-
-  var _ivStoredToken = ivGetToken();
-  if (_ivStoredToken) {
-    ivResolveSession()
-      .then(user => {
-        window.__IV_PORTAL_USER = user || null;
-        if (user) { ivSyncSignedIn(true); showAccount(user); }
-        else { ivClearTokens(); ivSyncSignedIn(false); showSignIn(); maybeShowWelcomeBack(); }
-      })
-      .catch(() => { window.__IV_PORTAL_USER = null; ivSyncSignedIn(false); showSignIn(); maybeShowWelcomeBack(); });
-  } else {
-    window.__IV_PORTAL_USER = null;
-    ivSyncSignedIn(false);
-    showSignIn();
-    maybeShowWelcomeBack();
-  }
-
-  // ---------- Save-this-search ----------
-  // Build the URL-param dict that account.html's saved-search cards expect.
-  // Keep this in sync with pushUrlState() — it reads the same STATE fields.
-  function snapshotFilterParams() {
-    const p = {};
-    try {
-      if (typeof STATE === 'undefined') return p;
-      if (STATE.cancer) p.cancer = STATE.cancer;
-      if (STATE.pep)    p.pep = STATE.pep;
-      if (STATE.gene)   p.gene = STATE.gene;
-      if (STATE.hla)    p.hla = STATE.hla;
-      if (STATE.safe)   p.safe = STATE.safe;
-      if (STATE.uniq)   p.uniq = STATE.uniq;
-      if (STATE.classFilter && STATE.classFilter.size) {
-        p.class = [...STATE.classFilter].join(',');
-      }
-    } catch(e) {}
-    return p;
-  }
-
-  function ivToast(msg, kind) {
-    let t = document.getElementById('ivToast');
-    if (!t) {
-      t = document.createElement('div');
-      t.id = 'ivToast';
-      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:11px 18px;border-radius:12px;font-size:13.5px;font-weight:500;z-index:9999;box-shadow:0 12px 32px rgba(0,0,0,0.35);transition:opacity 0.2s;backdrop-filter:blur(10px);';
-      document.body.appendChild(t);
-    }
-    const colors = {
-      success: 'background:rgba(134,239,172,0.95);color:#052e16;',
-      error:   'background:rgba(248,113,113,0.95);color:#3f0a0a;',
-      info:    'background:rgba(129,140,248,0.95);color:#1e1b4b;',
-    };
-    t.style.cssText += colors[kind || 'info'];
-    t.textContent = msg;
-    t.style.opacity = '1';
-    clearTimeout(t._h);
-    t._h = setTimeout(() => { t.style.opacity = '0'; }, 2800);
-  }
-  // Expose so the bookmark-button onclick can reach it.
-  window.ivToast = ivToast;
-
-  async function handleSaveSearch() {
-    if (!window.__IV_PORTAL_USER) {
-      const yes = confirm('Sign in to save searches across devices. Go to sign in now?');
-      if (yes) location.href = 'login.html?return=' + encodeURIComponent(location.pathname + location.hash);
-      return;
-    }
-    const params = snapshotFilterParams();
-    if (!Object.keys(params).length) {
-      ivToast('Set at least one filter before saving.', 'error');
-      return;
-    }
-    // Suggest a name based on the active filters.
-    const suggest = [
-      params.cancer && params.cancer,
-      params.gene && ('gene=' + params.gene),
-      params.hla && ('HLA ' + params.hla),
-      params.class && ('class=' + params.class),
-      params.safe && 'safe',
-    ].filter(Boolean).join(' · ') || 'My search';
-    const label = prompt('Name this search:', suggest);
-    if (label === null) return;  // user cancelled
-    if (!label.trim()) { ivToast('Name cannot be empty.', 'error'); return; }
-    const remark = prompt('Optional remark / note for future reference (leave blank to skip):', '') || '';
-    if (remark.trim()) params._remark = remark.trim();
-    try {
-      const r = await authedFetch('/api/portal/saved_searches', {
-        method: 'POST',
-        body: JSON.stringify({ label: label.trim(), params }),
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(data.detail || 'Save failed');
-      ivToast('★ Saved · find it under your account', 'success');
-    } catch (err) {
-      ivToast('Could not save: ' + err.message, 'error');
-    }
-  }
-
-  // Wire the Save-this-search button as soon as the DOM is ready.
-  function wireSaveBtn() {
-    const b = document.getElementById('saveSearchBtn');
-    if (!b || b.__wired) return;
-    b.__wired = true;
-    // Update title hint based on auth state.
-    if (window.__IV_PORTAL_USER) b.title = 'Save the current filter to your account';
-    b.addEventListener('click', handleSaveSearch);
-  }
-  document.addEventListener('DOMContentLoaded', wireSaveBtn);
-  window.addEventListener('load', wireSaveBtn);
-
-  // ---------- Save this comparison (compare modal button) ----------
-  // The compare modal shows a side-by-side of every pep::code pair in the
-  // COMPARE set. Saving = persisting that set so the user can re-open the
-  // same comparison later. We POST to /api/portal/saved_searches with
-  // params.compare_keys = "PEP1::CODE1,PEP2::CODE2,…" — account.html
-  // detects this and routes the entry into the "★ Saved comparisons" card.
-  // Loading is handled by the deep-link branch in loadAll's wrapper below
-  // (URL `#explorer?compare=PEP::CODE,…`).
-  window.handleSaveComparison = async function () {
-    if (!window.__IV_PORTAL_USER) {
-      const yes = confirm('Sign in to save comparisons to your account?');
-      if (yes) location.href = 'login.html?return=' + encodeURIComponent(location.pathname + location.hash);
-      return;
-    }
-    if (!COMPARE || COMPARE.size < 2) {
-      ivToast('Add at least 2 peptide/cancer pairs to compare before saving.', 'error');
-      return;
-    }
-    const keys = [...COMPARE];                        // ["PEP::CODE", …]
-    // Build a sensible default label: peptide(s) + cancer count.
-    const peps = [...new Set(keys.map(k => k.split('::')[0]))];
-    const defaultLabel = peps.length === 1
-      ? `★ ${peps[0]} across ${keys.length} cancers`
-      : `★ ${peps.length} peptides × ${keys.length} entries`;
-    const label = prompt('Label for this saved comparison:', defaultLabel);
-    if (label === null) return;
-    const remark = prompt('Optional remark / note for future reference (leave blank to skip):', '') || '';
-    const params = { compare_keys: keys.join(',') };
-    if (remark.trim()) params._remark = remark.trim();
-    try {
-      const r = await authedFetch('/api/portal/saved_searches', {
-        method: 'POST',
-        body: JSON.stringify({ label: (label.trim() || defaultLabel), params }),
-      });
-      if (!r.ok) throw new Error(await r.text());
-      ivToast('★ Saved · find it under your account → Saved comparisons', 'success');
-    } catch (err) {
-      ivToast('Could not save: ' + (err.message || 'error'), 'error');
-    }
-  };
-
-  // ---------- Bookmark peptide (drawer button) ----------
-  // Lives at document level so it survives the drawer re-rendering each open.
-  // Bookmarks go into /api/portal/saved_searches as a peptide-flavored entry
-  // (params include `pep` and `open` so account.html can split them out into
-  // a dedicated "★ Saved peptides" section and the "Open" link deep-links
-  // straight to the drawer). Auto-history already records the visit on
-  // drawer-open, so we don't double-write to /history here.
-  document.addEventListener('click', async (ev) => {
-    const b = ev.target.closest('#bookmarkPepBtn');
-    if (!b) return;
-    if (!window.__IV_PORTAL_USER) {
-      const yes = confirm('Sign in to bookmark peptides to your account?');
-      if (yes) location.href = 'login.html?return=' + encodeURIComponent(location.pathname + location.hash);
-      return;
-    }
-    const defaultLabel = '★ ' + b.dataset.pep + ' · ' + b.dataset.code;
-    const label = prompt('Label for this bookmark:', defaultLabel);
-    if (label === null) return;  // user cancelled
-    const remark = prompt('Optional remark / note for future reference (leave blank to skip):', '') || '';
-    const params = {
-      cancer: b.dataset.code,
-      pep:    b.dataset.pep,
-      // include `open` so the saved-search "Open" link deep-links to the drawer
-      open:   b.dataset.pep,
-    };
-    if (b.dataset.gene) params.gene = b.dataset.gene;
-    if (remark.trim()) params._remark = remark.trim();
-    try {
-      const r = await authedFetch('/api/portal/saved_searches', {
-        method: 'POST',
-        body: JSON.stringify({ label: (label.trim() || defaultLabel), params }),
-      });
-      if (!r.ok) throw new Error(await r.text());
-      b.textContent = '★ bookmarked';
-      b.disabled = true;
-      ivToast('★ Saved · find it under your account → Saved peptides', 'success');
-    } catch (err) {
-      ivToast('Could not bookmark: ' + (err.message || 'error'), 'error');
-    }
-  });
-
-  // ---------- Feedback modal ----------
-  window.ivOpenFeedback = function () {
-    const bd = document.getElementById('ivFbBackdrop');
-    if (!bd) return;
-    // Pre-fill email + name if signed in.
-    const u = window.__IV_PORTAL_USER;
-    if (u) {
-      const e = document.getElementById('ivFbEmail');
-      const n = document.getElementById('ivFbName');
-      if (e && !e.value) e.value = u.email || '';
-      if (n && !n.value) n.value = u.name || '';
-    }
-    document.getElementById('ivFbAlert').hidden = true;
-    bd.hidden = false;
-    // Focus subject for fastest entry.
-    setTimeout(() => { const s = document.getElementById('ivFbSubject'); if (s) s.focus(); }, 30);
-  };
-  window.ivCloseFeedback = function () {
-    const bd = document.getElementById('ivFbBackdrop');
-    if (bd) bd.hidden = true;
-  };
-  window.ivFbUpdateCounter = function () {
-    const ta = document.getElementById('ivFbMessage');
-    const c  = document.getElementById('ivFbCounter');
-    if (!ta || !c) return;
-    const n = (ta.value || '').length;
-    c.textContent = n + ' / 10 min';
-    c.classList.toggle('ok', n >= 10);
-  };
-  window.ivSubmitFeedback = async function (ev) {
-    ev.preventDefault();
-    const alertEl = document.getElementById('ivFbAlert');
-    alertEl.hidden = true;
-    const btn = document.getElementById('ivFbSubmit');
-    btn.disabled = true;
-    const origText = btn.textContent;
-    btn.textContent = 'Sending…';
-    try {
-      const body = {
-        inquiry_type: document.getElementById('ivFbType').value,
-        name:    document.getElementById('ivFbName').value.trim() || null,
-        email:   document.getElementById('ivFbEmail').value.trim(),
-        subject: document.getElementById('ivFbSubject').value.trim(),
-        message: document.getElementById('ivFbMessage').value.trim(),
-        page_url: location.href,
-      };
-      const r = await authedFetch('/api/portal/auth/contact', {
-        method: 'POST',
-        body: JSON.stringify(body),
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(data.detail || 'Submission failed');
-      // Clear sensitive fields, show success.
-      document.getElementById('ivFbSubject').value = '';
-      document.getElementById('ivFbMessage').value = '';
-      ivFbUpdateCounter();
-      alertEl.textContent = data.message || 'Thanks — message received.';
-      alertEl.className = 'iv-fb-alert success';
-      alertEl.hidden = false;
-      setTimeout(() => ivCloseFeedback(), 1500);
-    } catch (err) {
-      alertEl.textContent = err.message || 'Could not send.';
-      alertEl.className = 'iv-fb-alert error';
-      alertEl.hidden = false;
-    } finally {
-      btn.disabled = false;
-      btn.textContent = origText;
-    }
-    return false;
-  };
-
-  // Esc closes the feedback modal too.
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      const bd = document.getElementById('ivFbBackdrop');
-      if (bd && !bd.hidden) { e.stopPropagation(); ivCloseFeedback(); }
-    }
-  });
-
-  // Wire "Send feedback" entry point in the user dropdown.
-  document.addEventListener('DOMContentLoaded', () => {
-    const f = document.getElementById('ivDdFeedback');
-    if (f) f.addEventListener('click', () => { ivOpenFeedback(); });
-  });
-
-  // ---------- History logging ----------
-  // Wrap openDrawer so every peptide-view fires a fire-and-forget POST to
-  // /api/portal/history. Anonymous viewers skip it silently.
-  function wrapOpenDrawer() {
-    if (typeof openDrawer !== 'function' || openDrawer.__ivHistoryWrapped) return;
-    const _orig = openDrawer;
-    const wrapped = function(r, opts) {
-      const out = _orig.call(this, r, opts);
-      try {
-        if (window.__IV_PORTAL_USER && r) {
-          const payload = {
-            cancer: r[COL.code],
-            peptide: r[COL.pep],
-            gene: r[COL.gene] || null,
-            cls: r[COL.cls] || null,
-          };
-          // Fire-and-forget; failures must never block drawer rendering.
-          authedFetch('/api/portal/history', {
-            method: 'POST',
-            body: JSON.stringify(payload),
-          }).catch(() => {});
-        }
-      } catch (e) { /* swallow */ }
-      return out;
-    };
-    wrapped.__ivHistoryWrapped = true;
-    openDrawer = wrapped;
-  }
-  // The main script defines openDrawer up-front, but in case it hasn't
-  // executed yet (e.g. defer ordering), try once now + once after load.
-  wrapOpenDrawer();
-  window.addEventListener('load', wrapOpenDrawer);
-})();
-</script>
-<script>
-/* Pill displays GoatCounter's all-time visit total (cumulative, never resets).
-   The Cloudflare Worker keeps recording action-level counts in the background
-   as a private metric — visible at the Worker's /total endpoint. */
-(function () {
-  var GC_TOTAL = 'https://immuno-verse.goatcounter.com/counter/TOTAL.json';
-  var QUERIES_API = 'https://immunoverse-queries.amansharma-e44.workers.dev';
-  var el = document.getElementById('liveVisitors');
-
-  function render(n) {
-    if (!el) return;
-    if (typeof n === 'number' && !isNaN(n)) el.textContent = n.toLocaleString();
-  }
-
-  fetch(GC_TOTAL, { cache: 'no-store' })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (d) { if (d) render(parseInt(d.count, 10)); })
-    .catch(function () {});
-
-  // Fire-and-forget: still log query actions to the private Worker counter,
-  // but don't update the pill from the response (pill is GoatCounter-driven).
-  window.__bumpQueryCounter = function () {
-    fetch(QUERIES_API + '/increment', { method: 'POST', mode: 'cors' })
-      .catch(function () {});
-  };
-})();
-</script>
 </body>
 </html>

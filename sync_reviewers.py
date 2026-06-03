@@ -4,15 +4,20 @@ Run this AFTER integrate_data.py finishes its daily rebuild. The /reviewers/ fol
 holds an independent copy of all the data the portal loads at runtime, so it keeps
 working even if the root domain ever gets gated behind a login.
 
-What gets mirrored (all read-only copies; root is never modified):
+reviewers/ is a FROZEN, INDEPENDENT copy of the portal — it must keep working,
+login-free, for paper reviewers regardless of what changes on the main site
+(gating, the Welcome modal, auth, etc.). So only the *data* is kept current here;
+the reviewers UI (index.html + chatbot widget) is NEVER overwritten.
+
+What gets mirrored (DATA only; read-only copies; root is never modified):
   - data_js/                 (per-cancer .js files + _summary.js + _search_index.js)
   - data/                    (per-cancer .json files for the download buttons)
-  - chatbot/                 (chatbot widget assets)
   - pancancer_image.png      (the body map illustration)
 
-The reviewers/index.html itself is hand-maintained and uses relative paths — it is
-NOT overwritten here. Any UI tweaks to the root index.html that should also apply
-to reviewers must be copied manually (or by uncommenting the COPY_INDEX block).
+NOT mirrored (frozen so main-site UI changes can't leak into reviewers):
+  - reviewers/index.html     (COPY_INDEX = False)
+  - reviewers/chatbot/       (its own pinned copy)
+To intentionally push a UI change into reviewers, copy the file(s) by hand.
 """
 import shutil
 import sys
@@ -25,14 +30,14 @@ REVIEWERS = ROOT / "reviewers"
 MIRRORS = [
     ("data_js",            "data_js"),
     ("data",               "data"),
-    ("chatbot",            "chatbot"),
     ("pancancer_image.png", "pancancer_image.png"),
+    # NOTE: chatbot/ is intentionally NOT mirrored — reviewers keeps its own
+    # pinned widget so main-site changes never alter the reviewers UI.
 ]
 
-# Set this to True if you want the daily rebuild to also overwrite reviewers/index.html
-# with the root index.html. Leave False if reviewers/index.html ever diverges (e.g. you
-# add a "reviewer notes" banner only on that page).
-COPY_INDEX = True
+# Keep False. reviewers/index.html is a frozen, independent page (no login/gating);
+# it must NOT be overwritten with the root index.html. (See module docstring.)
+COPY_INDEX = False
 
 
 def mirror(src_rel: str, dst_rel: str) -> None:
