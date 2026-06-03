@@ -229,10 +229,20 @@ admin console) is served by a **separate backend**, not by these static pages.
   signed out. `index.html` exposes `window.ivAuthSession` ({getToken,setTokens,
   clear,refresh}). Sign-out clears both tokens (`ivClearTokens`) but **keeps** the
   remembered account.
-- **Access gating ("locked cancers", as of 2026-06-03):** signed-out visitors on
-  the main site see **NBL only**; the other 20 cancers are locked behind sign-in.
-  `index.html` defines `ANON_UNLOCKED = {'NBL'}` and
-  `isLocked(code) = !signedIn && !ANON_UNLOCKED.has(code)`. `__IV_SIGNED_IN` is
+- **Access gating ("locked cancers") — BUILT BUT DISABLED via feature flag.**
+  `window.IV_GATING_ENABLED = false` in `index.html` (top of the ACCESS GATING
+  block). While false, `isLocked()` always returns false (everything open), the
+  homepage Welcome/sign-in modal does **not** auto-show, and `ivApplyLockState()`
+  is a no-op — i.e. the public site behaves exactly as it did before gating. The
+  decision (2026-06-03): no public locking until the login system is hardened.
+  **To re-enable:** set `IV_GATING_ENABLED = true` (one line). When ON: signed-out
+  visitors see **NBL only** (`ANON_UNLOCKED = {'NBL'}`); the other 20 cancers are
+  locked behind sign-in.
+  `isLocked(code) = GATING_ENABLED && !signedIn && !ANON_UNLOCKED.has(code)`.
+  `__IV_SIGNED_IN` is
+  seeded synchronously from token presence and corrected by `/auth/me`
+  (`ivSyncSignedIn` → `window.ivApplyLockState()` re-renders + reloads if it
+  flipped). `__IV_SIGNED_IN` is
   seeded synchronously from token presence and corrected by `/auth/me`
   (`ivSyncSignedIn` → `window.ivApplyLockState()` re-renders + reloads if it
   flipped). Locked surfaces, all routed to `openAuthGate()` → `window.ivOpenAuthGate()`:
@@ -252,11 +262,13 @@ admin console) is served by a **separate backend**, not by these static pages.
     "Log in to another account"; "Create account".
   - *First-time* (no remembered account) → **"Welcome to ImmunoVerse"** + "Log in"
     / "Create account" (no card).
-  `maybeShowWelcomeBack()` auto-shows it on signed-out homepage load (dismissible
-  via ✕ / backdrop / Esc; `sessionStorage iv_wb_dismissed` stops re-nagging in the
-  same tab; suppressed under `/reviewers/`). `window.ivOpenAuthGate()` opens it on
-  demand from locked-content clicks (ignores the dismissed flag; no-ops if signed
-  in). "Create account" deep-links to `login.html#create`.
+  `maybeShowWelcomeBack()` would auto-show it on signed-out homepage load
+  (dismissible via ✕ / backdrop / Esc; `sessionStorage iv_wb_dismissed` stops
+  re-nagging; suppressed under `/reviewers/`) — but this auto-show is **gated by
+  `IV_GATING_ENABLED` and currently OFF**, so no popup appears for anonymous
+  visitors. The modal markup/JS stays in place for when gating is re-enabled.
+  `window.ivOpenAuthGate()` can still open it on demand (no-ops if signed in).
+  "Create account" deep-links to `login.html#create`.
 - **Access model:** institutional emails (`.edu`/`.ac.*`/partner list in
   `auth/domain_check.py`) auto-activate on register; individuals submit an
   access request that an admin approves. Admin allow-list via
@@ -368,6 +380,20 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-03 — Disable cancer locking behind a feature flag (keep the code, don't gate the public)
+**Why:** Decision to NOT lock cancers publicly until the login system is hardened
+— a single auth hiccup with gating on would lock everyone out of 20/21 cancers.
+**What:** Added `window.IV_GATING_ENABLED = false` in `index.html`. While false:
+`isLocked()` always returns false (all 21 cancers open, full explorer loads for
+everyone), the homepage Welcome/sign-in modal does NOT auto-show, and
+`ivApplyLockState()` no-ops. The public site behaves exactly as before gating. All
+the locking + modal code stays in place — re-enabling is a one-line flip to
+`true`. Everything else from today's work stays live (hero count fix, admin-only
+Queries pill, persistent localStorage sessions + refresh-on-401, the auth endpoint
+fallback chain run.app→…→Deno). `window.ivOpenAuthGate()` still works on demand.
+**Files touched:** `index.html` (+ regenerated `reviewers/index.html`),
+`ARCHITECTURE.md`. Commit SHA: _pending_.
 
 ### 2026-06-03 — Auth endpoint fallback chain (Cloud Run run.app primary — fixes NYU login, no DNS needed)
 **Update:** the primary base is the auth service's own

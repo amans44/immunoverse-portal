@@ -4249,21 +4249,31 @@ function geneSearchTerms(input) {
 }
 
 // ============ ACCESS GATING ============
-// Anonymous / signed-out visitors get NBL only; the other 20 cancers are locked
-// behind sign-in. `__IV_SIGNED_IN` is seeded optimistically from token presence
-// (no network) and corrected by the auth boot script's /auth/me result, which
-// calls ivApplyLockState() if it flipped. Clicking anything locked opens the
-// sign-in gate (window.ivOpenAuthGate, defined in the auth boot script).
+// FEATURE FLAG — gating is currently OFF. When ON, anonymous / signed-out
+// visitors get NBL only (ANON_UNLOCKED) and the other 20 cancers are locked
+// behind sign-in, with the homepage Welcome/sign-in modal. It is disabled for
+// now (no public locking until the login system is hardened). Everything below
+// — and the Welcome modal auto-show — is dormant while this is false. Flip to
+// true (here AND set window.IV_GATING_ENABLED below) to re-enable in one place.
+window.IV_GATING_ENABLED = false;
+// `__IV_SIGNED_IN` is seeded optimistically from token presence (no network) and
+// corrected by the auth boot script's /auth/me result, which calls
+// ivApplyLockState() if it flipped. Clicking anything locked opens the sign-in
+// gate (window.ivOpenAuthGate, defined in the auth boot script).
 const ANON_UNLOCKED = new Set(['NBL']);
 // The /reviewers/ mirror is intentionally ungated (self-contained copy for
 // reviewers who have no account) — never lock anything when served from there.
 const IV_BYPASS_LOCK = /\/reviewers\//.test(location.pathname);
 window.__IV_SIGNED_IN = (function () { try { return !!localStorage.getItem('iv_portal_access'); } catch (e) { return false; } })();
-function isLocked(code) { return !IV_BYPASS_LOCK && !window.__IV_SIGNED_IN && !ANON_UNLOCKED.has(code); }
+function isLocked(code) {
+  if (!window.IV_GATING_ENABLED) return false;   // gating disabled → everything open
+  return !IV_BYPASS_LOCK && !window.__IV_SIGNED_IN && !ANON_UNLOCKED.has(code);
+}
 function openAuthGate() { if (typeof window.ivOpenAuthGate === 'function') window.ivOpenAuthGate(); else location.href = 'login.html?return=' + encodeURIComponent(location.pathname + location.hash); }
 // Re-render every access-sensitive surface + reload the explorer for the new
 // access level. Called when /auth/me resolves to a different signed-in state.
 window.ivApplyLockState = function () {
+  if (!window.IV_GATING_ENABLED) return;   // gating off → nothing depends on sign-in state
   const summary = window.__PD__ && window.__PD__['_summary'];
   if (!summary) return;
   try { renderCancerGrid(summary); } catch (e) {}
@@ -8902,8 +8912,11 @@ window.addEventListener('popstate', async () => {
     document.body.style.overflow = 'hidden';
   }
   // Auto-greeting on homepage load (signed-out only) — dismissible, once per tab.
-  // Suppressed on the ungated /reviewers/ mirror.
+  // Gated by the IV_GATING_ENABLED feature flag (currently OFF — no auto popup
+  // for anonymous visitors) and suppressed on the ungated /reviewers/ mirror.
+  // ivOpenAuthGate() can still open the modal on demand regardless of this.
   function maybeShowWelcomeBack() {
+    if (!window.IV_GATING_ENABLED) return;
     if (/\/reviewers\//.test(location.pathname)) return;
     try { if (sessionStorage.getItem('iv_wb_dismissed') === '1') return; } catch (e) {}
     _ivShowAuthModal();
