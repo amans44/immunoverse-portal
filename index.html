@@ -3124,7 +3124,10 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <a href="#downloads">Data</a>
       <a href="#cite">Cite</a>
     </div>
-    <div class="live-stat" id="liveStat" aria-label="Live query count" title="Total queries to the atlas">
+    <!-- Live query counter: hidden by default; revealed only for signed-in
+         admins by the auth bootstrap below (showAccount). Anonymous and
+         non-admin visitors never see it. Query counting still runs for all. -->
+    <div class="live-stat" id="liveStat" aria-label="Live query count" title="Total queries to the atlas" style="display:none;">
       <span class="live-dot" aria-hidden="true"></span>
       <span class="live-num" id="liveVisitors">—</span>
       <span class="live-label">Queries</span>
@@ -3536,7 +3539,7 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
   <div class="container">
     <div class="section-head">
       <div class="kicker">All 21 cancers</div>
-      <h2>21 cancers · 340,000+ ranked candidate targets</h2>
+      <h2>21 cancers · 26,603 ranked candidate targets</h2>
       <p>Each tile's donut (<b>NC</b> = non-canonical) shows the fraction of the repertoire from <b style="color:var(--accent-violet)">non-canonical</b> sources — splicing, cryptic ORFs, retroelements, mutations, fusions, microbial. Click a tile to filter the explorer above.</p>
     </div>
     <div style="margin: 6px 0 12px; display: flex; align-items: baseline; justify-content: space-between;">
@@ -3834,6 +3837,126 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
   <span class="iv-fb-fab-label">Feedback</span>
 </button>
 
+<!-- ===== Welcome-back modal (ChatGPT-style account picker, dismissible) =====
+     Shown on homepage load to a returning, signed-out visitor who has a
+     remembered account in localStorage. Markup is filled + wired by
+     maybeShowWelcomeBack() in the portal auth boot script. -->
+<div id="ivWbBackdrop" class="iv-wb-backdrop" hidden>
+  <div class="iv-wb-card" role="dialog" aria-labelledby="ivWbTitle" aria-modal="true">
+    <button class="iv-wb-close" type="button" aria-label="Close" id="ivWbClose">×</button>
+    <h2 id="ivWbTitle" class="iv-wb-title">Welcome back</h2>
+    <p id="ivWbSub" class="iv-wb-sub">Choose an account to continue.</p>
+
+    <button type="button" class="iv-wb-acct" id="ivWbAcct" title="Continue with this account">
+      <span class="iv-wb-avatar" id="ivWbAvatar" aria-hidden="true">?</span>
+      <span class="iv-wb-acct-text">
+        <span class="iv-wb-acct-name" id="ivWbName">—</span>
+        <span class="iv-wb-acct-email" id="ivWbEmail">—</span>
+      </span>
+      <span class="iv-wb-forget" id="ivWbForget" role="button" tabindex="0" aria-label="Forget this account" title="Forget this account">×</span>
+    </button>
+
+    <div class="iv-wb-or"><span>OR</span></div>
+
+    <a class="iv-wb-btn" id="ivWbLoginOther" href="login.html">Log in to another account</a>
+    <a class="iv-wb-btn" id="ivWbCreate" href="login.html#create">Create account</a>
+  </div>
+</div>
+<style>
+/* ===== Welcome-back modal ===== */
+.iv-wb-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(5,7,14,0.72);
+  z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px;
+  backdrop-filter: blur(6px);
+}
+.iv-wb-backdrop[hidden] { display: none !important; }
+.iv-wb-card {
+  width: 100%; max-width: 460px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 34px 30px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  text-align: center;
+}
+.iv-wb-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 34px; height: 34px;
+  background: transparent; border: 0;
+  color: var(--text-2); font-size: 24px; line-height: 1;
+  cursor: pointer; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.iv-wb-close:hover { color: var(--text-0); background: var(--bg-2); }
+.iv-wb-title { font-size: 34px; font-weight: 700; color: var(--text-0); margin: 6px 0 10px; letter-spacing: -0.01em; }
+.iv-wb-sub   { color: var(--text-2); font-size: 15px; margin: 0 0 26px; }
+.iv-wb-acct {
+  display: flex; align-items: center; gap: 16px;
+  width: 100%; text-align: left;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.iv-wb-acct:hover { border-color: var(--accent-cyan); background: var(--bg-2); }
+.iv-wb-avatar {
+  flex: none; width: 48px; height: 48px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px; color: #06281f;
+  background: var(--grad-primary);
+}
+.iv-wb-acct-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.iv-wb-acct-name  { font-weight: 700; font-size: 16px; color: var(--text-0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iv-wb-acct-email { font-size: 13.5px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iv-wb-forget {
+  flex: none; width: 28px; height: 28px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-3); font-size: 18px; cursor: pointer;
+}
+.iv-wb-forget:hover { color: var(--text-0); background: rgba(255,255,255,0.08); }
+.iv-wb-or {
+  display: flex; align-items: center; gap: 14px;
+  color: var(--text-3); font-size: 12px; font-weight: 600; letter-spacing: 0.1em;
+  margin: 22px 2px;
+}
+.iv-wb-or::before, .iv-wb-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.iv-wb-btn {
+  display: block; width: 100%; box-sizing: border-box; text-align: center;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: 9999px;
+  padding: 13px 18px;
+  font-family: inherit; font-size: 15px; font-weight: 600;
+  color: var(--text-0); cursor: pointer; text-decoration: none;
+  transition: all 0.15s ease;
+}
+.iv-wb-btn + .iv-wb-btn { margin-top: 12px; }
+.iv-wb-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+@media (max-width: 480px) {
+  .iv-wb-title { font-size: 28px; }
+  .iv-wb-card { padding: 34px 22px 24px; }
+}
+
+/* ===== Locked-cancer affordances (signed-out visitors) ===== */
+.ctile.ctile-locked { position: relative; filter: grayscale(0.8) brightness(0.78); cursor: pointer; }
+.ctile.ctile-locked:hover { filter: grayscale(0.4) brightness(0.95); }
+.ctile-lockbadge {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(15,18,28,0.9); color: #fbbf24;
+  font-size: 10px; font-weight: 600; padding: 3px 7px;
+  border-radius: 999px; border: 1px solid rgba(251,191,36,0.45);
+  letter-spacing: 0.3px; z-index: 2;
+}
+a.dl-locked { filter: grayscale(0.8) brightness(0.82); }
+a.dl-locked .sz { color: #fbbf24; }
+</style>
+
 <style>
 /* ===== Feedback modal + FAB ===== */
 .iv-fb-fab {
@@ -4125,6 +4248,31 @@ function geneSearchTerms(input) {
   return aliases.includes(s) ? aliases : [s, ...aliases];
 }
 
+// ============ ACCESS GATING ============
+// Anonymous / signed-out visitors get NBL only; the other 20 cancers are locked
+// behind sign-in. `__IV_SIGNED_IN` is seeded optimistically from token presence
+// (no network) and corrected by the auth boot script's /auth/me result, which
+// calls ivApplyLockState() if it flipped. Clicking anything locked opens the
+// sign-in gate (window.ivOpenAuthGate, defined in the auth boot script).
+const ANON_UNLOCKED = new Set(['NBL']);
+// The /reviewers/ mirror is intentionally ungated (self-contained copy for
+// reviewers who have no account) — never lock anything when served from there.
+const IV_BYPASS_LOCK = /\/reviewers\//.test(location.pathname);
+window.__IV_SIGNED_IN = (function () { try { return !!localStorage.getItem('iv_portal_access'); } catch (e) { return false; } })();
+function isLocked(code) { return !IV_BYPASS_LOCK && !window.__IV_SIGNED_IN && !ANON_UNLOCKED.has(code); }
+function openAuthGate() { if (typeof window.ivOpenAuthGate === 'function') window.ivOpenAuthGate(); else location.href = 'login.html?return=' + encodeURIComponent(location.pathname + location.hash); }
+// Re-render every access-sensitive surface + reload the explorer for the new
+// access level. Called when /auth/me resolves to a different signed-in state.
+window.ivApplyLockState = function () {
+  const summary = window.__PD__ && window.__PD__['_summary'];
+  if (!summary) return;
+  try { renderCancerGrid(summary); } catch (e) {}
+  try { populateCancerSelect(); } catch (e) {}
+  try { renderDownloadGrid(summary); } catch (e) {}
+  try { renderBodyMap(summary); } catch (e) {}
+  try { if (typeof loadAll === 'function') loadAll(); } catch (e) {}
+};
+
 // ============ LOAD SUMMARY ============
 // Uses <script> tag loading (not fetch) so the portal works when opened directly
 // as a local file (file://) as well as when served over HTTP.
@@ -4182,8 +4330,11 @@ function renderCancerGrid(summary) {
     // Build class breakdown tooltip
     const breakdown = CLASS_ORDER.filter(k => (c.classes[k]||0) > 0)
       .map(k => `${CLASS_LABELS[k]}: ${(c.classes[k]||0).toLocaleString()}`).join(' · ');
+    const locked = isLocked(c.code);
+    const tileTitle = locked ? `Sign in to explore ${c.name}` : `${c.name} — ${breakdown}`;
     return `
-      <button class="ctile" onclick="selectCancer('${c.code}')" title="${c.name} — ${breakdown}">
+      <button class="ctile${locked ? ' ctile-locked' : ''}" onclick="selectCancer('${c.code}')" title="${tileTitle}">
+        ${locked ? '<div class="ctile-lockbadge">🔒 Sign in</div>' : ''}
         <div class="tile-head">
           <div class="code">${c.code}</div>
           <span class="group">${c.group}</span>
@@ -4342,17 +4493,25 @@ function renderClassChips(summary) {
 
 function populateCancerSelect() {
   const sel = document.getElementById('fCancer');
-  sel.innerHTML = '<option value="">All cancers</option>' + CANCERS.map(c => `<option value="${c.code}">${c.code} — ${c.name}</option>`).join('');
+  sel.innerHTML = '<option value="">All cancers</option>' + CANCERS.map(c => {
+    const lk = isLocked(c.code);
+    return `<option value="${c.code}"${lk ? ' disabled' : ''}>${c.code} — ${c.name}${lk ? ' 🔒' : ''}</option>`;
+  }).join('');
 }
 
 function renderDownloadGrid(summary) {
   const el = document.getElementById('dlGrid');
-  el.innerHTML = summary.cancers.map(c => `
-    <a href="data/${c.code}.json" download>
-      <div><b>${c.code}</b><div style="font-size:11px;color:var(--text-2);margin-top:1px;">${c.name}</div></div>
-      <span class="sz">${c.count.toLocaleString()}</span>
-    </a>
-  `).join('');
+  el.innerHTML = summary.cancers.map(c => {
+    const meta = `<div><b>${c.code}</b><div style="font-size:11px;color:var(--text-2);margin-top:1px;">${c.name}</div></div>`;
+    if (isLocked(c.code)) {
+      return `<a class="dl-locked" href="javascript:void(0)" onclick="openAuthGate()" title="Sign in to download">
+        ${meta}<span class="sz">🔒</span>
+      </a>`;
+    }
+    return `<a href="data/${c.code}.json" download>
+      ${meta}<span class="sz">${c.count.toLocaleString()}</span>
+    </a>`;
+  }).join('');
 }
 
 function toggleClass(k, scroll) {
@@ -4376,9 +4535,12 @@ async function loadCancer(code) {
 }
 
 async function loadAll() {
-  // Concurrently load all cancers; ~60 MB total with per-HLA binding records
-  document.getElementById('atlasBody').innerHTML = '<tr><td colspan="12" class="loader">Loading 21 cancer tables (~60 MB)…</td></tr>';
-  const all = await Promise.all(CANCERS.map(c => loadCancer(c.code)));
+  // Concurrently load the cancers this viewer may see. Signed-out visitors get
+  // NBL only (the other 20 are locked); signed-in users get all 21 (~60 MB).
+  const toLoad = CANCERS.filter(c => !isLocked(c.code));
+  const sizeHint = toLoad.length > 1 ? `${toLoad.length} cancer tables (~60 MB)` : `${toLoad.length} cancer table`;
+  document.getElementById('atlasBody').innerHTML = `<tr><td colspan="12" class="loader">Loading ${sizeHint}…</td></tr>`;
+  const all = await Promise.all(toLoad.map(c => loadCancer(c.code)));
   const rows = [];
   all.forEach(d => {
     d.rows.forEach(r => {
@@ -4396,6 +4558,7 @@ async function loadAll() {
 }
 
 async function selectCancer(code) {
+  if (isLocked(code)) { openAuthGate(); return; }   // locked → prompt sign-in
   STATE.cancer = code;
   document.getElementById('fCancer').value = code;
   document.getElementById('expTitle').textContent = code + ' — ' + (CANCERS.find(c => c.code===code)?.name || '');
@@ -4628,6 +4791,12 @@ function renderSearchResults(g, q) {
 
 async function navigateSearchResult(action, data) {
   const close = () => { document.getElementById('searchResults').hidden = true; };
+  // A hit that resolves to a specific locked cancer (a peptide or a cancer tile)
+  // must not reveal locked data — prompt sign-in instead. Gene/HLA/class hits
+  // filter the explorer, which for signed-out visitors only holds NBL anyway.
+  if ((action === 'peptide' || action === 'cancer') && data.code && isLocked(data.code)) {
+    close(); openAuthGate(); return;
+  }
   const clearCancerScopedFilters = () => {
     STATE.cancer = ''; document.getElementById('fCancer').value = '';
     STATE.pep = ''; const fp = document.getElementById('fPep'); if (fp) fp.value = '';
@@ -8179,7 +8348,11 @@ document.addEventListener('keydown', e => {
 });
 
 // ============ EVENT BINDING ============
-document.getElementById('fCancer').addEventListener('change', e => { STATE.cancer = e.target.value; STATE.page = 1; applyFilters(); });
+document.getElementById('fCancer').addEventListener('change', e => {
+  const v = e.target.value;
+  if (v && isLocked(v)) { e.target.value = STATE.cancer || ''; openAuthGate(); return; }  // belt-and-braces (options are disabled)
+  STATE.cancer = v; STATE.page = 1; applyFilters();
+});
 document.getElementById('fPep').addEventListener('input', e => { STATE.pep = e.target.value; STATE.page = 1; applyFilters(); });
 document.getElementById('fGene').addEventListener('input', e => { STATE.gene = e.target.value; STATE.page = 1; applyFilters(); });
 document.getElementById('fHla').addEventListener('input', e => { STATE.hla = e.target.value; STATE.page = 1; applyFilters(); });
@@ -8331,7 +8504,9 @@ loadAll = async function() {
 
   // (a) Single-peptide drawer deep link.
   try {
-    if (_deepLinkPep && _deepLinkCode) {
+    if (_deepLinkPep && _deepLinkCode && isLocked(_deepLinkCode)) {
+      openAuthGate();          // crafted link into a locked cancer → prompt sign-in
+    } else if (_deepLinkPep && _deepLinkCode) {
       await loadCancer(_deepLinkCode);
       const row = (DATA_CACHE[_deepLinkCode]?.rows || []).find(r => r[COL.pep] === _deepLinkPep);
       if (row) {
@@ -8351,6 +8526,7 @@ loadAll = async function() {
     COMPARE.clear();
     keys.forEach(k => COMPARE.add(k));
     const codes = [...new Set(keys.map(k => k.split('::')[1]).filter(Boolean))];
+    if (codes.some(c => isLocked(c))) { COMPARE.clear(); openAuthGate(); return; }  // any locked cancer → prompt sign-in
     await Promise.all(codes.map(c => loadCancer(c)));
     renderCompareBar();
     openCompareModal();
@@ -8368,6 +8544,7 @@ window.addEventListener('popstate', async () => {
   if (!urlPep && curPep) {
     closeDrawer({ skipUrl: true });
   } else if (urlPep && urlCode && (urlPep !== curPep)) {
+    if (isLocked(urlCode)) { openAuthGate(); return; }   // locked cancer → prompt sign-in
     try {
       await loadCancer(urlCode);
       const row = (DATA_CACHE[urlCode]?.rows || []).find(r => r[COL.pep] === urlPep);
@@ -8483,11 +8660,47 @@ window.addEventListener('popstate', async () => {
   window.IMMUNOVERSE_AUTH_BASE = window.IMMUNOVERSE_AUTH_BASE || "https://auth.immunoverse-chat.com";
   const AUTH = window.IMMUNOVERSE_AUTH_BASE.replace(/\/+$/, '');
 
+  // ---- Session token helpers ----------------------------------------------
+  // Tokens live in localStorage (NOT sessionStorage) so a signed-in session is
+  // shared across tabs and survives closing/reopening the browser — the user
+  // stays signed in until they explicitly sign out or the 30-day refresh token
+  // lapses. The httpOnly cookies remain the primary credential; these are the
+  // cross-site (Safari ITP) bearer fallback.
+  function ivGetToken()    { try { return localStorage.getItem('iv_portal_access'); } catch (e) { return null; } }
+  function ivSetTokens(d)  {
+    try {
+      if (d && d.access_token)  localStorage.setItem('iv_portal_access',  d.access_token);
+      if (d && d.refresh_token) localStorage.setItem('iv_portal_refresh', d.refresh_token);
+    } catch (e) {}
+  }
+  function ivClearTokens() { try { localStorage.removeItem('iv_portal_access'); localStorage.removeItem('iv_portal_refresh'); } catch (e) {} }
+  // Trade the refresh token (cookie and/or localStorage fallback) for a fresh
+  // access token. Returns true on success. Rotating refresh on the backend also
+  // resets the 30-day clock — so any active use keeps the session alive.
+  async function ivTryRefresh() {
+    let stored = null;
+    try { stored = localStorage.getItem('iv_portal_refresh'); } catch (e) {}
+    try {
+      const r = await fetch(AUTH + '/api/portal/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(stored ? { refresh_token: stored } : {}),
+      });
+      if (!r.ok) return false;
+      const d = await r.json().catch(() => ({}));
+      ivSetTokens(d);
+      return true;
+    } catch (e) { return false; }
+  }
+  // Expose for the chatbot widget / other inline scripts that need the token.
+  window.ivAuthSession = { getToken: ivGetToken, setTokens: ivSetTokens, clear: ivClearTokens, refresh: ivTryRefresh };
+
   function authedFetch(path, opts) {
     opts = opts || {};
     const headers = Object.assign({}, opts.headers || {});
     try {
-      const tok = sessionStorage.getItem('iv_portal_access');
+      const tok = ivGetToken();
       if (tok && !headers.Authorization) headers.Authorization = 'Bearer ' + tok;
     } catch (e) {}
     if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
@@ -8503,11 +8716,22 @@ window.addEventListener('popstate', async () => {
     return (a + b).toUpperCase().slice(0, 2);
   }
 
+  // The live-query pill is admin-only. Pass the signed-in user (or null) and it
+  // reveals the pill ONLY for admins. Clearing the inline style (rather than
+  // forcing a value) lets the responsive @media rules still hide it on narrow
+  // viewports, matching the original behaviour.
+  function setQueriesPillVisible(user) {
+    const pill = document.getElementById('liveStat');
+    if (!pill) return;
+    pill.style.display = (user && user.role === 'admin') ? '' : 'none';
+  }
+
   function showSignIn() {
     const a = document.getElementById('ivSignInBtn');
     const m = document.getElementById('ivUserMenu');
     if (a) a.style.display = '';
     if (m) m.style.display = 'none';
+    setQueriesPillVisible(null);
   }
   function showAccount(user) {
     const a = document.getElementById('ivSignInBtn');
@@ -8534,7 +8758,129 @@ window.addEventListener('popstate', async () => {
         adm.title = 'Requires admin sign-in';
       }
     }
+    // Live-query pill is admin-only — reveal it here, hide for non-admins.
+    setQueriesPillVisible(user);
+    // Remember this account for the ChatGPT-style "Welcome back" modal. Kept in
+    // localStorage even after sign-out so a returning visitor sees their account
+    // pre-listed; only the card's ✕ (forget) or a different login clears it.
+    rememberAccount(user);
   }
+
+  // ---- Remembered account (for the Welcome-back modal) --------------------
+  var IV_LAST_ACCT_KEY = 'iv_portal_last_account';
+  function rememberAccount(user) {
+    if (!user || !user.email) return;
+    try {
+      localStorage.setItem(IV_LAST_ACCT_KEY, JSON.stringify({
+        name: user.name || '', email: user.email,
+      }));
+    } catch (e) {}
+  }
+  function getRememberedAccount() {
+    try {
+      var raw = localStorage.getItem(IV_LAST_ACCT_KEY);
+      if (!raw) return null;
+      var a = JSON.parse(raw);
+      return (a && a.email) ? a : null;
+    } catch (e) { return null; }
+  }
+  function forgetAccount() { try { localStorage.removeItem(IV_LAST_ACCT_KEY); } catch (e) {} }
+
+  // ---- Welcome / auth-gate modal ------------------------------------------
+  // Two faces of the same modal:
+  //   • remembered account  → "Welcome back" + account card (ChatGPT-style)
+  //   • first-time visitor   → "Welcome to ImmunoVerse" + Log in / Create
+  var _ivWbWired = false;
+  function ivCloseWelcomeBack() {
+    var bd = document.getElementById('ivWbBackdrop');
+    if (bd) bd.hidden = true;
+    document.body.style.overflow = '';
+    // Don't auto-nag again in this tab once dismissed; clicking a locked cancer
+    // still re-opens it (ivOpenAuthGate ignores this flag).
+    try { sessionStorage.setItem('iv_wb_dismissed', '1'); } catch (e) {}
+  }
+  function ivFillAuthModal() {
+    var acct  = getRememberedAccount();
+    var title = document.getElementById('ivWbTitle');
+    var sub   = document.getElementById('ivWbSub');
+    var card  = document.getElementById('ivWbAcct');
+    var orDiv = document.querySelector('#ivWbBackdrop .iv-wb-or');
+    var other = document.getElementById('ivWbLoginOther');
+    if (acct) {
+      if (title) title.textContent = 'Welcome back';
+      if (sub)   sub.textContent   = 'Choose an account to continue.';
+      if (card)  card.style.display = '';
+      if (orDiv) orDiv.style.display = '';
+      document.getElementById('ivWbName').textContent  = acct.name || acct.email.split('@')[0];
+      document.getElementById('ivWbEmail').textContent = acct.email;
+      document.getElementById('ivWbAvatar').textContent = initials(acct.name, acct.email);
+      if (other) other.textContent = 'Log in to another account';
+    } else {
+      if (title) title.textContent = 'Welcome to ImmunoVerse';
+      if (sub)   sub.textContent   = 'Sign in or create an account to explore all 21 cancers.';
+      if (card)  card.style.display = 'none';
+      if (orDiv) orDiv.style.display = 'none';
+      if (other) other.textContent = 'Log in';
+    }
+  }
+  function _ivWireWelcomeBack() {
+    if (_ivWbWired) return;
+    _ivWbWired = true;
+    var here = location.pathname + location.hash;
+    var close    = document.getElementById('ivWbClose');
+    var backdrop = document.getElementById('ivWbBackdrop');
+    var acctBtn  = document.getElementById('ivWbAcct');
+    var forget   = document.getElementById('ivWbForget');
+    var other    = document.getElementById('ivWbLoginOther');
+    var create   = document.getElementById('ivWbCreate');
+
+    if (close)    close.addEventListener('click', ivCloseWelcomeBack);
+    if (backdrop) backdrop.addEventListener('click', function (ev) { if (ev.target === backdrop) ivCloseWelcomeBack(); });
+    document.addEventListener('keydown', function (ev) {
+      var bd = document.getElementById('ivWbBackdrop');
+      if (ev.key === 'Escape' && bd && !bd.hidden) ivCloseWelcomeBack();
+    });
+    // Continue with the remembered account → login with the email prefilled.
+    if (acctBtn) acctBtn.addEventListener('click', function () {
+      var a = getRememberedAccount();
+      var email = a ? a.email : '';
+      location.href = 'login.html?email=' + encodeURIComponent(email) + '&return=' + encodeURIComponent(here);
+    });
+    // ✕ on the card → forget the remembered account (don't trigger the card click).
+    if (forget) {
+      function doForget(ev) {
+        ev.stopPropagation(); ev.preventDefault();
+        forgetAccount();
+        ivFillAuthModal();   // collapse to the first-time-visitor layout
+      }
+      forget.addEventListener('click', doForget);
+      forget.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') doForget(ev); });
+    }
+    if (other)  other.setAttribute('href',  'login.html?return=' + encodeURIComponent(here));
+    if (create) create.setAttribute('href', 'login.html?return=' + encodeURIComponent(here) + '#create');
+  }
+  function _ivShowAuthModal() {
+    var bd = document.getElementById('ivWbBackdrop');
+    if (!bd) return;
+    ivFillAuthModal();
+    _ivWireWelcomeBack();
+    bd.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  // Auto-greeting on homepage load (signed-out only) — dismissible, once per tab.
+  // Suppressed on the ungated /reviewers/ mirror.
+  function maybeShowWelcomeBack() {
+    if (/\/reviewers\//.test(location.pathname)) return;
+    try { if (sessionStorage.getItem('iv_wb_dismissed') === '1') return; } catch (e) {}
+    _ivShowAuthModal();
+  }
+  // On-demand gate (e.g. clicking a locked cancer) — always opens, ignores the
+  // per-tab dismissed flag. Exposed so the main app's locking can call it.
+  window.ivOpenAuthGate = function () {
+    // A signed-in user should never be gated; no-op defensively.
+    if (window.__IV_PORTAL_USER) return;
+    _ivShowAuthModal();
+  };
 
   // Dropdown open/close — wired once on first paint.
   (function initDropdown() {
@@ -8556,7 +8902,7 @@ window.addEventListener('popstate', async () => {
     const out = document.getElementById('ivDdSignOut');
     if (out) out.addEventListener('click', async () => {
       try { await authedFetch('/api/portal/auth/logout', { method: 'POST' }); } catch(e) {}
-      try { sessionStorage.removeItem('iv_portal_access'); } catch(e) {}
+      ivClearTokens();
       location.reload();
     });
 
@@ -8576,7 +8922,7 @@ window.addEventListener('popstate', async () => {
         // Sign out then jump to login with a return-to-admin URL so the
         // next sign-in lands directly on the dashboard.
         try { await authedFetch('/api/portal/auth/logout', { method: 'POST' }); } catch(e) {}
-        try { sessionStorage.removeItem('iv_portal_access'); } catch(e) {}
+        ivClearTokens();
         location.href = 'login.html?return=' + encodeURIComponent('admin.html');
       });
     }
@@ -8590,20 +8936,44 @@ window.addEventListener('popstate', async () => {
   // (the credentialed cross-origin fetch to auth.immunoverse-chat.com was
   // tripping Chrome's LNA heuristic and users would dismiss the prompt
   // thinking it was about figures). Users who have signed in have a token
-  // in sessionStorage — we only call /auth/me when there's a reason to.
-  var _ivStoredToken = null;
-  try { _ivStoredToken = sessionStorage.getItem('iv_portal_access'); } catch (e) {}
+  // in localStorage — we only call /auth/me when there's a reason to.
+  //
+  // On a 401 (access token expired but the 30-day refresh token may still be
+  // valid) we silently /refresh once and retry — that's what keeps a user
+  // signed in across days/tabs/restarts without re-entering a password.
+  async function ivResolveSession() {
+    let r = await authedFetch('/api/portal/auth/me');
+    if (r.status === 401 && await ivTryRefresh()) {
+      r = await authedFetch('/api/portal/auth/me');
+    }
+    return r.ok ? r.json() : null;
+  }
+
+  // Reconcile the optimistic lock state (set synchronously from token presence)
+  // with the authoritative /auth/me result. If it flipped, re-apply locking so
+  // the grid/explorer/downloads reflect the real access level.
+  function ivSyncSignedIn(signedIn) {
+    var was = window.__IV_SIGNED_IN;
+    window.__IV_SIGNED_IN = !!signedIn;
+    if (was !== window.__IV_SIGNED_IN && typeof window.ivApplyLockState === 'function') {
+      window.ivApplyLockState();
+    }
+  }
+
+  var _ivStoredToken = ivGetToken();
   if (_ivStoredToken) {
-    authedFetch('/api/portal/auth/me')
-      .then(r => r.ok ? r.json() : null)
+    ivResolveSession()
       .then(user => {
         window.__IV_PORTAL_USER = user || null;
-        if (user) showAccount(user); else showSignIn();
+        if (user) { ivSyncSignedIn(true); showAccount(user); }
+        else { ivClearTokens(); ivSyncSignedIn(false); showSignIn(); maybeShowWelcomeBack(); }
       })
-      .catch(() => { window.__IV_PORTAL_USER = null; showSignIn(); });
+      .catch(() => { window.__IV_PORTAL_USER = null; ivSyncSignedIn(false); showSignIn(); maybeShowWelcomeBack(); });
   } else {
     window.__IV_PORTAL_USER = null;
+    ivSyncSignedIn(false);
     showSignIn();
+    maybeShowWelcomeBack();
   }
 
   // ---------- Save-this-search ----------

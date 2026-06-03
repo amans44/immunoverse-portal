@@ -741,12 +741,33 @@ window.IMMUNOVERSE_AUTH_BASE = window.IMMUNOVERSE_AUTH_BASE || "https://auth.imm
 const AUTH = window.IMMUNOVERSE_AUTH_BASE.replace(/\/+$/, '');
 const RETURN_TO = (new URLSearchParams(location.search)).get('return') || 'account.html';
 
-// Already signed in? Jump straight to the account dashboard so users don't
-// stare at a login form when they're already logged in.
+// Already signed in? Jump straight to the destination so users don't stare at
+// a login form when they're already logged in. If the access token has expired
+// but the 30-day refresh token is still valid, silently refresh first — that's
+// what keeps returning visitors signed in without re-typing a password.
 (async function checkSession() {
+  function bearer() {
+    let tok = null; try { tok = localStorage.getItem('iv_portal_access'); } catch (e) {}
+    return tok ? { Authorization: 'Bearer ' + tok } : {};
+  }
   try {
-    const r = await fetch(AUTH + '/api/portal/auth/me', { credentials: 'include' });
-    if (r.ok) location.replace(RETURN_TO);
+    let r = await fetch(AUTH + '/api/portal/auth/me', { credentials: 'include', headers: bearer() });
+    if (r.ok) { location.replace(RETURN_TO); return; }
+    // Access token expired → try one silent refresh against the refresh token.
+    let stored = null; try { stored = localStorage.getItem('iv_portal_refresh'); } catch (e) {}
+    const rf = await fetch(AUTH + '/api/portal/auth/refresh', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(stored ? { refresh_token: stored } : {}),
+    });
+    if (rf.ok) {
+      const d = await rf.json().catch(() => ({}));
+      try {
+        if (d.access_token)  localStorage.setItem('iv_portal_access',  d.access_token);
+        if (d.refresh_token) localStorage.setItem('iv_portal_refresh', d.refresh_token);
+      } catch (e) {}
+      location.replace(RETURN_TO);
+    }
   } catch (e) { /* offline / first visit — fine */ }
 })();
 
@@ -859,6 +880,22 @@ function esc(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<
 document.addEventListener('DOMContentLoaded', () => {
   const e = $('rg-email');
   if (e) e.addEventListener('input', refreshEmailHint);
+
+  // Deep-links from the homepage "Welcome back" modal:
+  //   ?email=…  → prefill the sign-in email (returning account)
+  //   #create   → open the Create-account tab
+  const params = new URLSearchParams(location.search);
+  const presetEmail = params.get('email');
+  if (presetEmail) {
+    const si = $('si-email');
+    if (si) si.value = presetEmail;
+  }
+  if ((location.hash || '').toLowerCase() === '#create') {
+    switchMode('create');
+  } else if (presetEmail) {
+    const sp = $('si-password');     // returning account → focus password directly
+    if (sp) setTimeout(() => sp.focus(), 50);
+  }
 });
 
 async function handleSignin(ev) {
@@ -888,10 +925,16 @@ async function handleSignin(ev) {
       clearLoading('signinSubmit');
       return false;
     }
-    // The browser stored the cookie; persist the access token as a fallback
-    // so cross-site cookie-less browsers (Safari ITP) can still authenticate
-    // via the Authorization: Bearer header.
-    try { sessionStorage.setItem('iv_portal_access', data.access_token); } catch(e) {}
+    // The browser stored the httpOnly cookies; persist the tokens in
+    // localStorage too as a fallback so cross-site cookie-less browsers (Safari
+    // ITP) can still authenticate via the Authorization: Bearer header, and so
+    // the session is shared across tabs and survives a browser restart.
+    try {
+      if (data.access_token)  localStorage.setItem('iv_portal_access',  data.access_token);
+      if (data.refresh_token) localStorage.setItem('iv_portal_refresh', data.refresh_token);
+      // Remember this account for the homepage "Welcome back" modal.
+      localStorage.setItem('iv_portal_last_account', JSON.stringify({ name: '', email: $('si-email').value.trim() }));
+    } catch(e) {}
     location.href = RETURN_TO;
   } catch (err) {
     showAlert('Network error: ' + err.message, 'error');
@@ -935,7 +978,10 @@ async function handleRegister(ev) {
       return false;
     }
     if (data.tokens && data.tokens.access_token) {
-      try { sessionStorage.setItem('iv_portal_access', data.tokens.access_token); } catch(e) {}
+      try {
+        localStorage.setItem('iv_portal_access', data.tokens.access_token);
+        if (data.tokens.refresh_token) localStorage.setItem('iv_portal_refresh', data.tokens.refresh_token);
+      } catch(e) {}
     }
     // If institutional → auto_approved, go straight to dashboard. If not (the
     // backend accepted a non-institutional email and made the account

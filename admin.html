@@ -508,11 +508,32 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString();
 }
 
+// Tokens live in localStorage so the session is shared across tabs and survives
+// a browser restart (stay signed in until explicit sign-out or 30-day lapse).
+function ivClearTokens() { try { localStorage.removeItem('iv_portal_access'); localStorage.removeItem('iv_portal_refresh'); } catch (e) {} }
+async function ivTryRefresh() {
+  let stored = null; try { stored = localStorage.getItem('iv_portal_refresh'); } catch (e) {}
+  try {
+    const r = await fetch(AUTH + '/api/portal/auth/refresh', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(stored ? { refresh_token: stored } : {}),
+    });
+    if (!r.ok) return false;
+    const d = await r.json().catch(() => ({}));
+    try {
+      if (d.access_token)  localStorage.setItem('iv_portal_access',  d.access_token);
+      if (d.refresh_token) localStorage.setItem('iv_portal_refresh', d.refresh_token);
+    } catch (e) {}
+    return true;
+  } catch (e) { return false; }
+}
+
 function authedFetch(path, opts) {
   opts = opts || {};
   const headers = Object.assign({}, opts.headers || {});
   try {
-    const tok = sessionStorage.getItem('iv_portal_access');
+    const tok = localStorage.getItem('iv_portal_access');
     if (tok && !headers.Authorization) headers.Authorization = 'Bearer ' + tok;
   } catch (e) {}
   if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
@@ -524,8 +545,12 @@ let REQ_FILTER = 'pending';
 let USER_FILTER = '';
 
 async function boot() {
-  const me = await authedFetch('/api/portal/auth/me');
+  let me = await authedFetch('/api/portal/auth/me');
+  if (me.status === 401 && await ivTryRefresh()) {
+    me = await authedFetch('/api/portal/auth/me');
+  }
   if (!me.ok) {
+    ivClearTokens();
     location.replace('login.html?return=' + encodeURIComponent('admin.html'));
     return;
   }
@@ -552,7 +577,7 @@ async function boot() {
     </div>`;
     window.adminElevate = async () => {
       try { await authedFetch('/api/portal/auth/logout', { method: 'POST' }); } catch(e) {}
-      try { sessionStorage.removeItem('iv_portal_access'); } catch(e) {}
+      ivClearTokens();
       location.href = 'login.html?return=' + encodeURIComponent('admin.html');
     };
     return;

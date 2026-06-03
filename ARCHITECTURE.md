@@ -84,7 +84,7 @@ Three layers, in increasing visibility:
 | **GoatCounter** | `https://immuno-verse.goatcounter.com` (private dashboard) + `https://immuno-verse.goatcounter.com/counter/TOTAL.json` (public JSON endpoint, enabled in Settings) | Cookieless visit tracking. The public JSON endpoint feeds the visible "Queries" pill. |
 | **Cloudflare Worker query counter** | KV namespace `IMMUNOVERSE_COUNTERS` on the `immunoverse-queries` Worker | Counts real action events (search submission + chatbot send) as a private metric. Kept running silently in the background even though the pill no longer reads from it. Useful as a paper-supplementary stat. |
 
-**The visible "Queries" pill** in the main portal's topnav fetches `GoatCounter /counter/TOTAL.json` on page load and renders the cumulative all-time visit count. The pulsing cyan dot is purely visual; the number is not real-time (refreshes per page load).
+**The "Queries" pill** in the main portal's topnav fetches `GoatCounter /counter/TOTAL.json` on page load and renders the cumulative all-time visit count. The pulsing cyan dot is purely visual; the number is not real-time (refreshes per page load). **As of 2026-06-03 the pill is admin-only:** it is `display:none` by default and is revealed only for signed-in users whose `role === 'admin'` (via `setQueriesPillVisible()` in the auth bootstrap). Anonymous and non-admin signed-in visitors never see it. Query *counting* (the Worker `/increment` + GoatCounter fetch) still runs for everyone regardless of visibility.
 
 ---
 
@@ -95,6 +95,7 @@ Three layers, in increasing visibility:
 - **CSS class:** `.live-stat` (pill body), `.live-dot` (pulsing dot), `.live-num` (number), `.live-label` (caption).
 - **JS:** inline `<script>` at the bottom of `index.html` — fetches `GC_TOTAL` (`https://immuno-verse.goatcounter.com/counter/TOTAL.json`) on load, renders the count. Also exposes `window.__bumpQueryCounter` (fire-and-forget POST to the Worker `/increment` endpoint) so search + chatbot actions still log to the Worker counter in the background.
 - **Hooks that fire `__bumpQueryCounter`:** `runSearch` (debounced typeahead in `#globalSearch`), the `results` click handler (search-result selection), and the chatbot `send()` function in `chatbot/chatbot.js`.
+- **Admin-only visibility:** the pill carries inline `style="display:none"` and is revealed only for signed-in admins by `setQueriesPillVisible(user)` (called from `showAccount`/`showSignIn`). It clears the inline style for admins rather than forcing a value, so the responsive `@media` hide rules below still apply.
 - **Hidden on screens < 560px** to avoid topnav crowding.
 
 ### Global search
@@ -193,6 +194,47 @@ admin console) is served by a **separate backend**, not by these static pages.
   cross-site cookies `iv_portal_access` / `iv_portal_refresh`; bcrypt passwords.
   Collections are `portal_*` (e.g. `portal_users`, `portal_access_requests`,
   `portal_password_reset_tokens`, `portal_deleted_users`).
+- **Session persistence ("stay signed in", as of 2026-06-03):** access token TTL
+  60 min, refresh token TTL **30 days** (`portal_auth/auth.py`). `/refresh`
+  *rotates* the refresh token and re-issues with a fresh 30-day expiry, so the
+  window **slides** — any active use resets the clock; 30 days of true inactivity
+  (or explicit sign-out) ends it. Frontend stores `iv_portal_access` +
+  `iv_portal_refresh` in **`localStorage`** (NOT `sessionStorage`) so a session is
+  shared across tabs and survives a browser restart. Each page (`index.html`,
+  `account.html`, `admin.html`, `login.html`) does **refresh-on-401**: if
+  `/auth/me` 401s, it calls `/refresh` once (cookie and/or the localStorage
+  refresh-token fallback for Safari ITP) and retries before treating the user as
+  signed out. `index.html` exposes `window.ivAuthSession` ({getToken,setTokens,
+  clear,refresh}). Sign-out clears both tokens (`ivClearTokens`) but **keeps** the
+  remembered account.
+- **Access gating ("locked cancers", as of 2026-06-03):** signed-out visitors on
+  the main site see **NBL only**; the other 20 cancers are locked behind sign-in.
+  `index.html` defines `ANON_UNLOCKED = {'NBL'}` and
+  `isLocked(code) = !signedIn && !ANON_UNLOCKED.has(code)`. `__IV_SIGNED_IN` is
+  seeded synchronously from token presence and corrected by `/auth/me`
+  (`ivSyncSignedIn` → `window.ivApplyLockState()` re-renders + reloads if it
+  flipped). Locked surfaces, all routed to `openAuthGate()` → `window.ivOpenAuthGate()`:
+  grid tiles (🔒 badge), the cancer `<select>` (disabled options), the downloads
+  grid, body-map pins (via `selectCancer`), global-search peptide/cancer hits, and
+  the URL deep-link openers (single-drawer, compare, popstate). The explorer only
+  *loads* unlocked cancers (`loadAll` filters by `isLocked`), so locked data is
+  never fetched client-side. **Bypass:** `IV_BYPASS_LOCK` is true under
+  `/reviewers/`, so the (regenerated) reviewers mirror stays fully open and
+  un-gated. To change the free set, edit `ANON_UNLOCKED`.
+- **"Welcome" / sign-in-gate modal (homepage):** one modal (`#ivWbBackdrop` in
+  `index.html`) with two faces, chosen by `ivFillAuthModal()`:
+  - *Returning* (a remembered account exists in `localStorage`
+    `iv_portal_last_account = {name,email}`, written on every sign-in by
+    `index.html`/`account.html`/`login.html`) → **"Welcome back"** + account card
+    (avatar + name + email + ✕ to forget) → `login.html?email=…` (prefilled);
+    "Log in to another account"; "Create account".
+  - *First-time* (no remembered account) → **"Welcome to ImmunoVerse"** + "Log in"
+    / "Create account" (no card).
+  `maybeShowWelcomeBack()` auto-shows it on signed-out homepage load (dismissible
+  via ✕ / backdrop / Esc; `sessionStorage iv_wb_dismissed` stops re-nagging in the
+  same tab; suppressed under `/reviewers/`). `window.ivOpenAuthGate()` opens it on
+  demand from locked-content clicks (ignores the dismissed flag; no-ops if signed
+  in). "Create account" deep-links to `login.html#create`.
 - **Access model:** institutional emails (`.edu`/`.ac.*`/partner list in
   `auth/domain_check.py`) auto-activate on register; individuals submit an
   access request that an admin approves. Admin allow-list via
@@ -304,6 +346,111 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-03 — Lock 20 of 21 cancers behind sign-in (NBL free) + first-time-visitor gate modal
+**Why:** Make the atlas account-gated: anonymous visitors get a free taste (NBL)
+and must sign in / create an account to reach the other 20 cancers. Pair it with a
+sign-in gate modal that also greets brand-new visitors.
+**What:**
+- **Locking (`index.html`):** `ANON_UNLOCKED = {'NBL'}`, `isLocked(code)`,
+  `__IV_SIGNED_IN` (optimistic from token, corrected by `/auth/me` via
+  `ivSyncSignedIn` → `window.ivApplyLockState`). Gated every access path:
+  grid tiles (🔒 badge + `ctile-locked`), `selectCancer`, the cancer `<select>`
+  (disabled options), downloads grid (→ gate), body-map pins, global-search
+  peptide/cancer hits, and the three URL deep-link loaders (single drawer, compare,
+  popstate). `loadAll()` only fetches unlocked cancers, so locked data never hits
+  the client. New `openAuthGate()` routes locked clicks to `window.ivOpenAuthGate`.
+- **First-time-visitor modal:** the welcome modal now has two faces via
+  `ivFillAuthModal()` — "Welcome back" (+ account card) when a remembered account
+  exists, else "Welcome to ImmunoVerse" (+ Log in / Create). `ivOpenAuthGate()`
+  (exposed on `window`) opens it on demand for locked clicks, ignoring the
+  per-tab dismissed flag; auto-greeting still fires on load and is dismissible.
+- **Reviewers stay open:** `IV_BYPASS_LOCK` (`/reviewers/` path) disables all
+  gating + the auto modal, so the regenerated `reviewers/index.html` mirror is
+  fully browsable without an account (its documented purpose). `demo/index.html`
+  keeps its own separate static 3-cancer gating — untouched.
+- Re-ran `sync_reviewers.py`.
+**Files touched:** `index.html` (+ regenerated `reviewers/index.html`),
+`ARCHITECTURE.md`. Commit SHA: _pending_.
+
+### 2026-06-03 — Persistent "stay signed in" sessions + ChatGPT-style "Welcome back" modal
+**Why:** (1) Sign-in didn't persist — the token lived in `sessionStorage`, so it
+died on tab close and wasn't shared across tabs; a fresh tab always looked logged
+out. We want Netflix/ChatGPT-style "stay signed in until you sign out." (2) Add a
+"Welcome back" account picker on the homepage for returning, signed-out visitors
+(ref: `references/create account .png`). Context: most cancers are being locked,
+so we want a smooth re-entry path.
+**What:**
+- **Backend (`immunoVerse_agent/portal_auth/auth.py`):** `REFRESH_TOKEN_TTL_DAYS`
+  7 → **30**. `/refresh` already rotates + re-issues the refresh token, so this is
+  a **30-day sliding** window (resets on each use). ⚠️ **Needs a Cloud Run
+  redeploy of the auth service** to take effect.
+- **Token persistence (frontend):** moved `iv_portal_access` + new
+  `iv_portal_refresh` from `sessionStorage` → **`localStorage`** in `login.html`,
+  `account.html`, `admin.html`, `index.html` (shared across tabs, survives
+  restart). httpOnly cookies remain the primary credential; localStorage is the
+  cross-site (Safari ITP) bearer fallback.
+- **Refresh-on-401:** `index.html` (`ivResolveSession`/`ivTryRefresh`),
+  `account.html` + `admin.html` (`boot()`), and `login.html` (`checkSession`)
+  now silently `/refresh` once before treating a 401 as signed-out / before
+  showing the login form. New `window.ivAuthSession` helper on the homepage.
+- **"Welcome back" modal:** new `#ivWbBackdrop` modal + CSS in `index.html`;
+  `maybeShowWelcomeBack()` shows it for signed-out visitors with a remembered
+  account (`iv_portal_last_account`, written on every sign-in). Dismissible;
+  per-tab `iv_wb_dismissed` guard. `login.html` gained `?email=` prefill +
+  `#create` deep-link.
+- **Sign-out** everywhere now clears both tokens (`ivClearTokens`) but keeps the
+  remembered account so the modal can greet the user next time.
+- `demo/index.html` has no auth layer → unchanged. Re-ran `sync_reviewers.py` so
+  `reviewers/index.html` picks up all of the above.
+**Files touched:** `index.html`, `login.html`, `account.html`, `admin.html`
+(+ regenerated `reviewers/index.html`), `immunoVerse_agent/portal_auth/auth.py`,
+`ARCHITECTURE.md`. Commit SHA: _pending_.
+
+### 2026-06-03 — Gate the live "Queries" pill to signed-in admins only
+**Why:** The topnav "Queries" counter was visible to every visitor. We want the
+live query/visit count to be an internal metric, shown only to admins after
+sign-in — not exposed to the public.
+**What:**
+- The `#liveStat` pill now carries inline `style="display:none"` and is revealed
+  only when the auth bootstrap detects a signed-in user with `role === 'admin'`.
+- New helper `setQueriesPillVisible(user)` in the topnav auth IIFE: called from
+  `showAccount(user)` (reveals for admins, hides for non-admins) and `showSignIn()`
+  (always hides). It clears the inline `display` for admins rather than setting a
+  fixed value, so the existing `@media (max-width:560px)` hide rule still applies.
+- Query *counting* is unchanged: the GoatCounter fetch and the fire-and-forget
+  Worker `/increment` still run for all visitors — only the on-screen display is
+  gated.
+- `demo/index.html` has no Queries pill, so it needed no change.
+- Re-ran `sync_reviewers.py` so `reviewers/index.html` picks up the gated pill.
+**Files touched:** `index.html` (+ regenerated `reviewers/index.html`),
+`ARCHITECTURE.md`. Commit SHA: _pending_.
+
+### 2026-06-03 — Fix bogus "340,000+" hero stat on the cancers grid
+**Why:** The "All 21 cancers" section heading read `21 cancers · 340,000+ ranked
+candidate targets`. That number was never computed from the data — it's a leftover
+placeholder traceable to the old Google Stitch login mockup
+(`login-stitch/v0/code.html`, "over 340,000 unique cancer-specific peptides" /
+`340,291`). The manuscript (`cancer_discovery/.../nature_cancer_submission_*.docx`)
+never claims 340,000 (its headline is 16,687 tumor-specific pHLAs). The portal's
+actual atlas holds **26,603** targets across the 21 cancers — confirmed three ways:
+sum of the per-tile `count` fields in `data/*.json`, the row count in
+`data_js/_search_index.js` (26,603 rows), and the sum of the visible tile numbers.
+The heading sits directly above the explorer it describes ("Click a tile to filter
+the explorer"), so it now matches the data exactly.
+**What:**
+- Changed the hero `<h2>` to `21 cancers · 26,603 ranked candidate targets` in the
+  root `index.html` and the hand-maintained `demo/index.html`.
+- Changed the same string in the chatbot help text (`chatbot/chatbot.js`,
+  `#cancers` line).
+- Re-ran `sync_reviewers.py` (propagates root `index.html` + `chatbot/` to
+  `reviewers/`) and `build_demo.py` (propagates root `chatbot/` to `demo/chatbot/`),
+  so all 6 served copies now read 26,603.
+- Note: the stale `340,291` figure still lives in the archived, non-served
+  `login-stitch/v0/code.html` mockup and was intentionally left untouched.
+**Files touched:** `index.html`, `demo/index.html`, `chatbot/chatbot.js`
+(+ regenerated `reviewers/index.html`, `reviewers/chatbot/chatbot.js`,
+`demo/chatbot/chatbot.js`). Commit SHA: _pending_.
 
 ### 2026-05-29 — Portal auth fixes: forgot-password, set-password-after-approval, admin soft-delete
 **Why:** Three reported gaps. (1) Approved individual users had no way to set a

@@ -996,13 +996,34 @@ function alert(boxId, msg, kind) {
 }
 function clearAlert(boxId) { $(boxId).classList.add('hidden'); }
 
+// Tokens live in localStorage so the session is shared across tabs and survives
+// a browser restart (stay signed in until explicit sign-out or 30-day lapse).
+function ivClearTokens() { try { localStorage.removeItem('iv_portal_access'); localStorage.removeItem('iv_portal_refresh'); } catch (e) {} }
+async function ivTryRefresh() {
+  let stored = null; try { stored = localStorage.getItem('iv_portal_refresh'); } catch (e) {}
+  try {
+    const r = await fetch(AUTH + '/api/portal/auth/refresh', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(stored ? { refresh_token: stored } : {}),
+    });
+    if (!r.ok) return false;
+    const d = await r.json().catch(() => ({}));
+    try {
+      if (d.access_token)  localStorage.setItem('iv_portal_access',  d.access_token);
+      if (d.refresh_token) localStorage.setItem('iv_portal_refresh', d.refresh_token);
+    } catch (e) {}
+    return true;
+  } catch (e) { return false; }
+}
+
 function authedFetch(path, opts) {
   opts = opts || {};
   const headers = Object.assign({}, opts.headers || {});
-  // Belt-and-braces: also send the sessionStorage token as Bearer for browsers
+  // Belt-and-braces: also send the localStorage token as Bearer for browsers
   // that drop cross-site cookies (Safari ITP / locked-down Chrome flags).
   try {
-    const tok = sessionStorage.getItem('iv_portal_access');
+    const tok = localStorage.getItem('iv_portal_access');
     if (tok && !headers.Authorization) headers.Authorization = 'Bearer ' + tok;
   } catch (e) {}
   if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
@@ -1034,8 +1055,14 @@ function initials(name, email) {
 let CURRENT_USER = null;
 
 async function boot() {
-  const me = await authedFetch('/api/portal/auth/me');
+  let me = await authedFetch('/api/portal/auth/me');
+  // Access token expired but the 30-day refresh token may still be valid →
+  // silently refresh once and retry before bouncing to the login page.
+  if (me.status === 401 && await ivTryRefresh()) {
+    me = await authedFetch('/api/portal/auth/me');
+  }
   if (!me.ok) {
+    ivClearTokens();
     location.replace('login.html?return=' + encodeURIComponent('account.html'));
     return;
   }
@@ -1045,6 +1072,8 @@ async function boot() {
 }
 
 function paintUser(u) {
+  // Remember this account for the homepage "Welcome back" modal (survives sign-out).
+  try { localStorage.setItem('iv_portal_last_account', JSON.stringify({ name: u.name || '', email: u.email })); } catch (e) {}
   const display = u.name || u.email.split('@')[0];
   $('userName').textContent = display;
   $('userAvatar').textContent = initials(u.name, u.email);
@@ -1323,7 +1352,7 @@ async function saveProfile(ev) {
 
 async function signOut() {
   try { await authedFetch('/api/portal/auth/logout', { method: 'POST' }); } catch (e) {}
-  try { sessionStorage.removeItem('iv_portal_access'); } catch (e) {}
+  ivClearTokens();
   location.href = 'index.html';
 }
 
@@ -1432,7 +1461,7 @@ async function deleteAccount(ev) {
       const d = await r.json().catch(() => ({}));
       throw new Error(d.detail || 'Delete failed');
     }
-    try { sessionStorage.removeItem('iv_portal_access'); } catch(e) {}
+    ivClearTokens();
     alert('delAlert', 'Account deleted. Redirecting…', 'success');
     setTimeout(() => { location.href = 'index.html'; }, 1200);
   } catch (err) {
@@ -1483,7 +1512,7 @@ window.revokeAll = revokeAll;
       );
       if (!yes) return;
       try { await authedFetch('/api/portal/auth/logout', { method: 'POST' }); } catch(e) {}
-      try { sessionStorage.removeItem('iv_portal_access'); } catch(e) {}
+      ivClearTokens();
       location.href = 'login.html?return=' + encodeURIComponent('admin.html');
     });
   }
