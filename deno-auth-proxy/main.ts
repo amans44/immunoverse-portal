@@ -1,18 +1,14 @@
 // ImmunoVerse portal — auth reverse proxy (Deno Deploy)
-// =============================================================================
-// 4th-tier fallback in the portal's auth endpoint chain (IV_AUTH_BASES):
-//   Cloud Run run.app  ->  auth.immuno-verse.com  ->  auth.immunoverse-chat.com
-//   ->  THIS proxy (immunoverse-auth.amans44.deno.net)
-// Only hit if all three above are unreachable (essentially never), but deno.net
-// stays reachable on networks that DNS-sinkhole immunoverse-chat.com (NYU).
 //
-// SECURITY: fixed UPSTREAM + fixed /api/portal/ prefix + portal-only CORS, so it
-// is NOT an open relay. Auth carries via the Authorization: Bearer header (and
-// the /refresh body token), so no cookie rewriting is needed.
+// 4th-tier fallback in the portal auth chain (IV_AUTH_BASES). Only hit if the
+// run.app + custom-domain bases are all unreachable; deno.net stays reachable
+// on networks that DNS-sinkhole immunoverse-chat.com (e.g. NYU).
 //
-// NOTE: keep every line short — this file is meant to be pasted into a Deno
-// Deploy Playground, and long lines can get broken on paste.
-// =============================================================================
+// SECURITY: fixed UPSTREAM + fixed /api/portal/ prefix + portal-only CORS, so
+// it is NOT an open relay. Auth carries via the Bearer header + /refresh body
+// token, so no cookie rewriting is needed.
+//
+// Keep every line short — this is pasted into a Deno Deploy Playground.
 
 const UPSTREAM =
   "https://auth-service-739605637035.us-central1.run.app";
