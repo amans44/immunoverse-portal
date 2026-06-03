@@ -190,7 +190,13 @@ admin console) is served by a **separate backend**, not by these static pages.
   Run's own URL, not blocked by NYU, no DNS needed) →
   **`https://auth.immuno-verse.com`** (optional same-site host, needs a DNS record
   on the portal domain) → **`https://auth.immunoverse-chat.com`** (legacy fallback,
-  sinkholed at NYU).
+  sinkholed at NYU) → **`https://immunoverse-auth.deno.dev`** (Deno Deploy reverse
+  proxy, last-resort backstop — `deno.dev` stays reachable on networks that block
+  the custom domains). The Deno proxy source is version-controlled at
+  `deno-auth-proxy/main.ts` (fixed upstream + `/api/portal/` prefix + portal-only
+  CORS, so it is NOT an open relay — unlike the image proxy whose source lives only
+  in a dashboard). Auth carries across any base via the `Authorization: Bearer`
+  header (+ `/refresh` body token), so cookie rewriting isn't needed for the proxy.
   `ivAuthFetch(path, opts)` tries each base in order; a network/DNS failure on one
   (exactly what NYU's DNS-sinkhole of `immunoverse-chat.com` produces) falls
   through to the next, while any HTTP response counts as "reached". The winning
@@ -373,7 +379,12 @@ is published. `auth.immuno-verse.com` (needs a DNS record from the domain owner)
 stays in the chain as an optional nicer same-site host; `auth.immunoverse-chat.com`
 is the legacy last resort. CORS already allows the `immuno-verse.com` origin
 regardless of which auth host serves, and cross-site cookies (SameSite=none) +
-the localStorage bearer token authenticate across hosts.
+the localStorage bearer token authenticate across hosts. Also added a **4th-tier
+Deno Deploy reverse proxy** (`https://immunoverse-auth.deno.dev`) as a
+guaranteed-reachable backstop; its source is version-controlled at
+`deno-auth-proxy/main.ts` (deploy via `deno-auth-proxy/README.md`). Requires a
+one-time `deployctl deploy --project=immunoverse-auth` to go live; until then the
+4th entry is just a dead probe that's never reached in practice.
 
 
 **Why:** NYU's network (Palo Alto firewall, DNS Security) **DNS-sinkholes
