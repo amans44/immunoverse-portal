@@ -748,6 +748,7 @@ async function loadUsers() {
             ${u.previously_deleted ? `<span class="tag tag-pending" title="This email had a previously-deleted account on file">↺ returning</span>` : ''}
           </div>
           <div class="email-mono">${esc(u.email)}</div>
+          ${u.reason ? `<div class="reason-cell" style="margin-top:4px;" title="Reason the user gave at sign-up">“${esc(u.reason)}”</div>` : ''}
         </td>
         <td><span class="tag tag-${u.access_type === 'institutional' ? 'inst' : 'indiv'}">${u.access_type === 'institutional' ? 'academic' : 'non-academic'}</span></td>
         <td><span class="tag tag-${esc(u.status)}">${esc(u.status)}</span></td>

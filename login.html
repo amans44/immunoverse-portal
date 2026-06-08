@@ -530,6 +530,9 @@ select.input {
   margin-right: 14px;
 }
 .reason-counter.ok { color: var(--success); }
+/* Required-field marker. Hidden ones (conditional fields) use [hidden]. */
+.req { color: var(--danger, #e5484d); font-weight: 700; margin-left: 3px; }
+.req[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -629,22 +632,22 @@ select.input {
         <div id="emailHint" class="email-hint" style="display:none;"></div>
 
         <div class="field">
-          <label class="label" for="rg-name">Full name</label>
+          <label class="label" for="rg-name">Full name<span class="req">*</span></label>
           <input id="rg-name" class="input" name="name" type="text" autocomplete="name" placeholder="Dr. Sarah Jenkins" required />
         </div>
         <div class="field-row">
           <div>
-            <label class="label" for="rg-email"><span id="rg-emailLabel">Academic email</span></label>
+            <label class="label" for="rg-email"><span id="rg-emailLabel">Academic email</span><span class="req">*</span></label>
             <input id="rg-email" class="input" name="email" type="email" autocomplete="email" placeholder="s.jenkins@institute.edu" required />
           </div>
           <div>
-            <label class="label" for="rg-affiliation">Institution</label>
+            <label class="label" for="rg-affiliation">Institution<span class="req" id="reqAffil" hidden>*</span></label>
             <input id="rg-affiliation" class="input" name="affiliation" type="text" autocomplete="organization" placeholder="MSKCC" />
           </div>
         </div>
         <div class="field-row">
           <div>
-            <label class="label" for="rg-role">Research role</label>
+            <label class="label" for="rg-role">Research role<span class="req" id="reqRole" hidden>*</span></label>
             <select id="rg-role" class="input" name="research_role">
               <option value="">Select…</option>
               <option>Principal Investigator</option>
@@ -676,11 +679,11 @@ select.input {
         <div id="passwordBlock">
           <div class="field-row">
             <div>
-              <label class="label" for="rg-password">Password</label>
+              <label class="label" for="rg-password">Password<span class="req">*</span></label>
               <input id="rg-password" class="input" name="password" type="password" autocomplete="new-password" placeholder="At least 8 characters" minlength="8" />
             </div>
             <div>
-              <label class="label" for="rg-confirm">Confirm password</label>
+              <label class="label" for="rg-confirm">Confirm password<span class="req">*</span></label>
               <input id="rg-confirm" class="input" name="confirm_password" type="password" autocomplete="new-password" placeholder="Re-enter" minlength="8" />
             </div>
           </div>
@@ -690,7 +693,7 @@ select.input {
         <div id="reasonBlock" style="display:none;">
           <div class="field">
             <label class="label" for="rg-reason">
-              Reason for access
+              Reason for access<span class="req">*</span>
               <span id="reasonCounter" class="reason-counter">0 / 80 min</span>
             </label>
             <textarea id="rg-reason" class="input" rows="4" minlength="80"
@@ -833,6 +836,7 @@ function switchMode(mode) {
   $('registerForm').style.display = isSignin ? 'none' : '';
   $('tabSignin').classList.toggle('active', isSignin);
   $('tabCreate').classList.toggle('active', !isSignin);
+  if (!isSignin) syncRegisterRequirements();   // set required + asterisks up front
   $('formTitle').textContent = isSignin ? 'Sign in' : (SUB_TAB === 'individual' ? 'Request access' : 'Create account');
   $('formSub').textContent = isSignin
     ? 'Welcome back — your saved searches and viewed peptides are waiting.'
@@ -848,19 +852,38 @@ function switchMode(mode) {
 let SUB_TAB = 'institutional';
 const INST_REGEX = /\.(edu|gov)(\.[a-z]{2})?$|\.ac\.[a-z]{2}$|\.edu\.[a-z]{2}$|@(nyulangone|mskcc|broadinstitute|sanger|embl|nih|cancer|fredhutch|dana-farber|ludwigcancerresearch|wellcome|chuv|dtu|immunoverse-chat)\./i;
 
+// An academic-tab account with an UNRECOGNIZED domain will land 'pending' (an
+// admin reviews it) — that's when we require an affiliation + a written reason.
+// Recognized academics are auto-approved, so we keep their sign-up frictionless.
+function isReviewNeeded() {
+  const email = ($('rg-email').value || '').toLowerCase().trim();
+  return SUB_TAB === 'institutional' && email.includes('@') && !INST_REGEX.test(email);
+}
+// Single source of truth for which register fields are shown + required. Called
+// on tab switch and on every email keystroke (domain decides review-needed).
+function syncRegisterRequirements() {
+  const isInst = SUB_TAB === 'institutional';
+  const review = isReviewNeeded();
+  const needReason = !isInst || review;   // non-academic, or pending-academic
+  const needAffil  = !isInst || review;
+  $('passwordBlock').style.display = isInst ? '' : 'none';
+  $('rg-password').required = isInst;
+  $('rg-confirm').required  = isInst;
+  $('reasonBlock').style.display = needReason ? '' : 'none';
+  $('rg-reason').required = needReason;
+  $('rg-affiliation').required = needAffil;
+  $('rg-role').required = !isInst;
+  const tog = (id, on) => { const e = $(id); if (e) e.hidden = !on; };
+  tog('reqAffil', needAffil);
+  tog('reqRole', !isInst);
+}
+
 function pickSubTab(which) {
   SUB_TAB = which;
   const isInst = which === 'institutional';
   $('subTabInst').classList.toggle('active', isInst);
   $('subTabIndiv').classList.toggle('active', !isInst);
-  // Toggle which conditional blocks are visible + required.
-  $('passwordBlock').style.display = isInst ? '' : 'none';
-  $('reasonBlock').style.display = isInst ? 'none' : '';
-  $('rg-password').required = isInst;
-  $('rg-confirm').required = isInst;
-  $('rg-reason').required = !isInst;
-  $('rg-affiliation').required = !isInst;
-  $('rg-role').required = !isInst;
+  syncRegisterRequirements();   // show/require the right conditional blocks
   $('rg-emailLabel').textContent = isInst ? 'Academic email' : 'Email';
   $('rg-email').placeholder = isInst ? 's.jenkins@institute.edu' : 'you@example.com';
   $('registerSubmit').textContent = isInst ? 'Create account' : 'Submit access request';
@@ -881,6 +904,8 @@ function updateReasonCounter(el) {
 }
 
 function refreshEmailHint() {
+  // The required-field set depends on the typed domain, so re-sync every time.
+  syncRegisterRequirements();
   const hint = $('emailHint');
   const email = ($('rg-email').value || '').toLowerCase().trim();
   if (!email || !email.includes('@')) { hint.style.display = 'none'; return; }
@@ -888,7 +913,7 @@ function refreshEmailHint() {
   hint.style.display = '';
   if (SUB_TAB === 'institutional' && !isInst) {
     hint.className = 'email-hint warn';
-    hint.innerHTML = `<span class="h-icon">⚠</span><div><b>${esc(email.split('@')[1])}</b> doesn't look like a recognized academic domain. You can <a href="#" onclick="pickSubTab('individual');return false;" style="color:inherit;text-decoration:underline;">switch to non-academic access</a> (manual review), or continue and we'll keep the account pending until an admin reviews it.</div>`;
+    hint.innerHTML = `<span class="h-icon">⚠</span><div><b>${esc(email.split('@')[1])}</b> doesn't look like a recognized academic domain, so your account will be held <b>pending</b> until an admin reviews it — please fill in your institution and a short reason below. Or <a href="#" onclick="pickSubTab('individual');return false;" style="color:inherit;text-decoration:underline;">switch to non-academic access</a>.</div>`;
   } else if (SUB_TAB === 'institutional' && isInst) {
     hint.className = 'email-hint';
     hint.innerHTML = `<span class="h-icon">✓</span><div><b>${esc(email.split('@')[1])}</b> recognized as academic — your account will be active right after sign-up.</div>`;
@@ -981,6 +1006,19 @@ async function handleRegister(ev) {
     showAlert('Passwords do not match.', 'error');
     return false;
   }
+  // Unrecognized academic domain → the account will be held pending, so require
+  // the same affiliation + justification the backend now enforces for review.
+  const reviewReason = ($('rg-reason').value || '').trim();
+  if (isReviewNeeded()) {
+    if (!$('rg-affiliation').value.trim()) {
+      showAlert('Institution is required while your account awaits review.', 'error');
+      return false;
+    }
+    if (reviewReason.length < 80) {
+      showAlert('Please describe your use case in at least 80 characters.', 'error');
+      return false;
+    }
+  }
   setLoading('registerSubmit', 'Creating account…');
   try {
     const res = await ivAuthFetch('/api/portal/auth/register', {
@@ -993,6 +1031,7 @@ async function handleRegister(ev) {
         affiliation: $('rg-affiliation').value.trim() || null,
         research_role: $('rg-role').value || null,
         primary_interest: $('rg-interest').value || null,
+        reason: reviewReason || null,
         password: $('rg-password').value,
         confirm_password: $('rg-confirm').value,
       }),

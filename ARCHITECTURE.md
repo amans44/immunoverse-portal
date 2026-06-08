@@ -283,6 +283,21 @@ admin console) is served by a **separate backend**, not by these static pages.
   `auth/domain_check.py`) auto-activate on register; individuals submit an
   access request that an admin approves. Admin allow-list via
   `PORTAL_ADMIN_EMAILS` env + `portal_admin_allow_list` collection.
+  - **Statuses:** `pending` (can't sign in — *"awaiting approval"*; admin
+    **Activate**s them), `active` (full access), `suspended` (can't sign in;
+    admin **Reinstate**s). Pending/suspended users see only the anon level
+    (NBL) until activated. Required fields in the `login.html` register form are
+    marked with a red `*`.
+  - **Review-needed gets a mandatory justification (2026-06-08):** when a
+    registration will land `pending` — a non-academic, OR an academic with an
+    **unrecognized** domain (`INST_REGEX` client-side / `check_email_domain`
+    server-side) — the form requires an **affiliation + an ≥80-char reason**, and
+    `routes.register` enforces the same (400 otherwise). Recognized academics stay
+    instant/frictionless (no reason asked). The reason is stored on the
+    `PortalUser` (`reason` field) and shown inline in the **admin Users** table
+    (`admin.html`) so an admin sees *why* someone asked — including after approval.
+    Approved access requests also remain viewable via the Access-requests tab's
+    **"Approved"** filter.
 - **Password flows:**
   - *Forgot password* — `POST /api/portal/auth/reset-password` (emails a
     one-time link) → user lands on `reset.html?token=…` → `POST
@@ -390,6 +405,27 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-08 — Require affiliation + a justification for review-needed sign-ups; show it in admin
+**Why:** Pending users (esp. academics with unrecognized domains, who went through
+the "Academics" tab) arrived with no message and often no affiliation, so admins had
+nothing to review. Keep that context — and keep it visible after approval.
+**What:**
+- `login.html`: required fields now carry a red `*`. New `syncRegisterRequirements()`
+  + `isReviewNeeded()` centralize which fields are shown/required. On the Academics
+  tab, an **unrecognized email domain** (account will be pending) now reveals +
+  requires the **affiliation** and a **≥80-char reason**; recognized academics stay
+  frictionless. `handleRegister` validates this and sends `reason` to `/register`.
+- `admin.html`: the Users table shows the user's reason inline under their
+  name/email (`reason-cell`), so the "why" is visible for every user, even after
+  they're activated. (Approved access requests already persist under the Access-
+  requests "Approved" filter.)
+- Backend (sibling `portal_auth`, LOCAL/unpushed): `PortalUser.reason`,
+  `PortalRegisterRequest`/`PortalUserOut.reason`, and `routes.register` enforces
+  affiliation + ≥80-char reason whenever the account will be pending. See that
+  repo's `CHANGELOG.md`. Server-side enforcement goes live on the next auth deploy.
+**Files:** `login.html`, `admin.html`, `ARCHITECTURE.md`. **Commit:** (pending —
+batches with the auth-backend deploy; client-side validation works immediately).
 
 ### 2026-06-08 — Turn on cancer locking (NBL free), contextual gate, resume-after-login
 **Why:** Lock the 20 non-NBL cancers behind sign-in, but make it feel non-spammy.
