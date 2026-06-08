@@ -229,15 +229,14 @@ admin console) is served by a **separate backend**, not by these static pages.
   signed out. `index.html` exposes `window.ivAuthSession` ({getToken,setTokens,
   clear,refresh}). Sign-out clears both tokens (`ivClearTokens`) but **keeps** the
   remembered account.
-- **Access gating ("locked cancers") — BUILT BUT DISABLED via feature flag.**
-  `window.IV_GATING_ENABLED = false` in `index.html` (top of the ACCESS GATING
-  block). While false, `isLocked()` always returns false (everything open), the
-  homepage Welcome/sign-in modal does **not** auto-show, and `ivApplyLockState()`
-  is a no-op — i.e. the public site behaves exactly as it did before gating. The
-  decision (2026-06-03): no public locking until the login system is hardened.
-  **To re-enable:** set `IV_GATING_ENABLED = true` (one line). When ON: signed-out
-  visitors see **NBL only** (`ANON_UNLOCKED = {'NBL'}`); the other 20 cancers are
-  locked behind sign-in.
+- **Access gating ("locked cancers") — ENABLED (2026-06-08).**
+  `window.IV_GATING_ENABLED = true` in `index.html` (top of the ACCESS GATING
+  block). Signed-out visitors see **NBL only** (`ANON_UNLOCKED = {'NBL'}`); the
+  other 20 cancers are locked behind sign-in. The gate is **contextual** — it
+  opens only when an anon visitor reaches for locked data (clicks a locked
+  cancer/peptide/download, or searches one), never as an on-load interstitial.
+  **Kill switch:** set `IV_GATING_ENABLED = false` (one line) to reopen everything
+  instantly if a login outage would otherwise lock people out of 20/21 cancers.
   `isLocked(code) = GATING_ENABLED && !signedIn && !ANON_UNLOCKED.has(code)`.
   `__IV_SIGNED_IN` is
   seeded synchronously from token presence and corrected by `/auth/me`
@@ -253,6 +252,15 @@ admin console) is served by a **separate backend**, not by these static pages.
   never fetched client-side. **Bypass:** `IV_BYPASS_LOCK` is true under
   `/reviewers/`, so the (regenerated) reviewers mirror stays fully open and
   un-gated. To change the free set, edit `ANON_UNLOCKED`.
+  **Resume-after-login:** `openAuthGate(intended)` stashes the visitor's intended
+  destination in `window.__IV_GATE_RETURN`; `gateReturnUrl({cancer,pep,gene,hla,cls,
+  compare})` builds a self-contained `index.html#explorer?…` deep link (same scheme
+  as `pushUrlState`). The gate modal's Log in / Create links are refreshed on every
+  open from that value, so `login.html?return=…` lands the user **exactly where they
+  were headed** (the cancer/peptide they clicked) instead of `account.html`. Bare
+  `openAuthGate()` (deep-link, compare, popstate) falls back to the current URL,
+  which already IS the target. Gene/HLA/class search hits gate only when
+  `applyFilters()` returns 0 for an anon (match exists only in locked cancers).
 - **"Welcome" / sign-in-gate modal (homepage):** one modal (`#ivWbBackdrop` in
   `index.html`) with two faces, chosen by `ivFillAuthModal()`:
   - *Returning* (a remembered account exists in `localStorage`
@@ -262,15 +270,14 @@ admin console) is served by a **separate backend**, not by these static pages.
     "Log in to another account"; "Create account".
   - *First-time* (no remembered account) → **"Welcome to ImmunoVerse"** + "Log in"
     / "Create account" (no card).
-  `maybeShowWelcomeBack()` auto-shows it on signed-out homepage load, controlled
-  by its OWN flag **`window.IV_WELCOME_MODAL_ENABLED` (currently TRUE)** — NOT by
-  `IV_GATING_ENABLED`. So with locking OFF but the modal ON, anonymous visitors
-  get a **soft, dismissible sign-up nudge** while every cancer stays open (the
-  first-timer copy is benefits-based — "save searches and track viewed peptides
-  — or keep exploring" — not "to explore", since nothing is locked). Dismissible
-  via ✕ / backdrop / Esc; `sessionStorage iv_wb_dismissed` stops re-nagging per
-  tab; suppressed under `/reviewers/`. Set `IV_WELCOME_MODAL_ENABLED = false` to
-  remove the popup. `window.ivOpenAuthGate()` still opens it on demand.
+  `maybeShowWelcomeBack()` would auto-show it on signed-out homepage load, but its
+  flag **`window.IV_WELCOME_MODAL_ENABLED` is now FALSE (2026-06-08)** — the on-load
+  auto-popup read as spammy, so we nudge sign-up only at the moment a visitor
+  reaches for locked data. The SAME modal is still opened on demand by the gate
+  (`window.ivOpenAuthGate()`), so first-time/returning faces, the account card, and
+  the resume links all still apply — just contextually, never as an interstitial.
+  Dismissible via ✕ / backdrop / Esc; suppressed under `/reviewers/`. Flip
+  `IV_WELCOME_MODAL_ENABLED = true` to bring back the soft on-load nudge.
   "Create account" deep-links to `login.html#create`.
 - **Access model:** institutional emails (`.edu`/`.ac.*`/partner list in
   `auth/domain_check.py`) auto-activate on register; individuals submit an
@@ -383,6 +390,31 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-08 — Turn on cancer locking (NBL free), contextual gate, resume-after-login
+**Why:** Lock the 20 non-NBL cancers behind sign-in, but make it feel non-spammy.
+The on-load welcome interstitial annoyed visitors; instead the sign-in prompt
+should appear only when someone actually reaches for locked data — and after they
+sign in they should land back where they were, not on their account page.
+**What (`index.html`):**
+- `IV_GATING_ENABLED = true` (was `false`) → signed-out visitors get NBL only;
+  `loadAll()` still fetches only unlocked cancers so locked data never hits the
+  client. `IV_GATING_ENABLED = false` remains the one-line kill switch.
+- `IV_WELCOME_MODAL_ENABLED = false` (was `true`) → no on-load auto-popup; the
+  same modal is now used only on demand by the contextual gate.
+- **Resume-after-login:** new `gateReturnUrl({cancer,pep,gene,hla,cls,compare})`
+  builds an `index.html#explorer?…` deep link; `openAuthGate(intended)` stashes it
+  in `window.__IV_GATE_RETURN`; the gate modal's Log in / Create links + the
+  remembered-account button are refreshed on every open so `login.html?return=…`
+  lands the user exactly where they were headed (`login.html` already honored
+  `return`, defaulting to `account.html`).
+- Call sites now pass the intended target: `selectCancer`, the `fCancer` change
+  handler, the downloads grid, and global-search peptide/cancer hits. Gene/HLA/
+  class search hits gate only when `applyFilters()` (now returns its filtered row
+  count) yields 0 for an anon — i.e. the match lives only in locked cancers. Bare
+  `openAuthGate()` (deep-link/compare/popstate) still defaults to the current URL.
+**Files:** `index.html`, `ARCHITECTURE.md`. **Note:** `/reviewers/` mirror stays
+ungated (`IV_BYPASS_LOCK`). Not yet committed/pushed.
 
 ### 2026-06-03 — Freeze /reviewers/ + keep the Welcome popup as a soft sign-up nudge
 **Why:** (1) `/reviewers/` must stay independent + login-free for paper reviewers,

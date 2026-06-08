@@ -4251,15 +4251,15 @@ function geneSearchTerms(input) {
 // ============ ACCESS GATING ============
 // FEATURE FLAG — gating is currently OFF. When ON, anonymous / signed-out
 // visitors get NBL only (ANON_UNLOCKED) and the other 20 cancers are locked
-// behind sign-in, with the homepage Welcome/sign-in modal. It is disabled for
-// now (no public locking until the login system is hardened). Everything below
-// — and the Welcome modal auto-show — is dormant while this is false. Flip to
-// true (here AND set window.IV_GATING_ENABLED below) to re-enable in one place.
-window.IV_GATING_ENABLED = false;
-// Independent of gating: show the dismissible "Welcome / create an account" popup
-// to anonymous homepage visitors as a SOFT nudge to sign up — cancers stay fully
-// open, nothing is locked. Set false to remove the popup entirely.
-window.IV_WELCOME_MODAL_ENABLED = true;
+// behind sign-in. The gate is CONTEXTUAL: it opens only when an anon visitor
+// clicks a locked cancer / peptide / download (or searches one) — never as an
+// on-load interstitial. After they sign in they resume exactly where they were
+// headed (see openAuthGate/gateReturnUrl below).
+window.IV_GATING_ENABLED = true;
+// The old on-load "Welcome / create an account" auto-popup felt spammy, so it's
+// OFF — we nudge sign-up only at the moment a visitor reaches for locked data.
+// The same modal is still used on demand by the gate (window.ivOpenAuthGate).
+window.IV_WELCOME_MODAL_ENABLED = false;
 // `__IV_SIGNED_IN` is seeded optimistically from token presence (no network) and
 // corrected by the auth boot script's /auth/me result, which calls
 // ivApplyLockState() if it flipped. Clicking anything locked opens the sign-in
@@ -4273,7 +4273,34 @@ function isLocked(code) {
   if (!window.IV_GATING_ENABLED) return false;   // gating disabled → everything open
   return !IV_BYPASS_LOCK && !window.__IV_SIGNED_IN && !ANON_UNLOCKED.has(code);
 }
-function openAuthGate() { if (typeof window.ivOpenAuthGate === 'function') window.ivOpenAuthGate(); else location.href = 'login.html?return=' + encodeURIComponent(location.pathname + location.hash); }
+// True when an anonymous visitor is subject to locking right now (gating on,
+// not signed in, not the always-open /reviewers/ mirror).
+function anonGatingActive() { return !!window.IV_GATING_ENABLED && !IV_BYPASS_LOCK && !window.__IV_SIGNED_IN; }
+// Build a self-contained explorer deep link so that, after a gated sign-in, the
+// visitor lands EXACTLY where they were headed (the cancer/peptide/gene they
+// reached for) instead of on their account page. Mirrors pushUrlState()'s
+// `#explorer?…` scheme that loadAll()/loadUrlState() know how to restore.
+function gateReturnUrl(o) {
+  o = o || {};
+  const p = new URLSearchParams();
+  if (o.cancer) p.set('cancer', o.cancer);
+  if (o.pep)    { p.set('open', o.pep); if (o.cancer) p.set('cancer', o.cancer); }
+  if (o.gene)   p.set('gene', o.gene);
+  if (o.hla)    p.set('hla', o.hla);
+  if (o.cls)    p.set('class', o.cls);
+  if (o.compare) p.set('compare', o.compare);
+  const qs = p.toString();
+  return qs ? 'index.html#explorer?' + qs : (location.pathname + location.hash);
+}
+// Open the contextual sign-in gate. `intended` (optional) = where to send the
+// visitor AFTER they sign in; pass gateReturnUrl({...}) from a locked action so
+// the flow resumes seamlessly. With no arg we fall back to the current URL —
+// correct for crafted deep links, where location.hash already IS the target.
+function openAuthGate(intended) {
+  window.__IV_GATE_RETURN = intended || (location.pathname + location.hash);
+  if (typeof window.ivOpenAuthGate === 'function') window.ivOpenAuthGate();
+  else location.href = 'login.html?return=' + encodeURIComponent(window.__IV_GATE_RETURN);
+}
 // Re-render every access-sensitive surface + reload the explorer for the new
 // access level. Called when /auth/me resolves to a different signed-in state.
 window.ivApplyLockState = function () {
@@ -4518,7 +4545,7 @@ function renderDownloadGrid(summary) {
   el.innerHTML = summary.cancers.map(c => {
     const meta = `<div><b>${c.code}</b><div style="font-size:11px;color:var(--text-2);margin-top:1px;">${c.name}</div></div>`;
     if (isLocked(c.code)) {
-      return `<a class="dl-locked" href="javascript:void(0)" onclick="openAuthGate()" title="Sign in to download">
+      return `<a class="dl-locked" href="javascript:void(0)" onclick="openAuthGate(gateReturnUrl({cancer:'${c.code}'}))" title="Sign in to download">
         ${meta}<span class="sz">🔒</span>
       </a>`;
     }
@@ -4572,7 +4599,7 @@ async function loadAll() {
 }
 
 async function selectCancer(code) {
-  if (isLocked(code)) { openAuthGate(); return; }   // locked → prompt sign-in
+  if (isLocked(code)) { openAuthGate(gateReturnUrl({ cancer: code })); return; }   // locked → gate, resume into this cancer
   STATE.cancer = code;
   document.getElementById('fCancer').value = code;
   document.getElementById('expTitle').textContent = code + ' — ' + (CANCERS.find(c => c.code===code)?.name || '');
@@ -4809,7 +4836,12 @@ async function navigateSearchResult(action, data) {
   // must not reveal locked data — prompt sign-in instead. Gene/HLA/class hits
   // filter the explorer, which for signed-out visitors only holds NBL anyway.
   if ((action === 'peptide' || action === 'cancer') && data.code && isLocked(data.code)) {
-    close(); openAuthGate(); return;
+    close();
+    // Resume straight into the exact peptide drawer / cancer they clicked.
+    openAuthGate(action === 'peptide'
+      ? gateReturnUrl({ cancer: data.code, pep: data.pep })
+      : gateReturnUrl({ cancer: data.code }));
+    return;
   }
   const clearCancerScopedFilters = () => {
     STATE.cancer = ''; document.getElementById('fCancer').value = '';
@@ -4839,19 +4871,22 @@ async function navigateSearchResult(action, data) {
     clearCancerScopedFilters();
     STATE.gene = data.gene; document.getElementById('fGene').value = data.gene;
     close();
-    applyFilters();
+    // Cross-cancer filter. For an anon visitor only NBL is loaded, so zero
+    // matches means this gene lives only in locked cancers → gate (resume into
+    // the gene filter once signed in). NBL matches just show, no gate.
+    if (applyFilters() === 0 && anonGatingActive()) { openAuthGate(gateReturnUrl({ gene: data.gene })); return; }
     document.getElementById('explorer').scrollIntoView({behavior:'smooth'});
   } else if (action === 'hla') {
     clearCancerScopedFilters();
     STATE.hla = data.allele; document.getElementById('fHla').value = data.allele;
     close();
-    applyFilters();
+    if (applyFilters() === 0 && anonGatingActive()) { openAuthGate(gateReturnUrl({ hla: data.allele })); return; }
     document.getElementById('explorer').scrollIntoView({behavior:'smooth'});
   } else if (action === 'class') {
     clearCancerScopedFilters();
     STATE.classFilter = new Set([data.code]);
     close();
-    applyFilters();
+    if (applyFilters() === 0 && anonGatingActive()) { openAuthGate(gateReturnUrl({ cls: data.code })); return; }
     document.getElementById('explorer').scrollIntoView({behavior:'smooth'});
   }
 }
@@ -7121,6 +7156,8 @@ function applyFilters() {
 
   // Update CSV download link
   updateCsvLink(filt);
+  return tot;   // # rows visible after filtering — lets search-hit gating tell
+                // when a gene/HLA/class match exists only in locked cancers.
 }
 
 function windowBadge(tumor, normal) {
@@ -8364,7 +8401,7 @@ document.addEventListener('keydown', e => {
 // ============ EVENT BINDING ============
 document.getElementById('fCancer').addEventListener('change', e => {
   const v = e.target.value;
-  if (v && isLocked(v)) { e.target.value = STATE.cancer || ''; openAuthGate(); return; }  // belt-and-braces (options are disabled)
+  if (v && isLocked(v)) { e.target.value = STATE.cancer || ''; openAuthGate(gateReturnUrl({ cancer: v })); return; }  // belt-and-braces (options are disabled)
   STATE.cancer = v; STATE.page = 1; applyFilters();
 });
 document.getElementById('fPep').addEventListener('input', e => { STATE.pep = e.target.value; STATE.page = 1; applyFilters(); });
@@ -8889,10 +8926,12 @@ window.addEventListener('popstate', async () => {
       if (ev.key === 'Escape' && bd && !bd.hidden) ivCloseWelcomeBack();
     });
     // Continue with the remembered account → login with the email prefilled.
+    // Read the return target live (set by openAuthGate) so it points at wherever
+    // the visitor was just headed, not a stale value from page load.
     if (acctBtn) acctBtn.addEventListener('click', function () {
       var a = getRememberedAccount();
       var email = a ? a.email : '';
-      location.href = 'login.html?email=' + encodeURIComponent(email) + '&return=' + encodeURIComponent(here);
+      location.href = 'login.html?email=' + encodeURIComponent(email) + '&return=' + encodeURIComponent(_ivGateReturn());
     });
     // ✕ on the card → forget the remembered account (don't trigger the card click).
     if (forget) {
@@ -8904,14 +8943,24 @@ window.addEventListener('popstate', async () => {
       forget.addEventListener('click', doForget);
       forget.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') doForget(ev); });
     }
-    if (other)  other.setAttribute('href',  'login.html?return=' + encodeURIComponent(here));
-    if (create) create.setAttribute('href', 'login.html?return=' + encodeURIComponent(here) + '#create');
+  }
+  // Where the gate sends the visitor after sign-in. openAuthGate() stashes the
+  // intended deep link in __IV_GATE_RETURN; fall back to the current URL.
+  function _ivGateReturn() {
+    return window.__IV_GATE_RETURN || (location.pathname + location.hash);
   }
   function _ivShowAuthModal() {
     var bd = document.getElementById('ivWbBackdrop');
     if (!bd) return;
     ivFillAuthModal();
     _ivWireWelcomeBack();
+    // Refresh the Log in / Create links on EVERY open so the post-login return
+    // resolves to wherever the visitor was just headed (set by openAuthGate).
+    var ret    = _ivGateReturn();
+    var other  = document.getElementById('ivWbLoginOther');
+    var create = document.getElementById('ivWbCreate');
+    if (other)  other.setAttribute('href',  'login.html?return=' + encodeURIComponent(ret));
+    if (create) create.setAttribute('href', 'login.html?return=' + encodeURIComponent(ret) + '#create');
     bd.hidden = false;
     document.body.style.overflow = 'hidden';
   }
