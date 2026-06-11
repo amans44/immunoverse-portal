@@ -3,8 +3,8 @@ window.IMMUNOVERSE_HUB_INDEX = {
   "source_url": "https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/ImmunoVerse_Hub/",
   "totals": {
     "cancers": 33,
-    "samples": 4276,
-    "cohorts": 147
+    "samples": 4343,
+    "cohorts": 150
   },
   "cancers": [
     {
@@ -221,25 +221,27 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "CML",
       "display": "Chronic Myelogenous Leukemia",
       "category": "Leukemia",
-      "sample_count": 96,
-      "sample_included": 96,
-      "cohort_count": 1,
-      "biology_count": 21,
-      "hla_count": 36,
+      "sample_count": 111,
+      "sample_included": 111,
+      "cohort_count": 3,
+      "biology_count": 26,
+      "hla_count": 40,
       "studies": [
-        "PXD010450"
+        "MSV000086567",
+        "PXD010450",
+        "PXD076608"
       ],
       "biology": [
+        "BV173",
+        "BV173_PP2",
+        "BV173_SP600125",
+        "BV173_imatinib",
+        "K562_A11",
         "UPN01",
         "UPN02",
         "UPN03",
         "UPN04",
-        "UPN05",
-        "UPN06",
-        "UPN07",
-        "UPN08",
-        "UPN09",
-        "UPN10"
+        "UPN05"
       ],
       "files": {
         "metadata": "data/raw/CML_metadata.txt",
@@ -250,11 +252,11 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "COAD",
       "display": "Colon Adenocarcinoma",
       "category": "Solid",
-      "sample_count": 533,
-      "sample_included": 427,
-      "cohort_count": 17,
-      "biology_count": 93,
-      "hla_count": 83,
+      "sample_count": 585,
+      "sample_included": 479,
+      "cohort_count": 18,
+      "biology_count": 119,
+      "hla_count": 92,
       "studies": [
         "MSV000087927",
         "PXD000394",
@@ -272,19 +274,20 @@ window.IMMUNOVERSE_HUB_INDEX = {
         "phase2_PXD026573_JPST001211",
         "phase2_PXD033351",
         "phase2_PXD037587",
-        "phase2_PXD038165"
+        "phase2_PXD038165",
+        "phase2_PXD071022"
       ],
       "biology": [
         "103T_KRAS_G12V",
+        "1055698F_KRAS_G12V_MSI-H",
         "107T_KRAS_G12D",
+        "108937A1_BRAF_V600E_MSS",
+        "111209A1_KRAS_G12V_MSI-H",
+        "1120113F_PIK3CA_Q546K_TP53_R273H_MSS",
         "112T_KRAS_G12D",
-        "119T_KRAS_G13D",
-        "172T_KRAS_G12V",
-        "229T",
-        "241T",
-        "256T_KRAS_G12D",
-        "257T_KRAS_G12V",
-        "258T_KRAS_G12D"
+        "1136279F_KRAS_G12D_MSS",
+        "1146020F_H1047R_MSS",
+        "1160100F_KRAS_G12D_MSS"
       ],
       "files": {
         "metadata": "data/raw/COAD_metadata.txt",

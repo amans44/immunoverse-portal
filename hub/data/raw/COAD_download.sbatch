@@ -627,3 +627,61 @@ ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2019/03/PXD009602/UPN_9_HLA-class_I
 )
 
 for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./phase2_29789417 {}"
+
+# phase2_PXD071022
+declare -a samples=(
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1055698F_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1055698F_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/108937A1_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/108937A1_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/111209A1_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/111209A1_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1120113F_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1120113F_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1136279F_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1136279F_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1146020F_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1146020F_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1160100F_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1160100F_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1189347F_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1189347F_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1284636F_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1284636F_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1306257F_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1306257F_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1319540F_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/1319540F_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/2PXQ9AG6_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/2PXQ9AG6_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/30774B1_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/30774B1_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/43882A1_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/43882A1_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/4ZFUNAIU_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/4ZFUNAIU_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/8AOM8AGA_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/8AOM8AGA_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/95471A1_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/95471A1_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/B2CV7Z22_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/B2CV7Z22_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/CRGG6A53_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/CRGG6A53_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/EFLFZA9R_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/EFLFZA9R_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/F93JCAVD_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/F93JCAVD_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/G5TZDA6H_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/G5TZDA6H_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/ILS39235FT1_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/ILS39235FT1_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/RFY7HAL3_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/RFY7HAL3_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/UK9MAZ21_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/UK9MAZ21_CRC_200323_2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/YU1YVAJU_CRC_200323_1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/YU1YVAJU_CRC_200323_2.raw
+)
+
+for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./phase2_PXD071022 {}"
