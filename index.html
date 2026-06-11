@@ -2787,7 +2787,8 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
    below resets this and gives the search its own full-width row. */
 .search-wrap {
   position: relative;
-  flex: 0 0 220px;
+  flex: 0 1 200px;     /* shrinkable: starts at 200px, can shrink so it never pushes the CTA off-screen */
+  min-width: 130px;
   height: 38px;
 }
 .search-input-row {
@@ -3031,21 +3032,23 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   nav.topnav .inner { gap: 12px; padding: 12px 22px; }
   .live-stat { display: none; }                  /* admin-only decorative pill */
   nav .links a { padding: 7px 9px; font-size: 12.5px; }
+  .iv-inhouse-pill .ihp-text { display: none; }   /* in-house pill → lock icon only */
+  .iv-inhouse-pill { padding: 7px 9px; }
 }
 @media (max-width: 1399px) {
   .brand .sub { display: none; }                 /* drop the "Atlas" subtitle */
+  .brand { font-size: 15px; gap: 8px; }          /* compact the logo+wordmark */
+  .brand .logo { width: 26px; height: 26px; }
   nav .links a { padding: 6px 8px; font-size: 12px; }
-  .iv-inhouse-pill .ihp-text { display: none; }   /* in-house pill → lock icon only */
-  .iv-inhouse-pill { padding: 7px 9px; }
   nav .cta { padding: 7px 13px; font-size: 12.5px; }
   .theme-toggle { width: 32px; height: 32px; }
   nav.topnav .inner { gap: 10px; }
 }
 
-/* ≤1280px: the 8 section links collapse into the hamburger dropdown. The search
+/* ≤1366px: the 8 section links collapse into the hamburger dropdown. The search
    box, in-house pill, account chip and CTA STAY in the bar, so the CTA is always
-   visible — on smaller screens the links live behind the ☰ menu. */
-@media (max-width: 1280px) {
+   visible — on laptops the links live behind the ☰ menu. */
+@media (max-width: 1366px) {
   .nav-toggle { display: block; }
   nav .links {
     display: none;
