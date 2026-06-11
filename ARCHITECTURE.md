@@ -458,6 +458,15 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-11 — Fix percentile heatmap tooltip: cells are normal samples, not peptides
+**Why:** Frank flagged that the interactive percentile figure's HLA×tissue heatmap
+tooltip read "N peptides", but each cell value is the number of **normal samples**
+(of that tissue) that carry that HLA — not a peptide count.
+**What:** One-line wording fix in `_ivBuildScifiFigure`'s heatmap cell `data-tip`:
+`${hla} × ${tissue} · ${v} normal sample(s) with this HLA`. Applies to every cancer
+(the renderer is shared). No data/structure change.
+**Files:** `index.html`. **Commit:** _portal_ — this commit.
+
 ### 2026-06-11 — Shared peptide page shows the full drawer data (not a stub)
 **Why:** A peptide-scoped share rendered only the header, a pill row, the per-HLA
 table and 2 figures — far less than the portal drawer shows for that peptide.

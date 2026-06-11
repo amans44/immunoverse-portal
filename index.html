@@ -6740,7 +6740,7 @@ function _ivPaintScifiFigure(wrap, themeName) {
     tableHTML += `<tr data-cats="${cats}"><th class="iv-scifi-htrow" style="color:${rowColor}">${hla}</th>`;
     heatmap.matrix[ri].forEach((v, ci) => {
       tableHTML += `<td data-tissue="${ci}" style="background:${cellBg(v)};color:${cellFg(v)};font-weight:${v > 2 ? 700 : 400}"`
-        + ` data-tip="${hla} × ${heatmap.tissues[ci]} · ${v} peptide${v === 1 ? '' : 's'}">${v}</td>`;
+        + ` data-tip="${hla} × ${heatmap.tissues[ci]} · ${v} normal sample${v === 1 ? '' : 's'} with this HLA">${v}</td>`;
     });
     tableHTML += '</tr>';
   });
