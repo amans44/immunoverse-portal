@@ -79,13 +79,94 @@ def compute_diff_plot_inhouse(cls, source):
     return None
 
 
+# In-house sources append a sample/run identifier as the LAST pipe field
+# (e.g. base_HDMB03_ERR4880042, add_MED411-2_SRR21548774). The public pipeline's
+# clean_gene() suffix-regex grabs that token as the "gene" for non-canonical rows
+# (their gene_symbol column is empty), so the drawer showed the run ID instead of
+# the real source. Detect those tokens so we never mistake them for a gene.
+_SAMPLE_RE = re.compile(r'^(base|add)_|_(ERR|SRR|DRR)\d+$')
+
+
+def _is_sample(tok):
+    return bool(tok and _SAMPLE_RE.search(tok))
+
+
+def _gene_from_record(cls, parts):
+    """Extract the real source gene/identifier from ONE '|'-split source record,
+    per class. Never returns a sample/run token."""
+    try:
+        if cls in ('self_gene', 'variant', 'rna_edit'):
+            # ENSG|ENST|SYMBOL|tpm:..|...|sample  -> the symbol
+            if len(parts) >= 3 and parts[0].startswith('ENSG'):
+                g = (parts[2] or '').strip()
+                if g and g != 'None':
+                    return g
+        elif cls == 'splicing':
+            # chr:..|strand|..|[ENST]|GENE,GENE|..|sample -> the comma gene field
+            for p in parts[1:]:
+                if _is_sample(p) or p.startswith('chr') or p.startswith('ENST') or p.startswith('TE_info'):
+                    continue
+                if ',' in p:
+                    g = p.split(',')[0].strip()
+                    if g and g != 'None':
+                        return g
+        elif cls == 'TE_chimeric_transcript':
+            # ..|TE_info:...|HOSTGENE,None|count|sample -> the field after TE_info
+            for i, p in enumerate(parts):
+                if p.startswith('TE_info') and i + 1 < len(parts):
+                    g = parts[i + 1].split(',')[0].strip()
+                    if g and g != 'None':
+                        return g
+        elif cls == 'ERV':
+            # TEFAM_dupN|score|chr:..|.. -> the TE family (drop the _dupN instance id)
+            head = (parts[0] or '').split(':')[0]
+            fam = head.split('_dup')[0]
+            if fam and not _is_sample(fam):
+                return fam
+        elif cls == 'nuORF':
+            # ENST....._N_chr:..|nuORF|sample -> the transcript id
+            m = re.match(r'(ENST\d+)', parts[0] or '')
+            if m:
+                return m.group(1)
+        # circRNA / intron_retention / fusion: no reliable gene symbol in-house
+        # (the hero shows the coordinate / raw annotation instead).
+    except (IndexError, AttributeError):
+        pass
+    return ''
+
+
+def clean_gene_inhouse(r):
+    """In-house gene/source label. Uses the gene_symbol column when present
+    (canonical rows), else a class-aware structured parse of `source` that
+    skips sample/run IDs — so non-canonical rows show the real source."""
+    gsym = (r.get('gene_symbol') or '').strip()
+    if gsym and gsym not in ('nan', 'None', ''):
+        val = I.safe_eval(gsym)
+        if isinstance(val, (list, tuple)):
+            names = [str(x).strip() for x in val if str(x).strip() not in ('nan', 'None', '')]
+            if names:
+                return '/'.join(dict.fromkeys(names))
+        else:
+            return gsym
+    cls = (r.get('typ') or '').strip() or 'self_gene'
+    src = (r.get('source') or '').strip()
+    if not src or src == 'nan':
+        return ''
+    for rec in src.split(';'):
+        g = _gene_from_record(cls, rec.split('|'))
+        if g:
+            return g
+    return ''
+
+
 def process_inhouse(source_dir: Path, code: str, name: str, group: str):
     source_dir = Path(source_dir)
     enhanced_file = source_dir / 'final_enhanced.txt'
     if not enhanced_file.exists():
         raise SystemExit(f'No final_enhanced.txt in {source_dir}')
     # metadata is <CODE>_metadata.txt (e.g. MB_metadata.txt)
-    metadata_file = next(iter(source_dir.glob('*_metadata.txt')), None)
+    # MB ships MB_metadata.txt; OS ships metadata.txt — match both.
+    metadata_file = next(iter(source_dir.glob('*metadata.txt')), None)
 
     total_patients = 0
     hla_patient_count = {}
@@ -119,7 +200,7 @@ def process_inhouse(source_dir: Path, code: str, name: str, group: str):
             dep = I.safe_float(r.get('depmap_median'))
             homo = I.parse_sc_pert(r)   # None for in-house (no sc_pert col) -> "-"
             uniq = 1 if str(r.get('unique', '')).strip().lower() in ('true', '1') else 0
-            gene = I.clean_gene(r, None)
+            gene = clean_gene_inhouse(r)
             ensg = I.extract_ensg(r)
             atlas = I.parse_atlas(r)
             nuorf_type = (r.get('nuorf_type') or '').strip()

@@ -323,10 +323,12 @@ admin console) is served by a **separate backend**, not by these static pages.
 
 ## Private in-house datasets (lab-only cancers)
 
-In-house cohorts (currently **medulloblastoma**, code `MB`) are hosted privately
-and folded into the **same explorer** as the 21 public cancers, so they're directly
-comparable — not a separate page. Visible ONLY to a lab allow-list; invisible to
-everyone else (nav, dropdown, grid, search).
+In-house cohorts (**medulloblastoma** code `MB`, **osteosarcoma** code `OS`) are
+hosted privately and folded into the **same explorer** as the 21 public cancers, so
+they're directly comparable — not a separate page. Visible ONLY to a lab allow-list;
+invisible to everyone else (nav, dropdown, grid, search). Adding a cohort is purely
+data-side (transform → upload → register a Firestore doc); the frontend discovers it
+dynamically via `ivLoadInhouseGated`, no redeploy.
 
 - **Storage:** private GCS bucket `immunoverse-private-datasets` (project
   `immunoverse-chat`, public-access-prevention ENFORCED), one folder per cancer at
@@ -455,6 +457,28 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-11 — Add osteosarcoma in-house cohort + fix non-canonical source names
+**Why:** Frank's second in-house cohort (osteosarcoma, 640 peptides) is ready in GCS;
+and the drawer showed the wrong "source name" for non-canonical medulloblastoma
+peptides (it displayed the sample/run ID like `base_HDMB03_ERR4880042` instead of the
+real gene/TE).
+**What:**
+- **Source-name fix (`integrate_inhouse.py`).** The public `clean_gene()` fallback
+  regex grabbed the last `|`-token of the source, which in-house data fills with a
+  sample/run ID (the public format has none). New class-aware `clean_gene_inhouse()`:
+  `self_gene/variant/rna_edit` → the symbol (`STX2`, `GSTP1`); `splicing` → the gene
+  (`HES6`, `RPP21`); `TE_chimeric` → host gene (`IDE`, `SCAP`); `ERV` → TE family
+  (`MER52A`, `L1ME4a`); `nuORF` → transcript; `circRNA` → coords-only. Never returns a
+  `base_*`/`add_*`/`*_ERR|SRR|DRR` token. Verified: 0 sample-name genes across MB(352)
+  + OS(640). Medulloblastoma data was regenerated + re-uploaded with the fix.
+- **Osteosarcoma live.** `OS.js`/`OS_detail.js` built (group Pediatric) and uploaded to
+  `OS/`; Firestore `portal_private_datasets/osteosarcoma` (code `OS`, prefix `OS/`,
+  **visibility lab**). Also made the metadata glob match `metadata.txt` (OS) as well as
+  `MB_metadata.txt`. Smoke-tested live: a member sees MB + OS, OS data proxies, OS
+  assets sign + fetch. No frontend change — `ivLoadInhouseGated` auto-discovers it; the
+  banner now reads "Your lab in-house cohorts (2): Medulloblastoma, Osteosarcoma".
+**Files:** `integrate_inhouse.py` (+ bucket data, Firestore). **Commit:** _portal_ — this commit.
 
 ### 2026-06-11 — Fix: in-house drawer detail (diffPlot figures, mutations, source) never loaded
 **Why:** In-house peptides (e.g. medulloblastoma `SPKLGGIGF`) showed no gene-expression
