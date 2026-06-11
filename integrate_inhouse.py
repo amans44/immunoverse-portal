@@ -91,31 +91,49 @@ def _is_sample(tok):
     return bool(tok and _SAMPLE_RE.search(tok))
 
 
+_GENE_TOK = re.compile(r'^[A-Za-z][\w\-.]*$')
+
+
+def _first_gene(field):
+    """From a comma list ('HES6,None' / 'None,LINC02802' / 'HES6,HES6') -> first real gene."""
+    for g in (field or '').split(','):
+        g = g.strip()
+        if g and g != 'None':
+            return g
+    return ''
+
+
 def _gene_from_record(cls, parts):
     """Extract the real source gene/identifier from ONE '|'-split source record,
-    per class. Never returns a sample/run token."""
+    per class. Handles BOTH the medulloblastoma and osteosarcoma source layouts.
+    Never returns a sample/run token."""
     try:
         if cls in ('self_gene', 'variant', 'rna_edit'):
-            # ENSG|ENST|SYMBOL|tpm:..|...|sample  -> the symbol
-            if len(parts) >= 3 and parts[0].startswith('ENSG'):
+            # MB layout: ENSG|ENST|SYMBOL|tpm:..|...   -> symbol at index 2
+            if parts[0].startswith('ENSG') and len(parts) >= 3:
                 g = (parts[2] or '').strip()
                 if g and g != 'None':
                     return g
+            # OS layout: SYMBOL|p.change|count|AF|ENSG|coords|...  -> symbol at index 0
+            p0 = (parts[0] or '').strip()
+            if (p0 and not p0.startswith('ENS') and not p0.startswith('chr')
+                    and not _is_sample(p0) and _GENE_TOK.match(p0)):
+                return p0
         elif cls == 'splicing':
-            # chr:..|strand|..|[ENST]|GENE,GENE|..|sample -> the comma gene field
+            # chr:..|..|[ENST]|GENE,GENE|.. (gene may be 1st OR 2nd: 'None,GENE')
             for p in parts[1:]:
                 if _is_sample(p) or p.startswith('chr') or p.startswith('ENST') or p.startswith('TE_info'):
                     continue
                 if ',' in p:
-                    g = p.split(',')[0].strip()
-                    if g and g != 'None':
+                    g = _first_gene(p)
+                    if g:
                         return g
         elif cls == 'TE_chimeric_transcript':
-            # ..|TE_info:...|HOSTGENE,None|count|sample -> the field after TE_info
+            # ..|TE_info:...|HOSTGENE,None| OR |None,HOSTGENE| -> the non-None host gene
             for i, p in enumerate(parts):
                 if p.startswith('TE_info') and i + 1 < len(parts):
-                    g = parts[i + 1].split(',')[0].strip()
-                    if g and g != 'None':
+                    g = _first_gene(parts[i + 1])
+                    if g:
                         return g
         elif cls == 'ERV':
             # TEFAM_dupN|score|chr:..|.. -> the TE family (drop the _dupN instance id)
@@ -128,8 +146,19 @@ def _gene_from_record(cls, parts):
             m = re.match(r'(ENST\d+)', parts[0] or '')
             if m:
                 return m.group(1)
-        # circRNA / intron_retention / fusion: no reliable gene symbol in-house
-        # (the hero shows the coordinate / raw annotation instead).
+        elif cls == 'fusion':
+            # GENEA-GENEB|count|coords|.. -> the fusion gene pair
+            p0 = (parts[0] or '').strip()
+            if p0 and not p0.startswith('chr') and not _is_sample(p0):
+                return p0
+        elif cls == 'intron_retention':
+            # ENSG..,SYMBOL,chr,strand,..|.. -> the symbol (first gene-like, non-ENSG/chr token)
+            for tok in (parts[0] or '').split(','):
+                tok = tok.strip()
+                if (tok and tok != 'None' and not tok.startswith('ENS')
+                        and not tok.startswith('chr') and _GENE_TOK.match(tok)):
+                    return tok
+        # circRNA: coordinate-only, no gene (the hero shows the coordinate instead).
     except (IndexError, AttributeError):
         pass
     return ''
