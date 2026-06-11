@@ -3138,6 +3138,10 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
     </button>
     <!-- Portal auth chip: rendered as "Sign in" text link when no session,
          or an avatar + dropdown when signed in. JS at bottom decides. -->
+    <!-- Members-only in-house pill: revealed by ivLoadInhouseGated(); a persistent,
+         compact entry point to the lab's private cohorts. Collapses to the lock icon
+         below 1180px so it never pushes the sign-in chip / CTA off-screen. -->
+    <button type="button" id="ivInhouseNav" class="iv-inhouse-pill" style="display:none;" onclick="return ivInhouseFilter(event)" title="In-house (private) cohorts — visible to approved lab members only. Toggle to view only your lab's in-house cohorts."><span class="ihp-lock" aria-hidden="true">🔒</span><span class="ihp-text">In-house</span></button>
     <a id="ivSignInBtn" class="iv-signin-link" href="login.html" style="display:none;">Sign in</a>
     <div class="iv-user-menu" id="ivUserMenu" style="display:none;">
       <button type="button" class="iv-acc-chip" id="ivAccountChip" aria-haspopup="true" aria-expanded="false" title="Your account">
@@ -3153,10 +3157,9 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
         <a href="account.html" role="menuitem"><span class="iv-dd-icon">👤</span>Account</a>
         <a href="account.html#savedSearches" role="menuitem"><span class="iv-dd-icon">★</span>Saved searches</a>
         <a href="account.html#history" role="menuitem"><span class="iv-dd-icon">⊕</span>Recently viewed</a>
-        <!-- In-house (private) cohorts — revealed by ivLoadInhouseGated() ONLY for
-             approved lab members; hidden for everyone else. Lives in the account
-             menu (not the topnav) so it stays members-only and keeps the nav uncluttered. -->
-        <button type="button" role="menuitem" id="ivInhouseNav" style="display:none;" onclick="return ivInhouseFilter(event)" title="In-house (private) cohorts — visible to approved lab members only. Click to view only in-house cohorts."><span class="iv-dd-icon">🔒</span>In-house cohorts</button>
+        <!-- In-house (private) cohorts — members-only; revealed by ivLoadInhouseGated().
+             One of three entry points (also a topnav pill + an explorer banner). -->
+        <button type="button" role="menuitem" id="ivDdInhouse" style="display:none;" onclick="return ivInhouseFilter(event)" title="In-house (private) cohorts — visible to approved lab members only. Toggle to view only your lab's in-house cohorts."><span class="iv-dd-icon">🔒</span>In-house cohorts</button>
         <a href="admin.html" role="menuitem" id="ivDdAdmin"><span class="iv-dd-icon">🛡</span>Admin dashboard</a>
         <button type="button" role="menuitem" id="ivDdFeedback"><span class="iv-dd-icon">💬</span>Send feedback</button>
         <div class="iv-dd-sep"></div>
@@ -3364,6 +3367,10 @@ Somatic mutations from TCGA / TARGET were searched against histology-matched imm
       <h2>Search, filter, and rank the full atlas.</h2>
       <p>Every row is a tumor-specific peptide with its gene of origin, aberration class, HLA alleles, recurrence, abundance, tumor-vs-normal expression window, and DepMap essentiality. Click any row for the full annotation drawer.</p>
     </div>
+
+    <!-- Members-only: lists the lab's in-house cohorts; populated + revealed by
+         ivLoadInhouseGated() → ivRenderInhouseBanner(). Hidden for everyone else. -->
+    <div id="ivInhouseBanner" class="iv-inhouse-banner" style="display:none;"></div>
 
     <div class="explorer">
       <div class="exp-head">
@@ -3956,7 +3963,45 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
   padding: 2px 7px; border-radius: 9999px; font-family: var(--mono);
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
-#ivInhouseNav.iv-active { color: var(--accent, #22d3ee); font-weight: 700; }
+/* In-house (private cohorts) — members-only entry points. The compact topnav
+   PILL is a persistent indicator; the BANNER above the explorer lists the cohorts.
+   Both toggle the in-house-only filter and share the badge's purple→cyan accent. */
+.iv-inhouse-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: 9999px;
+  border: 1px solid rgba(34,211,238,0.45);
+  background: rgba(34,211,238,0.12);
+  color: var(--accent, #22d3ee); font-size: 13px; font-weight: 700;
+  font-family: inherit; cursor: pointer; white-space: nowrap; line-height: 1;
+}
+.iv-inhouse-pill:hover { background: rgba(34,211,238,0.22); }
+.iv-inhouse-pill.iv-active {
+  background: linear-gradient(135deg,#7c3aed,#22d3ee); color: #fff; border-color: transparent;
+}
+.iv-inhouse-pill .ihp-lock { font-size: 12px; }
+@media (max-width: 1179px) {
+  .iv-inhouse-pill .ihp-text { display: none; }
+  .iv-inhouse-pill { padding: 7px 9px; }
+}
+
+.iv-inhouse-banner {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 0 18px; padding: 12px 16px; border-radius: 12px;
+  border: 1px solid rgba(34,211,238,0.38);
+  background: rgba(34,211,238,0.09);
+}
+.iv-inhouse-banner .ihb-lock { font-size: 18px; line-height: 1; }
+.iv-inhouse-banner .ihb-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.iv-inhouse-banner .ihb-text b { font-size: 14px; color: var(--text-0); }
+.iv-inhouse-banner .ihb-names { font-size: 13px; color: var(--text-2); }
+.iv-inhouse-banner .ihb-btn {
+  margin-left: auto; padding: 8px 16px; border-radius: 8px; border: 0;
+  background: linear-gradient(135deg,#7c3aed,#22d3ee); color: #fff;
+  font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap;
+}
+.iv-inhouse-banner .ihb-btn:hover { filter: brightness(1.08); }
+.iv-inhouse-banner.iv-active { border-color: rgba(34,211,238,0.7); background: rgba(34,211,238,0.16); }
+#ivDdInhouse.iv-active { color: var(--accent, #22d3ee); font-weight: 700; }
 
 /* ===== Locked-cancer affordances (signed-out visitors) ===== */
 .ctile.ctile-locked { position: relative; filter: grayscale(0.8) brightness(0.78); cursor: pointer; }
@@ -4783,27 +4828,69 @@ async function ivLoadInhouseGated() {
     datasets = await r.json();
   } catch (e) { return; }
   if (!Array.isArray(datasets) || !datasets.length) return;   // not a member → nothing
-  let added = 0;
+  const shown = [];
   for (const ds of datasets) {
     const code = ds.cancer_code || ds.id;
+    const name = ds.title || code;
     // RELATIVE paths only: these are fetched through ivAuthedFetch, which prepends
     // the resolved auth base itself. Baking the base in here too would double it
     // (https://base + https://base/api/...) and the fetch would throw — the data
-    // never loads and the cancer silently never appears, even though the nav shows.
+    // never loads and the cancer silently never appears, even though the entry shows.
     const fileUrl = (p) => `/api/portal/data/datasets/${encodeURIComponent(ds.id)}/file?path=${encodeURIComponent(p)}`;
     try {
       await ivRegisterInhouse({
-        code, name: ds.title || code, group: 'In-house', datasetId: ds.id,
+        code, name, group: 'In-house', datasetId: ds.id,
         dataUrl: fileUrl(`${code}.js`), detailUrl: fileUrl(`${code}_detail.js`),
         assetBase: `/api/portal/data/datasets/${encodeURIComponent(ds.id)}/file?path=assets`,
         fetchVia: window.ivAuthedFetch,
       });
-      added++;
+      shown.push({ code, name });
     } catch (e) { console.warn('[in-house] failed to load', code, e); }
   }
-  if (added) { const nav = document.getElementById('ivInhouseNav'); if (nav) nav.style.display = ''; }
+  if (shown.length) ivRevealInhouse(shown);
 }
 window.ivLoadInhouseGated = ivLoadInhouseGated;
+
+// Reveal the members-only in-house entry points once cohorts are loaded: the
+// persistent topnav PILL + the BANNER above the explorer (which lists the cohorts),
+// and tag <body> so the nav can react if needed. Idempotent.
+function ivRevealInhouse(cohorts) {
+  try { document.body.classList.add('iv-has-inhouse'); } catch (e) {}
+  // Three entry points, all members-only: topnav pill, account-menu item, banner.
+  ['ivInhouseNav', 'ivDdInhouse'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = '';
+  });
+  ivRenderInhouseBanner(cohorts);
+}
+window.ivRevealInhouse = ivRevealInhouse;
+
+// Banner above the explorer: "🔒 Your lab in-house cohorts (N): A, B  [View in-house only →]".
+function ivRenderInhouseBanner(cohorts) {
+  const box = document.getElementById('ivInhouseBanner');
+  if (!box || !cohorts || !cohorts.length) return;
+  const names = cohorts.map(c => c.name).join(', ');
+  const n = cohorts.length;
+  box.innerHTML =
+    '<span class="ihb-lock" aria-hidden="true">🔒</span>' +
+    '<span class="ihb-text"><b>Your lab in-house cohort' + (n === 1 ? '' : 's') + ' (' + n + ')</b>' +
+    '<span class="ihb-names">' + names + '</span></span>' +
+    '<button type="button" class="ihb-btn" id="ivInhouseBannerBtn" onclick="return ivInhouseFilter(event)">View in-house only →</button>';
+  box.style.display = '';
+}
+window.ivRenderInhouseBanner = ivRenderInhouseBanner;
+
+// Keep the pill + banner in sync with the in-house-only filter state.
+function ivSyncInhouseUI() {
+  const on = !!STATE.inhouseOnly;
+  ['ivInhouseNav', 'ivDdInhouse'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.classList.toggle('iv-active', on);
+  });
+  const box = document.getElementById('ivInhouseBanner');
+  if (box) box.classList.toggle('iv-active', on);
+  const btn = document.getElementById('ivInhouseBannerBtn');
+  if (btn) btn.textContent = on ? 'Show all cancers' : 'View in-house only →';
+}
+window.ivSyncInhouseUI = ivSyncInhouseUI;
 
 // In-house nav toggle: filter the explorer to ONLY in-house cohorts (and back).
 window.ivInhouseFilter = function (e) {
@@ -4814,12 +4901,11 @@ window.ivInhouseFilter = function (e) {
     const chip = document.getElementById('ivAccountChip'); if (chip) chip.setAttribute('aria-expanded', 'false');
   } catch (err) {}
   STATE.inhouseOnly = !STATE.inhouseOnly;
-  const nav = document.getElementById('ivInhouseNav');
-  if (nav) nav.classList.toggle('iv-active', STATE.inhouseOnly);
   if (STATE.inhouseOnly) {   // clear single-cancer filter so all in-house cohorts show
     STATE.cancer = '';
     const sel = document.getElementById('fCancer'); if (sel) sel.value = '';
   }
+  ivSyncInhouseUI();
   STATE.page = 1;
   try { applyFilters(); } catch (err) {}
   const ex = document.getElementById('explorer'); if (ex) ex.scrollIntoView({ behavior: 'smooth' });
@@ -4829,7 +4915,7 @@ window.ivInhouseFilter = function (e) {
 function ivClearInhouseOnly() {
   if (!STATE.inhouseOnly) return;
   STATE.inhouseOnly = false;
-  const nav = document.getElementById('ivInhouseNav'); if (nav) nav.classList.remove('iv-active');
+  ivSyncInhouseUI();
 }
 
 // LOCAL TEST: open  index.html?ivlocal=MB  to load the locally-built MB.js +
