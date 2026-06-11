@@ -456,22 +456,26 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
-### 2026-06-11 — Topnav never overflows: shrink band + hamburger ≤1280 + first-name chip
-**Why:** Even after moving the in-house entry out of the link row, "Explore atlas →"
-still ran off-screen on laptops — 8 section links + search + pill + account + CTA
-simply don't fit one row at ~1280–1440px.
+### 2026-06-11 — Topnav never overflows: shrink search/brand + hamburger ≤1366 + first-name chip
+**Why:** "Explore atlas →" kept running off-screen on laptops — 8 section links +
+search + pill + account + CTA don't fit one row at ~1280–1440px. The biggest hidden
+culprit was the search box: a fixed, non-shrinking `flex: 0 0 220px` that hogged
+width no matter what.
 **What:**
+- **Search box shrinks.** `.search-wrap` → `flex: 0 1 200px; min-width: 130px;` so it
+  gives up width under pressure instead of shoving the CTA off (the focus-expand
+  overlay to 520px is absolutely positioned, so it's unaffected).
 - **Account chip shows the first name only** (`showAccount`): `Aman` not `Aman
-  Sharma`, reclaiming width. The dropdown header keeps the full name.
+  Sharma`. The dropdown header keeps the full name.
 - **Responsive bands.** ≤1599px: tighten gaps, hide the (admin-only) Queries pill,
-  links → 12.5px. ≤1399px: drop the "Atlas" brand subtitle, links → 12px, the
-  in-house pill collapses to its lock icon, smaller CTA/theme toggle.
-- **Hamburger at ≤1280px.** The 8 section links collapse into the existing `☰`
-  dropdown; the search box, in-house pill, account chip and CTA stay in the bar —
-  so the CTA is *always* visible (the nav's hard requirement). Search still drops to
-  its own row ≤960px. The links-collapse moved up from 960 → 1280 so common laptops
-  use the menu instead of overflowing.
-**Files:** `index.html`. **Commit:** _portal_ — see this commit.
+  links → 12.5px, in-house pill → lock icon only. ≤1399px: drop the "Atlas" subtitle,
+  compact the logo/wordmark (15px, 26px mark), links → 12px, smaller CTA/theme.
+- **Hamburger at ≤1366px.** The 8 section links collapse into the `☰` dropdown (moved
+  up from 960 → 1366 so all common laptop widths fold them into the menu); the search
+  box, in-house pill, account chip and CTA stay in the bar — so the CTA is *always*
+  visible. Search still drops to its own row ≤960px.
+**Files:** `index.html`. **Commits:** _portal_ `51601c1` (chip + first bands), `38d6411`
+(search shrink + compact brand + ≤1366).
 
 ### 2026-06-10 — Fix: in-house cancer never loaded (double-base URL) + declutter topnav
 **Why:** Right after go-live, a signed-in lab member saw the In-house entry but the
