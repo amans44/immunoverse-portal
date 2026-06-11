@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Shared data · ImmunoVerse</title>
+<style>
+  :root{ --bg-0:#070a12; --bg-1:#0f1424; --bg-2:#151b2e; --border:#28304d; --text-0:#f2f5ff; --text-1:#c8cfe4; --text-2:#9aa6c4; --text-3:#6b7596; --accent:#22d3ee; --violet:#818cf8; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif; background:var(--bg-0); color:var(--text-0); line-height:1.5; }
+  .mono{ font-family:'JetBrains Mono',ui-monospace,monospace; }
+  header{ padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  header .brand{ font-weight:800; letter-spacing:-.01em; }
+  header .pill{ margin-left:auto; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#05070e; background:linear-gradient(135deg,#22d3ee,#818cf8); padding:3px 10px; border-radius:9999px; }
+  main{ max-width:880px; margin:0 auto; padding:32px 20px 80px; }
+  .card{ background:var(--bg-1); border:1px solid var(--border); border-radius:16px; padding:28px; }
+  h1{ font-size:22px; margin:0 0 6px; }
+  .sub{ color:var(--text-2); font-size:14px; margin:0 0 20px; }
+  label{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-3); display:block; margin-bottom:6px; }
+  input[type=password]{ width:100%; background:var(--bg-2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; color:var(--text-0); font-size:15px; outline:none; }
+  input[type=password]:focus{ border-color:var(--accent); }
+  .btn{ background:linear-gradient(135deg,#22d3ee,#818cf8); color:#05070e; border:0; border-radius:10px; padding:12px 22px; font-weight:700; font-size:14px; cursor:pointer; margin-top:14px; }
+  .btn:disabled{ opacity:.6; cursor:default; }
+  .err{ color:#fca5a5; font-size:13px; margin-top:10px; min-height:18px; }
+  .pep-title{ font-size:24px; font-weight:800; font-family:'JetBrains Mono',monospace; letter-spacing:.02em; }
+  .meta-row{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 20px; }
+  .pill-mini{ background:var(--bg-2); border:1px solid var(--border); border-radius:9999px; padding:4px 11px; font-size:12px; color:var(--text-1); }
+  .pill-mini b{ color:var(--text-0); }
+  .sec{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--accent); margin:26px 0 10px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th,td{ text-align:left; padding:7px 10px; border-bottom:1px solid var(--border); }
+  th{ color:var(--text-3); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+  td.num{ text-align:right; font-family:'JetBrains Mono',monospace; }
+  .figs{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+  .fig{ background:var(--bg-2); border:1px solid var(--border); border-radius:10px; padding:10px; }
+  .fig .cap{ font-size:11px; color:var(--text-3); margin-bottom:6px; }
+  .fig img{ width:100%; border-radius:6px; display:block; background:#fff; }
+  .fig.no-plot{ display:none; }
+  .rowlink{ color:var(--accent); cursor:pointer; }
+  .footer{ color:var(--text-3); font-size:11px; margin-top:30px; text-align:center; }
+  a{ color:var(--accent); }
+  .hidden{ display:none; }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">ImmunoVerse</span>
+  <span style="color:var(--text-3);font-size:13px;">Shared data</span>
+  <span class="pill">Private · read-only</span>
+</header>
+
+<main>
+  <!-- Password gate -->
+  <div id="gate" class="card" style="max-width:440px;margin:40px auto;">
+    <h1>🔒 Password required</h1>
+    <p class="sub">Someone shared private ImmunoVerse data with you. Enter the password they gave you to view it.</p>
+    <form id="gateForm">
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="off" placeholder="••••••••" required />
+      <div class="err" id="gateErr"></div>
+      <button class="btn" id="gateBtn" type="submit">Unlock</button>
+    </form>
+  </div>
+
+  <!-- Content (rendered after unlock) -->
+  <div id="content" class="hidden"></div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var AUTH_BASES = (window.IMMUNOVERSE_AUTH_BASES || [
+    'https://auth-service-739605637035.us-central1.run.app',
+    'https://auth.immuno-verse.com',
+    'https://auth.immunoverse-chat.com'
+  ]).map(function (s) { return String(s).replace(/\/+$/, ''); });
+  var _base = null;
+  function authFetch(path, opts) {
+    var order = _base ? [_base].concat(AUTH_BASES.filter(function (b) { return b !== _base; })) : AUTH_BASES.slice();
+    var i = 0;
+    function tryNext() {
+      if (i >= order.length) return Promise.reject(new Error('unreachable'));
+      var b = order[i++];
+      return fetch(b + path, opts).then(function (r) { _base = b; return r; }).catch(tryNext);
+    }
+    return tryNext();
+  }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function qp(n){ try { return new URLSearchParams(location.search).get(n); } catch(e){ return null; } }
+
+  var SHARE_ID = qp('s');
+  var TOKEN = null, DATASET = null, CODE = null, SCOPE = null, PEPTIDE = null, PD = null, DETAIL = null;
+  var COL = {pep:0,gene:1,cls:2,psm:3,score:4,abund:5,qval:6,tumorExp:7,normalExp:8,depmap:9,homo:10,unique:11,hlas:12,bind:13,atlas:14,ensg:15,nuorf:16,recurrence:17,totalSamples:18};
+
+  if (!SHARE_ID) { document.getElementById('gate').innerHTML = '<h1>Invalid link</h1><p class="sub">This share link is missing its id.</p>'; }
+
+  document.getElementById('gateForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('gateBtn'), errEl = document.getElementById('gateErr');
+    errEl.textContent = ''; btn.disabled = true; btn.textContent = 'Unlocking…';
+    authFetch('/api/portal/data/shares/' + encodeURIComponent(SHARE_ID) + '/unlock', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: document.getElementById('pw').value })
+    }).then(function (r) {
+      if (!r.ok) throw new Error(r.status === 401 ? 'Wrong password, or the link has expired or been revoked.' : ('Error ' + r.status));
+      return r.json();
+    }).then(function (d) {
+      TOKEN = d.token; DATASET = d.dataset_id; CODE = d.cancer_code || d.dataset_id; SCOPE = d.scope; PEPTIDE = d.peptide;
+      return (SCOPE === 'peptide' && PEPTIDE) ? loadPeptide(PEPTIDE) : loadData();
+    }).then(function () {
+      document.getElementById('gate').classList.add('hidden');
+      var c = document.getElementById('content'); c.classList.remove('hidden');
+      if (SCOPE === 'peptide' && PEPTIDE) c.innerHTML = renderPeptide(PEPTIDE);
+      else c.innerHTML = renderCohort();
+    }).catch(function (err) {
+      errEl.textContent = err.message || 'Could not unlock.'; btn.disabled = false; btn.textContent = 'Unlock';
+    });
+  });
+
+  function fileUrl(path) {
+    return (_base || AUTH_BASES[0]) + '/api/portal/data/datasets/' + encodeURIComponent(DATASET) +
+           '/file?path=' + encodeURIComponent(path) + '&share=' + encodeURIComponent(TOKEN);
+  }
+  function loadData() {
+    // The processed JS (window.__PD__[CODE]) — fetched with the share token and eval'd.
+    return authFetch('/api/portal/data/datasets/' + encodeURIComponent(DATASET) + '/file?path=' +
+                     encodeURIComponent(CODE + '.js') + '&share=' + encodeURIComponent(TOKEN))
+      .then(function (r) { if (!r.ok) throw new Error('Could not load data (' + r.status + ')'); return r.text(); })
+      .then(function (t) { (new Function(t))(); PD = (window.__PD__ || {})[CODE]; })
+      .then(function () {
+        return authFetch('/api/portal/data/datasets/' + encodeURIComponent(DATASET) + '/file?path=' +
+                         encodeURIComponent(CODE + '_detail.js') + '&share=' + encodeURIComponent(TOKEN))
+          .then(function (r) { return r.ok ? r.text() : ''; })
+          .then(function (t) { if (t) { (new Function(t))(); } DETAIL = (window.__PD__ || {})[CODE + '_detail'] || {}; })
+          .catch(function () { DETAIL = {}; });
+      });
+  }
+
+  // Peptide-scoped shares fetch ONLY that one peptide (the backend enforces the
+  // token's peptide claim), so the rest of the cohort is never sent to the page.
+  function loadPeptide(pep) {
+    return authFetch('/api/portal/data/datasets/' + encodeURIComponent(DATASET) + '/peptide?pep=' +
+                     encodeURIComponent(pep) + '&share=' + encodeURIComponent(TOKEN))
+      .then(function (r) { if (!r.ok) throw new Error('Could not load (' + r.status + ')'); return r.json(); })
+      .then(function (d) {
+        CODE = d.code || CODE;
+        PD = { code: CODE, name: d.name, cols: d.cols, rows: [d.row] };
+        DETAIL = {}; if (d.detail) DETAIL[pep] = d.detail;
+      });
+  }
+
+  function findRow(pep) { return (PD && PD.rows || []).filter(function (r) { return r[COL.pep] === pep; })[0]; }
+
+  function figBlock(pep) {
+    var d = (DETAIL[pep] || [])[2] || {};
+    var dp = d.diffPlot || {};
+    var figs = [
+      ['Intensity percentile', pep + '_percentile.png'],
+      ['MS/MS spectrum', 'spectrum_' + pep + '.png'],
+      ['PSM rank-abundance', pep + '_rank_abundance.png']
+    ];
+    if (dp.gene) figs.unshift(['Gene expression (tumor vs normal)', dp.gene]);
+    if (dp.splicing) figs.unshift(['Splice-junction expression', dp.splicing]);
+    if (dp.erv) figs.unshift(['Retroelement expression', dp.erv]);
+    return '<div class="figs">' + figs.map(function (f) {
+      return '<div class="fig"><div class="cap">' + esc(f[0]) + '</div>' +
+        '<img src="' + fileUrl('assets/' + f[1]) + '" alt="' + esc(f[0]) +
+        '" onerror="this.parentNode.classList.add(\'no-plot\')" /></div>';
+    }).join('') + '</div>';
+  }
+
+  function renderPeptide(pep) {
+    var r = findRow(pep);
+    if (!r) return '<div class="card"><h1>' + esc(pep) + '</h1><p class="sub">This peptide is not in the shared dataset.</p></div>';
+    var bind = r[COL.bind] || [];
+    var bindRows = bind.length ? bind.map(function (b) {
+      return '<tr><td class="mono">' + esc(b[0]) + '</td><td class="num">' + (b[1] != null ? b[1].toFixed(2) : '—') +
+        '</td><td class="num">' + (b[2] != null ? b[2].toFixed(0) : '—') + '</td><td>' + esc(b[3] || '—') + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" style="color:var(--text-3)">No per-HLA records on file.</td></tr>';
+    return '<div class="card">' +
+      '<div class="pep-title">' + esc(pep) + '</div>' +
+      '<div class="sub">' + esc(r[COL.gene] || 'unknown gene') + ' · ' + esc(r[COL.cls]) + ' · ' + esc(CODE) +
+        (r[COL.ensg] ? ' · <span class="mono" style="color:var(--text-3)">' + esc(r[COL.ensg]) + '</span>' : '') + '</div>' +
+      '<div class="meta-row">' +
+        '<span class="pill-mini"><b>' + pep.length + '</b> aa</span>' +
+        '<span class="pill-mini"><b>' + esc(r[COL.psm]) + '</b> PSMs</span>' +
+        '<span class="pill-mini"><b>' + (r[COL.abund] || 0).toFixed(3) + '</b> abund.</span>' +
+        (r[COL.recurrence] != null ? '<span class="pill-mini"><b>' + (r[COL.recurrence] * 100).toFixed(0) + '%</b> recurrence</span>' : '') +
+        (r[COL.totalSamples] ? '<span class="pill-mini"><b>' + esc(r[COL.totalSamples]) + '</b> patients</span>' : '') +
+        (r[COL.tumorExp] != null ? '<span class="pill-mini">tumor <b>' + r[COL.tumorExp].toFixed(1) + '</b> · normal <b>' + (r[COL.normalExp] != null ? r[COL.normalExp].toFixed(1) : '—') + '</b></span>' : '') +
+      '</div>' +
+      '<div class="sec">Per-HLA binding</div>' +
+      '<table><thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th></tr></thead><tbody>' + bindRows + '</tbody></table>' +
+      '<div class="sec">Figures</div>' + figBlock(pep) +
+      '<div class="footer">Shared privately via ImmunoVerse · read-only · this link can be revoked by its owner at any time.</div>' +
+      '</div>';
+  }
+
+  function renderCohort() {
+    var rows = (PD && PD.rows || []).slice(0, 1000);
+    var body = rows.map(function (r, i) {
+      return '<tr><td><span class="rowlink mono" data-pep="' + esc(r[COL.pep]) + '">' + esc(r[COL.pep]) + '</span></td>' +
+        '<td>' + esc(r[COL.gene] || '—') + '</td><td>' + esc(r[COL.cls]) + '</td>' +
+        '<td class="num">' + esc(r[COL.psm]) + '</td><td class="num">' + (r[COL.abund] || 0).toFixed(3) + '</td>' +
+        '<td class="num">' + (r[COL.recurrence] != null ? (r[COL.recurrence] * 100).toFixed(0) + '%' : '—') + '</td>' +
+        '<td class="mono" style="font-size:11px">' + esc((r[COL.hlas] || []).join(', ')) + '</td></tr>';
+    }).join('');
+    setTimeout(function () {
+      document.querySelectorAll('.rowlink').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var c = document.getElementById('content');
+          c.innerHTML = '<p style="margin-bottom:14px;"><a href="#" id="backToList">← back to all ' + esc(CODE) + ' peptides</a></p>' + renderPeptide(el.dataset.pep);
+          document.getElementById('backToList').addEventListener('click', function (e) { e.preventDefault(); c.innerHTML = renderCohort(); });
+          window.scrollTo(0, 0);
+        });
+      });
+    }, 0);
+    return '<div class="card"><h1>' + esc((PD && PD.name) || CODE) + '</h1>' +
+      '<p class="sub">' + (rows.length) + ' peptides · shared read-only. Click a peptide to see its details and figures.</p>' +
+      '<table><thead><tr><th>Peptide</th><th>Gene</th><th>Class</th><th>PSMs</th><th>Abund.</th><th>Recur.</th><th>HLAs</th></tr></thead>' +
+      '<tbody>' + body + '</tbody></table>' +
+      '<div class="footer">Shared privately via ImmunoVerse · read-only · this link can be revoked by its owner at any time.</div></div>';
+  }
+})();
+</script>
+</body>
+</html>

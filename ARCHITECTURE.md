@@ -321,6 +321,48 @@ admin console) is served by a **separate backend**, not by these static pages.
   SMTP later is a config change (intended from address: `noreply@immuno-verse.com`,
   which needs DNS access to that domain — currently pending).
 
+## Private in-house datasets (lab-only cancers)
+
+In-house cohorts (currently **medulloblastoma**, code `MB`) are hosted privately
+and folded into the **same explorer** as the 21 public cancers, so they're directly
+comparable — not a separate page. Visible ONLY to a lab allow-list; invisible to
+everyone else (nav, dropdown, grid, search).
+
+- **Storage:** private GCS bucket `immunoverse-private-datasets` (project
+  `immunoverse-chat`, public-access-prevention ENFORCED), one folder per cancer at
+  the bucket ROOT (e.g. `medulloblastoma/{MB.js, MB_detail.js, MB_metadata.txt,
+  final_enhanced.txt, assets/}`). Raw `final_enhanced.txt` is transformed into the
+  explorer's `window.__PD__["MB"]={…}` format by **`integrate_inhouse.py`** (reuses
+  `integrate_data.py` helpers; asset names carry NO code prefix). Never served from
+  `/hub` (that page is public-only).
+- **Backend** (`portal_auth/dataset_routes.py`, mounted `/api/portal/data`): a
+  Firestore doc `portal_private_datasets/<id>` records `cancer_code`,
+  `storage_prefix`, and `visibility` (`lab` = central allow-list, or `restricted`
+  = explicit `allowed_emails`). The lab allow-list is `PORTAL_LAB_EMAILS` env +
+  `portal_lab_allow_list` collection, managed from the admin **"Lab data access"**
+  tab. `GET /datasets` lists only what the caller may see; `/file?path=` proxies
+  bytes (access-checked); `POST /sign` returns short-lived **V4 signed URLs** so
+  `<img>`/downloads load cross-browser without cookies (avoids Safari/Firefox ITP).
+  Signing uses IAM `signBlob` with a **cloud-platform-scoped** token (the storage
+  scope alone is rejected). Toggle the whole feature with `PORTAL_PRIVATE_BACKEND`
+  (`gcs` live / `filesystem` dev-or-off).
+- **Frontend** (`index.html`): `ivLoadInhouseGated()` (signed-in only) fetches
+  `/datasets`; a non-member gets `[]` and sees nothing. Members get the cancers
+  registered into `window.IV_INHOUSE` (badged **🔒 In-house** in grid + dropdown),
+  a **🔒 In-house** topnav link that filters the explorer to in-house only
+  (`STATE.inhouseOnly`), and full comparability (global search, compare modal,
+  bundle download). In-house cancers are never lock-gated (`isLocked` returns false
+  for them). Figures resolve via `ivSignInhouse()` (signed URLs in prod, local files
+  under `?ivlocal=`).
+- **Sharing** (`share.html` + account "Shared links"): a member shares a peptide OR
+  a whole cohort. `POST /datasets/{id}/shares` mints a link `/share.html?s={id}` +
+  a **retrievable** password (owner can re-view it in `account.html` and **revoke**
+  via `GET /my-shares` + `DELETE /shares/{id}`). A collaborator opens the read-only
+  `share.html`, enters the password (`POST /shares/{id}/unlock` → a scoped share
+  JWT), and sees ONLY the shared content — a peptide share calls
+  `GET /datasets/{id}/peptide`, which enforces the token's peptide claim server-side
+  so the rest of the cohort is never sent. Assets stream via `/file?…&share={token}`.
+
 ## CORS proxies
 
 The portal needs to read the *bytes* of NYU figures in two cases:
@@ -405,6 +447,36 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-10 — Private in-house datasets go LIVE: gated explorer + collaborator sharing
+**Why:** Frank's in-house cohorts (medulloblastoma now, OS later) need to be hosted
+privately for the lab yet be directly comparable to the 21 public cancers, and lab
+members need to share a peptide or a cohort with outside collaborators.
+**What:**
+- **Live in-house cancer.** `medulloblastoma` (code `MB`, 352 peptides) registered
+  in Firestore (`portal_private_datasets/medulloblastoma`, `visibility:lab`,
+  `storage_prefix:medulloblastoma/`) and served from the private bucket. Folded into
+  the main explorer for members only; badged **🔒 In-house**, with a topnav filter,
+  search/compare/bundle parity, and never lock-gated. Non-members see nothing.
+- **Cross-browser figures.** Images load via short-lived V4 **signed URLs**
+  (`POST /datasets/{id}/sign`), not cookie-proxied — so Safari/Firefox ITP can't
+  block them. Fixed a signer bug where the storage-scoped token was rejected by IAM
+  `signBlob` (`ACCESS_TOKEN_SCOPE_INSUFFICIENT`); now mints a cloud-platform-scoped
+  token for signing. Verified end-to-end with a live smoke test before shipping.
+- **Sharing.** A member shares a **peptide** or a **whole cohort** from the drawer
+  (**Share** button) → link `/share.html?s={id}` + a retrievable password. The
+  read-only `share.html` gates on the password and renders ONLY the shared content;
+  a peptide share is enforced server-side (`GET /datasets/{id}/peptide`) so the rest
+  of the cohort is never exposed. Members see/copy their passwords and **revoke** any
+  share from the new **"Shared links"** card in `account.html`.
+**Files:** `index.html` (in-house registry/gating/badges/filter, signed-URL figures,
+Share dialog), `account.html` ("Shared links" card), `share.html` (new read-only
+landing page), `admin.html` ("Lab data access" tab), `integrate_inhouse.py` (new
+transform); backend (sibling `immunoVerse_agent`): `portal_auth/dataset_routes.py`,
+`models.py`, `private_data.py` (commit `c845bc7`). Go-live ops: bucket IAM
+(`objectViewer` + `serviceAccountTokenCreator` on the SA), `iamcredentials` API,
+`PORTAL_PRIVATE_BACKEND=gcs` + `PORTAL_LAB_EMAILS`, auth-service revision
+`auth-service-00022+`. **Commit:** _portal_ — see this commit.
 
 ### 2026-06-08 — Require affiliation + a justification for review-needed sign-ups; show it in admin
 **Why:** Pending users (esp. academics with unrecognized domains, who went through

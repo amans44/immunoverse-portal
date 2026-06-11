@@ -777,6 +777,21 @@ footer.page-footer a:hover { color: var(--text-0); }
       <div id="historyAlert" class="alert hidden"></div>
       <div id="historyContainer"></div>
     </div>
+
+    <!-- ===== Shared links (in-house data shared with collaborators) =====
+         Hidden unless the user has created at least one share. -->
+    <div class="card" id="sharedLinks" style="display:none;">
+      <div class="card-head">
+        <h2><span class="icon-tag">🔗</span>Shared links</h2>
+        <button id="refreshShares" class="right-link" style="background:none;border:0;cursor:pointer;font:inherit;">Refresh</button>
+      </div>
+      <p style="font-size:13px;color:var(--text-2);margin:0 0 12px;line-height:1.5;">
+        In-house data you've shared with outside collaborators. Give them the link <b>and</b> the password.
+        Revoke any time to cut off access.
+      </p>
+      <div id="sharesAlert" class="alert hidden"></div>
+      <div id="sharesContainer"></div>
+    </div>
   </div>
 
   <aside>
@@ -1092,7 +1107,7 @@ async function boot() {
   }
   CURRENT_USER = await me.json();
   paintUser(CURRENT_USER);
-  await Promise.all([loadSaved(), loadHistory(), loadSessions()]);
+  await Promise.all([loadSaved(), loadHistory(), loadSessions(), loadShares()]);
 }
 
 function paintUser(u) {
@@ -1340,6 +1355,50 @@ $('clearHist').addEventListener('click', async () => {
   const r = await authedFetch('/api/portal/history', { method: 'DELETE' });
   if (r.ok) loadHistory();
 });
+
+// ---------- Shared links ----------
+async function loadShares() {
+  const card = $('sharedLinks'), wrap = $('sharesContainer');
+  if (!card || !wrap) return;
+  try {
+    const r = await authedFetch('/api/portal/data/my-shares');
+    if (!r.ok) { card.style.display = 'none'; return; }
+    const items = await r.json();
+    if (!Array.isArray(items) || !items.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    wrap.innerHTML = `<table class="history">
+      <thead><tr><th>Shared</th><th>Password</th><th>Link</th><th>Created</th><th></th></tr></thead>
+      <tbody>${items.map(s => {
+        const what = (s.scope === 'peptide' && s.peptide)
+          ? `<span class="cancer-pill">${esc(s.cancer_code)}</span> <span class="pep-mono">${esc(s.peptide)}</span>`
+          : `<span class="cancer-pill">${esc(s.cancer_code)}</span> <span style="color:var(--text-2);font-size:12px;">whole cohort</span>`;
+        const revoked = s.revoked ? ' <span style="color:var(--text-3);font-size:11px;">(revoked)</span>' : '';
+        return `<tr style="${s.revoked ? 'opacity:.5;' : ''}">
+          <td>${what}${revoked}</td>
+          <td><code class="pep-mono" style="user-select:all;cursor:pointer;" data-copy="${esc(s.password || '')}" title="Click to copy">${esc(s.password || '—')}</code></td>
+          <td><button class="open-btn" data-copy="${esc(s.url)}">Copy link</button></td>
+          <td>${esc(timeAgo(s.created_at))}</td>
+          <td style="text-align:right;">${s.revoked ? '' : `<button class="open-btn" style="color:#dc2626;border-color:#fecaca;" data-revoke="${esc(s.share_id)}">Revoke</button>`}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+    wrap.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+      const t = b.dataset.copy; if (!t) return;
+      navigator.clipboard.writeText(t).then(() => {
+        const old = b.textContent; b.textContent = 'Copied!';
+        setTimeout(() => { b.textContent = old; }, 1400);
+      }).catch(() => {});
+    }));
+    wrap.querySelectorAll('[data-revoke]').forEach(b => b.addEventListener('click', async () => {
+      if (!confirm('Revoke this share link? Anyone you gave it to will immediately lose access.')) return;
+      const rr = await authedFetch('/api/portal/data/shares/' + b.dataset.revoke, { method: 'DELETE' });
+      if (rr.ok) loadShares();
+      else alert('sharesAlert', 'Could not revoke (HTTP ' + rr.status + ').', 'error');
+    }));
+  } catch (err) { card.style.display = 'none'; }
+}
+const _refreshShares = $('refreshShares');
+if (_refreshShares) _refreshShares.addEventListener('click', loadShares);
 
 // ---------- Profile ----------
 

@@ -378,6 +378,7 @@ footer.page-footer a:hover { color: var(--text-0); }
   <button id="tabUsers" onclick="switchTab('users')">Users <span class="count-badge" id="tabUserCount">0</span></button>
   <button id="tabInq"   onclick="switchTab('inquiries')">Feedback <span class="count-badge" id="tabInqCount">0</span></button>
   <button id="tabAllow" onclick="switchTab('allow')">Admin allow-list <span class="count-badge" id="tabAllowCount">0</span></button>
+  <button id="tabLab" onclick="switchTab('lab')">Lab data access <span class="count-badge" id="tabLabCount">0</span></button>
 </div>
 
 <!-- ===== Access requests ===== -->
@@ -431,6 +432,29 @@ footer.page-footer a:hover { color: var(--text-0); }
     <button class="btn" type="submit" id="addAllowBtn">Add to allow-list</button>
   </form>
   <div id="allowBody">Loading…</div>
+</section>
+
+<!-- ===== Lab data access (in-house datasets) ===== -->
+<section class="card" id="cardLab" hidden>
+  <div class="card-head">
+    <h2><span>🧬</span>Lab data access</h2>
+  </div>
+  <div id="labAlert" class="alert hidden"></div>
+  <p style="font-size:13px; color:var(--text-2); margin: 0 0 14px; line-height:1.55;">
+    Emails on this list can see the <b>In-house</b> data (the private cancers) on
+    the portal — everyone else, even signed-in users, cannot. This is separate from
+    the admin allow-list above. Two sources are merged: <b>env</b> entries come from
+    the <code>PORTAL_LAB_EMAILS</code> deploy config, and <b>firestore</b> entries
+    are added here and take effect immediately.
+  </p>
+  <form id="addLabForm" onsubmit="return addLabEmail(event)" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;">
+    <input id="labEmailInput" type="email" required placeholder="collaborator@institute.edu"
+      style="flex:1; min-width:240px; background:var(--bg-2); border:1px solid var(--border);
+             border-radius:9999px; padding:10px 16px; color:var(--text-0); font-family:inherit;
+             font-size:14px; outline:none;" />
+    <button class="btn" type="submit" id="addLabBtn">Grant access</button>
+  </form>
+  <div id="labBody">Loading…</div>
 </section>
 
 <!-- ===== Users ===== -->
@@ -607,7 +631,7 @@ async function boot() {
     return;
   }
   $('adminGreeting').textContent = `Signed in as ${u.email}. Manage portal users and review access requests below.`;
-  await Promise.all([loadStats(), loadRequests(), loadUsers(), loadAllowList(), loadInquiries()]);
+  await Promise.all([loadStats(), loadRequests(), loadUsers(), loadAllowList(), loadLabAccess(), loadInquiries()]);
 }
 
 // ---------- Stats ----------
@@ -639,10 +663,12 @@ function switchTab(which) {
   $('cardUsers').hidden     = which !== 'users';
   $('cardInquiries').hidden = which !== 'inquiries';
   $('cardAllow').hidden     = which !== 'allow';
+  $('cardLab').hidden       = which !== 'lab';
   $('tabReq').classList.toggle('active',   which === 'requests');
   $('tabUsers').classList.toggle('active', which === 'users');
   $('tabInq').classList.toggle('active',   which === 'inquiries');
   $('tabAllow').classList.toggle('active', which === 'allow');
+  $('tabLab').classList.toggle('active',   which === 'lab');
 }
 
 // ---------- Access requests ----------
@@ -927,6 +953,90 @@ async function removeAllowEmail(email) {
   }
 }
 
+// ---------- Lab data access (in-house datasets) ----------
+async function loadLabAccess() {
+  clearAlert('labAlert');
+  const body = $('labBody');
+  body.innerHTML = 'Loading…';
+  try {
+    const r = await authedFetch('/api/portal/data/admin/lab-emails');
+    if (!r.ok) throw new Error('Failed (' + r.status + ')');
+    const items = await r.json();
+    $('tabLabCount').textContent = items.length;
+    if (!items.length) {
+      body.innerHTML = `<div class="empty-state">No one has in-house data access yet. Add an email above.</div>`;
+      return;
+    }
+    body.innerHTML = `<table class="tbl">
+      <thead><tr><th>Email</th><th>Source</th><th>Status</th><th>Added</th><th></th></tr></thead>
+      <tbody>${items.map(e => {
+        const sourceTag = e.source === 'env'
+          ? `<span class="tag tag-admin" title="From PORTAL_LAB_EMAILS env var">env</span>`
+          : `<span class="tag tag-inst">firestore</span>`;
+        const statusCell = e.has_account
+          ? `<span class="tag tag-active">Has account</span>`
+          : `<span class="tag tag-pending">Not yet registered</span>`;
+        const removeBtn = e.source === 'env'
+          ? `<span style="font-size:11px;color:var(--text-3);font-style:italic;">env-locked</span>`
+          : `<button class="btn btn-danger" data-rmlab="${esc(e.email)}">Remove</button>`;
+        return `<tr>
+          <td class="email-mono">${esc(e.email)}</td>
+          <td>${sourceTag}</td>
+          <td>${statusCell}</td>
+          <td>${esc(timeAgo(e.added_at))}</td>
+          <td class="row-actions">${removeBtn}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+    body.querySelectorAll('[data-rmlab]').forEach(b => b.addEventListener('click', () => removeLabEmail(b.dataset.rmlab)));
+  } catch (err) {
+    alert_('labAlert', err.message, 'error');
+    body.innerHTML = '';
+  }
+}
+
+async function addLabEmail(ev) {
+  ev.preventDefault();
+  clearAlert('labAlert');
+  const input = $('labEmailInput');
+  const email = (input.value || '').trim().toLowerCase();
+  if (!email) return false;
+  const btn = $('addLabBtn');
+  btn.disabled = true; btn.textContent = 'Granting…';
+  try {
+    const r = await authedFetch('/api/portal/data/admin/lab-emails', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.detail || 'Failed');
+    input.value = '';
+    alert_('labAlert', data.has_account
+      ? `${data.email} can now see in-house data (they're already registered).`
+      : `${data.email} added. They'll see in-house data once they sign in.`,
+      'success');
+    await loadLabAccess();
+  } catch (err) {
+    alert_('labAlert', err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Grant access';
+  }
+  return false;
+}
+
+async function removeLabEmail(email) {
+  if (!confirm(`Remove in-house data access for ${email}?`)) return;
+  try {
+    const r = await authedFetch('/api/portal/data/admin/lab-emails/' + encodeURIComponent(email), { method: 'DELETE' });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.detail || 'Failed');
+    alert_('labAlert', 'Access removed for ' + ((data && data.email) || email) + '.', 'success');
+    await loadLabAccess();
+  } catch (err) {
+    alert_('labAlert', err.message, 'error');
+  }
+}
+
 // ---------- Inquiries ----------
 let INQ_FILTER = 'new';
 
@@ -1035,6 +1145,7 @@ window.switchTab = switchTab;
 window.copyOtp = copyOtp;
 window.closeOtp = closeOtp;
 window.addAllowEmail = addAllowEmail;
+window.addLabEmail = addLabEmail;
 
 boot();
 </script>

@@ -3123,6 +3123,9 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <a href="#methods">Methods</a>
       <a href="#downloads">Data</a>
       <a href="#cite">Cite</a>
+      <!-- In-house (private) datasets — revealed by ivLoadInhouseGated() ONLY for
+           approved lab members; hidden (display:none) for everyone else. -->
+      <a href="#explorer" id="ivInhouseNav" style="display:none;" onclick="return ivInhouseFilter(event)" title="In-house (private) cohorts — visible to approved lab members only. Click to view only in-house cohorts.">🔒 In-house</a>
     </div>
     <!-- Live query counter: hidden by default; revealed only for signed-in
          admins by the auth bootstrap below (showAccount). Anonymous and
@@ -3943,6 +3946,17 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
   .iv-wb-card { padding: 34px 22px 24px; }
 }
 
+/* ===== In-house (private) cohort badges ===== */
+.ctile.ctile-inhouse { position: relative; }
+.ctile-inhouse-badge {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  background: linear-gradient(135deg,#7c3aed,#22d3ee); color: #fff;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 9999px; font-family: var(--mono);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+#ivInhouseNav.iv-active { color: var(--accent, #22d3ee); font-weight: 700; }
+
 /* ===== Locked-cancer affordances (signed-out visitors) ===== */
 .ctile.ctile-locked { position: relative; filter: grayscale(0.8) brightness(0.78); cursor: pointer; }
 .ctile.ctile-locked:hover { filter: grayscale(0.4) brightness(0.95); }
@@ -4170,6 +4184,130 @@ function hlaFreq(allele) {
 
 const CANCERS = [];
 const DATA_CACHE = {};
+// ---- In-house (private) datasets ----
+// code -> {assetBase, dataUrl, detailUrl}. Populated by ivRegisterInhouse() for
+// allow-listed users only. Public cancers aren't here, so ivInhouseAsset() falls
+// back to the NYU base + the public {CODE}_-prefixed asset naming for them.
+window.IV_INHOUSE = window.IV_INHOUSE || {};
+function ivInhouseAsset(code) {
+  const m = window.IV_INHOUSE[code];
+  return m ? { inhouse: true, base: m.assetBase }
+           : { inhouse: false, base: 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/assets' };
+}
+// Resolve in-house asset URLs for a peptide's figures. Local test (no datasetId)
+// → direct local file URLs. Production → short-lived SIGNED GCS URLs via the
+// bearer-authed /sign endpoint, so <img>s load straight from GCS with no cookie
+// (bulletproof cross-browser). Cached per dataset with a TTL. `paths` are
+// dataset-relative, e.g. "assets/PEP_percentile.png".
+window.__IV_SIGN_CACHE = window.__IV_SIGN_CACHE || {};
+async function ivSignInhouse(code, paths) {
+  const m = window.IV_INHOUSE[code] || {};
+  const out = {};
+  if (!m.datasetId) {                              // local test — assetBase is a folder
+    for (const p of paths) out[p] = `${m.assetBase}/${p.replace(/^assets\//, '')}`;
+    return out;
+  }
+  const cache = window.__IV_SIGN_CACHE[m.datasetId] = window.__IV_SIGN_CACHE[m.datasetId] || {};
+  const now = Date.now();
+  const need = paths.filter(p => !cache[p] || cache[p].exp < now);
+  if (need.length && window.ivAuthedFetch) {
+    try {
+      const r = await window.ivAuthedFetch(`/api/portal/data/datasets/${encodeURIComponent(m.datasetId)}/sign`, {
+        method: 'POST', body: JSON.stringify({ paths: need }),
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const exp = now + (((d.ttl_min || 25) - 2) * 60000);   // refresh 2 min early
+        for (const p of need) if (d.urls && d.urls[p]) cache[p] = { url: d.urls[p], exp };
+      }
+    } catch (e) {}
+  }
+  for (const p of paths) out[p] = (cache[p] && cache[p].url) || '';
+  return out;
+}
+window.ivSignInhouse = ivSignInhouse;
+
+// ---- In-house share dialog (peptide / cohort -> URL + password) ----
+function ivShareShell(inner) {
+  let bd = document.getElementById('ivShareBackdrop');
+  if (!bd) {
+    bd = document.createElement('div');
+    bd.id = 'ivShareBackdrop';
+    bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:10050;display:flex;align-items:center;justify-content:center;padding:20px;';
+    bd.addEventListener('click', e => { if (e.target === bd) bd.remove(); });
+    document.body.appendChild(bd);
+  }
+  bd.innerHTML = `<div style="background:var(--bg-1,#0f1424);border:1px solid var(--border,#2a3350);border-radius:14px;max-width:480px;width:100%;padding:22px 24px;color:var(--text-0,#f2f5ff);box-shadow:0 20px 60px rgba(0,0,0,.5);">
+    <button onclick="document.getElementById('ivShareBackdrop').remove()" style="position:absolute;margin:-8px 0 0 0;float:right;background:none;border:0;color:var(--text-3,#8a93ad);font-size:22px;cursor:pointer;line-height:1;">×</button>
+    ${inner}</div>`;
+}
+window.ivOpenShareDialog = function (code, pep) {
+  const m = window.IV_INHOUSE[code];
+  if (!m || !m.datasetId) { alert('Sharing goes live once this dataset is deployed (it needs the backend).'); return; }
+  ivShareShell(`
+    <h3 style="margin:0 0 6px;font-size:17px;">🔗 Share in-house data</h3>
+    <p style="font-size:13px;color:var(--text-2,#c8cfe4);margin:0 0 16px;line-height:1.5;">Create a password-protected, read-only link for an outside collaborator. You choose how much to share.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn" style="text-align:left;padding:11px 14px;" onclick="ivCreateShare('${code}','${pep}','peptide')">Share <b>this peptide only</b><div style="font-size:11px;opacity:.65;font-weight:400;margin-top:2px;font-family:var(--mono,monospace);">${pep} · ${code}</div></button>
+      <button class="btn" style="text-align:left;padding:11px 14px;" onclick="ivCreateShare('${code}','','cohort')">Share <b>the whole cohort</b><div style="font-size:11px;opacity:.65;font-weight:400;margin-top:2px;">All peptides in ${code}</div></button>
+    </div>`);
+};
+window.ivCreateShare = async function (code, pep, scope) {
+  const m = window.IV_INHOUSE[code];
+  ivShareShell('<p style="margin:8px 0;color:var(--text-2,#c8cfe4);">Creating link…</p>');
+  try {
+    const body = scope === 'peptide' ? { scope: 'peptide', peptide: pep, label: `${code} ${pep}` } : { scope: 'cohort', label: `${code} cohort` };
+    const r = await window.ivAuthedFetch(`/api/portal/data/datasets/${encodeURIComponent(m.datasetId)}/shares`, { method: 'POST', body: JSON.stringify(body) });
+    if (!r.ok) { let d = ''; try { d = (await r.json()).detail || ''; } catch (e) {} ivShareShell(`<p style="color:#f87171;margin:8px 0;">Could not create the link (HTTP ${r.status}).${d ? '<br>' + d : ''}</p>`); return; }
+    const s = await r.json();
+    const what = (s.scope === 'peptide' && s.peptide) ? `${s.peptide} in ${code}` : `all of ${code}`;
+    const fld = (label, val, big) => `<label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3,#8a93ad);">${label}</label>
+      <div style="display:flex;gap:8px;margin:4px 0 14px;">
+        <input readonly value="${String(val || '').replace(/"/g, '&quot;')}" onclick="this.select()" style="flex:1;background:var(--bg-2,#151b2e);border:1px solid var(--border,#2a3350);border-radius:8px;padding:9px 12px;color:inherit;font-size:${big ? '15px' : '12px'};font-family:var(--mono,monospace);letter-spacing:.03em;" />
+        <button class="btn" onclick="ivCopyVal(this)">Copy</button>
+      </div>`;
+    ivShareShell(`
+      <h3 style="margin:0 0 6px;font-size:17px;">🔗 Share link created</h3>
+      <p style="font-size:13px;color:var(--text-2,#c8cfe4);margin:0 0 16px;line-height:1.5;">Read-only access to <b>${what}</b>. Send your collaborator <b>both</b> the link and the password. Manage or revoke it anytime under <a href="account.html" style="color:var(--accent,#22d3ee);">Account → Shared links</a>.</p>
+      ${fld('Link', s.url, false)}
+      ${fld('Password', s.password, true)}`);
+  } catch (e) { ivShareShell('<p style="color:#f87171;margin:8px 0;">Network error creating the link.</p>'); }
+};
+window.ivCopyVal = function (btn) {
+  const inp = btn.parentNode && btn.parentNode.querySelector('input');
+  if (!inp) return;
+  navigator.clipboard.writeText(inp.value).then(() => { const o = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = o; }, 1400); }).catch(() => {});
+};
+
+// ---- In-house global-search integration ----
+// Build search-index rows from a registered in-house cancer's data and merge
+// them into IDX_CACHE, so a member can search-find in-house peptides/genes in the
+// top typeahead — comparable to the public atlas. Only runs client-side after the
+// member has loaded the in-house data, so non-members never get these entries.
+window.__IV_PENDING_IDX = window.__IV_PENDING_IDX || { rows: [], meta: [] };
+function ivAddInhouseToSearch(code, name) {
+  const d = window.__PD__[code];
+  if (!d || !d.rows) return;
+  const ci = {}; (d.cols || []).forEach((n, i) => ci[n] = i);
+  for (const r of d.rows) {
+    const row = { p: r[ci.pep], g: r[ci.gene] || '', c: r[ci['class']], ca: code,
+                  ps: r[ci.psm] || 0, re: r[ci.recurrence] || 0 };
+    if (r[ci.ensg]) row.e = r[ci.ensg];
+    const h = r[ci.hlas]; if (Array.isArray(h) && h.length) row.h = h.join(',');
+    window.__IV_PENDING_IDX.rows.push(row);
+  }
+  window.__IV_PENDING_IDX.meta.push({ k: 'cancer', code, name: name || code });
+  ivFlushInhouseSearch();
+}
+function ivFlushInhouseSearch() {
+  if (typeof IDX_CACHE === 'undefined' || !IDX_CACHE) return;   // flushed after loadSearchIndex
+  const p = window.__IV_PENDING_IDX;
+  if (!p.rows.length && !p.meta.length) return;
+  IDX_CACHE.rows = (IDX_CACHE.rows || []).concat(p.rows);
+  IDX_CACHE.meta = (IDX_CACHE.meta || []).concat(p.meta);
+  window.__IV_PENDING_IDX = { rows: [], meta: [] };
+}
+
 let CURRENT_ROWS = [];
 // Compare set — keys are "{pep}::{cancer}" so the same peptide across
 // different cancers can each be selected independently. Cap for manual
@@ -4183,6 +4321,7 @@ let STATE = {
   cancer: '', pep: '', gene: '', hla: '', uniq: '', rec: 0,
   length: '', rank: '', hlaClass: '', safe: '', nuorfSub: '',
   classFilter: new Set(),
+  inhouseOnly: false,   // In-house nav toggle: show only private cohorts
   sortCol: 'abund', sortDir: -1,
   page: 1, pageSize: 50
 };
@@ -4271,6 +4410,11 @@ const IV_BYPASS_LOCK = /\/reviewers\//.test(location.pathname);
 window.__IV_SIGNED_IN = (function () { try { return !!localStorage.getItem('iv_portal_access'); } catch (e) { return false; } })();
 function isLocked(code) {
   if (!window.IV_GATING_ENABLED) return false;   // gating disabled → everything open
+  // In-house cohorts are only ever registered for authorized users (the members-
+  // only gated loader / local test), and their access is the lab allow-list — NOT
+  // the public NBL sign-in gate. So never treat a registered in-house cancer as
+  // locked, or it'd be excluded from loadAll() and the pan-cancer comparison.
+  if (window.IV_INHOUSE && window.IV_INHOUSE[code]) return false;
   return !IV_BYPASS_LOCK && !window.__IV_SIGNED_IN && !ANON_UNLOCKED.has(code);
 }
 // True when an anonymous visitor is subject to locking right now (gating on,
@@ -4374,8 +4518,9 @@ function renderCancerGrid(summary) {
     const locked = isLocked(c.code);
     const tileTitle = locked ? `Sign in to explore ${c.name}` : `${c.name} — ${breakdown}`;
     return `
-      <button class="ctile${locked ? ' ctile-locked' : ''}" onclick="selectCancer('${c.code}')" title="${tileTitle}">
+      <button class="ctile${locked ? ' ctile-locked' : ''}${c.inhouse ? ' ctile-inhouse' : ''}" onclick="selectCancer('${c.code}')" title="${tileTitle}">
         ${locked ? '<div class="ctile-lockbadge">🔒 Sign in</div>' : ''}
+        ${c.inhouse ? '<div class="ctile-inhouse-badge">🔒 In-house</div>' : ''}
         <div class="tile-head">
           <div class="code">${c.code}</div>
           <span class="group">${c.group}</span>
@@ -4536,7 +4681,7 @@ function populateCancerSelect() {
   const sel = document.getElementById('fCancer');
   sel.innerHTML = '<option value="">All cancers</option>' + CANCERS.map(c => {
     const lk = isLocked(c.code);
-    return `<option value="${c.code}"${lk ? ' disabled' : ''}>${c.code} — ${c.name}${lk ? ' 🔒' : ''}</option>`;
+    return `<option value="${c.code}"${lk ? ' disabled' : ''}>${c.inhouse ? '🔒 ' : ''}${c.code} — ${c.name}${c.inhouse ? ' (in-house)' : ''}${lk ? ' 🔒' : ''}</option>`;
   }).join('');
 }
 
@@ -4568,12 +4713,141 @@ function toggleClass(k, scroll) {
 // ============ LOAD CANCER DATA ============
 async function loadCancer(code) {
   if (DATA_CACHE[code]) return DATA_CACHE[code];
-  await loadScript(`data_js/${code}.js`);
+  const m = window.IV_INHOUSE[code];
+  if (m) {
+    await loadScript(m.dataUrl);
+    if (m.detailUrl) { try { await loadScript(m.detailUrl); } catch (e) {} }
+  } else {
+    await loadScript(`data_js/${code}.js`);
+  }
   const j = window.__PD__[code];
   if (!j) throw new Error('data for ' + code + ' did not register');
   DATA_CACHE[code] = j;
   return j;
 }
+
+// Register an in-house (private) cancer into the explorer for an allow-listed
+// user: load its data, splice it into the summary + CANCERS, and re-render so it
+// shows in the grid, the cancer picker, and the explorer table alongside the
+// public cancers — directly comparable. Idempotent.
+async function ivRegisterInhouse(meta) {
+  // meta: {code, name, group, datasetId?, dataUrl, detailUrl, assetBase, fetchVia?}
+  window.IV_INHOUSE[meta.code] = { datasetId: meta.datasetId || null, assetBase: meta.assetBase, dataUrl: meta.dataUrl, detailUrl: meta.detailUrl };
+  try {
+    // Prod path: the processed JS sits behind auth, and a <script src> can't send
+    // the bearer token — so fetch it with fetchVia (bearer) and execute it, so
+    // loadCancer() finds it already registered in window.__PD__.
+    if (meta.fetchVia && !DATA_CACHE[meta.code]) {
+      for (const u of [meta.dataUrl, meta.detailUrl].filter(Boolean)) {
+        const r = await meta.fetchVia(u);
+        if (!r.ok) throw new Error('in-house data fetch ' + r.status);
+        (new Function(await r.text()))();   // sets window.__PD__[...]
+      }
+      if (window.__PD__[meta.code]) DATA_CACHE[meta.code] = window.__PD__[meta.code];
+    }
+    const data = await loadCancer(meta.code);   // window.__PD__[code] = {count, classes, …}
+    const summary = window.__PD__ && window.__PD__['_summary'];
+    if (summary && Array.isArray(summary.cancers) && !summary.cancers.some(c => c.code === meta.code)) {
+      summary.cancers.push({
+        code: meta.code, name: data.name || meta.name, group: meta.group || data.group || 'In-house',
+        count: data.count, unique: data.unique, safe: data.safe,
+        classes: data.classes, genes: data.genes, totalSamples: data.totalSamples, inhouse: true,
+      });
+    }
+    if (!CANCERS.some(c => c.code === meta.code)) {
+      CANCERS.push({ code: meta.code, name: data.name || meta.name, group: meta.group || 'In-house', inhouse: true });
+    }
+    try { ivAddInhouseToSearch(meta.code, data.name || meta.name); } catch (e) {}   // make it searchable
+    if (summary) { try { renderCancerGrid(summary); } catch (e) {} try { populateCancerSelect(); } catch (e) {} }
+    try { await loadAll(); } catch (e) {}
+    console.info('[in-house] registered', meta.code, '·', data.count, 'peptides');
+  } catch (e) {
+    console.warn('[in-house] register failed for', meta.code, e);
+  }
+}
+
+// PRODUCTION (members-only): after a user signs in, ask the backend which
+// in-house datasets THEY may see. The backend returns datasets only for emails on
+// the lab allow-list (or a dataset's allowed_emails), so non-members get an empty
+// list → nothing loads, no nav appears. For each visible dataset we register the
+// cancer into the explorer (data fetched with the bearer token; assets streamed
+// from the private bucket via the cookie-auth /file proxy) and reveal the nav.
+async function ivLoadInhouseGated() {
+  if (!window.__IV_PORTAL_USER) return;             // signed-in only
+  if (!window.ivAuthedFetch) return;
+  let datasets;
+  try {
+    const r = await window.ivAuthedFetch('/api/portal/data/datasets');
+    if (!r.ok) return;
+    datasets = await r.json();
+  } catch (e) { return; }
+  if (!Array.isArray(datasets) || !datasets.length) return;   // not a member → nothing
+  const base = (window.ivResolvedAuthBase && window.ivResolvedAuthBase()) || '';
+  let added = 0;
+  for (const ds of datasets) {
+    const code = ds.cancer_code || ds.id;
+    const fileUrl = (p) => `${base}/api/portal/data/datasets/${encodeURIComponent(ds.id)}/file?path=${encodeURIComponent(p)}`;
+    try {
+      await ivRegisterInhouse({
+        code, name: ds.title || code, group: 'In-house', datasetId: ds.id,
+        dataUrl: fileUrl(`${code}.js`), detailUrl: fileUrl(`${code}_detail.js`),
+        assetBase: `${base}/api/portal/data/datasets/${encodeURIComponent(ds.id)}/file?path=assets`,
+        fetchVia: window.ivAuthedFetch,
+      });
+      added++;
+    } catch (e) { console.warn('[in-house] failed to load', code, e); }
+  }
+  if (added) { const nav = document.getElementById('ivInhouseNav'); if (nav) nav.style.display = ''; }
+}
+window.ivLoadInhouseGated = ivLoadInhouseGated;
+
+// In-house nav toggle: filter the explorer to ONLY in-house cohorts (and back).
+window.ivInhouseFilter = function (e) {
+  if (e) e.preventDefault();
+  STATE.inhouseOnly = !STATE.inhouseOnly;
+  const nav = document.getElementById('ivInhouseNav');
+  if (nav) nav.classList.toggle('iv-active', STATE.inhouseOnly);
+  if (STATE.inhouseOnly) {   // clear single-cancer filter so all in-house cohorts show
+    STATE.cancer = '';
+    const sel = document.getElementById('fCancer'); if (sel) sel.value = '';
+  }
+  STATE.page = 1;
+  try { applyFilters(); } catch (err) {}
+  const ex = document.getElementById('explorer'); if (ex) ex.scrollIntoView({ behavior: 'smooth' });
+  return false;
+};
+// Picking a specific cancer (or "All") in the dropdown clears the in-house-only view.
+function ivClearInhouseOnly() {
+  if (!STATE.inhouseOnly) return;
+  STATE.inhouseOnly = false;
+  const nav = document.getElementById('ivInhouseNav'); if (nav) nav.classList.remove('iv-active');
+}
+
+// LOCAL TEST: open  index.html?ivlocal=MB  to load the locally-built MB.js +
+// the downloaded _inhouse_test assets, so the in-house render can be eyeballed
+// without the backend/bucket. No effect in production (no ?ivlocal param).
+(function ivLocalTestHook() {
+  // HARD GUARD: this ungated test loader runs ONLY on localhost / 127.0.0.1 /
+  // file:// — never on the live site. In production, in-house data is loaded
+  // exclusively by the gated path (fetch /api/portal/data/datasets, which only
+  // returns datasets for approved lab members). So even ?ivlocal=MB on the live
+  // domain does nothing.
+  const _host = location.hostname;
+  const _local = (location.protocol === 'file:') || _host === 'localhost' || _host === '127.0.0.1';
+  if (!_local) return;
+  let code;
+  try { code = new URLSearchParams(location.search).get('ivlocal'); } catch (e) { return; }
+  if (!code) return;
+  const start = async () => {
+    await ivRegisterInhouse({
+      code, name: code + ' (in-house · local test)', group: 'In-house',
+      dataUrl: `_inhouse_test/out/${code}.js`, detailUrl: `_inhouse_test/out/${code}_detail.js`,
+      assetBase: `_inhouse_test/medulloblastoma/assets`,
+    });
+    const nav = document.getElementById('ivInhouseNav'); if (nav) nav.style.display = '';  // show nav locally too
+  };
+  document.addEventListener('DOMContentLoaded', () => setTimeout(start, 500));
+})();
 
 async function loadAll() {
   // Concurrently load the cancers this viewer may see. Signed-out visitors get
@@ -4624,6 +4898,7 @@ async function loadSearchIndex() {
       console.warn('Search index failed to load', e);
       IDX_CACHE = {rows: [], meta: []};
     }
+    try { ivFlushInhouseSearch(); } catch (e) {}   // merge any in-house entries
     return IDX_CACHE;
   })();
   return IDX_LOADING;
@@ -5134,22 +5409,41 @@ async function downloadAllForPeptide(row, code, btnEl) {
       zip.file(`${stem}/intensity.csv`, _buildCsv(['Sample', 'Intensity'], rows));
     }
 
-    // 5. Figures — fetch each through the proxy in parallel.
+    // 5. Figures — fetch each in parallel. Public → NYU via the CORS proxy.
+    // In-house → the bearer-auth /file proxy (prod) or local files (test), since
+    // GCS signed URLs would hit CORS on fetch().
     const ASSET_BASE = 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/assets';
+    const _ihB = window.IV_INHOUSE[code];
+    const figBase = _ihB ? _ihB.assetBase : ASSET_BASE;
+    const fetchBlob = !_ihB ? _fetchImageBlob
+      : (_ihB.datasetId
+          ? async (url) => { try { const r = await window.ivAuthedFetch(url); return r.ok ? await r.blob() : null; } catch (e) { return null; } }
+          : async (url) => { try { const r = await fetch(url); return r.ok ? await r.blob() : null; } catch (e) { return null; } });
     const figJobs = [];
     const addFig = (label, url) => figJobs.push((async () => {
-      const blob = await _fetchImageBlob(url);
+      const blob = await fetchBlob(url);
       if (blob) zip.file(`${stem}/figures/${label}.png`, blob);
       return { label, url, ok: !!blob };
     })());
-    addFig('ms_spectrum', `${ASSET_BASE}/${code}_spectrum_${pep}.png`);
-    addFig('intensity_percentile', `${ASSET_BASE}/${code}_${pep}_percentile.png`);
-    addFig('rank_abundance', `${ASSET_BASE}/${code}_${pep}_rank_abundance.png`);
-    if (extra.diffPlot) {
-      if (extra.diffPlot.splicing) addFig('splicing_differential', `${ASSET_BASE}/${extra.diffPlot.splicing}`);
-      if (extra.diffPlot.erv) addFig('te_differential', `${ASSET_BASE}/${extra.diffPlot.erv}`);
-    } else if (cls === 'self_gene' && ensg && gene && /^ENSG\d{8,}$/.test(ensg)) {
-      addFig('expression_boxplot', `${ASSET_BASE}/${code}_${ensg}_${gene}_expr_boxplot+boxplot.png`);
+    if (_ihB) {
+      addFig('ms_spectrum', `${figBase}/spectrum_${pep}.png`);
+      addFig('intensity_percentile', `${figBase}/${pep}_percentile.png`);
+      addFig('rank_abundance', `${figBase}/${pep}_rank_abundance.png`);
+      if (extra.diffPlot) {
+        if (extra.diffPlot.gene) addFig('expression_boxplot', `${figBase}/${extra.diffPlot.gene}`);
+        if (extra.diffPlot.splicing) addFig('splicing_differential', `${figBase}/${extra.diffPlot.splicing}`);
+        if (extra.diffPlot.erv) addFig('te_differential', `${figBase}/${extra.diffPlot.erv}`);
+      }
+    } else {
+      addFig('ms_spectrum', `${ASSET_BASE}/${code}_spectrum_${pep}.png`);
+      addFig('intensity_percentile', `${ASSET_BASE}/${code}_${pep}_percentile.png`);
+      addFig('rank_abundance', `${ASSET_BASE}/${code}_${pep}_rank_abundance.png`);
+      if (extra.diffPlot) {
+        if (extra.diffPlot.splicing) addFig('splicing_differential', `${ASSET_BASE}/${extra.diffPlot.splicing}`);
+        if (extra.diffPlot.erv) addFig('te_differential', `${ASSET_BASE}/${extra.diffPlot.erv}`);
+      } else if (cls === 'self_gene' && ensg && gene && /^ENSG\d{8,}$/.test(ensg)) {
+        addFig('expression_boxplot', `${ASSET_BASE}/${code}_${ensg}_${gene}_expr_boxplot+boxplot.png`);
+      }
     }
     const figResults = await Promise.all(figJobs);
 
@@ -7066,6 +7360,7 @@ function applyFilters() {
   const filt = CURRENT_ROWS.filter(r => {
     // r schema at COL.* — cancer code at COL.code (19)
     if (cancer && r[COL.code] !== cancer) return false;
+    if (STATE.inhouseOnly && !window.IV_INHOUSE[r[COL.code]]) return false;
     if (classFilter.size && !classFilter.has(r[COL.cls])) return false;
     if (pepL && !r[COL.pep].toUpperCase().includes(pepL)) return false;
     if (geneL) {
@@ -7329,6 +7624,23 @@ async function openCompareModal() {
   const codes = [...new Set(rows.map(r => r[COL.code]))];
   await Promise.all(codes.map(c => loadDetail(c)));
 
+  // Pre-resolve signed URLs for any IN-HOUSE peptides in the comparison, since
+  // deepColumn (below) is synchronous and can't await per cell. Public peptides
+  // use the NYU base directly. `_cmpSigned[`${code}::assets/${fn}`]` -> url.
+  const _cmpSigned = {};
+  for (const r of rows) {
+    const code = r[COL.code], pep = r[COL.pep];
+    if (!window.IV_INHOUSE[code]) continue;
+    const ex = ((DETAIL_CACHE[code] || {})[pep] || [])[2] || {};
+    const dp = ex.diffPlot || {};
+    const fns = [`spectrum_${pep}.png`, `${pep}_percentile.png`, `${pep}_rank_abundance.png`,
+                 dp.gene || '', dp.splicing || '', dp.erv || ''].filter(Boolean).map(f => 'assets/' + f);
+    try {
+      const signed = await ivSignInhouse(code, fns);
+      for (const p of fns) _cmpSigned[`${code}::${p}`] = signed[p] || '';
+    } catch (e) {}
+  }
+
   const fmt = (v, d=2) => v == null ? '—' : (typeof v === 'number' ? v.toFixed(d) : String(v));
   const cell = c => `<td>${c}</td>`;
   const header = rows.map(r => {
@@ -7442,24 +7754,22 @@ async function openCompareModal() {
     })();
 
     // Plots (each auto-hides if the asset 404s via onerror).
-    const spectrumUrl = `${ASSET_BASE_CMP}/${code}_spectrum_${pep}.png`;
-    const percentileUrl = `${ASSET_BASE_CMP}/${code}_${pep}_percentile.png`;
-    const rankAbundUrl = `${ASSET_BASE_CMP}/${code}_${pep}_rank_abundance.png`;
-    // Same gating as openDrawer: only attempt the gene boxplot when this
-    // row has real gene-level RNA on file (self_gene, or non-canonical
-    // with successful parent-gene inheritance).
     const cmpExtra = ((DETAIL_CACHE[code]||{})[pep] || [])[2] || {};
+    const cmpDiff = cmpExtra.diffPlot || null;
     const cmpHasRealExpr = (r[COL.cls] === 'self_gene')
       || (cmpExtra.exprInherited && (r[COL.tumorExp] != null || r[COL.normalExp] != null));
-    const exprUrl = cmpHasRealExpr && ensg && gene && /^ENSG\d{8,}$/.test(ensg)
-      ? `${ASSET_BASE_CMP}/${code}_${ensg}_${gene}_expr_boxplot+boxplot.png` : '';
-    // Junction- / TE-level differential plot URLs (preferred over the
-    // gene-level boxplot for non-canonical rows; mirrors openDrawer).
-    const cmpDiff = cmpExtra.diffPlot || null;
+    const _cih = !!window.IV_INHOUSE[code];
+    const _csig = (fn) => fn ? (_cmpSigned[`${code}::assets/${fn}`] || '') : '';
+    const spectrumUrl   = _cih ? _csig(`spectrum_${pep}.png`)       : `${ASSET_BASE_CMP}/${code}_spectrum_${pep}.png`;
+    const percentileUrl = _cih ? _csig(`${pep}_percentile.png`)     : `${ASSET_BASE_CMP}/${code}_${pep}_percentile.png`;
+    const rankAbundUrl  = _cih ? _csig(`${pep}_rank_abundance.png`) : `${ASSET_BASE_CMP}/${code}_${pep}_rank_abundance.png`;
+    const exprUrl = _cih
+      ? _csig((cmpDiff && cmpDiff.gene) || '')
+      : (cmpHasRealExpr && ensg && gene && /^ENSG\d{8,}$/.test(ensg) ? `${ASSET_BASE_CMP}/${code}_${ensg}_${gene}_expr_boxplot+boxplot.png` : '');
     const cmpDiffSplicingUrl = cmpDiff && cmpDiff.splicing
-      ? `${ASSET_BASE_CMP}/${encodeURI(cmpDiff.splicing)}` : '';
+      ? (_cih ? _csig(cmpDiff.splicing) : `${ASSET_BASE_CMP}/${encodeURI(cmpDiff.splicing)}`) : '';
     const cmpDiffErvUrl = cmpDiff && cmpDiff.erv
-      ? `${ASSET_BASE_CMP}/${encodeURI(cmpDiff.erv)}` : '';
+      ? (_cih ? _csig(cmpDiff.erv) : `${ASSET_BASE_CMP}/${encodeURI(cmpDiff.erv)}`) : '';
     const plot = (src, label, sub) => src
       ? `<figure class="cmp-plot">
            <figcaption class="cmp-plot-title">${label}${sub ? `<span class="cmp-plot-sub">${sub}</span>` : ''}</figcaption>
@@ -7761,32 +8071,48 @@ async function openDrawer(r, opts) {
     </tr>`;
   }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--text-3);padding:14px 0;">No per-HLA binding records on file.<br><span style="font-size:10.5px;font-style:italic;">This can occur when the peptide was detected in samples where HLA typing was unavailable, or when the presenting allele could not be confidently assigned by NetMHCpan. The peptide was still empirically identified by mass spectrometry.</span></td></tr>';
 
-  // MS/MS spectrum hotlink (NYU genome server)
-  const ASSET_BASE = 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/assets';
-  const spectrumUrl = `${ASSET_BASE}/${code}_spectrum_${pep}.png`;
-  const percentileUrl = `${ASSET_BASE}/${code}_${pep}_percentile.png`;
-  const rankAbundanceUrl = `${ASSET_BASE}/${code}_${pep}_rank_abundance.png`;
+  // MS/MS spectrum hotlink. Public cancers -> NYU server with {CODE}_-prefixed
+  // names; in-house cancers -> their private asset base with NON-prefixed names
+  // ({pep}_percentile.png, spectrum_{pep}.png, and the exact diff-plot filenames
+  // from integrate_inhouse).
+  const _ih = ivInhouseAsset(code);
   const geneForExpr = (r[COL.gene]||'').split('/')[0];
-  // Only attempt the gene-level boxplot URL when this row has real
-  // gene-level RNA on file: self_gene rows always do; non-canonical rows
-  // only when we successfully inherited from a parent gene (ENSG999-style
-  // placeholders never resolve to a real plot, so skip the section title
-  // entirely instead of rendering an empty 404 panel).
+  // Only attempt the gene-level boxplot when this row has real gene-level RNA:
+  // self_gene rows always do; non-canonical rows only when inherited.
   const hasRealExpr = (r[COL.cls] === 'self_gene')
     || (extra.exprInherited && (r[COL.tumorExp] != null || r[COL.normalExp] != null));
-  const exprUrl = hasRealExpr && ensg && geneForExpr && /^ENSG\d{8,}$/.test(ensg)
-    ? `${ASSET_BASE}/${code}_${ensg}_${geneForExpr}_expr_boxplot+boxplot.png`
-    : '';
-  // Per-class differential plot URLs derived from the source string in
-  // integrate_data.compute_diff_plot. Splicing rows get a junction-level
-  // plot, ERV rows a TE-level plot, TE_chimeric rows both side-by-side.
-  // Falls back to the gene-level exprUrl above when absent (most rows,
-  // including all self_gene/variant/pathogen/intron_retention/fusion).
   const diffPlot = extra.diffPlot || null;
-  const diffSplicingUrl = diffPlot && diffPlot.splicing
-    ? `${ASSET_BASE}/${encodeURI(diffPlot.splicing)}` : '';
-  const diffErvUrl = diffPlot && diffPlot.erv
-    ? `${ASSET_BASE}/${encodeURI(diffPlot.erv)}` : '';
+  let spectrumUrl, percentileUrl, rankAbundanceUrl, exprUrl, diffSplicingUrl, diffErvUrl;
+  let percentileImgSrc, spectrumImgSrc, rankAbundSvgUrl;
+  if (_ih.inhouse) {
+    // In-house: NO code prefix; diff-plot filenames come from the data. Resolve
+    // every figure to a short-lived SIGNED GCS URL (or a local file URL in the
+    // test harness) so <img>s load directly, cross-browser, with no cookie.
+    const fnSpec = `spectrum_${pep}.png`, fnPerc = `${pep}_percentile.png`, fnRank = `${pep}_rank_abundance.png`;
+    const fnGene = (diffPlot && diffPlot.gene) || '';
+    const fnSpl  = (diffPlot && diffPlot.splicing) || '';
+    const fnErv  = (diffPlot && diffPlot.erv) || '';
+    const reqs = [fnSpec, fnPerc, fnRank, fnGene, fnSpl, fnErv].filter(Boolean).map(f => 'assets/' + f);
+    let signed = {};
+    try { signed = await ivSignInhouse(code, reqs); } catch (e) {}
+    const S = (f) => f ? (signed['assets/' + f] || '') : '';
+    spectrumUrl = S(fnSpec); percentileUrl = S(fnPerc); rankAbundanceUrl = S(fnRank);
+    exprUrl = S(fnGene); diffSplicingUrl = S(fnSpl); diffErvUrl = S(fnErv);
+    // In-house has PNG only (no SVG) — point the SVG <img> straight at the PNG.
+    percentileImgSrc = percentileUrl; spectrumImgSrc = spectrumUrl; rankAbundSvgUrl = '';
+  } else {
+    const ASSET_BASE = _ih.base;
+    spectrumUrl      = `${ASSET_BASE}/${code}_spectrum_${pep}.png`;
+    percentileUrl    = `${ASSET_BASE}/${code}_${pep}_percentile.png`;
+    rankAbundanceUrl = `${ASSET_BASE}/${code}_${pep}_rank_abundance.png`;
+    exprUrl = (hasRealExpr && ensg && geneForExpr && /^ENSG\d{8,}$/.test(ensg))
+      ? `${ASSET_BASE}/${code}_${ensg}_${geneForExpr}_expr_boxplot+boxplot.png` : '';
+    diffSplicingUrl = diffPlot && diffPlot.splicing ? `${ASSET_BASE}/${encodeURI(diffPlot.splicing)}` : '';
+    diffErvUrl = diffPlot && diffPlot.erv ? `${ASSET_BASE}/${encodeURI(diffPlot.erv)}` : '';
+    percentileImgSrc = `${ASSET_SVG_BASE}/${code}/${pep}_percentile.svg`;
+    spectrumImgSrc   = `${ASSET_SVG_BASE}/${code}/spectrum_${pep}.svg`;
+    rankAbundSvgUrl  = `${ASSET_SVG_BASE}/${code}/${pep}_rank_abundance.svg`;
+  }
 
   // External cross-references
   const geneStr = r[COL.gene] || '';
@@ -8000,6 +8326,7 @@ async function openDrawer(r, opts) {
         ${crossBtn}
         <button class="copy-btn" title="Copy peptide" onclick="navigator.clipboard && navigator.clipboard.writeText('${pep}')">⧉ copy</button>
         <button class="copy-btn" id="bookmarkPepBtn" data-pep="${pep}" data-code="${code}" data-gene="${(r[COL.gene]||'').replace(/"/g,'')}" data-cls="${r[COL.cls]||''}" title="Sign in to bookmark this peptide to your account">☆ bookmark</button>
+        ${window.IV_INHOUSE[code] ? `<button class="copy-btn" title="Create a password-protected share link for a collaborator" onclick="ivOpenShareDialog('${code}','${pep}')">🔗 share</button>` : ''}
         <button class="dl-all-btn" title="Bundle every table, JSON record, and figure for this peptide into one ZIP" onclick="downloadAllFromDrawer(this)">${DL_ICON}<span>Download all</span></button>
       </div>
     </div>
@@ -8113,7 +8440,7 @@ async function openDrawer(r, opts) {
     <div class="plot-wrap" data-svg-kind="percentile" data-png-url="${percentileUrl}">
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${percentileUrl}','intensity_percentile')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
-      <img src="${ASSET_SVG_BASE}/${code}/${pep}_percentile.svg" alt="Percentile plot for ${pep}"
+      <img src="${percentileImgSrc}" alt="Percentile plot for ${pep}"
            oncontextmenu="return false;"
            onload="this.classList.add('ok')"
            onclick="openLightbox('${percentileUrl}','Intensity percentile: ${pep} in ${code}')"
@@ -8128,7 +8455,7 @@ async function openDrawer(r, opts) {
     <div class="spectrum-wrap" data-svg-kind="spectrum" data-png-url="${spectrumUrl}">
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${spectrumUrl}','ms_spectrum')">${DL_ICON}PNG</button>
       <button class="expand-btn" onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
-      <img src="${ASSET_SVG_BASE}/${code}/spectrum_${pep}.svg" alt="MS/MS spectrum for ${pep} in ${code}"
+      <img src="${spectrumImgSrc}" alt="MS/MS spectrum for ${pep} in ${code}"
            oncontextmenu="return false;"
            onload="this.classList.add('ok')"
            onclick="openLightbox('${spectrumUrl}','MS/MS spectrum: ${pep} in ${code}')"
@@ -8144,7 +8471,7 @@ async function openDrawer(r, opts) {
          button still downloads the PNG regardless of the current view. -->
     <div class="section-title" data-tip="Rank-abundance curve showing how this peptide's detection frequency (PSM count) compares across the immunopeptidome samples where it was found. A peptide appearing at high abundance across many samples is a strong shared target candidate.">PSM rank-abundance curve</div>
     <div class="section-subtitle">The peptide's abundance rank in every patient sample that detected it — a flat curve near the top means consistent high abundance across patients.</div>
-    <div class="plot-wrap" data-png-url="${rankAbundanceUrl}" data-svg-url="${ASSET_SVG_BASE}/${code}/${pep}_rank_abundance.svg">
+    <div class="plot-wrap" data-png-url="${rankAbundanceUrl}" data-svg-url="${rankAbundSvgUrl}">
       <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${rankAbundanceUrl}','rank_abundance')">${DL_ICON}PNG</button>
       <button class="dl-figure-btn svg-toggle-btn" data-state="png" hidden title="Switch to higher-resolution SVG view" onclick="toggleRankAbundanceSvg(this)">SVG</button>
       <button class="expand-btn" onclick="openLightbox('${rankAbundanceUrl}','Rank-abundance: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
@@ -8402,6 +8729,7 @@ document.addEventListener('keydown', e => {
 document.getElementById('fCancer').addEventListener('change', e => {
   const v = e.target.value;
   if (v && isLocked(v)) { e.target.value = STATE.cancer || ''; openAuthGate(gateReturnUrl({ cancer: v })); return; }  // belt-and-braces (options are disabled)
+  ivClearInhouseOnly();
   STATE.cancer = v; STATE.page = 1; applyFilters();
 });
 document.getElementById('fPep').addEventListener('input', e => { STATE.pep = e.target.value; STATE.page = 1; applyFilters(); });
@@ -8791,6 +9119,10 @@ window.addEventListener('popstate', async () => {
     if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
     return ivAuthFetch(path, Object.assign({ credentials: 'include' }, opts, { headers }));
   }
+  // Exposed so the explorer's in-house loader can fetch private dataset data
+  // with the bearer token, and build the cookie-auth proxy URLs for assets.
+  window.ivAuthedFetch = authedFetch;
+  window.ivResolvedAuthBase = function () { return _ivAuthBase || IV_AUTH_BASES[0]; };
 
   function initials(name, email) {
     const s = (name || email || '?').trim();
@@ -9065,7 +9397,7 @@ window.addEventListener('popstate', async () => {
     ivResolveSession()
       .then(user => {
         window.__IV_PORTAL_USER = user || null;
-        if (user) { ivSyncSignedIn(true); showAccount(user); }
+        if (user) { ivSyncSignedIn(true); showAccount(user); try { window.ivLoadInhouseGated && window.ivLoadInhouseGated(); } catch (e) {} }
         else { ivClearTokens(); ivSyncSignedIn(false); showSignIn(); maybeShowWelcomeBack(); }
       })
       .catch(() => { window.__IV_PORTAL_USER = null; ivSyncSignedIn(false); showSignIn(); maybeShowWelcomeBack(); });
