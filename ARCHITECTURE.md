@@ -456,6 +456,22 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-11 — Fix: in-house drawer detail (diffPlot figures, mutations, source) never loaded
+**Why:** In-house peptides (e.g. medulloblastoma `SPKLGGIGF`) showed no gene-expression
+boxplot, splicing/ERV differential, mutations, or source panel — even though the
+assets exist in the bucket and sign + fetch fine.
+**Root cause:** `loadDetail(code)` only knew the public path — it did
+`loadScript('data_js/<code>_detail.js')`, which 404s for in-house cancers, then fell
+back to `DETAIL_CACHE[code] = {}`. But `ivRegisterInhouse` had *already* fetched and
+executed the detail JS into `window.__PD__["<code>_detail"]`; `loadDetail` just never
+looked there. So `extra = {}` → no `diffPlot`, no mutations, no `source`. (The bars
+that *did* show come from the row in `<code>.js`, not the detail — which is why it
+looked like only the figures were broken.) Backend signing was fine all along.
+**Fix:** `loadDetail` now returns `window.__PD__["<code>_detail"]` when it's already
+loaded (the in-house case), before attempting the public `loadScript`. One-line-ish
+change; fixes the drawer, the compare modal, and the bundle download together.
+**Files:** `index.html`. **Commit:** _portal_ — see this commit.
+
 ### 2026-06-11 — Topnav never overflows: shrink search/brand + hamburger ≤1366 + first-name chip
 **Why:** "Explore atlas →" kept running off-screen on laptops — 8 section links +
 search + pill + account + CTA don't fit one row at ~1280–1440px. The biggest hidden

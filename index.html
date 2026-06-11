@@ -8060,6 +8060,14 @@ function closeCompareModal() {
 
 async function loadDetail(code) {
   if (DETAIL_CACHE[code]) return DETAIL_CACHE[code];
+  // In-house cancers have NO public data_js/<code>_detail.js — ivRegisterInhouse
+  // already fetched + executed their detail JS into window.__PD__["<code>_detail"].
+  // Use it directly; otherwise loadScript() 404s and the detail (diffPlot figures,
+  // mutations, source, …) is silently lost.
+  if (window.__PD__ && window.__PD__[`${code}_detail`]) {
+    DETAIL_CACHE[code] = window.__PD__[`${code}_detail`];
+    return DETAIL_CACHE[code];
+  }
   try {
     await loadScript(`data_js/${code}_detail.js`);
     DETAIL_CACHE[code] = window.__PD__[`${code}_detail`] || {};
