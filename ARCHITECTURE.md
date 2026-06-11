@@ -474,8 +474,11 @@ width no matter what.
   up from 960 → 1366 so all common laptop widths fold them into the menu); the search
   box, in-house pill, account chip and CTA stay in the bar — so the CTA is *always*
   visible. Search still drops to its own row ≤960px.
+- **Hamburger closes on outside click / link choice / Esc** (not only when the ☰
+  button is tapped again) — a document-level click handler that ignores the toggle
+  button and in-menu chrome.
 **Files:** `index.html`. **Commits:** _portal_ `51601c1` (chip + first bands), `38d6411`
-(search shrink + compact brand + ≤1366).
+(search shrink + compact brand + ≤1366), plus the menu-dismiss handler.
 
 ### 2026-06-10 — Fix: in-house cancer never loaded (double-base URL) + declutter topnav
 **Why:** Right after go-live, a signed-in lab member saw the In-house entry but the

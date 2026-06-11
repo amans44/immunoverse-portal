@@ -5322,6 +5322,22 @@ async function navigateSearchResult(action, data) {
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.search-wrap')) results.hidden = true;
   });
+  // Mobile hamburger (.links) menu: close it on an outside click, when a link in
+  // it is chosen, or on Esc — not only when the ☰ button is tapped again.
+  document.addEventListener('click', (e) => {
+    const links = document.querySelector('.topnav .links');
+    if (!links || !links.classList.contains('open')) return;
+    const toggle = document.querySelector('.nav-toggle');
+    if (toggle && toggle.contains(e.target)) return;                 // the ☰ button toggles itself
+    if (e.target.closest('.links') && !e.target.closest('.links a')) return; // click inside menu chrome → keep open
+    links.classList.remove('open');                                  // outside click, or a link was chosen → close
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const links = document.querySelector('.topnav .links');
+      if (links) links.classList.remove('open');
+    }
+  });
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
       e.preventDefault();
