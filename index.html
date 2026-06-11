@@ -3024,34 +3024,29 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
                 shrink brand subtitle, ultra-tight padding
    ========================================================================= */
 
-@media (max-width: 1279px) {
-  nav.topnav .inner { gap: 14px; padding: 12px 24px; }
-  .live-stat .live-label { display: none; }
+/* Laptop band: progressively shrink type / gaps and drop secondary chrome so
+   the full nav — including the sign-in chip and "Explore atlas →" CTA — always
+   fits without anything running off-screen (Aman's hard requirement). */
+@media (max-width: 1599px) {
+  nav.topnav .inner { gap: 12px; padding: 12px 22px; }
+  .live-stat { display: none; }                  /* admin-only decorative pill */
+  nav .links a { padding: 7px 9px; font-size: 12.5px; }
 }
-@media (max-width: 1179px) {
-  .live-stat { display: none; }
-  nav .links a { padding: 8px 11px; font-size: 13.5px; }
-}
-@media (max-width: 1099px) {
-  nav .cta { padding: 8px 16px; font-size: 13px; }
-  .theme-toggle { width: 34px; height: 34px; }
-  nav .links a { padding: 7px 9px; font-size: 13px; }
+@media (max-width: 1399px) {
+  .brand .sub { display: none; }                 /* drop the "Atlas" subtitle */
+  nav .links a { padding: 6px 8px; font-size: 12px; }
+  .iv-inhouse-pill .ihp-text { display: none; }   /* in-house pill → lock icon only */
+  .iv-inhouse-pill { padding: 7px 9px; }
+  nav .cta { padding: 7px 13px; font-size: 12.5px; }
+  .theme-toggle { width: 32px; height: 32px; }
+  nav.topnav .inner { gap: 10px; }
 }
 
-/* Responsive layout below 960px — links collapse, search wraps. */
-@media (max-width: 960px) {
-  .hero .hero-grid { grid-template-columns: 1fr; gap: 20px; }
-  .hero-stats { grid-template-columns: repeat(4, 1fr); }
-  .filters { grid-template-columns: 1fr 1fr; }
-  footer.ftr .cols { grid-template-columns: 1fr 1fr; }
+/* ≤1280px: the 8 section links collapse into the hamburger dropdown. The search
+   box, in-house pill, account chip and CTA STAY in the bar, so the CTA is always
+   visible — on smaller screens the links live behind the ☰ menu. */
+@media (max-width: 1280px) {
   .nav-toggle { display: block; }
-  .search-wrap { max-width: none; order: 3; flex-basis: 100%; margin-top: 8px; flex: 1 1 100%; height: auto; }
-  /* Mobile: search has its own full-width row, so undo the desktop
-     expand-on-focus pattern (no overlay needed when there's nothing
-     to overlay with). */
-  .search-input-row { position: relative; width: 100%; }
-  .search-wrap:focus-within .search-input-row { width: 100%; }
-  .search-kbd { display: none; }
   nav .links {
     display: none;
     position: absolute;
@@ -3063,11 +3058,25 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
     padding: 12px 24px 16px;
     flex-direction: column;
     gap: 2px;
+    z-index: 60;
   }
   nav .links.open { display: flex; }
   nav .links a { padding: 10px 14px; font-size: 15px; }
-  /* Sign-in chip + CTA explicitly kept out of the hamburger so users can
-     always sign in / jump to the explorer without opening any menu. */
+}
+
+/* ≤960px: search drops to its own full-width row below the bar. */
+@media (max-width: 960px) {
+  .hero .hero-grid { grid-template-columns: 1fr; gap: 20px; }
+  .hero-stats { grid-template-columns: repeat(4, 1fr); }
+  .filters { grid-template-columns: 1fr 1fr; }
+  footer.ftr .cols { grid-template-columns: 1fr 1fr; }
+  .search-wrap { max-width: none; order: 3; flex-basis: 100%; margin-top: 8px; flex: 1 1 100%; height: auto; }
+  /* Mobile: search has its own full-width row, so undo the desktop
+     expand-on-focus pattern (no overlay needed when there's nothing
+     to overlay with). */
+  .search-input-row { position: relative; width: 100%; }
+  .search-wrap:focus-within .search-input-row { width: 100%; }
+  .search-kbd { display: none; }
 }
 @media (max-width: 520px) {
   nav.topnav .inner { gap: 8px; padding: 10px 14px; }
@@ -9252,9 +9261,10 @@ window.addEventListener('popstate', async () => {
     if (!m) return;
     m.style.display = '';
     const display = user.name || user.email.split('@')[0];
+    const firstName = display.trim().split(/\s+/)[0] || display;   // chip shows first name only (saves nav width)
     document.getElementById('ivAccAvatar').textContent = initials(user.name, user.email);
-    document.getElementById('ivAccName').textContent = display;
-    document.getElementById('ivDdName').textContent = display;
+    document.getElementById('ivAccName').textContent = firstName;
+    document.getElementById('ivDdName').textContent = display;     // dropdown keeps the full name
     document.getElementById('ivDdEmail').textContent = user.email;
     // Admin-dashboard link is shown to every signed-in user. The click
     // handler (wired below) decides whether to navigate or to bounce to

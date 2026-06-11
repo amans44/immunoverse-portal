@@ -456,6 +456,23 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-11 — Topnav never overflows: shrink band + hamburger ≤1280 + first-name chip
+**Why:** Even after moving the in-house entry out of the link row, "Explore atlas →"
+still ran off-screen on laptops — 8 section links + search + pill + account + CTA
+simply don't fit one row at ~1280–1440px.
+**What:**
+- **Account chip shows the first name only** (`showAccount`): `Aman` not `Aman
+  Sharma`, reclaiming width. The dropdown header keeps the full name.
+- **Responsive bands.** ≤1599px: tighten gaps, hide the (admin-only) Queries pill,
+  links → 12.5px. ≤1399px: drop the "Atlas" brand subtitle, links → 12px, the
+  in-house pill collapses to its lock icon, smaller CTA/theme toggle.
+- **Hamburger at ≤1280px.** The 8 section links collapse into the existing `☰`
+  dropdown; the search box, in-house pill, account chip and CTA stay in the bar —
+  so the CTA is *always* visible (the nav's hard requirement). Search still drops to
+  its own row ≤960px. The links-collapse moved up from 960 → 1280 so common laptops
+  use the menu instead of overflowing.
+**Files:** `index.html`. **Commit:** _portal_ — see this commit.
+
 ### 2026-06-10 — Fix: in-house cancer never loaded (double-base URL) + declutter topnav
 **Why:** Right after go-live, a signed-in lab member saw the In-house entry but the
 medulloblastoma cohort never appeared in the explorer, and the extra topnav link
