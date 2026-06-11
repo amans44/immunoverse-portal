@@ -41,6 +41,16 @@
   .footer{ color:var(--text-3); font-size:11px; margin-top:30px; text-align:center; }
   a{ color:var(--accent); }
   .hidden{ display:none; }
+  .bars{ margin:6px 0 4px; }
+  .gbar{ display:flex; align-items:center; gap:10px; margin:6px 0; font-size:12px; }
+  .gbar .lbl{ width:150px; color:var(--text-2); flex:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gbar .track{ flex:1; height:8px; background:var(--bg-2); border-radius:5px; overflow:hidden; }
+  .gbar .fill{ height:100%; background:linear-gradient(90deg,#22d3ee,#818cf8); }
+  .gbar .v{ width:66px; text-align:right; font-family:'JetBrains Mono',monospace; color:var(--text-0); flex:none; }
+  .subsec{ color:var(--text-2); font-size:12.5px; margin:-2px 0 10px; }
+  .xref{ display:inline-block; font-size:12px; margin:3px 8px 0 0; color:var(--accent); text-decoration:none; }
+  .raw{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-3); word-break:break-all; background:var(--bg-2); padding:8px 10px; border-radius:6px; margin-top:6px; }
+  details summary{ cursor:pointer; color:var(--text-2); font-size:12px; }
 </style>
 </head>
 <body>
@@ -170,14 +180,120 @@
     }).join('') + '</div>';
   }
 
+  function num(v, d) { return v == null ? '—' : (typeof v === 'number' ? v.toFixed(d == null ? 2 : d) : String(v)); }
+  function bar(lbl, pct, val) {
+    return '<div class="gbar"><div class="lbl">' + esc(lbl) + '</div><div class="track"><div class="fill" style="width:' +
+      Math.max(0, Math.min(100, pct)).toFixed(0) + '%"></div></div><div class="v">' + esc(val) + '</div></div>';
+  }
+
+  function metricsBlock(r) {
+    var dep = r[COL.depmap], homo = r[COL.homo], score = r[COL.score], abund = r[COL.abund] || 0;
+    return '<div class="sec">Presentation metrics</div><div class="bars">' +
+      bar('Abundance rank', abund * 100, abund.toFixed(3)) +
+      bar('Spectral score', Math.min(100, score || 0), score != null ? String(score) : '—') +
+      bar('Homogeneity (scRNA)', (homo || 0) * 100, homo != null ? homo.toFixed(2) : '—') +
+      bar('DepMap essentiality', Math.max(0, Math.min(100, (-(dep || 0)) * 50 + 50)), dep != null ? dep.toFixed(2) : '—') +
+      '</div>';
+  }
+
+  function exprBlock(r) {
+    var t = r[COL.tumorExp], n = r[COL.normalExp];
+    if (t == null && n == null) return '';
+    var maxE = Math.max(t || 0, n || 0, 1), interp = '';
+    if (t != null && n != null) {
+      var ratio = n > 0 ? t / n : (t > 0 ? Infinity : 0);
+      interp = !isFinite(ratio) ? 'Tumor-specific — undetectable in the most-expressing normal tissue.'
+        : ratio >= 5 ? ratio.toFixed(1) + '× tumor-enriched window — favorable therapeutic margin.'
+        : ratio >= 1.5 ? ratio.toFixed(1) + '× higher in tumor than the top normal tissue.'
+        : 'Narrow window — comparable tumor and normal expression.';
+    }
+    return '<div class="sec">Expression window (RNA · TPM)</div><div class="bars">' +
+      bar('Tumor (median)', t != null ? t / maxE * 100 : 0, t != null ? t.toFixed(1) : '—') +
+      bar('Max GTEx normal', n != null ? n / maxE * 100 : 0, n != null ? n.toFixed(1) : '—') +
+      '</div>' + (interp ? '<div class="subsec">' + esc(interp) + '</div>' : '');
+  }
+
+  function sourceAnnoBlock(r, extra) {
+    var src = (extra && extra.source) || '';
+    if (!src) return '';
+    var coord = '', mChr = src.match(/chr[\dXYM]+:\d+-\d+/); if (mChr) coord = mChr[0];
+    var mTx = src.match(/ENST\d+(?:\.\d+)?/), transcript = mTx ? mTx[0] : '';
+    var links = [];
+    if (coord) {
+      links.push('<a class="xref" href="https://useast.ensembl.org/Homo_sapiens/Location/View?r=' + encodeURIComponent(coord.replace(/^chr/, '')) + '" target="_blank" rel="noopener">Ensembl region ↗</a>');
+      links.push('<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=' + encodeURIComponent(coord) + '" target="_blank" rel="noopener">UCSC hg38 ↗</a>');
+    }
+    if (transcript) links.push('<a class="xref" href="https://rest.ensembl.org/lookup/id/' + encodeURIComponent(transcript.split('.')[0]) + '?content-type=text/html" target="_blank" rel="noopener">' + esc(transcript) + ' ↗</a>');
+    return '<div class="sec">Source annotation</div>' +
+      '<div class="meta-row">' +
+        (coord ? '<span class="pill-mini mono">' + esc(coord) + '</span>' : '') +
+        (transcript ? '<span class="pill-mini">Transcript <b class="mono">' + esc(transcript) + '</b></span>' : '') +
+        (r[COL.nuorf] ? '<span class="pill-mini">Subtype <b>' + esc(r[COL.nuorf]) + '</b></span>' : '') +
+      '</div>' +
+      (links.length ? '<div style="margin:2px 0 8px;">' + links.join('') + '</div>' : '') +
+      '<details><summary>Show raw annotation</summary><div class="raw">' + esc(src) + '</div></details>';
+  }
+
+  function mutBlock(extra) {
+    var muts = extra && extra.mutations;
+    if (!muts || !muts.length) return '';
+    var pills = muts.slice(0, 8).map(function (m) {
+      return '<span class="pill-mini"><b class="mono">' + esc(m.gene || '') + '</b> ' + esc(m.protein_change || '') +
+        (m.variant_type ? ' · ' + esc(m.variant_type) : '') + '</span>';
+    }).join(' ');
+    return '<div class="sec">Mutation</div><div class="meta-row">' + pills + '</div>';
+  }
+
+  function bindTable(title, rows) {
+    if (!rows.length) return '';
+    var body = rows.map(function (b) {
+      return '<tr><td class="mono">' + esc(b[0]) + '</td><td class="num">' + num(b[1]) +
+        '</td><td class="num">' + (b[2] != null ? b[2].toFixed(0) : '—') + '</td><td>' + esc(b[3] || '—') + '</td></tr>';
+    }).join('');
+    return '<div class="sec">' + esc(title) + '</div>' +
+      '<table><thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th></tr></thead><tbody>' + body + '</tbody></table>';
+  }
+
+  function intensBlock(intens) {
+    if (!intens || !intens.length) return '';
+    var scalar = typeof intens[0] === 'number';
+    var vals = scalar ? intens.map(function (v, i) { return ['Sample ' + (i + 1), v]; }) : intens;
+    var max = Math.max.apply(null, vals.map(function (x) { return x[1] || 0; }).concat([1]));
+    var rows = vals.slice(0, 24).map(function (x) {
+      return bar(String(x[0]), (x[1] || 0) / max * 100, x[1] != null ? Number(x[1]).toFixed(1) : '—');
+    }).join('');
+    return '<div class="sec">Per-sample MS intensity</div><div class="bars">' + rows + '</div>';
+  }
+
+  function atlasBlock(r) {
+    var a = r[COL.atlas] || [];
+    if (!a.length) return '<div class="sec">Normal-tissue presentation (HLA Ligand Atlas)</div>' +
+      '<div class="subsec" style="color:#86efac;">Clean — not detected on normal tissues in the atlas.</div>';
+    var names = a.map(function (x) { return Array.isArray(x) ? x[0] : x; });
+    return '<div class="sec">Normal-tissue presentation (HLA Ligand Atlas)</div>' +
+      '<div class="subsec" style="color:#fca5a5;">Detected on ' + a.length + ' normal tissue' + (a.length > 1 ? 's' : '') +
+      ': <span class="mono" style="color:var(--text-2)">' + esc(names.join(', ')) + '</span></div>';
+  }
+
+  function xrefBlock(r) {
+    var g = (r[COL.gene] || '').split('/')[0], ensg = r[COL.ensg] || '', pep = r[COL.pep], L = [];
+    if (g && g.indexOf('-') < 0 && /^[A-Za-z]/.test(g) && !/^ENST/.test(g)) {
+      L.push('<a class="xref" href="https://www.genecards.org/cgi-bin/carddisp.pl?gene=' + encodeURIComponent(g) + '" target="_blank" rel="noopener">GeneCards ↗</a>');
+      L.push('<a class="xref" href="https://www.uniprot.org/uniprotkb?query=' + encodeURIComponent(g) + '+AND+organism_id:9606" target="_blank" rel="noopener">UniProt ↗</a>');
+      L.push('<a class="xref" href="https://depmap.org/portal/gene/' + encodeURIComponent(g) + '" target="_blank" rel="noopener">DepMap ↗</a>');
+    }
+    if (/^ENSG/.test(ensg)) L.push('<a class="xref" href="https://www.ensembl.org/Homo_sapiens/Gene/Summary?g=' + encodeURIComponent(ensg) + '" target="_blank" rel="noopener">Ensembl ↗</a>');
+    L.push('<a class="xref" href="https://www.iedb.org/result_v3.php?cookie_id=&searchtab=simple&linear_sequence=' + encodeURIComponent(pep) + '" target="_blank" rel="noopener">IEDB ↗</a>');
+    return '<div class="sec">Cross-references</div><div>' + L.join('') + '</div>';
+  }
+
   function renderPeptide(pep) {
     var r = findRow(pep);
     if (!r) return '<div class="card"><h1>' + esc(pep) + '</h1><p class="sub">This peptide is not in the shared dataset.</p></div>';
-    var bind = r[COL.bind] || [];
-    var bindRows = bind.length ? bind.map(function (b) {
-      return '<tr><td class="mono">' + esc(b[0]) + '</td><td class="num">' + (b[1] != null ? b[1].toFixed(2) : '—') +
-        '</td><td class="num">' + (b[2] != null ? b[2].toFixed(0) : '—') + '</td><td>' + esc(b[3] || '—') + '</td></tr>';
-    }).join('') : '<tr><td colspan="4" style="color:var(--text-3)">No per-HLA records on file.</td></tr>';
+    var d = DETAIL[pep] || [], addq = d[0] || [], intens = d[1] || [], extra = d[2] || {};
+    var badges = [];
+    badges.push(r[COL.unique] ? '<span class="pill-mini" style="color:#86efac">unique mapping</span>' : '<span class="pill-mini" style="color:var(--text-2)">ambiguous mapping</span>');
+    if (r[COL.nuorf]) badges.push('<span class="pill-mini">nuORF · ' + esc(r[COL.nuorf]) + '</span>');
     return '<div class="card">' +
       '<div class="pep-title">' + esc(pep) + '</div>' +
       '<div class="sub">' + esc(r[COL.gene] || 'unknown gene') + ' · ' + esc(r[COL.cls]) + ' · ' + esc(CODE) +
@@ -188,11 +304,18 @@
         '<span class="pill-mini"><b>' + (r[COL.abund] || 0).toFixed(3) + '</b> abund.</span>' +
         (r[COL.recurrence] != null ? '<span class="pill-mini"><b>' + (r[COL.recurrence] * 100).toFixed(0) + '%</b> recurrence</span>' : '') +
         (r[COL.totalSamples] ? '<span class="pill-mini"><b>' + esc(r[COL.totalSamples]) + '</b> patients</span>' : '') +
-        (r[COL.tumorExp] != null ? '<span class="pill-mini">tumor <b>' + r[COL.tumorExp].toFixed(1) + '</b> · normal <b>' + (r[COL.normalExp] != null ? r[COL.normalExp].toFixed(1) : '—') + '</b></span>' : '') +
+        badges.join('') +
       '</div>' +
-      '<div class="sec">Per-HLA binding</div>' +
-      '<table><thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th></tr></thead><tbody>' + bindRows + '</tbody></table>' +
+      sourceAnnoBlock(r, extra) +
+      mutBlock(extra) +
+      metricsBlock(r) +
+      exprBlock(r) +
       '<div class="sec">Figures</div>' + figBlock(pep) +
+      bindTable('Per-HLA binding', r[COL.bind] || []) +
+      bindTable('Predicted binders across HLA panel', addq.slice(0, 16)) +
+      intensBlock(intens) +
+      atlasBlock(r) +
+      xrefBlock(r) +
       '<div class="footer">Shared privately via ImmunoVerse · read-only · this link can be revoked by its owner at any time.</div>' +
       '</div>';
   }

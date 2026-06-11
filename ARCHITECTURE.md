@@ -458,6 +458,21 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-11 — Shared peptide page shows the full drawer data (not a stub)
+**Why:** A peptide-scoped share rendered only the header, a pill row, the per-HLA
+table and 2 figures — far less than the portal drawer shows for that peptide.
+**What:** The backend `/peptide` endpoint already returns the full 19-col row + the
+detail (`addq`, `intens`, `extra{diffPlot, source, mutations}`), so `share.html`'s
+`renderPeptide` was expanded to match the drawer: presentation metrics (abundance,
+spectral score, homogeneity, DepMap), the expression window (tumor vs normal TPM +
+interpretation), source annotation for non-canonical rows (coords / transcript /
+links / raw), all figures (spectrum, percentile, rank-abundance, gene boxplot,
+splicing, ERV), per-HLA binding, the extended predicted-binder panel (`additional_
+query`), per-sample MS intensity, HLA-Ligand-Atlas normal-tissue safety, mutations,
+and cross-reference links. No backend change. Read-only and still peptide-scoped
+(the token's peptide claim is enforced server-side).
+**Files:** `share.html`. **Commit:** _portal_ — this commit.
+
 ### 2026-06-11 — Add osteosarcoma in-house cohort + fix non-canonical source names
 **Why:** Frank's second in-house cohort (osteosarcoma, 640 peptides) is ready in GCS;
 and the drawer showed the wrong "source name" for non-canonical medulloblastoma
