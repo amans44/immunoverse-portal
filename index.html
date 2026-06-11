@@ -3123,9 +3123,6 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <a href="#methods">Methods</a>
       <a href="#downloads">Data</a>
       <a href="#cite">Cite</a>
-      <!-- In-house (private) datasets — revealed by ivLoadInhouseGated() ONLY for
-           approved lab members; hidden (display:none) for everyone else. -->
-      <a href="#explorer" id="ivInhouseNav" style="display:none;" onclick="return ivInhouseFilter(event)" title="In-house (private) cohorts — visible to approved lab members only. Click to view only in-house cohorts.">🔒 In-house</a>
     </div>
     <!-- Live query counter: hidden by default; revealed only for signed-in
          admins by the auth bootstrap below (showAccount). Anonymous and
@@ -3156,6 +3153,10 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
         <a href="account.html" role="menuitem"><span class="iv-dd-icon">👤</span>Account</a>
         <a href="account.html#savedSearches" role="menuitem"><span class="iv-dd-icon">★</span>Saved searches</a>
         <a href="account.html#history" role="menuitem"><span class="iv-dd-icon">⊕</span>Recently viewed</a>
+        <!-- In-house (private) cohorts — revealed by ivLoadInhouseGated() ONLY for
+             approved lab members; hidden for everyone else. Lives in the account
+             menu (not the topnav) so it stays members-only and keeps the nav uncluttered. -->
+        <button type="button" role="menuitem" id="ivInhouseNav" style="display:none;" onclick="return ivInhouseFilter(event)" title="In-house (private) cohorts — visible to approved lab members only. Click to view only in-house cohorts."><span class="iv-dd-icon">🔒</span>In-house cohorts</button>
         <a href="admin.html" role="menuitem" id="ivDdAdmin"><span class="iv-dd-icon">🛡</span>Admin dashboard</a>
         <button type="button" role="menuitem" id="ivDdFeedback"><span class="iv-dd-icon">💬</span>Send feedback</button>
         <div class="iv-dd-sep"></div>
@@ -3235,14 +3236,14 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 .iv-dd-name { font-size: 13.5px; font-weight: 600; color: var(--text-0); }
 .iv-dd-email { font-size: 12px; color: var(--text-2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .iv-user-dropdown a,
-.iv-user-dropdown button.iv-dd-signout {
+.iv-user-dropdown button[role="menuitem"] {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 12px; border-radius: 8px;
   font-size: 13.5px; color: var(--text-1);
   text-decoration: none; border: 0; background: transparent;
   cursor: pointer; font-family: inherit; width: 100%; text-align: left;
 }
-.iv-user-dropdown a:hover, .iv-user-dropdown button.iv-dd-signout:hover {
+.iv-user-dropdown a:hover, .iv-user-dropdown button[role="menuitem"]:hover {
   background: var(--bg-3); color: var(--text-0);
 }
 /* Browser default [hidden] { display: none } loses the specificity fight
@@ -4782,16 +4783,19 @@ async function ivLoadInhouseGated() {
     datasets = await r.json();
   } catch (e) { return; }
   if (!Array.isArray(datasets) || !datasets.length) return;   // not a member → nothing
-  const base = (window.ivResolvedAuthBase && window.ivResolvedAuthBase()) || '';
   let added = 0;
   for (const ds of datasets) {
     const code = ds.cancer_code || ds.id;
-    const fileUrl = (p) => `${base}/api/portal/data/datasets/${encodeURIComponent(ds.id)}/file?path=${encodeURIComponent(p)}`;
+    // RELATIVE paths only: these are fetched through ivAuthedFetch, which prepends
+    // the resolved auth base itself. Baking the base in here too would double it
+    // (https://base + https://base/api/...) and the fetch would throw — the data
+    // never loads and the cancer silently never appears, even though the nav shows.
+    const fileUrl = (p) => `/api/portal/data/datasets/${encodeURIComponent(ds.id)}/file?path=${encodeURIComponent(p)}`;
     try {
       await ivRegisterInhouse({
         code, name: ds.title || code, group: 'In-house', datasetId: ds.id,
         dataUrl: fileUrl(`${code}.js`), detailUrl: fileUrl(`${code}_detail.js`),
-        assetBase: `${base}/api/portal/data/datasets/${encodeURIComponent(ds.id)}/file?path=assets`,
+        assetBase: `/api/portal/data/datasets/${encodeURIComponent(ds.id)}/file?path=assets`,
         fetchVia: window.ivAuthedFetch,
       });
       added++;
@@ -4804,6 +4808,11 @@ window.ivLoadInhouseGated = ivLoadInhouseGated;
 // In-house nav toggle: filter the explorer to ONLY in-house cohorts (and back).
 window.ivInhouseFilter = function (e) {
   if (e) e.preventDefault();
+  // Invoked from the account dropdown — close it so the explorer is visible.
+  try {
+    const dd = document.getElementById('ivUserDropdown'); if (dd) dd.hidden = true;
+    const chip = document.getElementById('ivAccountChip'); if (chip) chip.setAttribute('aria-expanded', 'false');
+  } catch (err) {}
   STATE.inhouseOnly = !STATE.inhouseOnly;
   const nav = document.getElementById('ivInhouseNav');
   if (nav) nav.classList.toggle('iv-active', STATE.inhouseOnly);

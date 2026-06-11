@@ -349,10 +349,15 @@ everyone else (nav, dropdown, grid, search).
 - **Frontend** (`index.html`): `ivLoadInhouseGated()` (signed-in only) fetches
   `/datasets`; a non-member gets `[]` and sees nothing. Members get the cancers
   registered into `window.IV_INHOUSE` (badged **🔒 In-house** in grid + dropdown),
-  a **🔒 In-house** topnav link that filters the explorer to in-house only
-  (`STATE.inhouseOnly`), and full comparability (global search, compare modal,
-  bundle download). In-house cancers are never lock-gated (`isLocked` returns false
-  for them). Figures resolve via `ivSignInhouse()` (signed URLs in prod, local files
+  a **🔒 In-house cohorts** entry in the signed-in **account dropdown** (NOT the
+  topnav — keeps the nav uncluttered and the entry members-only) that filters the
+  explorer to in-house only (`STATE.inhouseOnly`), and full comparability (global
+  search, compare modal, bundle download). In-house cancers are never lock-gated
+  (`isLocked` returns false for them). The data JS + assets are fetched with
+  **relative** `/api/portal/data/...` paths through `ivAuthedFetch` (which prepends
+  the resolved auth base itself — baking the base in too would double it and the
+  fetch would silently throw, so the cancer never appears even though the entry
+  shows). Figures resolve via `ivSignInhouse()` (signed URLs in prod, local files
   under `?ivlocal=`).
 - **Sharing** (`share.html` + account "Shared links"): a member shares a peptide OR
   a whole cohort. `POST /datasets/{id}/shares` mints a link `/share.html?s={id}` +
@@ -447,6 +452,26 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-10 — Fix: in-house cancer never loaded (double-base URL) + declutter topnav
+**Why:** Right after go-live, a signed-in lab member saw the In-house entry but the
+medulloblastoma cohort never appeared in the explorer, and the extra topnav link
+pushed the "Explore atlas →" CTA off-screen.
+**What:**
+- **Data never loaded (root cause).** `ivLoadInhouseGated()` built the dataset
+  `dataUrl`/`detailUrl` with the auth base already baked in, *then* fetched them via
+  `ivAuthedFetch`, which prepends the resolved base again → `https://base` +
+  `https://base/api/...` = a malformed URL → `fetch` throws → swallowed by
+  `ivRegisterInhouse`'s catch → the cancer silently never registers (but the nav
+  entry still shows, since reveal is unconditional). Fixed by making the data paths
+  **relative** (`/api/portal/data/...`), matching the already-correct `/sign` path.
+- **Topnav declutter.** Moved the **🔒 In-house** link out of the 8-link nav row
+  (where it became a 9th item and overflowed the CTA) into the signed-in **account
+  dropdown** as "🔒 In-house cohorts". It's members-only anyway, so the dropdown is
+  its natural home; the nav row is back to its pre-go-live width and the CTA stays
+  on-screen. Broadened `.iv-user-dropdown button[role="menuitem"]` styling so the new
+  item (and the previously-unstyled Send-feedback button) render as proper menu rows.
+**Files:** `index.html`. **Commit:** _portal_ — see this commit.
 
 ### 2026-06-10 — Private in-house datasets go LIVE: gated explorer + collaborator sharing
 **Why:** Frank's in-house cohorts (medulloblastoma now, OS later) need to be hosted
