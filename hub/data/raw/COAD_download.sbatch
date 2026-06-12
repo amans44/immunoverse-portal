@@ -685,3 +685,11 @@ https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/05/PXD071022/YU1YVAJU_CRC_20
 )
 
 for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./phase2_PXD071022 {}"
+
+# phase2_PXD013831
+declare -a samples=(
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2019/12/PXD013831/20171206_QE_HFX_LC2_JMI_HLApI_OE37-1N_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2019/12/PXD013831/20171206_QE_HFX_LC2_JMI_HLApI_OE37-1N_R02.raw
+)
+
+for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./phase2_PXD013831 {}"

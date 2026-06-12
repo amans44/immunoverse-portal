@@ -25,140 +25,180 @@ window.IMMUNOVERSE_HUB["EWS"] = {
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool1.raw",
       "biology": "SK-N-MC_engineered_A2_IFNr",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool2.raw",
       "biology": "SK-N-MC_engineered_A2_IFNr",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool3.raw",
       "biology": "SK-N-MC_engineered_A2_IFNr",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool4.raw",
       "biology": "SK-N-MC_engineered_A2_IFNr",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool5.raw",
       "biology": "SK-N-MC_engineered_A2_IFNr",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool6.raw",
       "biology": "SK-N-MC_engineered_A2_IFNr",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool7.raw",
       "biology": "SK-N-MC_engineered_A2_IFNr",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool8.raw",
       "biology": "SK-N-MC_engineered_A2_IFNr",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool9.raw",
       "biology": "SK-N-MC_engineered_A2_IFNr",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool10.raw",
       "biology": "SK-N-MC_engineered_A2_IFNr",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-control-pool1.raw",
       "biology": "SK-N-MC_engineered_A2",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-control-pool2.raw",
       "biology": "SK-N-MC_engineered_A2",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-control-pool3.raw",
       "biology": "SK-N-MC_engineered_A2",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-control-pool4.raw",
       "biology": "SK-N-MC_engineered_A2",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-control-pool5.raw",
       "biology": "SK-N-MC_engineered_A2",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-control-pool6.raw",
       "biology": "SK-N-MC_engineered_A2",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-control-pool7.raw",
       "biology": "SK-N-MC_engineered_A2",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-control-pool8.raw",
       "biology": "SK-N-MC_engineered_A2",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-control-pool9.raw",
       "biology": "SK-N-MC_engineered_A2",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD046803",
       "batch": "",
       "sample": "F20201104_PF_SK-N-MC_Rep3_bb72-control-pool10.raw",
       "biology": "SK-N-MC_engineered_A2",
-      "HLA": "A*02:01"
+      "HLA": "A*02:01",
+      "special_note": "",
+      "acquisition": "DDA"
     }
   ],
   "hla": [

@@ -26,7 +26,8 @@ window.IMMUNOVERSE_HUB["BLCA"] = {
       "sample": "Seq48519_QE2.raw",
       "biology": "P7-human-biopsy",
       "HLA": "A*25:01,B*18:01,B*38:01,C*12:03",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD016060",
@@ -34,7 +35,8 @@ window.IMMUNOVERSE_HUB["BLCA"] = {
       "sample": "Seq48520_QE2.raw",
       "biology": "P7-PDX",
       "HLA": "A*25:01,B*18:01,B*38:01,C*12:03",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     }
   ],
   "hla": [

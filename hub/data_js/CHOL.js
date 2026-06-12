@@ -28,7 +28,8 @@ window.IMMUNOVERSE_HUB["CHOL"] = {
       "sample": "Seq48142_QE2.raw",
       "biology": "P2-human biopsy",
       "HLA": "A*24:02,B*58:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD016060",
@@ -36,7 +37,8 @@ window.IMMUNOVERSE_HUB["CHOL"] = {
       "sample": "Seq58386_QE3.raw",
       "biology": "P2-PDX-p0-1",
       "HLA": "A*24:02,B*58:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD016060",
@@ -44,7 +46,8 @@ window.IMMUNOVERSE_HUB["CHOL"] = {
       "sample": "Seq58387_QE3.raw",
       "biology": "P2-PDX-p0-2",
       "HLA": "A*24:02,B*58:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD016060",
@@ -52,7 +55,8 @@ window.IMMUNOVERSE_HUB["CHOL"] = {
       "sample": "Seq58388_QE3.raw",
       "biology": "P2-PDX-p3-1",
       "HLA": "A*24:02,B*58:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD016060",
@@ -60,7 +64,8 @@ window.IMMUNOVERSE_HUB["CHOL"] = {
       "sample": "Seq58389_QE3.raw",
       "biology": "P2-PDX-p3-1",
       "HLA": "A*24:02,B*58:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     }
   ],
   "hla": [

@@ -3,11 +3,11 @@ window.IMMUNOVERSE_HUB["COAD"] = {
   "code": "COAD",
   "display": "Colon Adenocarcinoma",
   "category": "Solid",
-  "sample_count": 585,
-  "sample_included": 479,
-  "cohort_count": 18,
-  "biology_count": 119,
-  "hla_count": 92,
+  "sample_count": 587,
+  "sample_included": 481,
+  "cohort_count": 19,
+  "biology_count": 120,
+  "hla_count": 93,
   "studies": [
     "MSV000087927",
     "PXD000394",
@@ -16,6 +16,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     "PXD023805_JPST001069_faims",
     "PXD028309",
     "phase2_PXD009602",
+    "phase2_PXD013831",
     "phase2_PXD015947",
     "phase2_PXD016582",
     "phase2_PXD023770_JPST001072",
@@ -5309,6 +5310,24 @@ window.IMMUNOVERSE_HUB["COAD"] = {
       "HLA": "A*02:03,A*24:02,B*15:02,B*15:25,C*03:04,C*08:01",
       "special_note": "",
       "acquisition": "DDA"
+    },
+    {
+      "study": "phase2_PXD013831",
+      "batch": "",
+      "sample": "20171206_QE_HFX_LC2_JMI_HLApI_OE37-1N_R01.raw",
+      "biology": "OE37-1N",
+      "HLA": "A*25:03,A*66:01,B*18:01,B*35:01,C*04:01,C*12:03",
+      "special_note": "",
+      "acquisition": "DDA"
+    },
+    {
+      "study": "phase2_PXD013831",
+      "batch": "",
+      "sample": "20171206_QE_HFX_LC2_JMI_HLApI_OE37-1N_R02.raw",
+      "biology": "OE37-1N",
+      "HLA": "A*25:03,A*66:01,B*18:01,B*35:01,C*04:01,C*12:03",
+      "special_note": "",
+      "acquisition": "DDA"
     }
   ],
   "hla": [
@@ -5323,6 +5342,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     "A*23:01",
     "A*24:02",
     "A*25:01",
+    "A*25:03",
     "A*26:01",
     "A*29:01",
     "A*29:02",

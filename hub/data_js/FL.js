@@ -27,224 +27,288 @@ window.IMMUNOVERSE_HUB["FL"] = {
       "batch": "",
       "sample": "FL0010331.raw",
       "biology": "FLMS001",
-      "HLA": ""
+      "HLA": "",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD010808",
       "batch": "",
       "sample": "FL0010403.raw",
       "biology": "FLMS001",
-      "HLA": ""
+      "HLA": "",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD010808",
       "batch": "",
       "sample": "FL0010409.raw",
       "biology": "FLMS002",
-      "HLA": ""
+      "HLA": "",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD010808",
       "batch": "",
       "sample": "FL0010415.raw",
       "biology": "FLMS002",
-      "HLA": ""
+      "HLA": "",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD010808",
       "batch": "",
       "sample": "FL0010829.raw",
       "biology": "FLMS003",
-      "HLA": ""
+      "HLA": "",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD010808",
       "batch": "",
       "sample": "FL0010833.raw",
       "biology": "FLMS003",
-      "HLA": ""
+      "HLA": "",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD010808",
       "batch": "",
       "sample": "FL0010839.raw",
       "biology": "FLMS004",
-      "HLA": ""
+      "HLA": "",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD010808",
       "batch": "",
       "sample": "FL0010843.raw",
       "biology": "FLMS004",
-      "HLA": ""
+      "HLA": "",
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     },
     {
       "study": "",
       "batch": "",
       "sample": "",
       "biology": "",
-      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02"
+      "HLA": "A*02:05,B*07:02,B*50:01,C*06:02,C*07:02",
+      "special_note": "",
+      "acquisition": ""
     }
   ],
   "hla": [

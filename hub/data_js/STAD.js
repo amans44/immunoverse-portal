@@ -26,7 +26,8 @@ window.IMMUNOVERSE_HUB["STAD"] = {
       "sample": "Seq48144_QE2.raw",
       "biology": "P4-human biopsy",
       "HLA": "A*02:01,A*23:01,B*38:01,B*44:03,C*04:01,C*12:03",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD016060",
@@ -34,7 +35,8 @@ window.IMMUNOVERSE_HUB["STAD"] = {
       "sample": "Seq48145_QE2.raw",
       "biology": "P4-PDX",
       "HLA": "A*02:01,A*23:01,B*38:01,B*44:03,C*04:01,C*12:03",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     }
   ],
   "hla": [

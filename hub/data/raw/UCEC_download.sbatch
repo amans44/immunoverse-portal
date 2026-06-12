@@ -31,3 +31,4 @@ ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2023/02/PXD036856/3530_ML_35035TC_0
 )
 
 for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./PXD036856 {}"
+

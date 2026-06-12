@@ -1,21 +1,21 @@
-study	batch	sample	biology	HLA
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool1.raw	SK-N-MC_engineered_A2_IFNr	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool2.raw	SK-N-MC_engineered_A2_IFNr	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool3.raw	SK-N-MC_engineered_A2_IFNr	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool4.raw	SK-N-MC_engineered_A2_IFNr	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool5.raw	SK-N-MC_engineered_A2_IFNr	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool6.raw	SK-N-MC_engineered_A2_IFNr	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool7.raw	SK-N-MC_engineered_A2_IFNr	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool8.raw	SK-N-MC_engineered_A2_IFNr	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool9.raw	SK-N-MC_engineered_A2_IFNr	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool10.raw	SK-N-MC_engineered_A2_IFNr	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool1.raw	SK-N-MC_engineered_A2	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool2.raw	SK-N-MC_engineered_A2	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool3.raw	SK-N-MC_engineered_A2	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool4.raw	SK-N-MC_engineered_A2	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool5.raw	SK-N-MC_engineered_A2	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool6.raw	SK-N-MC_engineered_A2	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool7.raw	SK-N-MC_engineered_A2	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool8.raw	SK-N-MC_engineered_A2	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool9.raw	SK-N-MC_engineered_A2	A*02:01
-PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool10.raw	SK-N-MC_engineered_A2	A*02:01
+study	batch	sample	biology	HLA	special_note	acquisition
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool1.raw	SK-N-MC_engineered_A2_IFNr	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool2.raw	SK-N-MC_engineered_A2_IFNr	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool3.raw	SK-N-MC_engineered_A2_IFNr	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool4.raw	SK-N-MC_engineered_A2_IFNr	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool5.raw	SK-N-MC_engineered_A2_IFNr	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool6.raw	SK-N-MC_engineered_A2_IFNr	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool7.raw	SK-N-MC_engineered_A2_IFNr	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool8.raw	SK-N-MC_engineered_A2_IFNr	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool9.raw	SK-N-MC_engineered_A2_IFNr	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-IFN-pool10.raw	SK-N-MC_engineered_A2_IFNr	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool1.raw	SK-N-MC_engineered_A2	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool2.raw	SK-N-MC_engineered_A2	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool3.raw	SK-N-MC_engineered_A2	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool4.raw	SK-N-MC_engineered_A2	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool5.raw	SK-N-MC_engineered_A2	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool6.raw	SK-N-MC_engineered_A2	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool7.raw	SK-N-MC_engineered_A2	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool8.raw	SK-N-MC_engineered_A2	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool9.raw	SK-N-MC_engineered_A2	A*02:01		DDA
+PXD046803		F20201104_PF_SK-N-MC_Rep3_bb72-control-pool10.raw	SK-N-MC_engineered_A2	A*02:01		DDA

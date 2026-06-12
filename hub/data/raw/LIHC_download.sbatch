@@ -213,3 +213,51 @@ ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2023/01/PXD033351/SNU475.massspec.M
 )
 
 for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./phase2_PXD033351 {}"
+
+# phase2_PXD029882
+declare -a samples=(
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210508_JB_HLE_p1011_24h_W6-32_20_DDA1_235-1151mz_msms1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210508_JB_HLE_p1011_24h_W6-32_20_DDA2_235-1151mz_msms2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210508_JB_HLE_p1011_24h_W6-32_20_DDA3_235-1151mz_msms3.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210508_JB_HLE_p1431_24h_W6-32_20_DDA1_235-1151mz_msms8.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210508_JB_HLE_p1431_24h_W6-32_20_DDA2_235-1151mz_msms9.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210508_JB_HLE_p1431_24h_W6-32_20_DDA3_235-1151mz_msms10.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210512_JB_SMMC_p1011_24h_W6-32_20_DDA1_235-1151mz_msms6.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210512_JB_SMMC_p1011_24h_W6-32_20_DDA2_235-1151mz_msms7.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210512_JB_SMMC_p1011_24h_W6-32_20_DDA3_235-1151mz_msms8.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210512_JB_SMMC_p1431_24h_W6-32_20_DDA1_235-1151mz_msms13.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210512_JB_SMMC_p1431_24h_W6-32_20_DDA2_235-1151mz_msms14.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210512_JB_SMMC_p1431_24h_W6-32_20_DDA3_235-1151mz_msms15.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_2_p1011_24h_W6-32_20_DDA1_235-1151mz_msms13.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_2_p1011_24h_W6-32_20_DDA2_235-1151mz_msms14.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_2_p1011_24h_W6-32_20_DDA3_235-1151mz_msms15.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_2_p1431_24h_W6-32_20_DDA1_235-1151mz_msms20.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_2_p1431_24h_W6-32_20_DDA2_235-1151mz_msms21.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_2_p1431_24h_W6-32_20_DDA3_235-1151mz_msms22.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_3_p1011_24h_W6-32_20_DDA1_235-1151mz_msms27.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_3_p1011_24h_W6-32_20_DDA2_235-1151mz_msms28.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_3_p1011_24h_W6-32_20_DDA3_235-1151mz_msms29.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_3_p1431_24h_W6-32_20_DDA1_235-1151mz_msms34.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_3_p1431_24h_W6-32_20_DDA2_235-1151mz_msms35.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210531_JB_SMMC_3_p1431_24h_W6-32_20_DDA3_235-1151mz_msms36.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_1_p1011_W6-32_33_DDA1_235-1151mz_msms12.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_1_p1011_W6-32_33_DDA1_235-1151mz_msms13.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_1_p1011_W6-32_33_DDA1_235-1151mz_msms14.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_1_p1431_W6-32_33_DDA1_235-1151mz_msms5.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_1_p1431_W6-32_33_DDA2_235-1151mz_msms6.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_1_p1431_W6-32_33_DDA3_235-1151mz_msms7.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_2_p1011_W6-32_33_DDA1_235-1151mz_msms26.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_2_p1011_W6-32_33_DDA2_235-1151mz_msms27.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_2_p1011_W6-32_33_DDA3_235-1151mz_msms28.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_2_p1431_W6-32_33_DDA1_235-1151mz_msms19.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_2_p1431_W6-32_33_DDA2_235-1151mz_msms20.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_2_p1431_W6-32_33_DDA3_235-1151mz_msms21.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_3_p1011_W6-32_33_DDA1_235-1151mz_msms40.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_3_p1011_W6-32_33_DDA2_235-1151mz_msms41.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_3_p1011_W6-32_33_DDA3_235-1151mz_msms42.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_3_p1431_W6-32_33_DDA1_235-1151mz_msms33.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_3_p1431_W6-32_33_DDA2_235-1151mz_msms34.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/10/PXD029882/210614_JB_HepG2_3_p1431_W6-32_33_DDA3_235-1151mz_msms35.raw
+)
+
+for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./phase2_PXD029882 {}"

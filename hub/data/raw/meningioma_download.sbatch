@@ -56,4 +56,15 @@ ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2019/07/PXD009925/20171212_QEh1_LC1
 
 for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./PXD009925 {}"
 
+# PXD013831
+declare -a samples=(
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2019/12/PXD013831/20171201_QEh1_LC1_HLAIp_SA_JMI_3993_R1.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2019/12/PXD013831/20171201_QEh1_LC1_HLAIp_SA_JMI_3993_R2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2019/12/PXD013831/20171211_QEh1_LC1_HLAIp_SA_JMI_4052-BA_R2.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2019/12/PXD013831/20171212_QEh1_LC1_HLAIp_SA_JMI_4052-BA_R3.raw
+)
+
+for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./PXD013831 {}"
+
+
 

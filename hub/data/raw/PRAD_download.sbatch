@@ -22,3 +22,15 @@ ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2021/09/PXD022020/LNCaP_clone_FGC-n
 
 for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./PXD022020 {}"
 
+# PXD055544
+
+declare -a samples=(
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/10/PXD055544/TTP_YS_20031_1776_05122023_06-Dec-23_16-38-15_4709.d.zip
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/10/PXD055544/TTP_YS_20031_1777_05122023_06-Dec-23_18-36-18_4710.d.zip
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/10/PXD055544/TTP_YS_20031_1777_05122023_06-Dec-23_18-36-18_4710.d.zip
+)
+
+for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./PXD055544 {}"
+cd ./PXD055544
+for f in *.zip; do unzip $f; done
+

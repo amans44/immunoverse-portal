@@ -2,9 +2,9 @@ window.IMMUNOVERSE_HUB_INDEX = {
   "generated_at_utc": null,
   "source_url": "https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/ImmunoVerse_Hub/",
   "totals": {
-    "cancers": 33,
-    "samples": 4343,
-    "cohorts": 150
+    "cancers": 36,
+    "samples": 4489,
+    "cohorts": 161
   },
   "cancers": [
     {
@@ -96,11 +96,11 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "BRCA",
       "display": "Breast Invasive Carcinoma",
       "category": "Solid",
-      "sample_count": 240,
-      "sample_included": 205,
-      "cohort_count": 9,
-      "biology_count": 55,
-      "hla_count": 42,
+      "sample_count": 264,
+      "sample_included": 229,
+      "cohort_count": 10,
+      "biology_count": 58,
+      "hla_count": 44,
       "studies": [
         "PXD000394",
         "PXD009738",
@@ -110,7 +110,8 @@ window.IMMUNOVERSE_HUB_INDEX = {
         "phase2_PXD024965",
         "phase2_PXD025345",
         "phase2_PXD034818",
-        "phase2_PXD038165"
+        "phase2_PXD038165",
+        "phase2_PXD057839"
       ],
       "biology": [
         "1029/17T/ER+/PR+/Her2neg",
@@ -252,11 +253,11 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "COAD",
       "display": "Colon Adenocarcinoma",
       "category": "Solid",
-      "sample_count": 585,
-      "sample_included": 479,
-      "cohort_count": 18,
-      "biology_count": 119,
-      "hla_count": 92,
+      "sample_count": 587,
+      "sample_included": 481,
+      "cohort_count": 19,
+      "biology_count": 120,
+      "hla_count": 93,
       "studies": [
         "MSV000087927",
         "PXD000394",
@@ -265,6 +266,7 @@ window.IMMUNOVERSE_HUB_INDEX = {
         "PXD023805_JPST001069_faims",
         "PXD028309",
         "phase2_PXD009602",
+        "phase2_PXD013831",
         "phase2_PXD015947",
         "phase2_PXD016582",
         "phase2_PXD023770_JPST001072",
@@ -522,15 +524,16 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "LIHC",
       "display": "Liver Hepatocellular Carcinoma",
       "category": "Solid",
-      "sample_count": 178,
-      "sample_included": 178,
-      "cohort_count": 4,
-      "biology_count": 72,
-      "hla_count": 95,
+      "sample_count": 220,
+      "sample_included": 220,
+      "cohort_count": 5,
+      "biology_count": 75,
+      "hla_count": 98,
       "studies": [
         "PXD023143",
         "PXD037270",
         "phase2_PXD013057",
+        "phase2_PXD029882",
         "phase2_PXD033351"
       ],
       "biology": [
@@ -668,14 +671,15 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "meningioma",
       "display": "Meningioma",
       "category": "CNS",
-      "sample_count": 33,
-      "sample_included": 33,
-      "cohort_count": 2,
-      "biology_count": 16,
-      "hla_count": 42,
+      "sample_count": 37,
+      "sample_included": 37,
+      "cohort_count": 3,
+      "biology_count": 18,
+      "hla_count": 45,
       "studies": [
         "PXD006939",
-        "PXD009925"
+        "PXD009925",
+        "PXD013831"
       ],
       "biology": [
         "3779-AMM",
@@ -774,19 +778,41 @@ window.IMMUNOVERSE_HUB_INDEX = {
       }
     },
     {
+      "code": "OS",
+      "display": "OS",
+      "category": "Solid",
+      "sample_count": 12,
+      "sample_included": 12,
+      "cohort_count": 1,
+      "biology_count": 2,
+      "hla_count": 5,
+      "studies": [
+        "PXD057839"
+      ],
+      "biology": [
+        "U2OS",
+        "U2OS_ptx"
+      ],
+      "files": {
+        "metadata": "data/raw/OS_metadata.txt",
+        "sbatch": "data/raw/OS_download.sbatch"
+      }
+    },
+    {
       "code": "OV",
       "display": "Ovarian Serous Cystadenocarcinoma",
       "category": "Solid",
-      "sample_count": 219,
-      "sample_included": 219,
-      "cohort_count": 6,
-      "biology_count": 61,
+      "sample_count": 221,
+      "sample_included": 221,
+      "cohort_count": 7,
+      "biology_count": 62,
       "hla_count": 66,
       "studies": [
         "MSV000084442_HLAthena_OV",
         "PXD006939_sternberg_cl",
         "PXD007635_schuster",
         "PXD014062_HGSC",
+        "phase2_PXD013831",
         "phase2_PXD036856",
         "phase2_PXD055609"
       ],
@@ -811,16 +837,18 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "PAAD",
       "display": "Pancreatic Adenocarcinoma",
       "category": "Solid",
-      "sample_count": 52,
-      "sample_included": 52,
-      "cohort_count": 4,
-      "biology_count": 21,
+      "sample_count": 106,
+      "sample_included": 106,
+      "cohort_count": 6,
+      "biology_count": 22,
       "hla_count": 39,
       "studies": [
         "MSV000091456",
         "MSV000096853",
         "PXD016060",
-        "phase2_PXD022020"
+        "phase2_PXD022020",
+        "phase2_PXD054360",
+        "phase2_PXD054417"
       ],
       "biology": [
         "C3L-00625",
@@ -832,7 +860,7 @@ window.IMMUNOVERSE_HUB_INDEX = {
         "P8-human biopsy-1",
         "P8-human biopsy-2",
         "PANC1",
-        "PANFR0049"
+        "PANC1_IFNr"
       ],
       "files": {
         "metadata": "data/raw/PAAD_metadata.txt",
@@ -843,15 +871,17 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "PRAD",
       "display": "Prostate Adenocarcinoma",
       "category": "Solid",
-      "sample_count": 2,
-      "sample_included": 2,
-      "cohort_count": 1,
-      "biology_count": 2,
-      "hla_count": 6,
+      "sample_count": 5,
+      "sample_included": 5,
+      "cohort_count": 2,
+      "biology_count": 3,
+      "hla_count": 11,
       "studies": [
-        "PXD022020"
+        "PXD022020",
+        "PXD055544"
       ],
       "biology": [
+        "LNCaP_add_B1501_AR_H875Y",
         "LNCaP_clone_FGC",
         "PC3"
       ],
@@ -887,6 +917,26 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "files": {
         "metadata": "data/raw/RT_metadata.txt",
         "sbatch": "data/raw/RT_download.sbatch"
+      }
+    },
+    {
+      "code": "schwannoma",
+      "display": "schwannoma",
+      "category": "Solid",
+      "sample_count": 1,
+      "sample_included": 1,
+      "cohort_count": 1,
+      "biology_count": 1,
+      "hla_count": 5,
+      "studies": [
+        "PXD013831"
+      ],
+      "biology": [
+        "3989-HT"
+      ],
+      "files": {
+        "metadata": "data/raw/schwannoma_metadata.txt",
+        "sbatch": "data/raw/schwannoma_download.sbatch"
       }
     },
     {
@@ -976,6 +1026,26 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "files": {
         "metadata": "data/raw/TALL_metadata.txt",
         "sbatch": "data/raw/TALL_download.sbatch"
+      }
+    },
+    {
+      "code": "UCS",
+      "display": "UCS",
+      "category": "Solid",
+      "sample_count": 2,
+      "sample_included": 2,
+      "cohort_count": 1,
+      "biology_count": 1,
+      "hla_count": 6,
+      "studies": [
+        "PXD013831"
+      ],
+      "biology": [
+        "OVZW-1P"
+      ],
+      "files": {
+        "metadata": "data/raw/UCS_metadata.txt",
+        "sbatch": "data/raw/UCS_download.sbatch"
       }
     },
     {

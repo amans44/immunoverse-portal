@@ -31,7 +31,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_181t_even_a_mhc1.raw",
       "biology": "p181",
       "HLA": "A*03:01,B*07:02,B*08:01,C*07:01,C*07:02",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -39,7 +40,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_181t_even_b_mhc1.raw",
       "biology": "p181",
       "HLA": "A*03:01,B*07:02,B*08:01,C*07:01,C*07:02",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -47,7 +49,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_181t_odd_a_mhc1.raw",
       "biology": "p181",
       "HLA": "A*03:01,B*07:02,B*08:01,C*07:01,C*07:02",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -55,7 +58,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_181t_odd_b_mhc1.raw",
       "biology": "p181",
       "HLA": "A*03:01,B*07:02,B*08:01,C*07:01,C*07:02",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -63,7 +67,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_216t_even_a_mhc1.raw",
       "biology": "p216",
       "HLA": "A*02:01,A*29:02,B*15:01,B*18:01,C*03:04,C*05:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -71,7 +76,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_216t_even_b_mhc1.raw",
       "biology": "p216",
       "HLA": "A*02:01,A*29:02,B*15:01,B*18:01,C*03:04,C*05:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -79,7 +85,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_216t_odd_a_mhc1.raw",
       "biology": "p216",
       "HLA": "A*02:01,A*29:02,B*15:01,B*18:01,C*03:04,C*05:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -87,7 +94,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_216t_odd_b_mhc1.raw",
       "biology": "p216",
       "HLA": "A*02:01,A*29:02,B*15:01,B*18:01,C*03:04,C*05:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -95,7 +103,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_430t_even_a_mhc1.raw",
       "biology": "p430",
       "HLA": "A*01:01,A*11:01,B*08:01,B*35:01,C*04:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -103,7 +112,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_430t_even_b_mhc1.raw",
       "biology": "p430",
       "HLA": "A*01:01,A*11:01,B*08:01,B*35:01,C*04:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -111,7 +121,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_430t_odd_a_mhc1.raw",
       "biology": "p430",
       "HLA": "A*01:01,A*11:01,B*08:01,B*35:01,C*04:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -119,7 +130,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_430t_odd_b_mhc1.raw",
       "biology": "p430",
       "HLA": "A*01:01,A*11:01,B*08:01,B*35:01,C*04:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -127,7 +139,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_454t_even_a_mhc1.raw",
       "biology": "p454",
       "HLA": "A*01:01,A*24:01,B*08:01,B*15:01,C*03:03,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -135,7 +148,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_454t_even_b_mhc1.raw",
       "biology": "p454",
       "HLA": "A*01:01,A*24:01,B*08:01,B*15:01,C*03:03,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -143,7 +157,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_454t_odd_a_mhc1.raw",
       "biology": "p454",
       "HLA": "A*01:01,A*24:01,B*08:01,B*15:01,C*03:03,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -151,7 +166,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_454t_odd_b_mhc1.raw",
       "biology": "p454",
       "HLA": "A*01:01,A*24:01,B*08:01,B*15:01,C*03:03,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -159,7 +175,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_489t_even_a_mhc1.raw",
       "biology": "p489",
       "HLA": "A*23:01,A*33:01,B*14:02,B*49:01,C*07:01,C*07:02",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -167,7 +184,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_489t_even_b_mhc1.raw",
       "biology": "p489",
       "HLA": "A*23:01,A*33:01,B*14:02,B*49:01,C*07:01,C*07:02",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -175,7 +193,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_489t_odd_a_mhc1.raw",
       "biology": "p489",
       "HLA": "A*23:01,A*33:01,B*14:02,B*49:01,C*07:01,C*07:02",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -183,7 +202,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "ben_220818_tu_489t_odd_b_mhc1.raw",
       "biology": "p489",
       "HLA": "A*23:01,A*33:01,B*14:02,B*49:01,C*07:01,C*07:02",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -191,7 +211,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "bln_130519_mhc1ipunder_711-16_t_even1.raw",
       "biology": "p711",
       "HLA": "A*01:01,A*23:01,B*08:01,B*44:03,C*04:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -199,7 +220,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "bln_130519_mhc1ipunder_711-16_t_even2.raw",
       "biology": "p711",
       "HLA": "A*01:01,A*23:01,B*08:01,B*44:03,C*04:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -207,7 +229,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "bln_130519_mhc1ipunder_711-16_t_odd1.raw",
       "biology": "p711",
       "HLA": "A*01:01,A*23:01,B*08:01,B*44:03,C*04:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -215,7 +238,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "bln_130519_mhc1ipunder_711-16_t_odd2.raw",
       "biology": "p711",
       "HLA": "A*01:01,A*23:01,B*08:01,B*44:03,C*04:01,C*07:01",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -223,7 +247,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "bln_130519_mhc1ipunder_716-16_t_even1.raw",
       "biology": "p716",
       "HLA": "A*02:01,B*44:02,B*58:01,C*05:01,C*07:18",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -231,7 +256,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "bln_130519_mhc1ipunder_716-16_t_even2.raw",
       "biology": "p716",
       "HLA": "A*02:01,B*44:02,B*58:01,C*05:01,C*07:18",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -239,7 +265,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "bln_130519_mhc1ipunder_716-16_t_odd1.raw",
       "biology": "p716",
       "HLA": "A*02:01,B*44:02,B*58:01,C*05:01,C*07:18",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     },
     {
       "study": "PXD031108",
@@ -247,7 +274,8 @@ window.IMMUNOVERSE_HUB["ESCA"] = {
       "sample": "bln_130519_mhc1ipunder_716-16_t_odd2.raw",
       "biology": "p716",
       "HLA": "A*02:01,B*44:02,B*58:01,C*05:01,C*07:18",
-      "special_note": ""
+      "special_note": "",
+      "acquisition": "DDA"
     }
   ],
   "hla": [
