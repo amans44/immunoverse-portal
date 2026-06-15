@@ -79,6 +79,24 @@ def compute_diff_plot_inhouse(cls, source):
     return None
 
 
+def _guard_diff_plot(dp, assets):
+    """Keep ONLY the figure refs whose PNG actually exists in the cohort's assets/
+    (no broken links). Returns None if nothing survives; fixes 'kind' when a 'both'
+    loses one side. With an empty `assets` set (no manifest), passes through."""
+    if not dp:
+        return None
+    if not assets:
+        return dp
+    present = {k: dp[k] for k in ('gene', 'splicing', 'erv') if dp.get(k) in assets}
+    if not present:
+        return None
+    if 'splicing' in present and 'erv' in present:
+        present['kind'] = 'both'
+    else:
+        present['kind'] = next(iter(present))
+    return present
+
+
 # In-house sources append a sample/run identifier as the LAST pipe field
 # (e.g. base_HDMB03_ERR4880042, add_MED411-2_SRR21548774). The public pipeline's
 # clean_gene() suffix-regex grabs that token as the "gene" for non-canonical rows
@@ -204,6 +222,21 @@ def process_inhouse(source_dir: Path, code: str, name: str, group: str):
 
     expr_by_gene, expr_by_ensg = I.build_gene_expression_map(enhanced_file)
 
+    # Asset manifest for this cohort — used to GUARD figure refs so we never point
+    # at a PNG Frank didn't ship (no broken links), and to recover boxplots whose
+    # source layout the derivation misses. Empty set (no assets/) => guard is a no-op.
+    assets_dir = source_dir / 'assets'
+    asset_set = {p.name for p in assets_dir.iterdir() if p.is_file()} if assets_dir.is_dir() else set()
+    # Index gene expr-boxplots by ENSG only. Frank names them ENSG_SYMBOL_..., but the
+    # symbol can be an alias of the data's gene_symbol (common for histones, e.g.
+    # H2BC1/HIST1H2BA), so match on the stable ENSG and ignore the symbol.
+    _box_re = re.compile(r'^(ENSG\d+)_.*_expr_boxplot\+boxplot\.png$')
+    box_by_ensg = {}
+    for _a in asset_set:
+        _m = _box_re.match(_a)
+        if _m:
+            box_by_ensg.setdefault(_m.group(1), _a)
+
     immuno_lookup = {}   # no in-house immunogenicity table — bind immuno scores stay None
     rows, detail, class_count, gene_set = [], {}, {}, set()
 
@@ -284,6 +317,22 @@ def process_inhouse(source_dir: Path, code: str, name: str, group: str):
             if expr_inherited:
                 extra['exprInherited'] = True
             diff_plot = compute_diff_plot_inhouse(cls, src_raw)
+            # Boxplot fallback: Frank names the gene expr-boxplot ENSG_SYMBOL, and a
+            # peptide can map to MULTIPLE genes (e.g. FOXP1/FOXP2/FOXP4) where only one
+            # has a figure — and multi-map rows make compute_diff_plot return None. So
+            # pair the row's `ensgs` + `gene_symbol` lists BY INDEX (and all combos as a
+            # safety net) and attach the first ENSG_SYMBOL boxplot that actually exists.
+            if not diff_plot and box_by_ensg:
+                # Every ENSG this peptide maps to (ensgs column + any in the source),
+                # in order; attach the first that has a boxplot (matched by ENSG only).
+                seen = []
+                for e in re.findall(r'ENSG\d+', (r.get('ensgs') or '') + ' ' + src_raw):
+                    if e not in seen:
+                        seen.append(e)
+                hit = next((box_by_ensg[e] for e in seen if e in box_by_ensg), None)
+                if hit:
+                    diff_plot = {'kind': 'gene', 'gene': hit}
+            diff_plot = _guard_diff_plot(diff_plot, asset_set)
             if diff_plot:
                 extra['diffPlot'] = diff_plot
             if src_raw and len(src_raw) < 2000:

@@ -323,9 +323,10 @@ admin console) is served by a **separate backend**, not by these static pages.
 
 ## Private in-house datasets (lab-only cancers)
 
-In-house cohorts (**medulloblastoma** code `MB`, **osteosarcoma** code `OS`) are
-hosted privately and folded into the **same explorer** as the 21 public cancers, so
-they're directly comparable — not a separate page. Visible ONLY to a lab allow-list;
+In-house cohorts (**MB** medulloblastoma, **OS** osteosarcoma, **DIPG**, **NEPC**,
+**CHORDOMA** — 5 live as of 2026-06-15) are hosted privately and folded into the
+**same explorer** as the 21 public cancers, so they're directly comparable — not a
+separate page. Visible ONLY to a lab allow-list;
 invisible to everyone else (nav, dropdown, grid, search). Adding a cohort is purely
 data-side (transform → upload → register a Firestore doc); the frontend discovers it
 dynamically via `ivLoadInhouseGated`, no redeploy.
@@ -469,6 +470,28 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-15 — Onboard DIPG, NEPC, Chordoma to the portal + robust figure attachment
+**Why:** Three new in-house cohorts (DIPG, NEPC, Chordoma) were in the private bucket
+(final_enhanced.txt + assets) but never processed into the explorer. Rendering them
+"like MB" surfaced two figure-naming gaps that the MB-tuned `integrate_inhouse.py`
+missed, risking broken/mis-attached figures.
+**What:**
+- `integrate_inhouse.py` hardened so EVERY shipped figure attaches to its correct
+  peptide and nothing breaks: (1) **asset-existence guard** (`_guard_diff_plot`) — a
+  figure ref is emitted only if that PNG exists in the cohort's `assets/` (no broken
+  links); (2) gene expr-boxplots matched by **ENSG alone** via an `ENSG→asset` index,
+  not reconstructed `ENSG_SYMBOL` — so multi-gene peptides (e.g. FOXP1/FOXP2/FOXP4)
+  and histone symbol aliases (H2BC1 vs HIST1H2BA) still attach. Audited per cohort:
+  **0 broken links**; diff-plot coverage up (DIPG 35→58, chordoma 74→114); the few
+  residual unshown boxplots are peptides that already display a primary class figure
+  (one figure slot per peptide, same as MB). Non-canonical source labels verified
+  clean (gene/location, no `base_*`/`SRR` run-ids) via `clean_gene_inhouse`.
+- Generated `<CODE>.js`/`<CODE>_detail.js` for the 3, uploaded to the bucket, and
+  registered `portal_private_datasets` docs (dipg/nepc/chordoma, `visibility:lab`).
+  Verified LIVE: a lab member lists all 5 cohorts; data JS + boxplot/percentile
+  figures serve 200 through the access-checked proxy. (MB/OS .js unchanged.)
+**Files:** `integrate_inhouse.py`. **Commit:** _portal_ — this change.
 
 ### 2026-06-14 — Granular per-dataset access board (groups + per-cohort emails)
 **Why:** Some in-house cohorts have outside collaborators who should see ONE cohort,
