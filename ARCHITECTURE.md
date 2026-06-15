@@ -340,17 +340,20 @@ dynamically via `ivLoadInhouseGated`, no redeploy.
   `/hub` (that page is public-only).
 - **Backend** (`portal_auth/dataset_routes.py`, mounted `/api/portal/data`): a
   Firestore doc `portal_private_datasets/<id>` records `cancer_code`,
-  `storage_prefix`, `visibility` (`lab` = central allow-list, or `restricted`),
-  plus per-dataset `allowed_emails` **and `allowed_groups`**. The lab allow-list is
-  `PORTAL_LAB_EMAILS` env + `portal_lab_allow_list` collection, managed from the
-  admin **"Lab data access"** tab.
-- **Granular per-dataset access board** (admin **"In-house access"** tab): each
-  registered dataset has its own allow-list of reusable **groups** + individual
-  **emails**, so an outside collaborator can be granted ONE cohort without joining
-  the whole lab. Reusable groups live in `portal_access_groups/<name>` (`{members}`);
-  a dataset's `allowed_groups` reference them. `PortalPrivateDataset.allows_email`
-  grants when the email is in `allowed_emails`, OR in any `allowed_group`'s members,
-  OR (`visibility:lab`) the caller is a central lab member — admins always see all.
+  `storage_prefix`, `visibility`, plus per-dataset `allowed_emails` **and
+  `allowed_groups`**. All 5 in-house datasets are `visibility:restricted` (2026-06-15)
+  so the **In-house access board is the single source of truth** — the legacy flat
+  `portal_lab_allow_list` / `PORTAL_LAB_EMAILS` no longer grants (and its admin tab is
+  removed). (`lab` visibility + the flat list still exist in code for any future
+  dataset that wants the simple "whole-lab" model.)
+- **Granular per-dataset access board** (admin **"In-house access"** tab — the ONLY
+  in-house access UI): each dataset has its own allow-list of reusable **groups** +
+  individual **emails**, so an outside collaborator can be granted ONE cohort without
+  joining the whole lab. Reusable groups live in `portal_access_groups/<name>`
+  (`{members}`); a dataset's `allowed_groups` reference them. Access (non-admin) =
+  email in `allowed_emails` OR in any `allowed_group`'s members OR (`visibility:lab`
+  only) a central lab member. **Admins bypass everything — they see all datasets.**
+  The whole lab is the `yarmarkovichlab` group assigned to every dataset.
   Endpoints under `/api/portal/data/admin`: `GET access-board`, group CRUD
   (`access-groups[...]`), and per-dataset `datasets/{id}/{emails,groups}` add/remove.
   This is the portal's OWN board — **separate** from the immunoVerse-chat board
@@ -470,6 +473,27 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-15 — Portal in-house access = admins + board (retire the flat lab tab)
+**Why:** The flat "Lab data access" list and the granular "In-house access" board were
+redundant — a `yarmarkovichlab` group assigned to all 5 datasets already replicates
+"whole lab sees all in-house", with per-dataset collaborators on top. Consolidate to
+one place and make admins all-seeing.
+**What:**
+- **Admin bypass** (`portal_auth/dataset_routes.py`): `resolve_dataset_access` +
+  `list_datasets` grant admins EVERY dataset regardless of visibility/lab/group. Access
+  model = **admins + lab members (group) + per-dataset collaborators (emails)**. (auth-
+  service rev 00026.)
+- **Datasets flipped `visibility: lab → restricted`** so the board (groups + emails) is
+  the SINGLE source of truth — the flat `portal_lab_allow_list` no longer silently
+  grants. Safe: `yarmarkovichlab` (14 NYU + gli9) covers the lab; the only flat-list-only
+  email was the admin, now covered by the bypass.
+- **Removed the "Lab data access" tab** from `admin.html` (button, section, JS, init,
+  switchTab). The In-house access board is the only place to manage in-house access.
+  (The chat reached this state earlier — its lab tab was replaced by the board, and chat
+  admins already bypass via `_request_allowed_cohorts`.)
+**Files:** `admin.html`; _backend_ `portal_auth/dataset_routes.py`. **Commit:** _portal_
++ _auth-service_ — this change.
 
 ### 2026-06-15 — Exhaustive per-PNG audit: recover every renderable in-house figure
 **Why:** A full audit (classify every asset → map to its peptide → is it rendered?)
