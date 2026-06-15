@@ -490,7 +490,13 @@ missed, risking broken/mis-attached figures.
 - Generated `<CODE>.js`/`<CODE>_detail.js` for the 3, uploaded to the bucket, and
   registered `portal_private_datasets` docs (dipg/nepc/chordoma, `visibility:lab`).
   Verified LIVE: a lab member lists all 5 cohorts; data JS + boxplot/percentile
-  figures serve 200 through the access-checked proxy. (MB/OS .js unchanged.)
+  figures serve 200 through the access-checked proxy.
+- MB + OS .js ALSO regenerated with the same hardened logic (audited 0 broken, 0 true
+  gaps): MB diff-plots 206→207, **OS 268→312 (+44)** — OS's symbol-first self_gene
+  layout had been missing boxplots that the ENSG-index match now recovers. Residual
+  unshown boxplots in every cohort are only secondary genes of multi-gene peptides
+  that already display their primary figure (one figure slot per peptide). Uploaded +
+  verified live.
 **Files:** `integrate_inhouse.py`. **Commit:** _portal_ — this change.
 
 ### 2026-06-14 — Granular per-dataset access board (groups + per-cohort emails)
