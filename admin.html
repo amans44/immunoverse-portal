@@ -379,6 +379,7 @@ footer.page-footer a:hover { color: var(--text-0); }
   <button id="tabInq"   onclick="switchTab('inquiries')">Feedback <span class="count-badge" id="tabInqCount">0</span></button>
   <button id="tabAllow" onclick="switchTab('allow')">Admin allow-list <span class="count-badge" id="tabAllowCount">0</span></button>
   <button id="tabLab" onclick="switchTab('lab')">Lab data access <span class="count-badge" id="tabLabCount">0</span></button>
+  <button id="tabBoard" onclick="switchTab('board')">In-house access</button>
 </div>
 
 <!-- ===== Access requests ===== -->
@@ -455,6 +456,58 @@ footer.page-footer a:hover { color: var(--text-0); }
     <button class="btn" type="submit" id="addLabBtn">Grant access</button>
   </form>
   <div id="labBody">Loading…</div>
+</section>
+
+<!-- ===== In-house access board (granular, per-dataset) ===== -->
+<style>
+  .pb-panel { background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+  .pb-title { font-weight: 700; font-size: 15px; color: var(--text-0); margin: 0 0 12px; }
+  .pb-hint { font-weight: 400; font-size: 12px; color: var(--text-2); margin-left: 8px; }
+  .pb-ds { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+  .pb-ds-head { font-weight: 700; font-size: 14px; color: var(--text-0); margin-bottom: 10px; }
+  .pb-ds-head .pb-code { font-family: ui-monospace, monospace; color: var(--accent, #8b6cff); margin-left: 8px; font-size: 12px; }
+  .pb-row { display:flex; align-items:flex-start; gap:10px; margin-bottom: 9px; }
+  .pb-lbl { flex-shrink:0; width: 60px; font-size: 11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color: var(--text-2); padding-top: 6px; }
+  .pb-chips { flex:1; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .pb-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 8px 4px 10px; border-radius:9999px; font-size:12px; background: var(--bg-1, #1b1b22); color: var(--text-0); border:1px solid var(--border); }
+  .pb-chip.grp { background: rgba(139,108,255,.16); color: var(--accent, #b9a4ff); border-color: rgba(139,108,255,.35); }
+  .pb-chip .x { cursor:pointer; opacity:.6; font-size:14px; line-height:1; }
+  .pb-chip .x:hover { opacity:1; }
+  .pb-empty { font-size:12px; color: var(--text-2); padding-top: 5px; }
+  .pb-add { display:flex; gap:6px; margin: 2px 0 0 70px; }
+  .pb-add input, .pb-add select { padding:6px 10px; border:1px solid var(--border); border-radius:8px; background: var(--bg-1, #15151b); color: var(--text-0); font-size:13px; }
+  .pb-add .btn { padding:6px 14px; }
+  .pb-grpchip { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:10px; background: rgba(139,108,255,.16); color: var(--accent, #b9a4ff); border:1px solid rgba(139,108,255,.35); font-size:13px; font-weight:600; margin:0 8px 8px 0; cursor:pointer; }
+  .pb-grpchip.active { outline: 2px solid var(--accent, #8b6cff); }
+  .pb-grpchip .gc { font-weight:400; font-size:11px; opacity:.8; }
+  .pb-grpdetail { background: var(--bg-1, #15151b); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+</style>
+<section class="card" id="cardBoard" hidden>
+  <div class="card-head">
+    <h2><span>🔐</span>In-house access</h2>
+  </div>
+  <div id="boardAlert" class="alert hidden"></div>
+  <p style="font-size:13px; color:var(--text-2); margin: 0 0 16px; line-height:1.55;">
+    Grant access to each in-house <b>dataset</b> by <b>group</b> (reusable, e.g. the whole lab)
+    or by individual <b>email</b> (e.g. an outside collaborator). Admins always see every dataset.
+    This is the portal's own board — <b>separate</b> from the immunoVerse-chat access board. Changes
+    take effect immediately.
+  </p>
+
+  <div class="pb-panel" style="margin-bottom:20px;">
+    <p class="pb-title">Groups <span class="pb-hint">reusable sets of people you assign to datasets</span></p>
+    <form onsubmit="return createPortalGroup(event)" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; max-width:540px;">
+      <input id="pbGroupName" type="text" required placeholder="group name (e.g. yarmarkovianlab)"
+        style="flex:1; min-width:220px; background:var(--bg-1,#15151b); border:1px solid var(--border); border-radius:9999px; padding:10px 16px; color:var(--text-0); font-size:14px; outline:none;" />
+      <button class="btn" type="submit">Create group</button>
+    </form>
+    <div id="pbGroups">Loading…</div>
+  </div>
+
+  <div class="pb-panel">
+    <p class="pb-title">Datasets <span class="pb-hint">who can see each in-house dataset</span></p>
+    <div id="pbDatasets">Loading…</div>
+  </div>
 </section>
 
 <!-- ===== Users ===== -->
@@ -664,11 +717,14 @@ function switchTab(which) {
   $('cardInquiries').hidden = which !== 'inquiries';
   $('cardAllow').hidden     = which !== 'allow';
   $('cardLab').hidden       = which !== 'lab';
+  $('cardBoard').hidden     = which !== 'board';
   $('tabReq').classList.toggle('active',   which === 'requests');
   $('tabUsers').classList.toggle('active', which === 'users');
   $('tabInq').classList.toggle('active',   which === 'inquiries');
   $('tabAllow').classList.toggle('active', which === 'allow');
   $('tabLab').classList.toggle('active',   which === 'lab');
+  $('tabBoard').classList.toggle('active', which === 'board');
+  if (which === 'board') loadPortalBoard();
 }
 
 // ---------- Access requests ----------
@@ -1036,6 +1092,171 @@ async function removeLabEmail(email) {
     alert_('labAlert', err.message, 'error');
   }
 }
+
+// ---------- In-house access board (granular, per-dataset: groups + emails) ----------
+let PB = { datasets: [], groups: [] };
+let PB_EXPANDED = null;
+const PB_BASE = '/api/portal/data/admin';
+
+async function loadPortalBoard() {
+  clearAlert('boardAlert');
+  const gw = $('pbGroups'), dw = $('pbDatasets');
+  gw.innerHTML = 'Loading…'; dw.innerHTML = '';
+  try {
+    const r = await authedFetch(PB_BASE + '/access-board');
+    if (!r.ok) throw new Error('Failed (' + r.status + ')');
+    PB = await r.json();
+    renderPortalGroups();
+    renderPortalDatasets();
+  } catch (err) {
+    alert_('boardAlert', err.message, 'error');
+    gw.innerHTML = '';
+  }
+}
+
+function renderPortalGroups() {
+  const wrap = $('pbGroups');
+  const groups = PB.groups || [];
+  if (!groups.length) {
+    wrap.innerHTML = `<div class="pb-empty">No groups yet. Create one (e.g. <b>yarmarkovianlab</b>), then assign it to datasets below.</div>`;
+    return;
+  }
+  let html = '<div>' + groups.map(g =>
+    `<span class="pb-grpchip ${PB_EXPANDED === g.name ? 'active' : ''}" data-grp="${esc(g.name)}">${esc(g.name)} <span class="gc">${g.member_count}</span></span>`
+  ).join('') + '</div>';
+  const g = groups.find(x => x.name === PB_EXPANDED);
+  if (g) {
+    const members = g.members.length
+      ? g.members.map(m => `<span class="pb-chip">${esc(m)}<span class="x" data-rmgm="${esc(g.name)}|${esc(m)}">×</span></span>`).join('')
+      : '<span class="pb-empty">No members yet.</span>';
+    html += `<div class="pb-grpdetail">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <b style="font-size:13px;">${esc(g.name)} — members</b>
+        <button class="btn btn-danger" data-delgrp="${esc(g.name)}">Delete group</button>
+      </div>
+      <div class="pb-chips" style="margin-bottom:10px;">${members}</div>
+      <div class="pb-add" style="margin-left:0;">
+        <input type="email" id="pbGmInput" placeholder="add member email" style="flex:1;max-width:320px;" />
+        <button class="btn" data-addgm="${esc(g.name)}">Add</button>
+      </div>
+    </div>`;
+  }
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('[data-grp]').forEach(el => el.addEventListener('click', () => {
+    PB_EXPANDED = (PB_EXPANDED === el.dataset.grp ? null : el.dataset.grp); renderPortalGroups();
+  }));
+  wrap.querySelectorAll('[data-delgrp]').forEach(el => el.addEventListener('click', () => deletePortalGroup(el.dataset.delgrp)));
+  wrap.querySelectorAll('[data-addgm]').forEach(el => el.addEventListener('click', () => addPortalGroupMember(el.dataset.addgm)));
+  wrap.querySelectorAll('[data-rmgm]').forEach(el => el.addEventListener('click', () => {
+    const i = el.dataset.rmgm.indexOf('|'); removePortalGroupMember(el.dataset.rmgm.slice(0, i), el.dataset.rmgm.slice(i + 1));
+  }));
+  const gm = $('pbGmInput');
+  if (gm && g) gm.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addPortalGroupMember(g.name); } });
+}
+
+function renderPortalDatasets() {
+  const wrap = $('pbDatasets');
+  const dsets = PB.datasets || [];
+  const groups = PB.groups || [];
+  if (!dsets.length) {
+    wrap.innerHTML = `<div class="pb-empty">No in-house datasets registered yet. Register one (dataset onboarding), then grant access here.</div>`;
+    return;
+  }
+  wrap.innerHTML = dsets.map(d => {
+    const assigned = d.allowed_groups || [];
+    const opts = groups.filter(g => !assigned.includes(g.name))
+      .map(g => `<option value="${esc(g.name)}">${esc(g.name)}</option>`).join('');
+    const gchips = assigned.length
+      ? assigned.map(g => `<span class="pb-chip grp">${esc(g)}<span class="x" data-unassign="${esc(d.id)}|${esc(g)}">×</span></span>`).join('')
+      : '<span class="pb-empty">none</span>';
+    const echips = (d.allowed_emails || []).length
+      ? d.allowed_emails.map(e => `<span class="pb-chip">${esc(e)}<span class="x" data-rmde="${esc(d.id)}|${esc(e)}">×</span></span>`).join('')
+      : '<span class="pb-empty">none</span>';
+    return `<div class="pb-ds">
+      <div class="pb-ds-head">${esc(d.title || d.id)}<span class="pb-code">${esc(d.cancer_code || '')}</span></div>
+      <div class="pb-row"><div class="pb-lbl">Groups</div><div class="pb-chips">${gchips}</div></div>
+      <div class="pb-add">
+        <select data-dsgsel="${esc(d.id)}" ${opts ? '' : 'disabled'}>${opts || '<option>— create a group first —</option>'}</select>
+        <button class="btn" data-assigng="${esc(d.id)}" ${opts ? '' : 'disabled'}>Assign group</button>
+      </div>
+      <div class="pb-row" style="margin-top:10px;"><div class="pb-lbl">People</div><div class="pb-chips">${echips}</div></div>
+      <div class="pb-add">
+        <input type="email" data-dseml="${esc(d.id)}" placeholder="collaborator@institute.edu" style="flex:1;max-width:320px;" />
+        <button class="btn" data-addde="${esc(d.id)}">Grant access</button>
+      </div>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('[data-unassign]').forEach(el => el.addEventListener('click', () => {
+    const i = el.dataset.unassign.indexOf('|'); unassignPortalGroup(el.dataset.unassign.slice(0, i), el.dataset.unassign.slice(i + 1));
+  }));
+  wrap.querySelectorAll('[data-rmde]').forEach(el => el.addEventListener('click', () => {
+    const i = el.dataset.rmde.indexOf('|'); removePortalDsEmail(el.dataset.rmde.slice(0, i), el.dataset.rmde.slice(i + 1));
+  }));
+  wrap.querySelectorAll('[data-assigng]').forEach(el => el.addEventListener('click', () => {
+    const id = el.dataset.assigng, sel = wrap.querySelector(`[data-dsgsel="${id}"]`);
+    if (sel && sel.value) assignPortalGroup(id, sel.value);
+  }));
+  wrap.querySelectorAll('[data-addde]').forEach(el => el.addEventListener('click', () => {
+    const id = el.dataset.addde, inp = wrap.querySelector(`[data-dseml="${id}"]`);
+    if (inp && inp.value.trim()) addPortalDsEmail(id, inp.value.trim());
+  }));
+}
+
+async function pbDo(path, opts) {
+  const r = await authedFetch(path, opts);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) { alert_('boardAlert', data.detail || ('Failed (' + r.status + ')'), 'error'); return false; }
+  return true;
+}
+
+function createPortalGroup(ev) {
+  if (ev) ev.preventDefault();
+  const inp = $('pbGroupName');
+  const name = (inp.value || '').trim();
+  if (!name) return false;
+  pbDo(PB_BASE + '/access-groups', { method: 'POST', body: JSON.stringify({ name }) }).then(ok => {
+    if (ok) { inp.value = ''; PB_EXPANDED = name; loadPortalBoard(); }
+  });
+  return false;
+}
+
+async function deletePortalGroup(name) {
+  if (!confirm(`Delete group '${name}'? It will be unassigned from all datasets.`)) return;
+  if (await pbDo(PB_BASE + '/access-groups/' + encodeURIComponent(name), { method: 'DELETE' })) {
+    if (PB_EXPANDED === name) PB_EXPANDED = null;
+    loadPortalBoard();
+  }
+}
+
+async function addPortalGroupMember(name) {
+  const inp = $('pbGmInput');
+  const email = ((inp && inp.value) || '').trim();
+  if (!email) return;
+  if (await pbDo(PB_BASE + '/access-groups/' + encodeURIComponent(name) + '/members', { method: 'POST', body: JSON.stringify({ email }) })) loadPortalBoard();
+}
+
+async function removePortalGroupMember(name, email) {
+  if (await pbDo(PB_BASE + '/access-groups/' + encodeURIComponent(name) + '/members/' + encodeURIComponent(email), { method: 'DELETE' })) loadPortalBoard();
+}
+
+async function assignPortalGroup(id, group) {
+  if (await pbDo(PB_BASE + '/datasets/' + encodeURIComponent(id) + '/groups', { method: 'POST', body: JSON.stringify({ group }) })) loadPortalBoard();
+}
+
+async function unassignPortalGroup(id, group) {
+  if (await pbDo(PB_BASE + '/datasets/' + encodeURIComponent(id) + '/groups/' + encodeURIComponent(group), { method: 'DELETE' })) loadPortalBoard();
+}
+
+async function addPortalDsEmail(id, email) {
+  if (await pbDo(PB_BASE + '/datasets/' + encodeURIComponent(id) + '/emails', { method: 'POST', body: JSON.stringify({ email }) })) loadPortalBoard();
+}
+
+async function removePortalDsEmail(id, email) {
+  if (await pbDo(PB_BASE + '/datasets/' + encodeURIComponent(id) + '/emails/' + encodeURIComponent(email), { method: 'DELETE' })) loadPortalBoard();
+}
+
+window.createPortalGroup = createPortalGroup;
+window.loadPortalBoard = loadPortalBoard;
 
 // ---------- Inquiries ----------
 let INQ_FILTER = 'new';

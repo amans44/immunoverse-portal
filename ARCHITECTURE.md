@@ -339,10 +339,22 @@ dynamically via `ivLoadInhouseGated`, no redeploy.
   `/hub` (that page is public-only).
 - **Backend** (`portal_auth/dataset_routes.py`, mounted `/api/portal/data`): a
   Firestore doc `portal_private_datasets/<id>` records `cancer_code`,
-  `storage_prefix`, and `visibility` (`lab` = central allow-list, or `restricted`
-  = explicit `allowed_emails`). The lab allow-list is `PORTAL_LAB_EMAILS` env +
-  `portal_lab_allow_list` collection, managed from the admin **"Lab data access"**
-  tab. `GET /datasets` lists only what the caller may see; `/file?path=` proxies
+  `storage_prefix`, `visibility` (`lab` = central allow-list, or `restricted`),
+  plus per-dataset `allowed_emails` **and `allowed_groups`**. The lab allow-list is
+  `PORTAL_LAB_EMAILS` env + `portal_lab_allow_list` collection, managed from the
+  admin **"Lab data access"** tab.
+- **Granular per-dataset access board** (admin **"In-house access"** tab): each
+  registered dataset has its own allow-list of reusable **groups** + individual
+  **emails**, so an outside collaborator can be granted ONE cohort without joining
+  the whole lab. Reusable groups live in `portal_access_groups/<name>` (`{members}`);
+  a dataset's `allowed_groups` reference them. `PortalPrivateDataset.allows_email`
+  grants when the email is in `allowed_emails`, OR in any `allowed_group`'s members,
+  OR (`visibility:lab`) the caller is a central lab member — admins always see all.
+  Endpoints under `/api/portal/data/admin`: `GET access-board`, group CRUD
+  (`access-groups[...]`), and per-dataset `datasets/{id}/{emails,groups}` add/remove.
+  This is the portal's OWN board — **separate** from the immunoVerse-chat board
+  (`chat_access_groups` / `chat_cohort_access`); the two never share state.
+  `GET /datasets` lists only what the caller may see; `/file?path=` proxies
   bytes (access-checked); `POST /sign` returns short-lived **V4 signed URLs** so
   `<img>`/downloads load cross-browser without cookies (avoids Safari/Firefox ITP).
   Signing uses IAM `signBlob` with a **cloud-platform-scoped** token (the storage
@@ -457,6 +469,30 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-14 — Granular per-dataset access board (groups + per-cohort emails)
+**Why:** Some in-house cohorts have outside collaborators who should see ONE cohort,
+not the whole lab (Frank's vision: e.g. Chordoma→Matija Snuderl, DIPG→Russell,
+NEPC→John Maris). The flat `portal_lab_allow_list` was all-or-nothing. We add
+granular, per-dataset access controlled from a new admin board — managed in the UI,
+no code edits. Deliberately **separate per product**: this is the portal's board;
+the immunoVerse-chat has its own independent one.
+**What:**
+- **Backend** (`portal_auth`): new reusable groups (`portal_access_groups/<name>` =
+  `{members}`) + a `allowed_groups` list on each `portal_private_datasets` doc.
+  `PortalPrivateDataset.allows_email(email, is_lab_member, user_groups)` now grants on
+  allowed_emails OR a matching group OR (lab-visibility) lab membership;
+  `resolve_dataset_access` + `GET /datasets` compute the caller's `user_groups`. New
+  admin endpoints under `/api/portal/data/admin`: `GET access-board`, group CRUD, and
+  per-dataset `datasets/{id}/{emails,groups}` add/remove (`require_portal_admin`).
+  Group names validated (no reserved `__*__`/`/` Firestore ids → clean 400).
+- **Frontend** (`admin.html`): new **"In-house access"** tab — a Groups manager
+  (create/expand/add-member/delete) + a per-dataset board (assign group via dropdown,
+  add/remove individual collaborator email, chips with × to revoke). Mirrors the chat
+  board UI. Verified end-to-end against live Firestore (create→assign→read→cleanup).
+**Files:** `admin.html` (board tab + JS + styles); _backend_ `portal_auth/models.py`,
+`portal_auth/private_data.py`, `portal_auth/dataset_routes.py`. **Commit:** _portal_ +
+_auth-service_ — this change (local, not yet deployed).
 
 ### 2026-06-11 — Fix percentile heatmap tooltip: cells are normal samples, not peptides
 **Why:** Frank flagged that the interactive percentile figure's HLA×tissue heatmap
