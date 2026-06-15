@@ -471,6 +471,22 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-15 — Render the nuORF qualitative figure (chordoma cryptic ORFs)
+**Why:** A scan of all 5 cohorts' nuORF peptides found chordoma uniquely ships a
+`nuorf_qualitative_<pep>.png` figure for 33 of its cryptic ORFs — present in the
+bucket but never rendered (the pipeline didn't emit it and the drawer had no slot).
+(nuORF peptides are gene-less, so they have no expression boxplot — this qualitative
+figure is the only extra evidence figure they get.)
+**What:**
+- `integrate_inhouse.py`: for `nuORF` rows, emit `extra.nuorfQual =
+  nuorf_qualitative_<pep>.png` when that asset exists (guarded — only chordoma has
+  them, so other cohorts are unaffected).
+- `index.html` drawer: sign/resolve `nuorfQualUrl` and render a **"Cryptic ORF —
+  qualitative expression"** plot-wrap section (expand + PNG-download), and include it
+  in the "Download all" bundle. Regenerated + uploaded chordoma's `.js`; verified live
+  (33 entries; figure serves 200).
+**Files:** `index.html`, `integrate_inhouse.py`. **Commit:** _portal_ — this change.
+
 ### 2026-06-15 — Atlas table: wrap the Gene column + reset drawer scroll on open
 **Why:** Peptides mapping to long multi-gene lists (histone clusters, e.g.
 `H2AFX/HIST1H2AL/HIST1H2AJ/HIST1H2AB/…`) stretched the Gene column far off-screen

@@ -5574,6 +5574,7 @@ async function downloadAllForPeptide(row, code, btnEl) {
         if (extra.diffPlot.splicing) addFig('splicing_differential', `${figBase}/${extra.diffPlot.splicing}`);
         if (extra.diffPlot.erv) addFig('te_differential', `${figBase}/${extra.diffPlot.erv}`);
       }
+      if (extra.nuorfQual) addFig('nuorf_qualitative', `${figBase}/${extra.nuorfQual}`);
     } else {
       addFig('ms_spectrum', `${ASSET_BASE}/${code}_spectrum_${pep}.png`);
       addFig('intensity_percentile', `${ASSET_BASE}/${code}_${pep}_percentile.png`);
@@ -8232,6 +8233,7 @@ async function openDrawer(r, opts) {
   const diffPlot = extra.diffPlot || null;
   let spectrumUrl, percentileUrl, rankAbundanceUrl, exprUrl, diffSplicingUrl, diffErvUrl;
   let percentileImgSrc, spectrumImgSrc, rankAbundSvgUrl;
+  let nuorfQualUrl = '';
   if (_ih.inhouse) {
     // In-house: NO code prefix; diff-plot filenames come from the data. Resolve
     // every figure to a short-lived SIGNED GCS URL (or a local file URL in the
@@ -8240,12 +8242,14 @@ async function openDrawer(r, opts) {
     const fnGene = (diffPlot && diffPlot.gene) || '';
     const fnSpl  = (diffPlot && diffPlot.splicing) || '';
     const fnErv  = (diffPlot && diffPlot.erv) || '';
-    const reqs = [fnSpec, fnPerc, fnRank, fnGene, fnSpl, fnErv].filter(Boolean).map(f => 'assets/' + f);
+    const fnQual = extra.nuorfQual || '';
+    const reqs = [fnSpec, fnPerc, fnRank, fnGene, fnSpl, fnErv, fnQual].filter(Boolean).map(f => 'assets/' + f);
     let signed = {};
     try { signed = await ivSignInhouse(code, reqs); } catch (e) {}
     const S = (f) => f ? (signed['assets/' + f] || '') : '';
     spectrumUrl = S(fnSpec); percentileUrl = S(fnPerc); rankAbundanceUrl = S(fnRank);
     exprUrl = S(fnGene); diffSplicingUrl = S(fnSpl); diffErvUrl = S(fnErv);
+    nuorfQualUrl = S(fnQual);
     // In-house has PNG only (no SVG) — point the SVG <img> straight at the PNG.
     percentileImgSrc = percentileUrl; spectrumImgSrc = spectrumUrl; rankAbundSvgUrl = '';
   } else {
@@ -8582,6 +8586,20 @@ async function openDrawer(r, opts) {
       }
       return '';
     })()}
+
+    ${nuorfQualUrl ? `
+    <div class="section-title" data-tip="Qualitative expression / translation evidence for this cryptic open reading frame (nuORF), shown for in-house cohorts where the lab provides it.">Cryptic ORF — qualitative expression</div>
+    <div class="section-subtitle">Qualitative RNA / translation evidence supporting this non-canonical ORF as the peptide's source.</div>
+    <div class="plot-wrap">
+      <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${nuorfQualUrl}','nuorf_qualitative')">${DL_ICON}PNG</button>
+      <button class="expand-btn" onclick="openLightbox('${nuorfQualUrl}','nuORF qualitative: ${pep} in ${code}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
+      <img src="${nuorfQualUrl}" alt="nuORF qualitative figure for ${pep}"
+           onload="this.classList.add('ok')"
+           onclick="openLightbox('${nuorfQualUrl}','nuORF qualitative: ${pep} in ${code}')"
+           onerror="this.parentNode.classList.add('no-plot');this.remove();" />
+      <div class="plot-caption">nuORF qualitative · ${pep}</div>
+    </div>
+    ` : ''}
 
     <div class="section-title" data-tip="Shows where this peptide ranks in terms of MS intensity compared to all other peptides in this cancer's immunopeptidome. A high percentile means this peptide is among the most abundantly presented — indicating strong and stable HLA presentation on the tumor surface.">Peptide intensity percentile vs atlas</div>
     <div class="section-subtitle">Percentile rank of this peptide's MS intensity among every peptide in the cancer's immunopeptidome — high percentile means one of the most abundantly presented targets.</div>

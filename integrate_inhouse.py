@@ -335,6 +335,13 @@ def process_inhouse(source_dir: Path, code: str, name: str, group: str):
             diff_plot = _guard_diff_plot(diff_plot, asset_set)
             if diff_plot:
                 extra['diffPlot'] = diff_plot
+            # nuORF qualitative figure: Frank ships nuorf_qualitative_<pep>.png for some
+            # cryptic ORFs (currently only chordoma). Keyed by the peptide; emit only
+            # when the asset exists so no broken link appears for cohorts without them.
+            if cls == 'nuORF':
+                _q = f'nuorf_qualitative_{pep}.png'
+                if _q in asset_set:
+                    extra['nuorfQual'] = _q
             if src_raw and len(src_raw) < 2000:
                 extra['source'] = src_raw.strip()
             if addq or intens or extra:
