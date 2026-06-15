@@ -712,6 +712,22 @@ table.atlas.compact td:nth-child(10) { display: none; }
 #compactBtn.active { background: var(--grad-primary-soft); border-color: var(--accent-cyan); color: var(--text-0); }
 .pep { font-family: var(--mono); font-weight: 600; color: var(--text-0); font-size: 12.5px; letter-spacing: 0.02em; }
 .gene { font-weight: 600; color: var(--text-0); }
+/* Gene column: cap the width and WRAP fully, so peptides mapping to long multi-gene
+   lists (e.g. histone clusters like H2AFX/HIST1H2AL/HIST1H2AJ/HIST1H2AB/…) don't
+   stretch the table far off-screen. The ENTIRE list stays visible — it wraps onto as
+   many lines as needed (no truncation). Overrides the tbody nowrap. */
+table.atlas thead th[data-col="gene"] { max-width: 260px; }
+table.atlas tbody td.col-gene {
+  white-space: normal;
+  max-width: 260px;
+  vertical-align: top;
+}
+table.atlas tbody td.col-gene .gene {
+  display: inline-block;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.32;
+}
 .classtag {
   display: inline-flex;
   align-items: center;
@@ -7628,7 +7644,7 @@ function renderRows(rows) {
       <td class="col-cmp col-stick col-stick-1"><label class="cmp-cell" onclick="event.stopPropagation()"><input type="checkbox" class="cmp-chk" ${cmpChecked} data-cmpkey="${cmpKey}"><span></span></label></td>
       <td class="col-stick col-stick-2"><span class="classtag" style="background:rgba(34,211,238,0.08);border-color:rgba(34,211,238,0.25);" title="${CANCER_NAMES[r[COL.code]]||r[COL.code]}">${r[COL.code]}</span></td>
       <td class="col-stick col-stick-3"><span class="pep">${r[COL.pep]}</span> ${safeIcon}</td>
-      <td><span class="gene">${r[COL.gene]||'—'}</span></td>
+      <td class="col-gene"><span class="gene" title="${(r[COL.gene]||'').replace(/"/g,'&quot;')}">${r[COL.gene]||'—'}</span></td>
       <td><span class="classtag" title="${CLASS_TIPS[r[COL.cls]]||''}"><span class="sw c-${r[COL.cls]}"></span>${CLASS_LABELS[r[COL.cls]]||r[COL.cls]}</span></td>
       <td title="${recTip}"><span class="pep">${recVal}</span></td>
       <td class="bar-cell" title="${abundTip}"><span class="fill" style="width:${abundW}%"></span><span class="val">${(abund).toFixed(2)}</span></td>
@@ -8672,6 +8688,10 @@ async function openDrawer(r, opts) {
   `;
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawerBg').classList.add('open');
+  // Reset the scroll to the top so a freshly-opened peptide starts at its header,
+  // not wherever the previously-viewed peptide was scrolled to. (#drawerBody is the
+  // only scrolling element.)
+  body.scrollTop = 0;
 
   // Async upgrade pass: every plot-wrap tagged with data-svg-kind tries to
   // load its NYU `assets_svg/` counterpart and replaces the static <img>

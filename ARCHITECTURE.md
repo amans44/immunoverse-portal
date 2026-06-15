@@ -471,6 +471,21 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-15 — Atlas table: wrap the Gene column + reset drawer scroll on open
+**Why:** Peptides mapping to long multi-gene lists (histone clusters, e.g.
+`H2AFX/HIST1H2AL/HIST1H2AJ/HIST1H2AB/…`) stretched the Gene column far off-screen
+(cells are `white-space:nowrap`). Separately, opening a peptide drawer, scrolling
+down, closing, then opening another showed the new drawer pre-scrolled to the old
+position instead of its top.
+**What:**
+- Gene cell tagged `col-gene`; CSS caps it at 260px and **wraps fully** (`white-space:
+  normal` + `overflow-wrap:anywhere` + `word-break:break-word`) — the ENTIRE gene list
+  stays visible across as many lines as needed, no truncation. Applies to every
+  cancer's table (shared renderer). `<th data-col="gene">` capped to match.
+- `openDrawer()` sets `#drawerBody.scrollTop = 0` right after the drawer opens (it's
+  the only scrolling element), so each peptide opens at its header.
+**Files:** `index.html`. **Commit:** _portal_ — this change.
+
 ### 2026-06-15 — Onboard DIPG, NEPC, Chordoma to the portal + robust figure attachment
 **Why:** Three new in-house cohorts (DIPG, NEPC, Chordoma) were in the private bucket
 (final_enhanced.txt + assets) but never processed into the explorer. Rendering them
