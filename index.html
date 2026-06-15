@@ -716,10 +716,11 @@ table.atlas.compact td:nth-child(10) { display: none; }
    lists (e.g. histone clusters like H2AFX/HIST1H2AL/HIST1H2AJ/HIST1H2AB/…) don't
    stretch the table far off-screen. The ENTIRE list stays visible — it wraps onto as
    many lines as needed (no truncation). Overrides the tbody nowrap. */
-table.atlas thead th[data-col="gene"] { max-width: 260px; }
+table.atlas thead th[data-col="gene"] { min-width: 170px; max-width: 270px; }
 table.atlas tbody td.col-gene {
   white-space: normal;
-  max-width: 260px;
+  min-width: 170px;   /* fits a single ENSG/ENST id (e.g. ENST00000506424) on one line */
+  max-width: 270px;   /* long multi-gene lists wrap within this */
   vertical-align: top;
 }
 table.atlas tbody td.col-gene .gene {

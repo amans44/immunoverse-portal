@@ -478,10 +478,12 @@ Newest at the top. Each entry: date, headline, summary, files touched, commit SH
 down, closing, then opening another showed the new drawer pre-scrolled to the old
 position instead of its top.
 **What:**
-- Gene cell tagged `col-gene`; CSS caps it at 260px and **wraps fully** (`white-space:
+- Gene cell tagged `col-gene`; CSS gives it `min-width:170px` (so a single ENSG/ENST id
+  like `ENST00000506424` never wraps — `overflow-wrap:anywhere` otherwise lets auto-
+  layout collapse the column) and `max-width:270px`, and **wraps fully** (`white-space:
   normal` + `overflow-wrap:anywhere` + `word-break:break-word`) — the ENTIRE gene list
   stays visible across as many lines as needed, no truncation. Applies to every
-  cancer's table (shared renderer). `<th data-col="gene">` capped to match.
+  cancer's table (shared renderer). `<th data-col="gene">` matched.
 - `openDrawer()` sets `#drawerBody.scrollTop = 0` right after the drawer opens (it's
   the only scrolling element), so each peptide opens at its header.
 **Files:** `index.html`. **Commit:** _portal_ — this change.
