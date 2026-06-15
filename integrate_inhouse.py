@@ -317,6 +317,36 @@ def process_inhouse(source_dir: Path, code: str, name: str, group: str):
             if expr_inherited:
                 extra['exprInherited'] = True
             diff_plot = compute_diff_plot_inhouse(cls, src_raw)
+            # Asset-anchored fallback for non-canonical rows whose class derivation bailed
+            # — multi-mapped ('not_unique') ERV/splice/TE sources, or the intron_retention
+            # CHM13 layout. Scan the RAW source for figure keys that ACTUALLY exist in
+            # assets/ and attach them (never points at a missing file). Recovers peptides
+            # that would otherwise show no figure. Runs BEFORE the gene-boxplot fallback so
+            # a non-canonical peptide prefers its own TE/junction figure over a host boxplot.
+            if not diff_plot and asset_set and cls in ('ERV', 'TE_chimeric_transcript', 'splicing', 'intron_retention'):
+                if cls == 'intron_retention':
+                    # CHM13_G…|GENE|chr|…  → figure joins the first 7 |-fields with commas
+                    p7 = [x.strip() for x in src_raw.split(';')[0].split('|')[:7]]
+                    if len(p7) == 7:
+                        cand = ','.join(p7) + '_expr.png'
+                        if cand in asset_set:
+                            diff_plot = {'kind': 'erv', 'erv': cand}
+                if not diff_plot:
+                    erv_hit = None
+                    for t in re.findall(r'[A-Za-z0-9\-]+_dup\d+', src_raw):
+                        if t + '_expr.png' in asset_set:
+                            erv_hit = t + '_expr.png'; break
+                    spl_hit = None
+                    for c in re.findall(r'chr[\dXYM]+:\d+-\d+', src_raw):
+                        fn = c.replace(':', '_') + '_splicing.png'
+                        if fn in asset_set:
+                            spl_hit = fn; break
+                    if erv_hit and spl_hit:
+                        diff_plot = {'kind': 'both', 'splicing': spl_hit, 'erv': erv_hit}
+                    elif erv_hit:
+                        diff_plot = {'kind': 'erv', 'erv': erv_hit}
+                    elif spl_hit:
+                        diff_plot = {'kind': 'splicing', 'splicing': spl_hit}
             # Boxplot fallback: Frank names the gene expr-boxplot ENSG_SYMBOL, and a
             # peptide can map to MULTIPLE genes (e.g. FOXP1/FOXP2/FOXP4) where only one
             # has a figure — and multi-map rows make compute_diff_plot return None. So

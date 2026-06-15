@@ -471,6 +471,23 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-15 — Exhaustive per-PNG audit: recover every renderable in-house figure
+**Why:** A full audit (classify every asset → map to its peptide → is it rendered?)
+found a handful of TRUE gaps: peptides showing NO figure though one exists. Causes:
+multi-mapped (`not_unique`) ERV/splice/TE sources where `compute_diff_plot` bailed,
+and the `intron_retention` CHM13 layout (`CHM13_G…|GENE|chr|…`) the pipeline didn't
+handle. (Most "unrendered" figures are benign — secondary genes of multi-gene peptides
+that already show a primary figure; the explorer has one figure slot per peptide.)
+**What:** `integrate_inhouse.py` adds an **asset-anchored fallback** for non-canonical
+rows when class derivation returns nothing: scan the RAW source for ERV/TE `*_dup<N>`
+tokens + `chr:start-end` splice coords and attach any matching figure that ACTUALLY
+exists (runs before the gene-boxplot fallback so a TE/splice peptide prefers its own
+figure). intron_retention CHM13 figures derived by joining the first 7 `|`-fields with
+commas. Re-audited all 5 cohorts: **0 broken links, 0 true gaps** — every peptide with
+any figure renders one. Coverage up (OS 312→319 peptides-with-a-figure). Regenerated +
+uploaded all 5 `.js`; verified live (MB 207, OS 319, DIPG 58, NEPC 41, chordoma 149).
+**Files:** `integrate_inhouse.py`. **Commit:** _portal_ — this change.
+
 ### 2026-06-15 — Render the nuORF qualitative figure (chordoma cryptic ORFs)
 **Why:** A scan of all 5 cohorts' nuORF peptides found chordoma uniquely ships a
 `nuorf_qualitative_<pep>.png` figure for 33 of its cryptic ORFs — present in the
