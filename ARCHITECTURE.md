@@ -474,6 +474,29 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-17 — Chat: b/y dissection — honest theoretical now, auto-upgrades to observed
+**Where this lives:** chat agent (`../immunoVerse_agent`, rev `00049-scz`).
+**Why:** the dissection ladder showed ALL b/y ions, but a spectrum may detect only a few
+(e.g. COAD `SMHTRLHGR` shows one b-ion) — co-showing a full ladder misrepresented coverage.
+Reading observed ions from the spectrum PNG is NOT reliable (labels carry charge states
+`b6++`, neutral losses `+o/+*`, and overlap heavily; a raster has no m/z calibration — a
+prototype mis-assigned), so the chat must not guess.
+**What:**
+- Ladder KEPT (the clean residue-box schematic), but `plotting.fragment_ladder(observed=…)`:
+  `observed=None` → titled **Theoretical**, captioned "all possible fragments — the spectrum
+  shows which were actually detected"; `observed={(type,index)}` → marks detected ions solid,
+  greys the rest, shows coverage ("1/8 b-ions, 6/8 y-ions").
+- **Forward-compatible plumbing:** `figures.spectrum_matches()` / `observed_base_ions()` read a
+  per-spectrum matched-ion JSON (`assets/{CODE}_spectrum_{PEP}.json` public,
+  `{folder}/assets/spectrum_{PEP}.json` in-house). None today → theoretical; when those files
+  land the dissection auto-upgrades to observed-marked — no code change. Format documented in
+  `immunoVerse_agent/MS_SPECTRUM_MATCHED_IONS_SPEC.md` (for the spectrum pipeline / Frank).
+- `ms_spectrum` serves the annotated spectrum (observed truth) + the ladder; the agent reads
+  observed coverage from the spectrum (or `coverage` when matched data exists), never the
+  raster. Verified in prod (COAD `SMHTRLHGR` → spectrum + theoretical-labeled ladder).
+**Files:** _agent repo_ `plotting.py`, `figures.py`, `immunoVerse_chat_mcp.py`,
+`MS_SPECTRUM_MATCHED_IONS_SPEC.md`. **Commit:** _agent_ `f7cddb7`.
+
 ### 2026-06-17 — Chat: m/z-align the b/y fragment ladder + coverage=confidence framing
 **Where this lives:** chat agent (`../immunoVerse_agent`, rev `00047-w6c`).
 **Why:** the b/y ladder was an evenly-spaced sequence schematic, so it didn't line up with
