@@ -474,6 +474,34 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-17 — Chat figures: GraphPad palettes + SVG hover tooltips + zoom panel + PNG/SVG/CSV downloads
+**Where this lives:** the **chat agent** (`../immunoVerse_agent`, service `immunoverse-agent`,
+rev `00042-9fw`), not the portal static pages. (See the entry below for the base figure tool.)
+**Why:** the generated plots looked flat (default matplotlib colors) and were download-/
+interaction-free. Make them publication-quality, recolorable on request, and genuinely usable.
+**What:**
+- **Palettes** (`plotting.py`): 9 named publication palettes — `prism` (default), `npg`,
+  `lancet`, `nejm`, `jama`, `aaas`, `vibrant`, `colorblind` (Okabe-Ito), `classic` — plus a
+  despined GraphPad-style look. `plot_peptides` gains `palette=` (named) and `colors=`
+  (explicit hex list; for tumor-vs-normal the first = tumor, second = normal) so the agent
+  recolors on request ("nature colors" → npg, "colorblind-safe" → colorblind, "dark red
+  tumor / grey normal" → colors=[...]).
+- **Three deliverables per figure**: PNG (always-renders markdown image) + **SVG** with
+  native `<title>` **hover tooltips** (gid + XML injection) + **CSV** of the exact values
+  drawn. `figures.save_figure` stores `<id>.png/.svg/.csv` under one id; `GET /figure/{key}`
+  serves all three with correct media types (csv as an attachment).
+- **Chat UI** (`web/chat.html` + `web/app.js`, `app.js?v=20260617a`): `enhanceChatFigures()`
+  wraps each `/figure` plot in a card with **separate PNG / SVG / CSV download buttons**,
+  upgrades the `<img>` to **inline SVG** so hover tooltips work (falls back to PNG; hides the
+  SVG/CSV buttons for assets that have none, e.g. served boxplots), and a **Zoom** button that
+  opens a **right-docked side-panel** (mirrors the 3D-viewer pattern) with mouse-wheel
+  zoom-to-cursor + drag-pan on the vector SVG.
+- **Verified in prod**: tool returns image_url/svg_url/csv_url + palette; `/figure/*.svg` is
+  `image/svg+xml` with `<title>` tooltips; `/figure/*.csv` is `text/csv` with full-precision
+  values; `palette=npg` and `colors=[...]` both recolor.
+**Files:** _agent repo_ `plotting.py`, `figures.py`, `api_server.py`,
+`immunoVerse_chat_mcp.py`, `web/chat.html`, `web/app.js`. **Commit:** _agent_ `21bde2e`.
+
 ### 2026-06-17 — Chat agent: server-rendered figure tool (8 plot types) + multi-gene compare
 **Where this lives:** the **chat agent** (`../immunoVerse_agent`, Cloud Run service
 `immunoverse-agent`), NOT the portal static pages. Logged here because the chat is
