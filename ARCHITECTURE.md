@@ -474,6 +474,36 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-17 — Chat: MS/MS spectrum (served) + computed b/y fragment-ion ladder
+**Where this lives:** the **chat agent** (`../immunoVerse_agent`, rev `00044-5kc`).
+**Why:** users want to see a peptide's MS/MS fragmentation (the b/y "dissection" from the
+PRAME / ms-spectra reference decks). The chat has NO raw MS/MS peaks (those are in the
+mzML/raw files, not the atlas), so a spectrum can only be SERVED, never drawn — but the
+b/y fragment m/z are pure chemistry and can be computed exactly.
+**What** (two new `plot_peptides` plot types):
+- **`ms_spectrum`** (one peptide): serves the lab's pre-rendered annotated spectrum —
+  public `{NYU}/assets/{CODE}_spectrum_{PEP}.png`, in-house
+  `gs://immunoverse-private-datasets/{folder}/assets/spectrum_{PEP}.png` (cohort-gated),
+  fetched server-side & re-served via `/figure` (`figures.spectrum_url`, mirrors
+  `boxplot_url`) — AND a computed b/y ladder. If no asset exists it says so and shows just
+  the ladder; it never fabricates a spectrum.
+- **`fragment_ladder`** (any peptide): deterministic b/y fragment-ion ladder schematic
+  (b blue / N-term, y red / C-term) + theoretical singly-charged monoisotopic m/z
+  (`figures.fragments` masses + `plotting.fragment_ladder`). CSV = full ion→fragment→m/z
+  table; SVG = per-ion hover tooltips. **I and L are isobaric** and flagged as
+  indistinguishable.
+- **Verified in prod**: `fragment_ladder(SLLQHLIGL)` → b2=201.12 / y2=189.12 etc. + CSV +
+  16 SVG tooltips; `ms_spectrum(SLLQHLIGL, SKCM)` served the real annotated spectrum
+  (a/b/y-labeled) plus the ladder.
+**Files:** _agent repo_ `plotting.py`, `figures.py`, `immunoVerse_chat_mcp.py`.
+**Commit:** _agent_ `df75a81`.
+
+### 2026-06-17 — Chat figures: cap figure card at 560px (normal in-chat size; Zoom for detail)
+**Where this lives:** chat agent (`web/chat.html`, rev `00043-xcs`). The inline SVG scaled
+to 100% of the chat column via its viewBox, so a normal chart filled the whole viewport.
+Capped `.iv-figure` at `max-width: 560px`; img/svg fill that, aspect preserved; the Zoom
+side-panel still opens figures large. **Commit:** _agent_ `5c004fa`.
+
 ### 2026-06-17 — Chat figures: GraphPad palettes + SVG hover tooltips + zoom panel + PNG/SVG/CSV downloads
 **Where this lives:** the **chat agent** (`../immunoVerse_agent`, service `immunoverse-agent`,
 rev `00042-9fw`), not the portal static pages. (See the entry below for the base figure tool.)
