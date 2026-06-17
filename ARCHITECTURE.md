@@ -474,6 +474,23 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-17 — Chat: m/z-align the b/y fragment ladder + coverage=confidence framing
+**Where this lives:** chat agent (`../immunoVerse_agent`, rev `00047-w6c`).
+**Why:** the b/y ladder was an evenly-spaced sequence schematic, so it didn't line up with
+the annotated spectrum. The reference decks label each ion at its m/z, and the PRAME deck's
+point is that full b/y coverage = confident ID.
+**What:**
+- `plotting.fragment_ladder` redrawn on the **m/z axis**: y-ions (red) up, b-ions (blue)
+  down, each stem at its theoretical singly-charged monoisotopic m/z, residues along the
+  axis — so it ALIGNS with the served spectrum (b7≈805, b8≈862, y2≈189 line up with the
+  matching peaks). Verified in prod.
+- Agent guidance: explain coverage = confidence (served spectrum shows which ions were
+  OBSERVED; near-complete series = strong, gaps = partial — the PRAME caveat). The ladder
+  is the full THEORETICAL set; the chat has NO raw peaks, so it must not claim observed/
+  missing beyond the served image or invent coverage numbers. (No matched-peak annotation
+  file ships with the assets today; marking observed-vs-missing would need that upstream.)
+**Files:** _agent repo_ `plotting.py`, `immunoVerse_chat_mcp.py`. **Commit:** _agent_ `8bc98b5`.
+
 ### 2026-06-17 — Chat: evidence queries show spectrum+ladder; every figure gets explained
 **Where this lives:** chat agent (`../immunoVerse_agent`, rev `00046-fmn`), agent-rules /
 `plot_peptides` guidance only (no code-path change).
