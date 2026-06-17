@@ -474,6 +474,23 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-17 — Chat: evidence queries show spectrum+ladder; every figure gets explained
+**Where this lives:** chat agent (`../immunoVerse_agent`, rev `00046-fmn`), agent-rules /
+`plot_peptides` guidance only (no code-path change).
+**What:**
+- A peptide **evidence/proof/validation** query ("how do we know this peptide is real",
+  "is this detection trustworthy") now returns a COMPLETE answer: **explained written
+  evidence** (n_PSM, sample recurrence, HLA presentation, tumor-specificity — each with a
+  one-sentence "why it's evidence") PLUS the **MS/MS spectrum + computed b/y ladder** (the
+  MS/MS peptide-spectrum match IS the evidence). No fabricated peaks if no spectrum exists.
+- **Rule 3b (all plot types):** never drop a figure alone — every embedded figure must be
+  accompanied by a short explanation + the standout REAL numbers from NeoVerse (verbatim
+  from tool output) and a one-line meaning.
+- **Verified in prod:** evidence prompt → query_neoverse_router + plot_peptides(ms_spectrum),
+  reply explains 112 PSMs / 19 samples / HLA-A*02:01 / TSI + embeds spectrum & ladder;
+  plain "compare PMEL vs TYR" → figure + explanation citing 4933.13/38.15, 583.78/7.68.
+**Files:** _agent repo_ `immunoVerse_chat_mcp.py`. **Commits:** _agent_ `ecff21b`, `34d95fa`, `1ccf887`.
+
 ### 2026-06-17 — Chat: MS/MS spectrum (served) + computed b/y fragment-ion ladder
 **Where this lives:** the **chat agent** (`../immunoVerse_agent`, rev `00044-5kc`).
 **Why:** users want to see a peptide's MS/MS fragmentation (the b/y "dissection" from the
