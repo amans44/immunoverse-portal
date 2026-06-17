@@ -474,6 +474,39 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-17 — Chat agent: server-rendered figure tool (8 plot types) + multi-gene compare
+**Where this lives:** the **chat agent** (`../immunoVerse_agent`, Cloud Run service
+`immunoverse-agent`), NOT the portal static pages. Logged here because the chat is
+launched from the portal (`index.html` → `window.IMMUNOVERSE_AGENT_BASE`) and this is the
+canonical change log. (The portal's own *drawer* figures are unrelated — see
+[Figure rendering (drawer)](#figure-rendering-drawer) above.)
+**Why:** the agent was fabricating "I made a graph" links and inventing example values.
+Replace that with REAL figures rendered from NeoVerse table values only.
+**What:**
+- **`plotting.py`** (new) — pure matplotlib (Agg) renderers, one per plot type, each takes
+  a DataFrame of real peptide rows and returns PNG bytes. Plot types:
+  `per_sample_intensity`, `intensity_percentile`, `tumor_normal_specificity`,
+  `prioritization_bubble`, `hla_coverage`, `peptide_length`, `expression_boxplot`
+  (pre-rendered per-tissue tumor-vs-GTEx boxplot — **served, not drawn**), and
+  `gene_expression_compare` (multi-gene tumor-vs-normal bars).
+- **`figures.py`** (new) — figure store: `save_figure(png)` → same-domain
+  `GET /figure/<uuid>.png` URL (https-upgraded to avoid mixed-content blocks). Public
+  expression boxplots are fetched from the NYU asset share **server-side** and re-served
+  via `/figure` (dodges NYU hotlink/cross-domain blank-image); in-house boxplots come from
+  the private bucket, gated by the caller's cohort access.
+- **`plot_peptides` tool** (`immunoVerse_chat_mcp.py`) — accepts `peptides=[...]`,
+  `gene=...`, or `genes=[...]`; routes to the renderer; embeds the image URL as markdown.
+- **`gene_expression_compare`** aggregates rows to the GENE level (median_tumor /
+  max_median_gtex are gene-level), draws one tumor (red) + normal-max (blue) bar-pair per
+  gene, is **not** row-capped, and matches **exact** gene tokens (a "TYR" request no longer
+  drags in TYROBP/TYRP1). `only={requested}` keeps secondary-token matches from adding
+  stray bars.
+- **Verified in prod** (rev `immunoverse-agent-00041-sdt`): all 8 plot types return valid
+  PNGs; PMEL-vs-TYR renders exactly two gene pairs.
+**Files:** _agent repo_ `plotting.py`, `figures.py`, `immunoVerse_chat_mcp.py`,
+`api_server.py`, `deploy/requirements.txt`. **Commits:** _agent_ `07d3b8b`, `f5fe84b`
+(+ earlier figure-tool commits).
+
 ### 2026-06-15 — Portal in-house access = admins + board (retire the flat lab tab)
 **Why:** The flat "Lab data access" list and the granular "In-house access" board were
 redundant — a `yarmarkovichlab` group assigned to all 5 datasets already replicates
