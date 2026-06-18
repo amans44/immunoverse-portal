@@ -474,6 +474,22 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-18 — Chat: clarify median on expression bars + auto-show boxplot for the range; UI scroll/scrollbar
+**Where this lives:** chat agent (`../immunoVerse_agent`, revs `00054-dw6` UI, `00055-7gw` expr).
+**What:**
+- **Expression bars = MEDIAN, clarified.** The tumor bar (`tumor_normal_specificity`,
+  `gene_expression_compare`) is `median_tumor` (~5000 for PMEL); the boxplot's ~40000 is the
+  top outlier sample. The atlas has NO per-sample/max-tumor column, so the chat can't print a
+  max number. Added a footnote on both bar plots ("bars = median … see the per-tissue boxplot
+  for the full range/outliers") and guidance: when the user asks about expression level / max /
+  range, or is surprised by bar-vs-boxplot height, ALSO call `expression_boxplot` (it holds the
+  real distribution) and explain median vs spread. Never prints a max TPM not in a tool result.
+- **Chat UI:** `loadSession` now opens at the LAST message (jump to bottom, retries for late
+  figure layout; `window.__bulkLoading` suppresses per-bubble scroll during bulk render) like
+  Claude/ChatGPT; scrollbar widened 6px→14px (+ `scrollbar-width:auto`). Cache-bust
+  `app.js?v=20260618a`.
+**Files:** _agent repo_ `plotting.py`, `immunoVerse_chat_mcp.py`, `web/chat.html`, `web/app.js`.
+
 ### 2026-06-17 — Chat: spectrum OCR tried + reverted; theoretical ladder + colour-count coverage
 **Where this lives:** chat agent (`../immunoVerse_agent`, rev `00053-bs8`).
 **Why:** to show ONLY the observed b/y ions (e.g. COAD `SMHTRLHGR` has one b-ion), tried
