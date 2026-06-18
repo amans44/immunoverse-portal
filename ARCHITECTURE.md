@@ -474,6 +474,28 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-17 — Chat: spectrum OCR tried + reverted; theoretical ladder + colour-count coverage
+**Where this lives:** chat agent (`../immunoVerse_agent`, rev `00053-bs8`).
+**Why:** to show ONLY the observed b/y ions (e.g. COAD `SMHTRLHGR` has one b-ion), tried
+reading them from the served spectrum PNG. **Cloud Vision OCR can't reliably read the labels**
+— they carry charge states (`b6++`) / neutral losses (`+o`,`+*`) and overlap; even at 3×
+upscale + document mode Vision recovered ~3 y-ions and MISSED `b6`. Greying unread ions would
+falsely mark real ions absent (a false negative — worse than the honest theoretical ladder),
+so OCR was reverted (and the `google-cloud-vision` dep dropped; the Vision API stays enabled
+but unused).
+**What now:**
+- Dissection ladder stays THEORETICAL (all b/y, the clean schematic), clearly labeled, and
+  carries a TRUTHFUL caption from the one reliable raster signal — `figures.spectrum_peak_counts()`
+  counts annotated b/y peaks by COLOUR (no OCR): COAD `SMHTRLHGR` → 1 b / ~6 y. Caption:
+  "the spectrum shows ≈N b-ion and ≈M y-ion peaks detected (count only — see the spectrum for
+  which)". `ms_spectrum` also returns `detected_peaks`. No identity guessing.
+- The served spectrum remains the visual truth; exact observed-marking (b6 solid, rest grey)
+  still auto-activates from the matched-ion JSON export (`MS_SPECTRUM_MATCHED_IONS_SPEC.md`).
+- Verified in prod: COAD `SMHTRLHGR` → `detected_peaks {b:1,y:6}`, theoretical ladder + count
+  caption, no Vision.
+**Files:** _agent repo_ `plotting.py`, `figures.py`, `immunoVerse_chat_mcp.py`,
+`deploy/requirements.txt`. **Commit:** _agent_ (this change).
+
 ### 2026-06-17 — Chat: b/y dissection — honest theoretical now, auto-upgrades to observed
 **Where this lives:** chat agent (`../immunoVerse_agent`, rev `00049-scz`).
 **Why:** the dissection ladder showed ALL b/y ions, but a spectrum may detect only a few
