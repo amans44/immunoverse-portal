@@ -474,6 +474,31 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-18 — Chat: dissection + marker_filter plot types (molecular catalogue + MS data)
+**Where this lives:** chat agent (`../immunoVerse_agent`, rev `00058-m4n`).
+**Why:** turn the chat from peptide lookup toward target discovery using the NYU molecular
+catalogue/MS results (full file catalogue in `NYU_IMMUNOVERSE_SHARE_CATALOGUE.md`). Exact
+values only.
+**What:** two new `plot_peptides` plot types (`neoverse_catalogue.py` + `plotting.py`):
+- **`dissection`** (peptides=[1]+cancer_abbrev): REAL observed b/y ions for a peptide's best
+  PSM from MaxQuant `msms.txt` `Matches` → two panels (theoretical | observed) + confidence
+  line (sequence coverage, score, #matched). Supersedes the OCR/theoretical-only ladder.
+- **`marker_filter`** (genes=[marker panel], gene=<target>, cancer_abbrev): stratify a
+  cancer's tumor samples by a marker signature (z-score over `gene_tpm.txt`) and plot the
+  target's expression high vs low (e.g. NE→ASCL1 LUAD: 15/15 top-ASCL1 are NE-high).
+- **Data path:** hybrid + low-memory. Uses a pre-built index from GCS
+  (`gs://immunoverse-chat-chat-data/catalogue/{tpmidx,msmsidx}_{CANCER}.json`) when present
+  (sub-second: byte-offset Range fetch / peptide lookup); else reads NYU DIRECTLY per query
+  (marker stream keeps only panel+target rows; dissection scans msms for one peptide). The
+  earlier in-request full-index BUILD OOM'd the instance (503) — builds now run OFFLINE
+  (`neoverse_catalogue.build_index`) and upload to GCS. Indexes for all 21 cancers being
+  pre-built/uploaded.
+- **Verified in prod**: LUAD dissection (b 8/10, y 4/10, 90% cov, score 143.9) + NE→ASCL1
+  marker_filter (15/15) render correctly via the direct path.
+**Files:** _agent repo_ `neoverse_catalogue.py` (new), `plotting.py`, `immunoVerse_chat_mcp.py`,
+`NYU_IMMUNOVERSE_SHARE_CATALOGUE.md`, `MS_SPECTRUM_MATCHED_IONS_SPEC.md`. **Commits:** _agent_
+`2b776a9`-ish series.
+
 ### 2026-06-18 — Chat: clarify median on expression bars + auto-show boxplot for the range; UI scroll/scrollbar
 **Where this lives:** chat agent (`../immunoVerse_agent`, revs `00054-dw6` UI, `00055-7gw` expr).
 **What:**
