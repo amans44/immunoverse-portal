@@ -474,6 +474,28 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-06-18 — Chat MS view unified + best-PSM spectrum; admin/auth + UI fixes
+**Where:** chat agent (`../immunoVerse_agent`, rev `00061-b6x`) + auth-service (`00027-ffh`).
+**What:**
+- **Unified `ms_spectrum`/`dissection`** into one comprehensive, ATLAS-FREE view: served/rendered
+  spectrum + two-panel b/y dissection (theoretical | REAL observed from msms) + confidence line.
+  Fixes a 2-peptide query failing when one peptide wasn't in the atlas, and "real vs theoretical"
+  now always shown together. Multiple peptides → call once per peptide.
+- **Best-PSM spectrum:** the spectrum is drawn from the SAME best PSM as the dissection (real
+  matched `Masses`/`Intensities` from msms), so they agree (the fixed lab image was a different,
+  weaker scan — e.g. SMHTRLHGR showed ~1 b-ion vs the best PSM's 7/8). Lab asset is only a fallback.
+- **Catalogue index path:** `dissection`/`marker_filter` use a pre-built GCS index when present
+  (`gs://immunoverse-chat-chat-data/catalogue/{tpmidx,msmsidx}_{CANCER}.json` → sub-second), else
+  read NYU directly (low-memory; ~8s marker, ~3min dissection). Indexes are built OFFLINE
+  (`build_and_upload_index.py`, run on Cloud Shell/VM) — the in-request build OOM'd (503).
+- **UI:** figure Zoom is now a CENTERED modal (was a right drawer); figure cap 560→660px; figures
+  show the PNG immediately and upgrade to inline-SVG (hover tooltips) lazily — faster chat open.
+- **Auth-service:** admin "Back to chat" → `/chat.html` (was the landing page); chat refresh-token
+  TTL 7→30 days (30-day sliding session, matching the portal).
+**Files:** _agent_ `neoverse_catalogue.py`, `plotting.py`, `immunoVerse_chat_mcp.py`,
+`web/chat.html`, `web/app.js`, `web/auth-header.js`, `build_and_upload_index.py`; _auth-service_
+`auth/auth.py`, `static/login/admin.html`. **Commits:** _agent_ `324fc58` (+ series).
+
 ### 2026-06-18 — Chat: dissection + marker_filter plot types (molecular catalogue + MS data)
 **Where this lives:** chat agent (`../immunoVerse_agent`, rev `00058-m4n`).
 **Why:** turn the chat from peptide lookup toward target discovery using the NYU molecular
