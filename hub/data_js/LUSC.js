@@ -3,9 +3,9 @@ window.IMMUNOVERSE_HUB["LUSC"] = {
   "code": "LUSC",
   "display": "Lung Squamous Cell Carcinoma",
   "category": "Solid",
-  "sample_count": 164,
-  "sample_included": 164,
-  "cohort_count": 13,
+  "sample_count": 257,
+  "sample_included": 257,
+  "cohort_count": 14,
   "biology_count": 56,
   "hla_count": 79,
   "studies": [
@@ -15,6 +15,7 @@ window.IMMUNOVERSE_HUB["LUSC"] = {
     "PXD022949",
     "phase2_PXD022020",
     "phase2_PXD033351",
+    "phase2_PXD034772_DIA",
     "phase2_PXD034820",
     "phase2_PXD038165",
     "phase2_PXD043057",
@@ -1515,6 +1516,843 @@ window.IMMUNOVERSE_HUB["LUSC"] = {
       "HLA": "A*02:01,B*07:02,B*44:02,C*05:01,C*07:02",
       "special_note": "",
       "acquisition": "DDA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00046-HLAIp_R01.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00046-HLAIp_R02.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00048-HLAIp_R01.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00048-HLAIp_R02.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00049-HLAIp_R01.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00049-HLAIp_R02.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00050-HLAIp_R01.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00050-HLAIp_R02.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00051-HLAIp_R01.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00051-HLAIp_R02.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00052-HLAIp_R01.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00052-HLAIp_R02.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00054_00055-HLAIp_R01.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200519_DIA_COL011-00054_00055-HLAIp_R02.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200526_DIA_COL011-00053-HLAIp_R03.raw",
+      "biology": "C3N-03023_LCNEC",
+      "HLA": "A*02:01,A*23:01,B*35:03,B*44:03,C*04:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00014-HLAIp_R03.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00014-HLAIp_R04.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00015-HLAIp_R03.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00015-HLAIp_R04.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00016-HLAIp_R03.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00016-HLAIp_R04.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00017-HLAIp_R01.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00017-HLAIp_R02.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00018-HLAIp_R03.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00018-HLAIp_R04.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00019-HLAIp_R03.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00019-HLAIp_R04.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00021-HLAIp_R01.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200715_DIA_COL011-00021-HLAIp_R02.raw",
+      "biology": "C3N-02287_LUAD",
+      "HLA": "A*02:01,A*03:01,B*38:01,B*44:05,C*02:02,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200720_DIA_COL011-00006a-HLAIp_R03.raw",
+      "biology": "C3N-02671_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,B*44:02,C*05:01,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200720_DIA_COL011-00006a-HLAIp_R04.raw",
+      "biology": "C3N-02671_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,B*44:02,C*05:01,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200720_DIA_COL011-00007a-HLAIp_R03.raw",
+      "biology": "C3N-02671_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,B*44:02,C*05:01,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200720_DIA_COL011-00007a-HLAIp_R04.raw",
+      "biology": "C3N-02671_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,B*44:02,C*05:01,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200720_DIA_COL011-00008a-HLAIp_R03.raw",
+      "biology": "C3N-02671_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,B*44:02,C*05:01,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200720_DIA_COL011-00008a-HLAIp_R04.raw",
+      "biology": "C3N-02671_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,B*44:02,C*05:01,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200720_DIA_COL011-00009a-HLAIp_R03.raw",
+      "biology": "C3N-02671_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,B*44:02,C*05:01,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200720_DIA_COL011-00009a-HLAIp_R04.raw",
+      "biology": "C3N-02671_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,B*44:02,C*05:01,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200721_DIA_COL011-00030a-HLAIp_R03.raw",
+      "biology": "C3N-02289_LUSC",
+      "HLA": "A*03:01,A*26:01,B*18:01,C*07:01,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200721_DIA_COL011-00030a-HLAIp_R04.raw",
+      "biology": "C3N-02289_LUSC",
+      "HLA": "A*03:01,A*26:01,B*18:01,C*07:01,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200721_DIA_COL011-00031a-HLAIp_R03.raw",
+      "biology": "C3N-02289_LUSC",
+      "HLA": "A*03:01,A*26:01,B*18:01,C*07:01,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200721_DIA_COL011-00031a-HLAIp_R04.raw",
+      "biology": "C3N-02289_LUSC",
+      "HLA": "A*03:01,A*26:01,B*18:01,C*07:01,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200721_DIA_COL011-00032a-HLAIp_R03.raw",
+      "biology": "C3N-02289_LUSC",
+      "HLA": "A*03:01,A*26:01,B*18:01,C*07:01,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200721_DIA_COL011-00032a-HLAIp_R04.raw",
+      "biology": "C3N-02289_LUSC",
+      "HLA": "A*03:01,A*26:01,B*18:01,C*07:01,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200721_DIA_COL011-00036a-HLAIp_R01.raw",
+      "biology": "C3N-02289_LUSC",
+      "HLA": "A*03:01,A*26:01,B*18:01,C*07:01,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200721_DIA_COL011-00036a-HLAIp_R02.raw",
+      "biology": "C3N-02289_LUSC",
+      "HLA": "A*03:01,A*26:01,B*18:01,C*07:01,C*12:03",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00039-HLAIp_R01.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00039-HLAIp_R02.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00040-HLAIp_R01.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00040-HLAIp_R02.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00041-HLAIp_R01.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00041-HLAIp_R02.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00042-HLAIp_R01.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00042-HLAIp_R02.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00044-HLAIp_R01.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00044-HLAIp_R02.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00045-HLAIp_R01.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200724_DIA_COL011-00045-HLAIp_R02.raw",
+      "biology": "C3N-02290_LUAD",
+      "HLA": "A*01:01,A*02:01,B*51:01,B*52:01,C*12:02,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00022-HLAIp_R01.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00022-HLAIp_R02.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00023-HLAIp_R01.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00023-HLAIp_R02.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00024-HLAIp_R01.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00024-HLAIp_R02.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00025-HLAIp_R01.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00025-HLAIp_R02.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00026-HLAIp_R01.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00026-HLAIp_R02.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00028-HLAIp_R01.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00028-HLAIp_R02.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00029-HLAIp_R01.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200804_DIA_COL011-00029-HLAIp_R02.raw",
+      "biology": "C3N-02288_LUSC",
+      "HLA": "A*02:01,A*02:17,B*13:02,B*15:01,C*04:01,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00056-HLAIp_R01.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00056-HLAIp_R02.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00057-HLAIp_R01.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00057-HLAIp_R02.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00059-HLAIp_R01.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00059-HLAIp_R02.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00060-HLAIp_R01.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00060-HLAIp_R02.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00061-HLAIp_R01.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00061-HLAIp_R02.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00062-HLAIp_R01.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00062-HLAIp_R02.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00063-HLAIp_R01.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200828_DIA_COL011-00063-HLAIp_R02.raw",
+      "biology": "C3N-03421_LUAD",
+      "HLA": "A*01:01,A*02:01,B*08:01,C*02:02,C*07:01",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200904_DIA_COL011-00001a-HLAIp_R01.raw",
+      "biology": "C3N-02672_LUAD",
+      "HLA": "A*02:01,A*11:01,B*38:01,B*51:01,C*12:03,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200904_DIA_COL011-00001a-HLAIp_R02.raw",
+      "biology": "C3N-02672_LUAD",
+      "HLA": "A*02:01,A*11:01,B*38:01,B*51:01,C*12:03,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200904_DIA_COL011-00002a-HLAIp_R01.raw",
+      "biology": "C3N-02672_LUAD",
+      "HLA": "A*02:01,A*11:01,B*38:01,B*51:01,C*12:03,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200904_DIA_COL011-00002a-HLAIp_R02.raw",
+      "biology": "C3N-02672_LUAD",
+      "HLA": "A*02:01,A*11:01,B*38:01,B*51:01,C*12:03,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200904_DIA_COL011-00004a-HLAIp_R01.raw",
+      "biology": "C3N-02672_LUAD",
+      "HLA": "A*02:01,A*11:01,B*38:01,B*51:01,C*12:03,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200904_DIA_COL011-00004a-HLAIp_R02.raw",
+      "biology": "C3N-02672_LUAD",
+      "HLA": "A*02:01,A*11:01,B*38:01,B*51:01,C*12:03,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200904_DIA_COL011-00005a-HLAIp_R01.raw",
+      "biology": "C3N-02672_LUAD",
+      "HLA": "A*02:01,A*11:01,B*38:01,B*51:01,C*12:03,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD034772_DIA",
+      "batch": "",
+      "sample": "20200904_DIA_COL011-00005a-HLAIp_R02.raw",
+      "biology": "C3N-02672_LUAD",
+      "HLA": "A*02:01,A*11:01,B*38:01,B*51:01,C*12:03,C*14:02",
+      "special_note": "",
+      "acquisition": "DIA"
     }
   ],
   "hla": [

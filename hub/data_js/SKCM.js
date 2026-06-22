@@ -3,10 +3,10 @@ window.IMMUNOVERSE_HUB["SKCM"] = {
   "code": "SKCM",
   "display": "Skin Cutaneous Melanoma",
   "category": "Solid",
-  "sample_count": 465,
-  "sample_included": 465,
-  "cohort_count": 18,
-  "biology_count": 101,
+  "sample_count": 487,
+  "sample_included": 487,
+  "cohort_count": 19,
+  "biology_count": 103,
   "hla_count": 65,
   "studies": [
     "MSV000084442_hlathena",
@@ -26,6 +26,7 @@ window.IMMUNOVERSE_HUB["SKCM"] = {
     "phase2_PXD034017",
     "phase2_PXD036856",
     "phase2_PXD043989",
+    "phase2_PXD043989_DIA",
     "phase2_PXD056367_JPST003393"
   ],
   "biology": [
@@ -4229,6 +4230,204 @@ window.IMMUNOVERSE_HUB["SKCM"] = {
       "HLA": "A*01:01,A*02:01,B*44:03,B*57:01,C*06:02,C*16:02",
       "special_note": "",
       "acquisition": "DDA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02128-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02128-HLAIp_R02.raw",
+      "biology": "sternberg_T1185B",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02129-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02129-HLAIp_R02.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02130-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02130-HLAIp_R02.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02131-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02131-HLAIp_R02.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02132-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02132-HLAIp_R02.raw",
+      "biology": "sternberg_T1185B",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02133-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02133-HLAIp_R02.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02134-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02134-HLAIp_R02.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02135-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20221118_DIA_INT001-02135-HLAIp_R02.raw",
+      "biology": "sternberg_T1185B_MG132_proteasome_inhibitor",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20231103_DIA_INT001-02982-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20231103_DIA_INT001-02983-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20231103_DIA_INT001-02984-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20231103_DIA_INT001-02985-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B_IFNr",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20231103_DIA_INT001-02986-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B_IFNr",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
+    },
+    {
+      "study": "phase2_PXD043989_DIA",
+      "batch": "",
+      "sample": "20231103_DIA_INT001-02987-HLAIp_R01.raw",
+      "biology": "sternberg_T1185B_IFNr",
+      "HLA": "A*02:01,A*68:01,B*13:02,B*40:01,C*03:04,C*06:02",
+      "special_note": "",
+      "acquisition": "DIA"
     }
   ],
   "hla": [

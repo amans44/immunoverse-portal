@@ -587,3 +587,31 @@ ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2021/09/PXD022020/A375-nzuh000402a1
 )
 
 for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./phase2_PXD022020 {}"
+
+# phase2_PXD043989_DIA
+declare -a samples=(
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02128-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02128-HLAIp_R02.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02129-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02129-HLAIp_R02.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02130-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02130-HLAIp_R02.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02131-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02131-HLAIp_R02.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02132-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02132-HLAIp_R02.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02133-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02133-HLAIp_R02.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02134-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02134-HLAIp_R02.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02135-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20221118_DIA_INT001-02135-HLAIp_R02.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20231103_DIA_INT001-02982-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20231103_DIA_INT001-02983-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20231103_DIA_INT001-02984-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20231103_DIA_INT001-02985-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20231103_DIA_INT001-02986-HLAIp_R01.raw
+https://ftp.pride.ebi.ac.uk/pride/data/archive/2024/03/PXD043989/20231103_DIA_INT001-02987-HLAIp_R01.raw
+)
+
+for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./phase2_PXD043989_DIA {}"

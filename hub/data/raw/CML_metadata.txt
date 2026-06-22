@@ -1,4 +1,4 @@
-study	batch	sample	biology	HLA	acquision	special_note
+study	batch	sample	biology	HLA	acquisition	special_note
 PXD010450	batch1	UPN01_classI_Rep1.raw	UPN01	"A*23:01,A*25:01,B*18:01,B*57:01,C*06:02,C*12:02"	DDA	
 PXD010450	batch1	UPN01_classI_Rep2.raw	UPN01	"A*23:01,A*25:01,B*18:01,B*57:01,C*06:02,C*12:02"	DDA	
 PXD010450	batch1	UPN01_classI_Rep3.raw	UPN01	"A*23:01,A*25:01,B*18:01,B*57:01,C*06:02,C*12:02"	DDA	

@@ -9,7 +9,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
   "biology_count": 2,
   "hla_count": 5,
   "studies": [
-    "PXD057839"
+    "PXD057839_FAIMS_DIA"
   ],
   "biology": [
     "U2OS",
@@ -21,7 +21,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
   },
   "rows": [
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240223_002_DIA.raw",
       "biology": "U2OS",
@@ -30,7 +30,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240223_004_DIA.raw",
       "biology": "U2OS",
@@ -39,7 +39,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240223_006_DIA.raw",
       "biology": "U2OS_ptx",
@@ -48,7 +48,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240223_008_DIA.raw",
       "biology": "U2OS_ptx",
@@ -57,7 +57,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_006_DIA.raw",
       "biology": "U2OS",
@@ -66,7 +66,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_008_DIA.raw",
       "biology": "U2OS",
@@ -75,7 +75,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_010_DIA.raw",
       "biology": "U2OS",
@@ -84,7 +84,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_012_DIA.raw",
       "biology": "U2OS",
@@ -93,7 +93,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_018_DIA.raw",
       "biology": "U2OS_ptx",
@@ -102,7 +102,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_020_DIA.raw",
       "biology": "U2OS_ptx",
@@ -111,7 +111,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_022_DIA.raw",
       "biology": "U2OS_ptx",
@@ -120,7 +120,7 @@ window.IMMUNOVERSE_HUB["OS"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "PXD057839",
+      "study": "PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_024_DIA.raw",
       "biology": "U2OS_ptx",

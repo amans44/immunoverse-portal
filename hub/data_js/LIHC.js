@@ -593,7 +593,7 @@ window.IMMUNOVERSE_HUB["LIHC"] = {
     {
       "study": "phase2_PXD013057",
       "batch": "",
-      "sample": "131025_NT_HCC23_Tumor_LysatReRun_W_20%_#1_50cm195min5s_msms10.RAW",
+      "sample": "131025_NT_HCC23_Tumor_LysatReRun_W_20%_#1_50cm195min5s_msms10.raw",
       "biology": "HCC023",
       "HLA": "A*24:02,A*29:02,B*37:01,B*44:03,C*06:02,C*16:01",
       "special_note": "",
@@ -602,7 +602,7 @@ window.IMMUNOVERSE_HUB["LIHC"] = {
     {
       "study": "phase2_PXD013057",
       "batch": "",
-      "sample": "131025_NT_HCC23_Tumor_W_20%_#1_50cm195min5s_msms1.RAW",
+      "sample": "131025_NT_HCC23_Tumor_W_20%_#1_50cm195min5s_msms1.raw",
       "biology": "HCC023",
       "HLA": "A*24:02,A*29:02,B*37:01,B*44:03,C*06:02,C*16:01",
       "special_note": "",
@@ -611,7 +611,7 @@ window.IMMUNOVERSE_HUB["LIHC"] = {
     {
       "study": "phase2_PXD013057",
       "batch": "",
-      "sample": "131025_NT_HCC24_Tumor_W_20%_#1_50cm195min5s_msms6.RAW",
+      "sample": "131025_NT_HCC24_Tumor_W_20%_#1_50cm195min5s_msms6.raw",
       "biology": "HCC024",
       "HLA": "A*03:01,A*68:01,B*15:01,B*40:01,C*03:04,C*03:81",
       "special_note": "",
@@ -620,7 +620,7 @@ window.IMMUNOVERSE_HUB["LIHC"] = {
     {
       "study": "phase2_PXD013057",
       "batch": "",
-      "sample": "140124_NT_HCC25_Tumor_W_20%_Rep#1_25cm90min3s_msms1.RAW",
+      "sample": "140124_NT_HCC25_Tumor_W_20%_Rep#1_25cm90min3s_msms1.raw",
       "biology": "HCC025",
       "HLA": "A*02:01,A*11:01,B*37:01,B*44:02,C*06:02,C*07:04",
       "special_note": "",
@@ -629,7 +629,7 @@ window.IMMUNOVERSE_HUB["LIHC"] = {
     {
       "study": "phase2_PXD013057",
       "batch": "",
-      "sample": "140122_NT_HCC26_Tumor_W_20%_Rep#1_25cm90min3s_msms5.RAW",
+      "sample": "140122_NT_HCC26_Tumor_W_20%_Rep#1_25cm90min3s_msms5.raw",
       "biology": "HCC026",
       "HLA": "A*01:01,A*02:01,B*08:01,B*51:01,C*01:02,C*07:01",
       "special_note": "",
@@ -638,7 +638,7 @@ window.IMMUNOVERSE_HUB["LIHC"] = {
     {
       "study": "phase2_PXD013057",
       "batch": "",
-      "sample": "140221_nt_HCC27_Tumor_W_20%_Rep#1_50cm195min5s_msms1.RAW",
+      "sample": "140221_nt_HCC27_Tumor_W_20%_Rep#1_50cm195min5s_msms1.raw",
       "biology": "HCC027",
       "HLA": "A*03:01,A*24:02,B*18:01,B*27:05,C*02:02,C*07:01",
       "special_note": "",
@@ -647,7 +647,7 @@ window.IMMUNOVERSE_HUB["LIHC"] = {
     {
       "study": "phase2_PXD013057",
       "batch": "",
-      "sample": "140221_nt_HCC28_Tumor_W_20%_Rep#1_50cm195min5s_msms5.RAW",
+      "sample": "140221_nt_HCC28_Tumor_W_20%_Rep#1_50cm195min5s_msms5.raw",
       "biology": "HCC028",
       "HLA": "A*02:01,A*24:02,B*07:02,B*35:03,C*04:01,C*07:02",
       "special_note": "",

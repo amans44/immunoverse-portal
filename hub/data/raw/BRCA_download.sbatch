@@ -355,7 +355,7 @@ ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2021/09/PXD024965/MS206194_LUM_mart
 
 for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 10 -I {} bash -c "wget -P ./phase2_PXD024965 {}"
 
-# phase2_PXD057839
+# phase2_PXD057839_FAIMS_DIA
 declare -a samples=(
 https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/06/PXD057839/OE2-20240520_026_DIA.raw
 https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/06/PXD057839/OE2-20240520_028_DIA.raw

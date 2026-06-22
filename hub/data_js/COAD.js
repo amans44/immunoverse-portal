@@ -3406,7 +3406,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).RAW",
+      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).raw",
       "biology": "UPN14",
       "HLA": "A*03:01,A*31:01,B*07:02,B*15:01,C*01:02,C*07:02",
       "special_note": "",
@@ -3415,7 +3415,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN14",
       "HLA": "A*03:01,A*31:01,B*07:02,B*15:01,C*01:02,C*07:02",
       "special_note": "",
@@ -3424,7 +3424,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN14",
       "HLA": "A*03:01,A*31:01,B*07:02,B*15:01,C*01:02,C*07:02",
       "special_note": "",
@@ -3433,7 +3433,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN14",
       "HLA": "A*03:01,A*31:01,B*07:02,B*15:01,C*01:02,C*07:02",
       "special_note": "",
@@ -3442,7 +3442,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN14",
       "HLA": "A*03:01,A*31:01,B*07:02,B*15:01,C*01:02,C*07:02",
       "special_note": "",
@@ -3451,7 +3451,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_14_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN14",
       "HLA": "A*03:01,A*31:01,B*07:02,B*15:01,C*01:02,C*07:02",
       "special_note": "",
@@ -3838,7 +3838,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).RAW",
+      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).raw",
       "biology": "UPN1",
       "HLA": "A*02:01,A*03:01,B*07:02,B*14:01,C*07:02,C*08:02",
       "special_note": "",
@@ -3847,7 +3847,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN1",
       "HLA": "A*02:01,A*03:01,B*07:02,B*14:01,C*07:02,C*08:02",
       "special_note": "",
@@ -3856,7 +3856,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN1",
       "HLA": "A*02:01,A*03:01,B*07:02,B*14:01,C*07:02,C*08:02",
       "special_note": "",
@@ -3865,7 +3865,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN1",
       "HLA": "A*02:01,A*03:01,B*07:02,B*14:01,C*07:02,C*08:02",
       "special_note": "",
@@ -3874,7 +3874,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN1",
       "HLA": "A*02:01,A*03:01,B*07:02,B*14:01,C*07:02,C*08:02",
       "special_note": "",
@@ -3883,7 +3883,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_1_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN1",
       "HLA": "A*02:01,A*03:01,B*07:02,B*14:01,C*07:02,C*08:02",
       "special_note": "",
@@ -4000,7 +4000,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).RAW",
+      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).raw",
       "biology": "UPN22",
       "HLA": "A*01:01,A*03:01,B*08:01,B*18:01",
       "special_note": "",
@@ -4009,7 +4009,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_R#1_(remnant).RAW",
+      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_R#1_(remnant).raw",
       "biology": "UPN22",
       "HLA": "A*01:01,A*03:01,B*08:01,B*18:01",
       "special_note": "",
@@ -4018,7 +4018,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_R#2_(remnant).RAW",
+      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_R#2_(remnant).raw",
       "biology": "UPN22",
       "HLA": "A*01:01,A*03:01,B*08:01,B*18:01",
       "special_note": "",
@@ -4027,7 +4027,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_R#3_(remnant).RAW",
+      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_R#3_(remnant).raw",
       "biology": "UPN22",
       "HLA": "A*01:01,A*03:01,B*08:01,B*18:01",
       "special_note": "",
@@ -4036,7 +4036,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN22",
       "HLA": "A*01:01,A*03:01,B*08:01,B*18:01",
       "special_note": "",
@@ -4045,7 +4045,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN22",
       "HLA": "A*01:01,A*03:01,B*08:01,B*18:01",
       "special_note": "",
@@ -4054,7 +4054,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN22",
       "HLA": "A*01:01,A*03:01,B*08:01,B*18:01",
       "special_note": "",
@@ -4063,7 +4063,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN22",
       "HLA": "A*01:01,A*03:01,B*08:01,B*18:01",
       "special_note": "",
@@ -4072,7 +4072,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_22_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN22",
       "HLA": "A*01:01,A*03:01,B*08:01,B*18:01",
       "special_note": "",
@@ -4081,7 +4081,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_23_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_23_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN23",
       "HLA": "A*02:01,A*03:01,B*15:01,B*40:01",
       "special_note": "",
@@ -4090,7 +4090,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_23_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_23_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN23",
       "HLA": "A*02:01,A*03:01,B*15:01,B*40:01",
       "special_note": "",
@@ -4099,7 +4099,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_23_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_23_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN23",
       "HLA": "A*02:01,A*03:01,B*15:01,B*40:01",
       "special_note": "",
@@ -4108,7 +4108,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_23_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_23_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN23",
       "HLA": "A*02:01,A*03:01,B*15:01,B*40:01",
       "special_note": "",
@@ -4117,7 +4117,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_23_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_23_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN23",
       "HLA": "A*02:01,A*03:01,B*15:01,B*40:01",
       "special_note": "",
@@ -4126,7 +4126,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_24_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_24_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN24",
       "HLA": "A*02:01,A*25:01,B*40:01",
       "special_note": "",
@@ -4135,7 +4135,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_24_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_24_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN24",
       "HLA": "A*02:01,A*25:01,B*40:01",
       "special_note": "",
@@ -4144,7 +4144,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_24_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_24_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN24",
       "HLA": "A*02:01,A*25:01,B*40:01",
       "special_note": "",
@@ -4153,7 +4153,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_24_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_24_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN24",
       "HLA": "A*02:01,A*25:01,B*40:01",
       "special_note": "",
@@ -4162,7 +4162,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_24_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_24_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN24",
       "HLA": "A*02:01,A*25:01,B*40:01",
       "special_note": "",
@@ -4171,7 +4171,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_25_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_25_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN25",
       "HLA": "A*01:01,A*02:01,B*37:01,B*57:01",
       "special_note": "",
@@ -4180,7 +4180,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_25_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_25_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN25",
       "HLA": "A*01:01,A*02:01,B*37:01,B*57:01",
       "special_note": "",
@@ -4189,7 +4189,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_25_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_25_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN25",
       "HLA": "A*01:01,A*02:01,B*37:01,B*57:01",
       "special_note": "",
@@ -4198,7 +4198,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_26_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_26_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN26",
       "HLA": "A*01:01,A*26:01,B*08:01,B*13:01",
       "special_note": "",
@@ -4207,7 +4207,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_26_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_26_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN26",
       "HLA": "A*01:01,A*26:01,B*08:01,B*13:01",
       "special_note": "",
@@ -4216,7 +4216,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_26_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_26_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN26",
       "HLA": "A*01:01,A*26:01,B*08:01,B*13:01",
       "special_note": "",
@@ -4225,7 +4225,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_27_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_27_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN27",
       "HLA": "A*23:01,A*31:01,B*15:01,B*44:02",
       "special_note": "",
@@ -4234,7 +4234,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_27_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_27_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN27",
       "HLA": "A*23:01,A*31:01,B*15:01,B*44:02",
       "special_note": "",
@@ -4243,7 +4243,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_27_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_27_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN27",
       "HLA": "A*23:01,A*31:01,B*15:01,B*44:02",
       "special_note": "",
@@ -4252,7 +4252,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_27_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_27_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN27",
       "HLA": "A*23:01,A*31:01,B*15:01,B*44:02",
       "special_note": "",
@@ -4261,7 +4261,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_27_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_27_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN27",
       "HLA": "A*23:01,A*31:01,B*15:01,B*44:02",
       "special_note": "",
@@ -4270,7 +4270,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_28_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_28_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN28",
       "HLA": "A*02:01,A*03:01,B*13:01,B*44:02",
       "special_note": "",
@@ -4279,7 +4279,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_28_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_28_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN28",
       "HLA": "A*02:01,A*03:01,B*13:01,B*44:02",
       "special_note": "",
@@ -4288,7 +4288,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_28_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_28_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN28",
       "HLA": "A*02:01,A*03:01,B*13:01,B*44:02",
       "special_note": "",
@@ -4297,7 +4297,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_28_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_28_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN28",
       "HLA": "A*02:01,A*03:01,B*13:01,B*44:02",
       "special_note": "",
@@ -4306,7 +4306,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_28_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_28_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN28",
       "HLA": "A*02:01,A*03:01,B*13:01,B*44:02",
       "special_note": "",
@@ -4315,7 +4315,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN29",
       "HLA": "A*02:01,A*68:01,B*40:01,B*51:01",
       "special_note": "",
@@ -4324,7 +4324,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN29",
       "HLA": "A*02:01,A*68:01,B*40:01,B*51:01",
       "special_note": "",
@@ -4333,7 +4333,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN29",
       "HLA": "A*02:01,A*68:01,B*40:01,B*51:01",
       "special_note": "",
@@ -4342,7 +4342,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN29",
       "HLA": "A*02:01,A*68:01,B*40:01,B*51:01",
       "special_note": "",
@@ -4351,7 +4351,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN29",
       "HLA": "A*02:01,A*68:01,B*40:01,B*51:01",
       "special_note": "",
@@ -4360,7 +4360,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_R_(remnant).RAW",
+      "sample": "UPN_29_HLA-class_I_CRC_(malignant)_R_(remnant).raw",
       "biology": "UPN29",
       "HLA": "A*02:01,A*68:01,B*40:01,B*51:01",
       "special_note": "",
@@ -4369,7 +4369,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).RAW",
+      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).raw",
       "biology": "UPN2",
       "HLA": "A*01:01,A*26:01,B*41:01,B*49:01,C*07:01,C*17:01",
       "special_note": "",
@@ -4378,7 +4378,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN2",
       "HLA": "A*01:01,A*26:01,B*41:01,B*49:01,C*07:01,C*17:01",
       "special_note": "",
@@ -4387,7 +4387,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN2",
       "HLA": "A*01:01,A*26:01,B*41:01,B*49:01,C*07:01,C*17:01",
       "special_note": "",
@@ -4396,7 +4396,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN2",
       "HLA": "A*01:01,A*26:01,B*41:01,B*49:01,C*07:01,C*17:01",
       "special_note": "",
@@ -4405,7 +4405,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN2",
       "HLA": "A*01:01,A*26:01,B*41:01,B*49:01,C*07:01,C*17:01",
       "special_note": "",
@@ -4414,7 +4414,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_2_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN2",
       "HLA": "A*01:01,A*26:01,B*41:01,B*49:01,C*07:01,C*17:01",
       "special_note": "",
@@ -4423,7 +4423,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_30_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_30_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN30",
       "HLA": "A*03:01,A*11:01,B*07:02,B*51:01,C*07:02,C*15:02",
       "special_note": "",
@@ -4432,7 +4432,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_30_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_30_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN30",
       "HLA": "A*03:01,A*11:01,B*07:02,B*51:01,C*07:02,C*15:02",
       "special_note": "",
@@ -4441,7 +4441,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_30_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_30_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN30",
       "HLA": "A*03:01,A*11:01,B*07:02,B*51:01,C*07:02,C*15:02",
       "special_note": "",
@@ -4450,7 +4450,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_30_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_30_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN30",
       "HLA": "A*03:01,A*11:01,B*07:02,B*51:01,C*07:02,C*15:02",
       "special_note": "",
@@ -4459,7 +4459,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_30_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_30_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN30",
       "HLA": "A*03:01,A*11:01,B*07:02,B*51:01,C*07:02,C*15:02",
       "special_note": "",
@@ -4468,7 +4468,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).RAW",
+      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).raw",
       "biology": "UPN3",
       "HLA": "A*02:01,B*44:02,B*51:01,C*05:01,C*15:02",
       "special_note": "",
@@ -4477,7 +4477,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN3",
       "HLA": "A*02:01,B*44:02,B*51:01,C*05:01,C*15:02",
       "special_note": "",
@@ -4486,7 +4486,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN3",
       "HLA": "A*02:01,B*44:02,B*51:01,C*05:01,C*15:02",
       "special_note": "",
@@ -4495,7 +4495,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN3",
       "HLA": "A*02:01,B*44:02,B*51:01,C*05:01,C*15:02",
       "special_note": "",
@@ -4504,7 +4504,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN3",
       "HLA": "A*02:01,B*44:02,B*51:01,C*05:01,C*15:02",
       "special_note": "",
@@ -4513,7 +4513,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN3",
       "HLA": "A*02:01,B*44:02,B*51:01,C*05:01,C*15:02",
       "special_note": "",
@@ -4522,7 +4522,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_R_(remnant).RAW",
+      "sample": "UPN_3_HLA-class_I_CRC_(malignant)_R_(remnant).raw",
       "biology": "UPN3",
       "HLA": "A*02:01,B*44:02,B*51:01,C*05:01,C*15:02",
       "special_note": "",
@@ -4531,7 +4531,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).RAW",
+      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_PA_(pre-adjustment).raw",
       "biology": "UPN4",
       "HLA": "A*24:02,A*32:01,B*07:02,B*44:02,C*05:01,C*07:02",
       "special_note": "",
@@ -4540,7 +4540,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN4",
       "HLA": "A*24:02,A*32:01,B*07:02,B*44:02,C*05:01,C*07:02",
       "special_note": "",
@@ -4549,7 +4549,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN4",
       "HLA": "A*24:02,A*32:01,B*07:02,B*44:02,C*05:01,C*07:02",
       "special_note": "",
@@ -4558,7 +4558,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN4",
       "HLA": "A*24:02,A*32:01,B*07:02,B*44:02,C*05:01,C*07:02",
       "special_note": "",
@@ -4567,7 +4567,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN4",
       "HLA": "A*24:02,A*32:01,B*07:02,B*44:02,C*05:01,C*07:02",
       "special_note": "",
@@ -4576,7 +4576,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN4",
       "HLA": "A*24:02,A*32:01,B*07:02,B*44:02,C*05:01,C*07:02",
       "special_note": "",
@@ -4585,7 +4585,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#6.RAW",
+      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#6.raw",
       "biology": "UPN4",
       "HLA": "A*24:02,A*32:01,B*07:02,B*44:02,C*05:01,C*07:02",
       "special_note": "",
@@ -4594,7 +4594,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#7.RAW",
+      "sample": "UPN_4_HLA-class_I_CRC_(malignant)_Rep#7.raw",
       "biology": "UPN4",
       "HLA": "A*24:02,A*32:01,B*07:02,B*44:02,C*05:01,C*07:02",
       "special_note": "",
@@ -4603,7 +4603,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_5_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_5_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN5",
       "HLA": "A*01:01,A*02:01,B*15:01,B*44:02,C*03:04,C*05:01",
       "special_note": "",
@@ -4612,7 +4612,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_5_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_5_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN5",
       "HLA": "A*01:01,A*02:01,B*15:01,B*44:02,C*03:04,C*05:01",
       "special_note": "",
@@ -4621,7 +4621,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_5_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_5_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN5",
       "HLA": "A*01:01,A*02:01,B*15:01,B*44:02,C*03:04,C*05:01",
       "special_note": "",
@@ -4630,7 +4630,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_5_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_5_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN5",
       "HLA": "A*01:01,A*02:01,B*15:01,B*44:02,C*03:04,C*05:01",
       "special_note": "",
@@ -4684,7 +4684,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_R#1_(remnant).RAW",
+      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_R#1_(remnant).raw",
       "biology": "UPN7",
       "HLA": "A*03:01,A*68:01,B*51:01,B*57:02,C*15:02,C*18:01",
       "special_note": "",
@@ -4693,7 +4693,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_R#2_(remnant).RAW",
+      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_R#2_(remnant).raw",
       "biology": "UPN7",
       "HLA": "A*03:01,A*68:01,B*51:01,B*57:02,C*15:02,C*18:01",
       "special_note": "",
@@ -4702,7 +4702,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_R#3_(remnant).RAW",
+      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_R#3_(remnant).raw",
       "biology": "UPN7",
       "HLA": "A*03:01,A*68:01,B*51:01,B*57:02,C*15:02,C*18:01",
       "special_note": "",
@@ -4711,7 +4711,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN7",
       "HLA": "A*03:01,A*68:01,B*51:01,B*57:02,C*15:02,C*18:01",
       "special_note": "",
@@ -4720,7 +4720,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN7",
       "HLA": "A*03:01,A*68:01,B*51:01,B*57:02,C*15:02,C*18:01",
       "special_note": "",
@@ -4729,7 +4729,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN7",
       "HLA": "A*03:01,A*68:01,B*51:01,B*57:02,C*15:02,C*18:01",
       "special_note": "",
@@ -4738,7 +4738,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN7",
       "HLA": "A*03:01,A*68:01,B*51:01,B*57:02,C*15:02,C*18:01",
       "special_note": "",
@@ -4747,7 +4747,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_7_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN7",
       "HLA": "A*03:01,A*68:01,B*51:01,B*57:02,C*15:02,C*18:01",
       "special_note": "",
@@ -4756,7 +4756,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_8_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_8_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN8",
       "HLA": "A*03:01,A*32:01,B*07:02,B*13:02,C*07:02,C*16:04",
       "special_note": "",
@@ -4765,7 +4765,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_8_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_8_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN8",
       "HLA": "A*03:01,A*32:01,B*07:02,B*13:02,C*07:02,C*16:04",
       "special_note": "",
@@ -4774,7 +4774,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_8_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_8_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN8",
       "HLA": "A*03:01,A*32:01,B*07:02,B*13:02,C*07:02,C*16:04",
       "special_note": "",
@@ -4783,7 +4783,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_8_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_8_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN8",
       "HLA": "A*03:01,A*32:01,B*07:02,B*13:02,C*07:02,C*16:04",
       "special_note": "",
@@ -4792,7 +4792,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_8_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_8_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN8",
       "HLA": "A*03:01,A*32:01,B*07:02,B*13:02,C*07:02,C*16:04",
       "special_note": "",
@@ -4801,7 +4801,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_9_HLA-class_I_CRC_(malignant)_Rep#1.RAW",
+      "sample": "UPN_9_HLA-class_I_CRC_(malignant)_Rep#1.raw",
       "biology": "UPN9",
       "HLA": "A*02:01,A*31:02,B*13:02,B*51:05,C*04:01,C*06:02",
       "special_note": "",
@@ -4810,7 +4810,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_9_HLA-class_I_CRC_(malignant)_Rep#2.RAW",
+      "sample": "UPN_9_HLA-class_I_CRC_(malignant)_Rep#2.raw",
       "biology": "UPN9",
       "HLA": "A*02:01,A*31:02,B*13:02,B*51:05,C*04:01,C*06:02",
       "special_note": "",
@@ -4819,7 +4819,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_9_HLA-class_I_CRC_(malignant)_Rep#3.RAW",
+      "sample": "UPN_9_HLA-class_I_CRC_(malignant)_Rep#3.raw",
       "biology": "UPN9",
       "HLA": "A*02:01,A*31:02,B*13:02,B*51:05,C*04:01,C*06:02",
       "special_note": "",
@@ -4828,7 +4828,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_9_HLA-class_I_CRC_(malignant)_Rep#4.RAW",
+      "sample": "UPN_9_HLA-class_I_CRC_(malignant)_Rep#4.raw",
       "biology": "UPN9",
       "HLA": "A*02:01,A*31:02,B*13:02,B*51:05,C*04:01,C*06:02",
       "special_note": "",
@@ -4837,7 +4837,7 @@ window.IMMUNOVERSE_HUB["COAD"] = {
     {
       "study": "phase2_PXD009602",
       "batch": "",
-      "sample": "UPN_9_HLA-class_I_CRC_(malignant)_Rep#5.RAW",
+      "sample": "UPN_9_HLA-class_I_CRC_(malignant)_Rep#5.raw",
       "biology": "UPN9",
       "HLA": "A*02:01,A*31:02,B*13:02,B*51:05,C*04:01,C*06:02",
       "special_note": "",

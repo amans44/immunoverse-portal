@@ -11,7 +11,7 @@
 #SBATCH --gres=gpu:a100:1
 
 
-# PXD057839
+# PXD057839_FAIMS_DIA
 declare -a samples=(
 https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/06/PXD057839/OE2-20240223_002_DIA.raw
 https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/06/PXD057839/OE2-20240223_004_DIA.raw
@@ -27,5 +27,5 @@ https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/06/PXD057839/OE2-20240520_02
 https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/06/PXD057839/OE2-20240520_024_DIA.raw
 )
 
-for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 5 -I {} bash -c "wget -P ./PXD057839 {}"
+for item in ${samples[@]}; do echo ${item}; done | xargs -n 1 -L 1 -P 5 -I {} bash -c "wget -P ./PXD057839_FAIMS_DIA {}"
 

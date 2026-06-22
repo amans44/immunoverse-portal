@@ -26,7 +26,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140103_SW_U266_preTherapy1_W_Adjusted_20__Rep1_25cm90min3s_msms1.RAW",
+      "sample": "140103_SW_U266_preTherapy1_W_Adjusted_20__Rep1_25cm90min3s_msms1.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -35,7 +35,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140103_SW_U266_preTherapy1_W_Adjusted_20__Rep2_25cm90min3s_msms4.RAW",
+      "sample": "140103_SW_U266_preTherapy1_W_Adjusted_20__Rep2_25cm90min3s_msms4.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -44,7 +44,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140103_SW_U266_preTherapy1_W_Adjusted_20__Rep3_25cm90min3s_msms7.RAW",
+      "sample": "140103_SW_U266_preTherapy1_W_Adjusted_20__Rep3_25cm90min3s_msms7.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -53,7 +53,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140103_SW_U266_preTherapy1_W_Adjusted_20__Rep4_25cm90min3s_msms10.RAW",
+      "sample": "140103_SW_U266_preTherapy1_W_Adjusted_20__Rep4_25cm90min3s_msms10.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -62,7 +62,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140103_SW_U266_preTherapy1_W_Adjusted_20__Rep5_25cm90min3s_msms13.RAW",
+      "sample": "140103_SW_U266_preTherapy1_W_Adjusted_20__Rep5_25cm90min3s_msms13.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -71,7 +71,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140108_SW_U266_preTherapy2_W_Adjusted_20__Rep1_25cm90min3s_msms5.RAW",
+      "sample": "140108_SW_U266_preTherapy2_W_Adjusted_20__Rep1_25cm90min3s_msms5.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -80,7 +80,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140108_SW_U266_preTherapy2_W_Adjusted_20__Rep2_25cm90min3s_msms8.RAW",
+      "sample": "140108_SW_U266_preTherapy2_W_Adjusted_20__Rep2_25cm90min3s_msms8.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -89,7 +89,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140108_SW_U266_preTherapy2_W_Adjusted_20__Rep3_25cm90min3s_msms11.RAW",
+      "sample": "140108_SW_U266_preTherapy2_W_Adjusted_20__Rep3_25cm90min3s_msms11.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -98,7 +98,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140108_SW_U266_preTherapy2_W_Adjusted_20__Rep4_25cm90min3s_msms14.RAW",
+      "sample": "140108_SW_U266_preTherapy2_W_Adjusted_20__Rep4_25cm90min3s_msms14.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -107,7 +107,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140108_SW_U266_preTherapy2_W_Adjusted_20__Rep5_25cm90min3s_msms17.RAW",
+      "sample": "140108_SW_U266_preTherapy2_W_Adjusted_20__Rep5_25cm90min3s_msms17.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -116,7 +116,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140117_SW_U266_preTherapy_W_Rest_50__Rep1_25cm90min3s_msms1.RAW",
+      "sample": "140117_SW_U266_preTherapy_W_Rest_50__Rep1_25cm90min3s_msms1.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -125,7 +125,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140117_SW_U266_preTherapy_W_Rest_50__Rep2_25cm90min3s_msms7.RAW",
+      "sample": "140117_SW_U266_preTherapy_W_Rest_50__Rep2_25cm90min3s_msms7.raw",
       "biology": "U266",
       "HLA": "A*02:01,A*03:01,B*07:02,B*40:01,C*03:04,C*07:02",
       "special_note": "",
@@ -134,7 +134,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre1_W_Adjusted2_20__Rep1_25cm90min3s_msms1.RAW",
+      "sample": "140606_SW_MM1S_Pre1_W_Adjusted2_20__Rep1_25cm90min3s_msms1.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -143,7 +143,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre1_W_Adjusted2_20__Rep2_25cm90min3s_msms16.RAW",
+      "sample": "140606_SW_MM1S_Pre1_W_Adjusted2_20__Rep2_25cm90min3s_msms16.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -152,7 +152,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre1_W_Adjusted2_20__Rep3_25cm90min3s_msms31.RAW",
+      "sample": "140606_SW_MM1S_Pre1_W_Adjusted2_20__Rep3_25cm90min3s_msms31.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -161,7 +161,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre1_W_Adjusted2_20__Rep4_25cm90min3s_msms46.RAW",
+      "sample": "140606_SW_MM1S_Pre1_W_Adjusted2_20__Rep4_25cm90min3s_msms46.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -170,7 +170,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre1_W_Adjusted2_20__Rep5_25cm90min3s_msms61.RAW",
+      "sample": "140606_SW_MM1S_Pre1_W_Adjusted2_20__Rep5_25cm90min3s_msms61.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -179,7 +179,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre2_W_Adjusted2_20__Rep1_25cm90min3s_msms6.RAW",
+      "sample": "140606_SW_MM1S_Pre2_W_Adjusted2_20__Rep1_25cm90min3s_msms6.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -188,7 +188,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre2_W_Adjusted2_20__Rep2_25cm90min3s_msms21.RAW",
+      "sample": "140606_SW_MM1S_Pre2_W_Adjusted2_20__Rep2_25cm90min3s_msms21.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -197,7 +197,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre2_W_Adjusted2_20__Rep3_25cm90min3s_msms36.RAW",
+      "sample": "140606_SW_MM1S_Pre2_W_Adjusted2_20__Rep3_25cm90min3s_msms36.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -206,7 +206,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre2_W_Adjusted2_20__Rep4_25cm90min3s_msms51.RAW",
+      "sample": "140606_SW_MM1S_Pre2_W_Adjusted2_20__Rep4_25cm90min3s_msms51.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -215,7 +215,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre2_W_Adjusted2_20__Rep5_25cm90min3s_msms65.RAW",
+      "sample": "140606_SW_MM1S_Pre2_W_Adjusted2_20__Rep5_25cm90min3s_msms65.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -224,7 +224,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre3_W_Adjusted2_20__Rep1_25cm90min3s_msms11.RAW",
+      "sample": "140606_SW_MM1S_Pre3_W_Adjusted2_20__Rep1_25cm90min3s_msms11.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -233,7 +233,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre3_W_Adjusted2_20__Rep2_25cm90min3s_msms26.RAW",
+      "sample": "140606_SW_MM1S_Pre3_W_Adjusted2_20__Rep2_25cm90min3s_msms26.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -242,7 +242,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre3_W_Adjusted2_20__Rep3_25cm90min3s_msms41.RAW",
+      "sample": "140606_SW_MM1S_Pre3_W_Adjusted2_20__Rep3_25cm90min3s_msms41.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -251,7 +251,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre3_W_Adjusted2_20__Rep4_25cm90min3s_msms56.RAW",
+      "sample": "140606_SW_MM1S_Pre3_W_Adjusted2_20__Rep4_25cm90min3s_msms56.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -260,7 +260,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140606_SW_MM1S_Pre3_W_Adjusted2_20__Rep5_25cm90min3s_msms70.RAW",
+      "sample": "140606_SW_MM1S_Pre3_W_Adjusted2_20__Rep5_25cm90min3s_msms70.raw",
       "biology": "MM1S",
       "HLA": "A*23:01,A*24:02,B*18:01,B*42:01,C*12:03,C*17:01",
       "special_note": "",
@@ -548,7 +548,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140425_SW_RPMI8226_W_20__Rep1_50cm195min3s_msms11.RAW",
+      "sample": "140425_SW_RPMI8226_W_20__Rep1_50cm195min3s_msms11.raw",
       "biology": "RPMI8226",
       "HLA": "A*30:01,A*68:02,B*15:10,C*02:02,C*03:04",
       "special_note": "",
@@ -557,7 +557,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140425_SW_RPMI8226_W_20__Rep2_50cm195min3s_msms17.RAW",
+      "sample": "140425_SW_RPMI8226_W_20__Rep2_50cm195min3s_msms17.raw",
       "biology": "RPMI8226",
       "HLA": "A*30:01,A*68:02,B*15:10,C*02:02,C*03:04",
       "special_note": "",
@@ -566,7 +566,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140514_SW_RPMI8226_W_20__3_50cm195min3s_msms5.RAW",
+      "sample": "140514_SW_RPMI8226_W_20__3_50cm195min3s_msms5.raw",
       "biology": "RPMI8226",
       "HLA": "A*30:01,A*68:02,B*15:10,C*02:02,C*03:04",
       "special_note": "",
@@ -575,7 +575,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140514_SW_RPMI8226_W_20__4_50cm195min3s3-50_B_msms6.RAW",
+      "sample": "140514_SW_RPMI8226_W_20__4_50cm195min3s3-50_B_msms6.raw",
       "biology": "RPMI8226",
       "HLA": "A*30:01,A*68:02,B*15:10,C*02:02,C*03:04",
       "special_note": "",
@@ -584,7 +584,7 @@ window.IMMUNOVERSE_HUB["MM"] = {
     {
       "study": "PXD035324",
       "batch": "",
-      "sample": "140514_SW_RPMI8226_W_20__5_50cm195min3s3-63_B_msms7.RAW",
+      "sample": "140514_SW_RPMI8226_W_20__5_50cm195min3s3-63_B_msms7.raw",
       "biology": "RPMI8226",
       "HLA": "A*30:01,A*68:02,B*15:10,C*02:02,C*03:04",
       "special_note": "",

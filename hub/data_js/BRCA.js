@@ -18,7 +18,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
     "phase2_PXD025345",
     "phase2_PXD034818",
     "phase2_PXD038165",
-    "phase2_PXD057839"
+    "phase2_PXD057839_FAIMS_DIA"
   ],
   "biology": [
     "1029/17T/ER+/PR+/Her2neg",
@@ -2198,7 +2198,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DDA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_026_DIA.raw",
       "biology": "MDA-MB-231",
@@ -2207,7 +2207,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_028_DIA.raw",
       "biology": "MDA-MB-231",
@@ -2216,7 +2216,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_030_DIA.raw",
       "biology": "MDA-MB-231",
@@ -2225,7 +2225,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_032_DIA.raw",
       "biology": "MDA-MB-231",
@@ -2234,7 +2234,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_034_DIA.raw",
       "biology": "MDA-MB-231",
@@ -2243,7 +2243,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_036_DIA.raw",
       "biology": "MDA-MB-231",
@@ -2252,7 +2252,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_038_DIA.raw",
       "biology": "MDA-MB-231_ptx",
@@ -2261,7 +2261,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_040_DIA.raw",
       "biology": "MDA-MB-231_ptx",
@@ -2270,7 +2270,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_042_DIA.raw",
       "biology": "MDA-MB-231_ptx",
@@ -2279,7 +2279,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_044_DIA.raw",
       "biology": "MDA-MB-231_ptx",
@@ -2288,7 +2288,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_046_DIA.raw",
       "biology": "MDA-MB-231_ptx",
@@ -2297,7 +2297,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240520_048_DIA.raw",
       "biology": "MDA-MB-231_ptx",
@@ -2306,7 +2306,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_002_DIA.raw",
       "biology": "SUM159",
@@ -2315,7 +2315,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_004_DIA.raw",
       "biology": "SUM159",
@@ -2324,7 +2324,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_006_DIA.raw",
       "biology": "SUM159",
@@ -2333,7 +2333,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_008_DIA.raw",
       "biology": "SUM159",
@@ -2342,7 +2342,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_010_DIA.raw",
       "biology": "SUM159",
@@ -2351,7 +2351,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_012_DIA.raw",
       "biology": "SUM159",
@@ -2360,7 +2360,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_014_DIA.raw",
       "biology": "SUM159_ptx",
@@ -2369,7 +2369,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_016_DIA.raw",
       "biology": "SUM159_ptx",
@@ -2378,7 +2378,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_018_DIA.raw",
       "biology": "SUM159_ptx",
@@ -2387,7 +2387,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_020_DIA.raw",
       "biology": "SUM159_ptx",
@@ -2396,7 +2396,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_022_DIA.raw",
       "biology": "SUM159_ptx",
@@ -2405,7 +2405,7 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "acquisition": "DIA"
     },
     {
-      "study": "phase2_PXD057839",
+      "study": "phase2_PXD057839_FAIMS_DIA",
       "batch": "",
       "sample": "OE2-20240613_024_DIA.raw",
       "biology": "SUM159_ptx",

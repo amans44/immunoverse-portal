@@ -3,8 +3,8 @@ window.IMMUNOVERSE_HUB_INDEX = {
   "source_url": "https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/ImmunoVerse_Hub/",
   "totals": {
     "cancers": 36,
-    "samples": 4489,
-    "cohorts": 161
+    "samples": 4673,
+    "cohorts": 164
   },
   "cancers": [
     {
@@ -111,7 +111,7 @@ window.IMMUNOVERSE_HUB_INDEX = {
         "phase2_PXD025345",
         "phase2_PXD034818",
         "phase2_PXD038165",
-        "phase2_PXD057839"
+        "phase2_PXD057839_FAIMS_DIA"
       ],
       "biology": [
         "1029/17T/ER+/PR+/Her2neg",
@@ -398,11 +398,11 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "FL",
       "display": "Follicular Lymphoma",
       "category": "Lymphoma",
-      "sample_count": 32,
-      "sample_included": 32,
+      "sample_count": 8,
+      "sample_included": 8,
       "cohort_count": 1,
       "biology_count": 4,
-      "hla_count": 5,
+      "hla_count": 0,
       "studies": [
         "PXD010808"
       ],
@@ -557,9 +557,9 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "LUAD",
       "display": "Lung Adenocarcinoma",
       "category": "Solid",
-      "sample_count": 164,
-      "sample_included": 164,
-      "cohort_count": 13,
+      "sample_count": 257,
+      "sample_included": 257,
+      "cohort_count": 14,
       "biology_count": 56,
       "hla_count": 79,
       "studies": [
@@ -569,6 +569,7 @@ window.IMMUNOVERSE_HUB_INDEX = {
         "PXD022949",
         "phase2_PXD022020",
         "phase2_PXD033351",
+        "phase2_PXD034772_DIA",
         "phase2_PXD034820",
         "phase2_PXD038165",
         "phase2_PXD043057",
@@ -598,9 +599,9 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "LUSC",
       "display": "Lung Squamous Cell Carcinoma",
       "category": "Solid",
-      "sample_count": 164,
-      "sample_included": 164,
-      "cohort_count": 13,
+      "sample_count": 257,
+      "sample_included": 257,
+      "cohort_count": 14,
       "biology_count": 56,
       "hla_count": 79,
       "studies": [
@@ -610,6 +611,7 @@ window.IMMUNOVERSE_HUB_INDEX = {
         "PXD022949",
         "phase2_PXD022020",
         "phase2_PXD033351",
+        "phase2_PXD034772_DIA",
         "phase2_PXD034820",
         "phase2_PXD038165",
         "phase2_PXD043057",
@@ -787,7 +789,7 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "biology_count": 2,
       "hla_count": 5,
       "studies": [
-        "PXD057839"
+        "PXD057839_FAIMS_DIA"
       ],
       "biology": [
         "U2OS",
@@ -943,10 +945,10 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "SKCM",
       "display": "Skin Cutaneous Melanoma",
       "category": "Solid",
-      "sample_count": 465,
-      "sample_included": 465,
-      "cohort_count": 18,
-      "biology_count": 101,
+      "sample_count": 487,
+      "sample_included": 487,
+      "cohort_count": 19,
+      "biology_count": 103,
       "hla_count": 65,
       "studies": [
         "MSV000084442_hlathena",
@@ -966,6 +968,7 @@ window.IMMUNOVERSE_HUB_INDEX = {
         "phase2_PXD034017",
         "phase2_PXD036856",
         "phase2_PXD043989",
+        "phase2_PXD043989_DIA",
         "phase2_PXD056367_JPST003393"
       ],
       "biology": [
