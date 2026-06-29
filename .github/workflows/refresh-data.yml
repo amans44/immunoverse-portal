@@ -113,3 +113,33 @@ jobs:
             gh issue create --title "Daily Dropbox refresh is failing" \
               --label ci-refresh-failure --body "$BODY"
           fi
+
+      # Direct email to Aman on every run (success OR failure) via Gmail SMTP.
+      # Runs last so ${{ job.status }} reflects the whole run. continue-on-error
+      # means a mail hiccup never marks the refresh itself as failed.
+      # Requires two repo secrets:
+      #   GMAIL_USER         — the sending Gmail address
+      #   GMAIL_APP_PASSWORD — a Google App Password (NOT the account password;
+      #                        create at https://myaccount.google.com/apppasswords)
+      - name: Email daily summary (Gmail SMTP)
+        if: always()
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.GMAIL_USER }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          from: ImmunoVerse Bot <${{ secrets.GMAIL_USER }}>
+          to: amansharma.e44@gmail.com
+          subject: "ImmunoVerse daily refresh: ${{ job.status }}${{ steps.commit.outputs.changed == 'true' && ' — new data committed' || '' }}"
+          body: |
+            ImmunoVerse daily Dropbox refresh finished — status: ${{ job.status }}.
+
+            Data changed:  ${{ steps.commit.outputs.changed || 'n/a (run did not reach the commit step)' }}
+            Files changed: ${{ steps.commit.outputs.files_changed || '0' }}
+
+            Run log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            — immunoverse-bot

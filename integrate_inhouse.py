@@ -176,7 +176,13 @@ def _gene_from_record(cls, parts):
                 if (tok and tok != 'None' and not tok.startswith('ENS')
                         and not tok.startswith('chr') and _GENE_TOK.match(tok)):
                     return tok
-        # circRNA: coordinate-only, no gene (the hero shows the coordinate instead).
+        elif cls == 'circRNA':
+            # Coordinate-only source: chr:start-end|strand|..|circRNA|sample.
+            # No host gene, so surface the back-splice coordinate as the identifier
+            # (otherwise the gene column renders blank).
+            head = (parts[0] or '').strip()
+            if re.match(r'^chr[\dXYM]+:\d+-\d+$', head):
+                return head
     except (IndexError, AttributeError):
         pass
     return ''
@@ -206,6 +212,23 @@ def clean_gene_inhouse(r):
     return ''
 
 
+def _detected_samples(r):
+    """Distinct samples a peptide was detected in — the keys of the per-sample HLA
+    map (`presented_by_each_sample_hla`), falling back to the `samples` column.
+
+    Used to compute in-house recurrence. The in-house final_enhanced.txt carries no
+    precomputed `recurrence` column (unlike the public Dropbox tables), and the
+    detection-sample identifiers (e.g. D425, MED411) line up exactly with the
+    metadata `biology` patients, so #detected / #patients is a well-defined fraction."""
+    d = I.safe_eval(r.get('presented_by_each_sample_hla', ''))
+    if isinstance(d, dict) and d:
+        return set(d.keys())
+    s = (r.get('samples') or '').strip()
+    if s and s not in ('nan', 'None'):
+        return {x.strip() for x in re.split(r'[;,]', s) if x.strip()}
+    return set()
+
+
 def process_inhouse(source_dir: Path, code: str, name: str, group: str):
     source_dir = Path(source_dir)
     enhanced_file = source_dir / 'final_enhanced.txt'
@@ -221,6 +244,17 @@ def process_inhouse(source_dir: Path, code: str, name: str, group: str):
         _, total_patients, hla_patient_count = I.load_metadata(metadata_file)
 
     expr_by_gene, expr_by_ensg = I.build_gene_expression_map(enhanced_file)
+
+    # Recurrence denominator: the cohort's patient count from metadata. If metadata
+    # is missing, fall back to the number of distinct samples peptides were ever
+    # detected in (the detection-sample universe), so recurrence stays a sane 0–1.
+    recur_denom = total_patients
+    if not recur_denom:
+        universe = set()
+        with open(enhanced_file, 'r', encoding='utf-8') as f:
+            for r in csv.DictReader(f, delimiter='\t'):
+                universe |= _detected_samples(r)
+        recur_denom = len(universe)
 
     # Asset manifest for this cohort — used to GUARD figure refs so we never point
     # at a PNG Frank didn't ship (no broken links), and to recover boxplots whose
@@ -250,7 +284,14 @@ def process_inhouse(source_dir: Path, code: str, name: str, group: str):
             score = I.safe_float(r.get('highest_score'))
             abund = I.safe_float(r.get('relative_abundance')) or 0
             qval = I.safe_float(r.get('best_pep'))
-            recurrence = I.safe_float(r.get('recurrence'))  # absent in-house -> None
+            # No precomputed `recurrence` column in-house -> derive it as
+            # (#samples detected in) / (cohort patients). Without this the frontend
+            # falls back to showing the raw PSM count in the recurrence column.
+            recurrence = I.safe_float(r.get('recurrence'))
+            if recurrence is None and recur_denom:
+                n_detected = len(_detected_samples(r))
+                if n_detected:
+                    recurrence = n_detected / recur_denom
 
             tumor_val = I.safe_eval(r.get('median_tumor', ''))
             normal_val = I.safe_eval(r.get('max_median_gtex', ''))

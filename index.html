@@ -552,6 +552,8 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
 .c-intron_retention { background: #fb923c; }
 .c-fusion { background: #f87171; }
 .c-pathogen { background: #e879f9; }
+.c-rna_edit { background: #2dd4bf; }
+.c-circRNA { background: #fda4af; }
 
 /* ===================== EXPLORER ===================== */
 .explorer {
@@ -3504,6 +3506,15 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
         <label><span class="ltxt">Min recurrence</span>
           <select id="fRec">
             <option value="0">Any</option>
+            <option value="0.1">≥ 10%</option>
+            <option value="0.25">≥ 25%</option>
+            <option value="0.5">≥ 50%</option>
+            <option value="0.75">≥ 75%</option>
+          </select>
+        </label>
+        <label><span class="ltxt">Min PSMs</span>
+          <select id="fPsm">
+            <option value="0">Any</option>
             <option value="2">≥ 2</option>
             <option value="5">≥ 5</option>
             <option value="10">≥ 10</option>
@@ -4218,7 +4229,9 @@ const CLASS_TIPS = {
   TE_chimeric_transcript:'TE chimeric transcript: fusion transcript driven by a transposable element promoter',
   intron_retention:'Intron retention: peptide from an unspliced intron retained in tumor mRNA',
   fusion:'Gene fusion: peptide spanning a fusion junction between two genes',
-  pathogen:'Microbial/viral: peptide from a tumor-resident pathogen (CMV, HPV, HBV, bacteria)'
+  pathogen:'Microbial/viral: peptide from a tumor-resident pathogen (CMV, HPV, HBV, bacteria)',
+  rna_edit:'RNA editing: peptide from an A-to-I (ADAR) RNA-edited transcript not encoded in the genome',
+  circRNA:'Circular RNA: peptide translated from a back-spliced circular RNA junction'
 };
 
 const HLA_FREQ = {
@@ -4393,7 +4406,7 @@ const COMPARE_MAX = 4;
 const COMPARE_MAX_CROSS = 21; // every cancer code
 const COMPARE = new Set();
 let STATE = {
-  cancer: '', pep: '', gene: '', hla: '', uniq: '', rec: 0,
+  cancer: '', pep: '', gene: '', hla: '', uniq: '', rec: 0, minPsm: 0,
   length: '', rank: '', hlaClass: '', safe: '', nuorfSub: '',
   classFilter: new Set(),
   inhouseOnly: false,   // In-house nav toggle: show only private cohorts
@@ -4418,6 +4431,8 @@ const CLASS_LABELS = {
   intron_retention:'Intron retention',
   fusion:'Gene fusion',
   pathogen:'Microbial / viral',
+  rna_edit:'RNA editing',
+  circRNA:'Circular RNA',
 };
 // Inline SVG icon per aberration class — consistent 24px, currentColor stroke
 const CLASS_ICONS = {
@@ -4430,6 +4445,8 @@ const CLASS_ICONS = {
   intron_retention: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="5" height="6" rx="1"/><rect x="16" y="9" width="5" height="6" rx="1"/><path d="M8 12h8" stroke-dasharray="2 2"/><path d="M10 7v10M14 7v10" opacity=".5"/></svg>',
   fusion:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="9" height="6" rx="1"/><rect x="13" y="9" width="9" height="6" rx="1"/><path d="M11 12h2"/></svg>',
   pathogen:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 4v2M12 18v2M4 12h2M18 12h2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4"/></svg>',
+  rna_edit:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M4 12h7M4 17h12"/><path d="M16 4l4 4-6 6h-4v-4z"/></svg>',
+  circRNA:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><path d="M12 5a7 7 0 0 1 6 3.5"/></svg>',
 };
 const CLASS_DESC = {
   self_gene:'Lineage-restricted or tumor-enriched proteins, the classic PC-CAR and TCR target class.',
@@ -4441,8 +4458,13 @@ const CLASS_DESC = {
   intron_retention:'Retained-intron-derived peptides, enriched in AML and other splicing-disrupted cancers.',
   fusion:'Gene fusion junction peptides — rare but tumor-specific.',
   pathogen:'Tumor-resident microbial and viral antigens (H. pylori, F. nucleatum, HBV, HPV, CMV, N. circulans…).',
+  rna_edit:'A-to-I (ADAR) RNA-edited peptides — recoded at the transcript level, absent from the genome.',
+  circRNA:'Peptides spanning back-spliced circular-RNA junctions.',
 };
-const CLASS_ORDER = ['self_gene','splicing','variant','nuORF','ERV','TE_chimeric_transcript','intron_retention','fusion','pathogen'];
+// Canonical full set of known aberration classes. The last two (rna_edit, circRNA)
+// only appear in in-house cohorts; the public landing cards/body-map hide any class
+// with a zero global count, so they surface only where they actually have peptides.
+const CLASS_ORDER = ['self_gene','splicing','variant','nuORF','ERV','TE_chimeric_transcript','intron_retention','fusion','pathogen','rna_edit','circRNA'];
 
 // Gene aliases — maps a user-facing search term to a list of forms the raw data
 // might use. Keeps backend canonicalization (integrate_data.py) in sync with
@@ -4554,7 +4576,7 @@ loadScript('data_js/_summary.js').then(() => {
   renderCancerGrid(summary);
   renderBodyMap(summary);
   renderClassBrowser(summary);
-  renderClassChips(summary);
+  renderClassChips();
   populateCancerSelect();
   renderDownloadGrid(summary);
   loadAll();
@@ -4656,7 +4678,8 @@ function classColor(k) {
   const map = {
     self_gene:'#22d3ee', splicing:'#a78bfa', variant:'#f472b6',
     nuORF:'#fbbf24', ERV:'#86efac', TE_chimeric_transcript:'#60a5fa',
-    intron_retention:'#f87171', fusion:'#fb923c', pathogen:'#c084fc'
+    intron_retention:'#f87171', fusion:'#fb923c', pathogen:'#c084fc',
+    rna_edit:'#2dd4bf', circRNA:'#fda4af'
   };
   return map[k] || '#8a93ad';
 }
@@ -4728,7 +4751,7 @@ function showBodyInfo(code) {
 function renderClassBrowser(summary) {
   const el = document.getElementById('classBrowser');
   const total = CLASS_ORDER.reduce((a,k)=> a + (summary.classes[k]||0), 0);
-  el.innerHTML = CLASS_ORDER.map(k => {
+  el.innerHTML = CLASS_ORDER.filter(k => (summary.classes[k]||0) > 0).map(k => {
     const n = summary.classes[k] || 0;
     const pct = (n/total*100).toFixed(1);
     const icon = CLASS_ICONS[k] || '';
@@ -4742,14 +4765,39 @@ function renderClassBrowser(summary) {
   }).join('');
 }
 
-function renderClassChips(summary) {
+// Faceted class-chip counts: how many targets each class has *within the current
+// filter context* (cancer, search, …), ignoring the class filter itself — so a chip's
+// number always equals what selecting only that class would show. Before the per-cancer
+// tables finish loading, falls back to the global public summary.
+function classChipCounts(F) {
+  if (!CURRENT_ROWS.length) {
+    const s = (window.__PD__ && window.__PD__['_summary']) ? window.__PD__['_summary'].classes : {};
+    return Object.assign({}, s);
+  }
+  F = F || compileFilters();
+  const counts = {};
+  for (const r of CURRENT_ROWS) {
+    if (!rowPasses(r, F, /*ignoreClass*/ true)) continue;
+    const k = r[COL.cls] || '';
+    if (k) counts[k] = (counts[k] || 0) + 1;
+  }
+  return counts;
+}
+function renderClassChips(F) {
   const el = document.getElementById('classChips');
-  el.innerHTML = CLASS_ORDER.map(k => {
-    const n = summary.classes[k] || 0;
-    return `<button class="chip" data-k="${k}" onclick="toggleClass('${k}', false)" title="${CLASS_TIPS[k] || CLASS_DESC[k] || ''}">
-      <span class="sw c-${k}"></span>${CLASS_LABELS[k]}<span class="n">${n.toLocaleString()}</span>
-    </button>`;
-  }).join('');
+  if (!el) return;
+  const counts = classChipCounts(F);
+  // Known classes first, then any extras present in the data (e.g. in-house rna_edit/circRNA).
+  const extras = Object.keys(counts).filter(k => k && !CLASS_ORDER.includes(k)).sort();
+  el.innerHTML = [...CLASS_ORDER, ...extras]
+    .filter(k => (counts[k] || 0) > 0 || STATE.classFilter.has(k))
+    .map(k => {
+      const n = counts[k] || 0;
+      const active = STATE.classFilter.has(k) ? ' active' : '';
+      return `<button class="chip${active}" data-k="${k}" onclick="toggleClass('${k}', false)" title="${CLASS_TIPS[k] || CLASS_DESC[k] || ''}">
+        <span class="sw c-${k}"></span>${CLASS_LABELS[k] || k}<span class="n">${n.toLocaleString()}</span>
+      </button>`;
+    }).join('');
 }
 
 function populateCancerSelect() {
@@ -7488,58 +7536,72 @@ function downloadCompareCsv() {
 }
 
 // ============ FILTER / SORT / RENDER ============
-function applyFilters() {
-  const {cancer, pep, gene, hla, uniq, rec, classFilter,
+// Compile STATE into a reusable predicate context (precomputed once per render).
+function compileFilters() {
+  const {cancer, pep, gene, hla, uniq, rec, minPsm, classFilter,
          length: plen, rank: rankCut, hlaClass, safe, nuorfSub} = STATE;
-  const pepL = pep.trim().toUpperCase();
   const geneL = gene.trim().toUpperCase();
-  const geneTerms = geneSearchTerms(geneL);
-  const hlaL  = hla.trim().toUpperCase().replace(/HLA-?/,'');
-  const rankN = rankCut ? parseFloat(rankCut) : null;
-  const plenN = plen ? parseInt(plen) : null;
-  const nuorfL = (nuorfSub||'').toUpperCase();
-  const filt = CURRENT_ROWS.filter(r => {
-    // r schema at COL.* — cancer code at COL.code (19)
-    if (cancer && r[COL.code] !== cancer) return false;
-    if (STATE.inhouseOnly && !window.IV_INHOUSE[r[COL.code]]) return false;
-    if (classFilter.size && !classFilter.has(r[COL.cls])) return false;
-    if (pepL && !r[COL.pep].toUpperCase().includes(pepL)) return false;
-    if (geneL) {
-      const g = (r[COL.gene]||'').toUpperCase();
-      if (!geneTerms.some(t => g.includes(t))) return false;
-    }
-    if (hlaL) {
-      const hs = (r[COL.hlas]||[]).join(',').toUpperCase();
-      if (!hs.includes(hlaL)) return false;
-    }
-    if (hlaClass) {
-      const hs = (r[COL.hlas]||[]);
-      if (!hs.some(a => (a||'').toUpperCase().startsWith(hlaClass))) return false;
-    }
-    if (plenN && r[COL.pep].length !== plenN) return false;
-    if (rankN !== null) {
-      const bind = r[COL.bind] || [];
-      const best = bind.reduce((m, b) => {
-        const v = b[1]; if (v == null) return m;
-        return m == null || v < m ? v : m;
-      }, null);
-      if (best == null || best > rankN) return false;
-    }
-    if (uniq === '1' && r[COL.unique] !== 1) return false;
-    if (rec && r[COL.psm] < rec) return false;
-    if (safe === '1') {
-      // "Safe" = tumor-specific AND no HLA Ligand Atlas normal hits
-      if (r[COL.unique] !== 1) return false;
-      if ((r[COL.atlas]||[]).length > 0) return false;
-    } else if (safe === '0') {
-      if ((r[COL.atlas]||[]).length === 0) return false;
-    }
-    if (nuorfL) {
-      const sub = (r[COL.nuorf]||'').toUpperCase();
-      if (!sub.includes(nuorfL.replace('UTR','UTR').replace('NCRNA','NC'))) return false;
-    }
-    return true;
-  });
+  return {
+    cancer, classFilter, uniq, rec, minPsm, hlaClass, safe, geneL,
+    pepL: pep.trim().toUpperCase(),
+    geneTerms: geneSearchTerms(geneL),
+    hlaL: hla.trim().toUpperCase().replace(/HLA-?/,''),
+    rankN: rankCut ? parseFloat(rankCut) : null,
+    plenN: plen ? parseInt(plen) : null,
+    nuorfL: (nuorfSub||'').toUpperCase(),
+  };
+}
+// Single source of truth for whether a row passes the active filters. `ignoreClass`
+// lets the class chips compute faceted counts (each chip = rows that class would yield).
+function rowPasses(r, F, ignoreClass) {
+  // r schema at COL.* — cancer code at COL.code (19)
+  if (F.cancer && r[COL.code] !== F.cancer) return false;
+  if (STATE.inhouseOnly && !window.IV_INHOUSE[r[COL.code]]) return false;
+  if (!ignoreClass && F.classFilter.size && !F.classFilter.has(r[COL.cls])) return false;
+  if (F.pepL && !r[COL.pep].toUpperCase().includes(F.pepL)) return false;
+  if (F.geneL) {
+    const g = (r[COL.gene]||'').toUpperCase();
+    if (!F.geneTerms.some(t => g.includes(t))) return false;
+  }
+  if (F.hlaL) {
+    const hs = (r[COL.hlas]||[]).join(',').toUpperCase();
+    if (!hs.includes(F.hlaL)) return false;
+  }
+  if (F.hlaClass) {
+    const hs = (r[COL.hlas]||[]);
+    if (!hs.some(a => (a||'').toUpperCase().startsWith(F.hlaClass))) return false;
+  }
+  if (F.plenN && r[COL.pep].length !== F.plenN) return false;
+  if (F.rankN !== null) {
+    const bind = r[COL.bind] || [];
+    const best = bind.reduce((m, b) => {
+      const v = b[1]; if (v == null) return m;
+      return m == null || v < m ? v : m;
+    }, null);
+    if (best == null || best > F.rankN) return false;
+  }
+  if (F.uniq === '1' && r[COL.unique] !== 1) return false;
+  // Min recurrence: filter on the real recurrence fraction (0–1). Rows without a
+  // recurrence value are excluded once a threshold is set.
+  if (F.rec) { const rv = r[COL.recurrence]; if (rv == null || rv < F.rec) return false; }
+  // Min PSMs: separate filter on the raw peptide-spectrum-match count.
+  if (F.minPsm && (r[COL.psm] || 0) < F.minPsm) return false;
+  if (F.safe === '1') {
+    // "Safe" = tumor-specific AND no HLA Ligand Atlas normal hits
+    if (r[COL.unique] !== 1) return false;
+    if ((r[COL.atlas]||[]).length > 0) return false;
+  } else if (F.safe === '0') {
+    if ((r[COL.atlas]||[]).length === 0) return false;
+  }
+  if (F.nuorfL) {
+    const sub = (r[COL.nuorf]||'').toUpperCase();
+    if (!sub.includes(F.nuorfL.replace('UTR','UTR').replace('NCRNA','NC'))) return false;
+  }
+  return true;
+}
+function applyFilters() {
+  const F = compileFilters();
+  const filt = CURRENT_ROWS.filter(r => rowPasses(r, F, false));
   // sort
   const cmap = {psm:17, score:4, abund:5, depmap:9, homo:10};  // psm column sorts by recurrence (index 17)
   const idx = cmap[STATE.sortCol] ?? 5;
@@ -7567,14 +7629,14 @@ function applyFilters() {
       if (r[COL.unique] === 1) nUniq++;
       const tExp = r[COL.tumorExp], nExp = r[COL.normalExp];
       if (tExp && nExp != null && tExp / Math.max(nExp, 0.01) > 10) nWide++;
-      if (r[COL.recurrence] != null ? r[COL.recurrence] >= 0.1 : r[COL.psm] >= 3) nRecur++;
+      if (r[COL.recurrence] != null && r[COL.recurrence] >= 0.1) nRecur++;
     }
     const pct = (n) => tot > 0 ? (n/tot*100).toFixed(0) : 0;
     const bar = (n) => `<span class="bar"><span style="width:${pct(n)}%"></span></span>`;
     document.getElementById('filterStats').innerHTML = `
       <div class="fs" title="Peptides uniquely mapping to one gene">${bar(nUniq)}<b>${pct(nUniq)}%</b> unique</div>
       <div class="fs" title="Peptides where tumor RNA is >10x the highest normal tissue — wide therapeutic window">${bar(nWide)}<b>${pct(nWide)}%</b> wide T/N</div>
-      <div class="fs" title="Peptides detected in ≥10% of patients (or ≥3 PSMs) — shared targets">${bar(nRecur)}<b>${pct(nRecur)}%</b> recurrent</div>
+      <div class="fs" title="Peptides detected in ≥10% of patients — shared targets">${bar(nRecur)}<b>${pct(nRecur)}%</b> recurrent</div>
     `;
   } else {
     document.getElementById('filterStats').innerHTML = '';
@@ -7583,6 +7645,8 @@ function applyFilters() {
   const slice = filt.slice((STATE.page-1)*ps, STATE.page*ps);
   renderRows(slice);
   renderCompareBar();
+  // Keep the class chips' faceted counts in sync with the current filter context.
+  renderClassChips(F);
 
   // sort header indicators
   document.querySelectorAll('#atlasTable thead th').forEach(th => {
@@ -7622,10 +7686,13 @@ function renderRows(rows) {
     const safeIcon = ((r[COL.atlas]||[]).length
       ? `<span class="warn-dot" title="Detected in ${(r[COL.atlas]||[]).length} normal tissue(s) via HLA Ligand Atlas">!</span>`
       : '');
-    const recVal = r[COL.recurrence] != null ? (r[COL.recurrence]*100).toFixed(0)+'%' : r[COL.psm];
+    // Recurrence column shows ONLY recurrence (fraction of patients). PSM is a separate
+    // metric — surfaced via the "Min PSMs" filter, the drawer, and CSV export — so we
+    // never mix a raw count into this %-valued column.
+    const recVal = r[COL.recurrence] != null ? (r[COL.recurrence]*100).toFixed(0)+'%' : '—';
     const recTip = r[COL.recurrence] != null
       ? `Detected in ${(r[COL.recurrence]*100).toFixed(0)}% of ${r[COL.totalSamples]||'?'} patients with this cancer`
-      : `Detected in ${r[COL.psm]} PSMs (peptide-spectrum matches)`;
+      : 'No recurrence data for this cohort';
     const abundTip = `Abundance rank ${(abund).toFixed(3)} — ${abund > 0.9 ? 'top 10% most abundant' : abund > 0.7 ? 'high abundance' : abund > 0.4 ? 'moderate abundance' : 'lower abundance'} in ${r[COL.code]} immunopeptidome`;
     const scoreTip = r[COL.score] ? `Spectral score ${r[COL.score]} — higher = more confident MS/MS identification` : '';
     const windowTip = r[COL.tumorExp] != null && r[COL.normalExp] != null
@@ -8909,12 +8976,13 @@ document.getElementById('fHlaClass').addEventListener('change', e => { STATE.hla
 document.getElementById('fLen').addEventListener('change', e => { STATE.length = e.target.value; STATE.page = 1; applyFilters(); });
 document.getElementById('fRank').addEventListener('change', e => { STATE.rank = e.target.value; STATE.page = 1; applyFilters(); });
 document.getElementById('fUniq').addEventListener('change', e => { STATE.uniq = e.target.value; STATE.page = 1; applyFilters(); });
-document.getElementById('fRec').addEventListener('change', e => { STATE.rec = parseInt(e.target.value); STATE.page = 1; applyFilters(); });
+document.getElementById('fRec').addEventListener('change', e => { STATE.rec = parseFloat(e.target.value); STATE.page = 1; applyFilters(); });
+document.getElementById('fPsm').addEventListener('change', e => { STATE.minPsm = parseInt(e.target.value); STATE.page = 1; applyFilters(); });
 document.getElementById('fSafe').addEventListener('change', e => { STATE.safe = e.target.value; STATE.page = 1; applyFilters(); });
 document.getElementById('fNuorf').addEventListener('change', e => { STATE.nuorfSub = e.target.value; STATE.page = 1; applyFilters(); });
 document.getElementById('resetBtn').addEventListener('click', () => {
-  STATE = {cancer:'', pep:'', gene:'', hla:'', uniq:'', rec:0, length:'', rank:'', hlaClass:'', safe:'', nuorfSub:'', classFilter:new Set(), sortCol:'abund', sortDir:-1, page:1, pageSize: STATE.pageSize};
-  ['fCancer','fPep','fGene','fHla','fHlaClass','fLen','fRank','fUniq','fRec','fSafe','fNuorf'].forEach(id => { const el=document.getElementById(id); if (el) el.value = id==='fRec'?'0':''; });
+  STATE = {cancer:'', pep:'', gene:'', hla:'', uniq:'', rec:0, minPsm:0, length:'', rank:'', hlaClass:'', safe:'', nuorfSub:'', classFilter:new Set(), sortCol:'abund', sortDir:-1, page:1, pageSize: STATE.pageSize};
+  ['fCancer','fPep','fGene','fHla','fHlaClass','fLen','fRank','fUniq','fRec','fPsm','fSafe','fNuorf'].forEach(id => { const el=document.getElementById(id); if (el) el.value = (id==='fRec'||id==='fPsm')?'0':''; });
   document.querySelectorAll('#classChips .chip').forEach(c => c.classList.remove('active'));
   document.querySelectorAll('#hlChips .hl-chip').forEach(c => c.classList.remove('active'));
   document.getElementById('expTitle').textContent = 'All cancers';
@@ -8948,11 +9016,12 @@ document.querySelectorAll('#hlChips .hl-chip').forEach(chip => {
     // reset first
     ['fPep','fGene','fHla','fUniq','fHlaClass','fLen','fRank','fSafe','fNuorf'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     document.getElementById('fRec').value = '0';
+    const fPsmEl = document.getElementById('fPsm'); if (fPsmEl) fPsmEl.value = '0';
     document.getElementById('fCancer').value = cancer;
     document.getElementById('fPep').value = pep;
     document.getElementById('fGene').value = gene;
     STATE.cancer = cancer; STATE.pep = pep; STATE.gene = gene;
-    STATE.hla = ''; STATE.uniq = ''; STATE.rec = 0; STATE.page = 1;
+    STATE.hla = ''; STATE.uniq = ''; STATE.rec = 0; STATE.minPsm = 0; STATE.page = 1;
     STATE.length = ''; STATE.rank = ''; STATE.hlaClass = ''; STATE.safe = ''; STATE.nuorfSub = '';
     STATE.classFilter.clear();
     if (cls) STATE.classFilter.add(cls);

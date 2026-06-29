@@ -466,13 +466,112 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
   5. Stage `data_js/`, `data/`, `hub/data_js/`, `hub/data/` and commit only if changed (`chore(data): daily refresh from Dropbox`).
   6. Push to `main`.
   7. Notify via comment on a tracking GitHub issue (label `ci-refresh-success`). On failure, posts to a separate issue labeled `ci-refresh-failure`.
+  8. **Email a direct summary to `amansharma.e44@gmail.com`** on every run (success or failure) via Gmail SMTP (`dawidd6/action-send-mail@v3`). Runs last so `${{ job.status }}` reflects the whole run; `continue-on-error` so a mail hiccup never fails the refresh. The subject flags whether new data was committed.
 - **Bot identity for commits:** `immunoverse-bot <immunoverse-bot@users.noreply.github.com>`.
+- **Required repo secrets (for the email step):** `GMAIL_USER` (sending Gmail address) and `GMAIL_APP_PASSWORD` (a Google [App Password](https://myaccount.google.com/apppasswords), NOT the account password — requires 2FA on the Google account). Optional repo *variable* `IMMUNOVERSE_DROPBOX_URL` overrides the hardcoded Dropbox share if Frank rotates it.
 
 ---
 
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-06-29 — In-house recurrence, full class taxonomy, daily email
+**Where:** portal (`integrate_inhouse.py`, `index.html`, `.github/workflows/refresh-data.yml`).
+
+Three fixes/features:
+
+- **In-house recurrence (was echoing PSM).** In-house `final_enhanced.txt` has no
+  precomputed `recurrence` column, so `integrate_inhouse.py` emitted `recurrence=null`
+  and the explorer's recurrence cell (`index.html` ~L7625) fell back to showing the raw
+  `n_psm` count. Now `integrate_inhouse.py` **derives recurrence = (#samples the peptide
+  was detected in) / (cohort patient count)**, where detection samples are the keys of
+  `presented_by_each_sample_hla` (fallback: the `samples` column). The detection-sample
+  IDs (e.g. `D425, MED411`) line up exactly with the metadata `biology` patients, so the
+  fraction is well-defined. Denominator falls back to the detection-sample universe size
+  if metadata is absent. Verified on MB: values 0.25/0.5/0.75/1.0, no nulls, decoupled
+  from PSM.
+- **Class taxonomy completed (`rna_edit`, `circRNA`).** In-house cohorts carry two
+  classes the public taxonomy lacked, so those peptides appeared in the list but had no
+  class chip and weren't in any per-class tally → "class counts ≠ targets in list". Added
+  `rna_edit` + `circRNA` to `CLASS_ORDER`/`CLASS_LABELS`/`CLASS_TIPS`/`CLASS_DESC`/
+  `CLASS_ICONS`/`classColor` + CSS swatches. The public landing cards/body-map hide any
+  class with a zero global count, so the two surface only where they have peptides.
+- **Faceted class-chip counts.** The class chips above the explorer previously read the
+  static **global public summary** (`summary.classes`), so for a single cohort (esp.
+  in-house) the chip numbers were unrelated to the filtered list. Refactored the
+  `applyFilters` predicate into reusable `compileFilters()` + `rowPasses(r, F, ignoreClass)`;
+  chips now count rows in the **current filter context** ignoring the class filter itself,
+  so each chip's number equals what selecting that class yields. Chips re-render at the end
+  of `applyFilters`.
+- **Daily email.** Added a Gmail-SMTP step to the refresh workflow that emails a
+  success/failure summary to `amansharma.e44@gmail.com` on every run (see Daily auto-sync
+  section for the required secrets).
+- **Recurrence vs PSM filters split.** The explorer's "Min recurrence" dropdown
+  previously filtered on the raw PSM count (mislabelled). It now filters on the real
+  recurrence fraction (`≥10/25/50/75 %`, `STATE.rec`), and a **new "Min PSMs"** dropdown
+  (`fPsm`/`STATE.minPsm`, `≥2/5/10/25/50`) handles PSM thresholds. Public recurrence is a
+  0–1 fraction (verified), so the % thresholds work for both public and in-house.
+- **Recurrence column = recurrence only.** The explorer's "Recurrence" cell previously
+  fell back to showing the raw PSM count when recurrence was null (mixing a count into a
+  %-valued column). It now shows the recurrence % or `—`; PSM lives solely in the "Min
+  PSMs" filter, the drawer, and CSV export — so the two metrics never get conflated. The
+  filtered-results "% recurrent" stat is likewise recurrence-only now.
+- **circRNA identifier.** `integrate_inhouse.py` `_gene_from_record` now surfaces the
+  back-splice coordinate (`chr:start-end`) as the identifier for `circRNA` rows (their
+  source is coordinate-only), so the gene column isn't blank.
+
+**In-house rebuild review (local, all 5 cohorts):** row counts, class tallies, and
+per-field fidelity (psm/score/qval/recurrence/unique/nuorf/hlas/gene) all match the raw
+`final_enhanced.txt`; **0 broken figure-asset refs**. Note **OS ships a native
+`recurrence` column** (22 cols) which the fix preserves; MB/DIPG/NEPC/chordoma (20 cols)
+get the computed value. `rna_edit` parses to its gene + ENSG; `circRNA` to its coordinate.
+
+**Files:** `integrate_inhouse.py`, `index.html`, `.github/workflows/refresh-data.yml`,
+`ARCHITECTURE.md`. **Commit:** _portal_ — this change.
+
+> **Deploy note (in-house):** the recurrence + circRNA fixes change in-house output. All
+> 5 cohorts' `{CODE}.js`/`{CODE}_detail.js` were **regenerated locally** with the updated
+> `integrate_inhouse.py` into their `in-house/<slug>/` folders (names: `Medulloblastoma /
+> Osteosarcoma / DIPG / NEPC / Chordoma (in-house)`). Aman **uploaded all 10 `.js`
+> to the bucket on 2026-06-29** (`MB/OS/DIPG/NEPC/CHORDOMA` × `.js`+`_detail.js`), verified
+> byte-identical to the local regen via md5. Note: DIPG has 1 patient → recurrence is 100%
+> for every row; NEPC/Chordoma have 2; OS keeps its native 14-patient recurrence column.
+
+### 2026-06-19 — Catalogue index: sharded msms + no-more-0-byte builds (agent 00062-gjj)
+**Where:** chat agent (`../immunoVerse_agent`, rev `immunoverse-agent-00062-gjj`).
+**Problem:** the offline catalogue builder (`build_and_upload_index.py`, run on Cloud Shell)
+silently shipped 0-byte msms indexes (LUSC/STAD both parts; AML/COAD/OV/PAAD msms) — `_idx_save`
+swallowed errors (`except: pass`) and `build_index` reported `msms_ok:True` from the in-memory
+dict regardless, so an out-of-memory/disk build wrote nothing yet "succeeded." Separately, the
+whole-file msms format produced 600–840 MB indexes (HNSC/BRCA/LIHC/GBM) that would OOM the 4 GiB
+agent on `json.load`.
+**Fix:** msms index is now SHARDED by peptide (`md5(pep)%64` → `msmsidx_{C}_sNN.json` + a tiny
+`msmsidx_{C}.json` manifest); a dissection query loads only the manifest + the one shard.
+`_idx_save` is compact and RAISES on failure; the filesystem `storage.save` writes tmp+atomic
+rename (never a 0-byte file); `build_index` returns real `tpm_ok`/`msms_ok`; `dissection` reads
+sharded OR legacy-inline OR falls back to direct NYU; the uploader pushes all shards (manifest
+last), refuses incomplete/0-byte builds, and deletes local files after upload to spare Cloud
+Shell's 5 GB disk. Deployed BEFORE re-sharding so the live agent reads both formats during the
+rebuild (a 0-byte/old index just falls back to the slow direct-NYU path — no outage).
+**Files:** `../immunoVerse_agent/{neoverse_catalogue.py, storage.py, build_and_upload_index.py}`.
+
+### 2026-06-18 — Fix: in-house cohorts vanished from portal (auth-service env regression)
+**Symptom:** in-house cohorts (MB/OS/DIPG/NEPC/chordoma) still listed in the admin
+board but opened with "no peptides / no cancers found" — no figures rendered.
+**Cause:** the auth-service deploy `00027` (admin "Back to chat" + 30-day TTL) re-ran
+`deploy/gcp/deploy_auth.sh`, whose `--set-env-vars` REPLACES the whole env and defaulted
+`PORTAL_PRIVATE_BACKEND` to `filesystem`. The service then read private data from an empty
+ephemeral disk instead of GCS — the bytes in `gs://immunoverse-private-datasets/{folder}/{CODE}.js`
+were fine the whole time. `PORTAL_LAB_EMAILS` was blanked too (admins still saw the board;
+lab members didn't). The admin board kept listing cohorts because it reads Firestore,
+independent of the storage backend.
+**Fix:** restored live env on rev `auth-service-00028-m6f` (`PORTAL_PRIVATE_BACKEND=gcs`,
+`PORTAL_LAB_EMAILS=amansharma.e44@gmail.com,gli9@nd.edu`) via `gcloud run services update`.
+Hardened `deploy_auth.sh`: defaults now MATCH prod (`gcs` + the lab list), and a pre-deploy
+GUARD aborts any deploy that would downgrade a live `gcs` backend to `filesystem` unless
+`IV_ALLOW_INHOUSE_DOWNGRADE=1` is set.
+**Files:** `../immunoVerse_agent/deploy/gcp/deploy_auth.sh`.
 
 ### 2026-06-18 — Chat MS view unified + best-PSM spectrum; admin/auth + UI fixes
 **Where:** chat agent (`../immunoVerse_agent`, rev `00061-b6x`) + auth-service (`00027-ffh`).
