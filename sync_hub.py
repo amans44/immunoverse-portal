@@ -113,7 +113,7 @@ def _fetch_text(url: str) -> str:
         if attempt < _FETCH_RETRIES:
             wait = _FETCH_BACKOFF * (2 ** (attempt - 1))
             print(f'  fetch failed ({last_err}); retry {attempt}/{_FETCH_RETRIES - 1} '
-                  f'in {wait}s → {url}', file=sys.stderr)
+                  f'in {wait}s -> {url}', file=sys.stderr)
             time.sleep(wait)
     raise RuntimeError(f'Failed to fetch {url} after {_FETCH_RETRIES} attempts: {last_err}')
 
