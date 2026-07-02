@@ -21,7 +21,10 @@ import json
 import os
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
+from http.client import HTTPException
 from pathlib import Path
 
 HUB_URL = 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/ImmunoVerse_Hub/'
@@ -82,10 +85,37 @@ CANCER_CATEGORY = {
 METADATA_RE = re.compile(r'href="([A-Za-z0-9]+)_metadata\.txt"')
 
 
+# NYU's public share intermittently hangs and then drops the connection
+# (http.client.RemoteDisconnected) or 5xx's under load. A single blip used to
+# fail the whole daily refresh even though the Dropbox data had already synced,
+# so retry transient network/server errors with exponential backoff before
+# giving up. 4xx (except 429) is treated as permanent and not retried.
+_FETCH_RETRIES = 4
+_FETCH_BACKOFF = 5  # seconds; doubles each attempt (5, 10, 20, ...)
+
+
 def _fetch_text(url: str) -> str:
     req = urllib.request.Request(url, headers={'User-Agent': 'immunoverse-hub-sync/1.0'})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return resp.read().decode('utf-8', errors='replace')
+    last_err = None
+    for attempt in range(1, _FETCH_RETRIES + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                return resp.read().decode('utf-8', errors='replace')
+        except urllib.error.HTTPError as e:
+            # Client errors (bad URL, 404) won't fix themselves — fail fast.
+            # 429/5xx are transient, so fall through to the retry/backoff.
+            if e.code < 500 and e.code != 429:
+                raise
+            last_err = e
+        except (urllib.error.URLError, HTTPException, TimeoutError, OSError) as e:
+            # Covers RemoteDisconnected, connection resets, DNS/timeout blips.
+            last_err = e
+        if attempt < _FETCH_RETRIES:
+            wait = _FETCH_BACKOFF * (2 ** (attempt - 1))
+            print(f'  fetch failed ({last_err}); retry {attempt}/{_FETCH_RETRIES - 1} '
+                  f'in {wait}s → {url}', file=sys.stderr)
+            time.sleep(wait)
+    raise RuntimeError(f'Failed to fetch {url} after {_FETCH_RETRIES} attempts: {last_err}')
 
 
 def list_cancers() -> list[str]:

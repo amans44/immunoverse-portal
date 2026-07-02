@@ -462,7 +462,7 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
   1. Checkout repo (fetch-depth: 0).
   2. Setup Python 3.11.
   3. Run `integrate_data.py` (rebuilds `data_js/` from Dropbox).
-  4. Run `sync_hub.py` (rebuilds `hub/data_js/` from the NYU public share).
+  4. Run `sync_hub.py` (rebuilds `hub/data_js/` from the NYU public share). All NYU fetches go through `_fetch_text`, which retries transient errors (RemoteDisconnected / timeouts / 5xx / 429) with exponential backoff — 4 attempts, 5→10→20 s — so a one-off NYU blip no longer fails the whole refresh. 4xx (e.g. 404) still fails fast.
   5. Stage `data_js/`, `data/`, `hub/data_js/`, `hub/data/` and commit only if changed (`chore(data): daily refresh from Dropbox`).
   6. Push to `main`.
   7. Notify via comment on a tracking GitHub issue (label `ci-refresh-success`). On failure, posts to a separate issue labeled `ci-refresh-failure`.
@@ -475,6 +475,24 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-07-02 — Hub sync retries transient NYU errors
+**Where:** portal (`sync_hub.py`).
+
+The 2026-07-02 daily refresh failed: the Dropbox rebuild succeeded, but the
+`Sync hub/ from NYU public share` step died with
+`http.client.RemoteDisconnected: Remote end closed connection without response`
+while fetching the NYU Hub directory listing (`_fetch_text(HUB_URL)`). The NYU
+public share had hung for ~8 min and dropped the connection — a transient
+upstream blip, not a config/URL change. Because `_fetch_text` had **no retry**,
+one dropped connection failed the whole run even though the Atlas data had
+already synced.
+
+`_fetch_text` now retries transient failures with exponential backoff
+(4 attempts, 5→10→20 s). Retries on `RemoteDisconnected`/`URLError`/timeouts/
+5xx/429; fails fast on 4xx (bad URL / 404) so a genuine layout change still
+surfaces immediately. Covers all three call sites (listing + per-cancer
+metadata + sbatch) since they all route through `_fetch_text`.
 
 ### 2026-06-29 — In-house recurrence, full class taxonomy, daily email
 **Where:** portal (`integrate_inhouse.py`, `index.html`, `.github/workflows/refresh-data.yml`).
