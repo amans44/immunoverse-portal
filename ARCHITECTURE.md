@@ -476,6 +476,17 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
+### 2026-07-02 — Bump refresh workflow actions off deprecated Node 20
+**Where:** portal (`.github/workflows/refresh-data.yml`).
+
+GitHub was warning that the refresh workflow's actions still target Node 20
+(force-run on Node 24). Bumped to the current Node-24 majors:
+`actions/checkout@v4→v7`, `actions/setup-python@v5→v6`,
+`dawidd6/action-send-mail@v3→v18`. The mail action's inputs
+(`server_address`/`server_port`/`secure`/`username`/`password`/`subject`/
+`to`/`from`/`body`) are unchanged across the bump, so the Gmail-SMTP step
+needs no edits. No behavioral change to the refresh itself.
+
 ### 2026-07-02 — Hub sync retries transient NYU errors
 **Where:** portal (`sync_hub.py`).
 
