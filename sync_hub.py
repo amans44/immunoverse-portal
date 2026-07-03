@@ -102,9 +102,12 @@ def _fetch_text(url: str) -> str:
             with urllib.request.urlopen(req, timeout=60) as resp:
                 return resp.read().decode('utf-8', errors='replace')
         except urllib.error.HTTPError as e:
-            # Client errors (bad URL, 404) won't fix themselves — fail fast.
-            # 429/5xx are transient, so fall through to the retry/backoff.
-            if e.code < 500 and e.code != 429:
+            # NYU's flaky server intermittently answers with a 302 redirect
+            # chain that dead-ends in a spurious 404 while it's degraded (seen
+            # 2026-07-03: the same URL served 200 minutes later). So 404 is
+            # treated as transient here alongside 408/429/5xx. Genuine client
+            # errors (400/401/403/405…) won't self-heal — fail fast on those.
+            if e.code not in (404, 408, 429) and e.code < 500:
                 raise
             last_err = e
         except (urllib.error.URLError, HTTPException, TimeoutError, OSError) as e:
@@ -118,11 +121,27 @@ def _fetch_text(url: str) -> str:
     raise RuntimeError(f'Failed to fetch {url} after {_FETCH_RETRIES} attempts: {last_err}')
 
 
+class HubUnreachable(Exception):
+    """The NYU listing couldn't be fetched at all (transient infra outage).
+
+    Distinct from a *reachable* listing that has no metadata files, which is a
+    genuine layout change and stays fatal.
+    """
+
+
 def list_cancers() -> list[str]:
     """Scrape the NYU directory listing for every CANCER_metadata.txt filename."""
-    html = _fetch_text(HUB_URL)
+    try:
+        html = _fetch_text(HUB_URL)
+    except Exception as exc:
+        # Couldn't reach NYU even after retries — a transient outage, not a
+        # structural change. Bubble up as HubUnreachable so main() can keep the
+        # existing hub data and let the (already-succeeded) Atlas refresh commit.
+        raise HubUnreachable(exc) from exc
     codes = sorted(set(METADATA_RE.findall(html)))
     if not codes:
+        # The listing loaded but has no metadata files — the layout really
+        # changed. Fail loudly so it surfaces as a failure email.
         sys.exit('No metadata files found at the NYU Hub URL — has the layout changed?')
     return codes
 
@@ -205,7 +224,17 @@ def write_outputs(code: str, metadata_text: str, sbatch_text: str, parsed: dict)
 
 
 def main() -> None:
-    codes = list_cancers()
+    try:
+        codes = list_cancers()
+    except HubUnreachable as exc:
+        # NYU is down/flaky right now. Don't fail the whole daily refresh over a
+        # transient outage of this *secondary* data source — the primary Atlas
+        # sync already ran, and the commit step needs to proceed so those
+        # changes go live. Leave the existing hub/data_js/ in place; it will
+        # refresh on the next run once NYU recovers.
+        print(f'[warn] NYU Hub unreachable ({exc}); keeping the existing '
+              f'hub/data_js/ and skipping hub sync this run.', file=sys.stderr)
+        return
     print(f'Found {len(codes)} cancers at the Hub.')
 
     summaries = []

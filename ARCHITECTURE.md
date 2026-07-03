@@ -462,7 +462,7 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
   1. Checkout repo (fetch-depth: 0).
   2. Setup Python 3.11.
   3. Run `integrate_data.py` (rebuilds `data_js/` from Dropbox).
-  4. Run `sync_hub.py` (rebuilds `hub/data_js/` from the NYU public share). All NYU fetches go through `_fetch_text`, which retries transient errors (RemoteDisconnected / timeouts / 5xx / 429) with exponential backoff — 4 attempts, 5→10→20 s — so a one-off NYU blip no longer fails the whole refresh. 4xx (e.g. 404) still fails fast.
+  4. Run `sync_hub.py` (rebuilds `hub/data_js/` from the NYU public share). All NYU fetches go through `_fetch_text`, which retries transient errors (RemoteDisconnected / timeouts / **404** / 408 / 429 / 5xx) with exponential backoff — 4 attempts, 5→10→20 s. 404 is retried because NYU's degraded server emits spurious 404s (302→404); genuine client errors (400/401/403) still fail fast. If the NYU **listing** is still unreachable after retries, `sync_hub.py` keeps the existing `hub/data_js/` and exits 0 (non-fatal) so this secondary source can't block the Atlas commit in step 5. A reachable-but-empty listing (real layout change) stays fatal.
   5. Stage `data_js/`, `data/`, `hub/data_js/`, `hub/data/` and commit only if changed (`chore(data): daily refresh from Dropbox`).
   6. Push to `main`.
   7. Notify via comment on a tracking GitHub issue (label `ci-refresh-success`). On failure, posts to a separate issue labeled `ci-refresh-failure`.
@@ -475,6 +475,28 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ## Change log
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
+
+### 2026-07-03 — Hub sync tolerates NYU's spurious 404s and outages
+**Where:** portal (`sync_hub.py`).
+
+The 2026-07-03 refresh failed again on the `Sync hub` step — this time
+`HTTP Error 404: Not Found` after a 302 redirect chain. The same URL served
+`200 OK` with all 36 metadata files minutes later, so it was NYU transiently
+redirecting to an error page while degraded, **not** a layout change. Two
+issues fixed:
+
+- **404 was fail-fast.** The 2026-07-02 retry logic treated all 4xx as
+  permanent, so NYU's spurious 404s bypassed the retry entirely. `_fetch_text`
+  now treats **404/408/429/5xx as transient** (retried with backoff) and only
+  fails fast on genuine client errors (400/401/403/405…).
+- **Hub failure blocked the Atlas commit.** The workflow runs `sync_hub.py`
+  *before* the commit step, so any hub-sync crash skipped the commit — meaning
+  a transient NYU blip stopped Frank's already-synced Dropbox/Atlas data from
+  going live. Added a `HubUnreachable` path: if the NYU **listing** can't be
+  fetched after retries, `main()` logs a warning, **keeps the existing
+  `hub/data_js/`, and exits 0** so the Atlas commit proceeds. A *reachable*
+  listing with no metadata files (a real layout change) is still fatal
+  (exit 1 → failure email), so genuine breakage still surfaces.
 
 ### 2026-07-02 — Bump refresh workflow actions off deprecated Node 20
 **Where:** portal (`.github/workflows/refresh-data.yml`).
