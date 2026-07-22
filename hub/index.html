@@ -515,6 +515,11 @@ footer {
    The Hub's CATALOGUE is public: anyone can see which cancers it holds and how
    much data each has. Only the file bytes are gated. So instead of hiding the
    page behind a wall, we show every card and lock the download buttons. */
+/* MUST come with the [hidden] guard below: an author-level `display` rule beats
+   the UA stylesheet's `[hidden] { display: none }`, so without it this banner
+   stays visible even when the element carries the hidden attribute — which is
+   exactly how signed-in admins ended up staring at "Downloads are locked". */
+.gate-bar[hidden], .collection[hidden] { display: none !important; }
 .gate-bar {
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
   padding: 16px 20px; margin: 0 0 28px; border-radius: 14px;
