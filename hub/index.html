@@ -925,17 +925,34 @@ function ivApplyAuthUI(user) {
      2. UNLOCK  — if the session has Hub access, swap in the full index and
                   enable the download buttons in place.
    A visitor with no account still sees the whole catalogue; that's the point. */
-async function ivHubBoot() {
-  var painted = false;
+var IV_HUB_PAINTED = false;
 
+async function ivHubBoot() {
   try {
     var pub = await ivAuthFetch(HUB_PUBLIC_INDEX, { credentials: 'omit' });
     if (pub.ok) {
       var pdata = await pub.json();
-      if (pdata && Array.isArray(pdata.cancers)) { ivRenderHub(pdata); painted = true; }
+      if (pdata && Array.isArray(pdata.cancers)) { ivRenderHub(pdata); IV_HUB_PAINTED = true; }
     }
   } catch (e) { /* fall through to the auth pass */ }
 
+  await ivHubTryUnlock();
+}
+
+/* Re-runnable access check. Split out of ivHubBoot so a page that painted while
+   signed-out can recover WITHOUT a manual reload — otherwise it stays locked
+   forever after the user signs in (bfcache restore via Back, or signing in on
+   another tab while this one sits open). */
+var _ivUnlockBusy = false;
+
+async function ivHubTryUnlock() {
+  if (IV_HUB_UNLOCKED || _ivUnlockBusy) return;
+  _ivUnlockBusy = true;
+  try { await _ivHubUnlockInner(); } finally { _ivUnlockBusy = false; }
+}
+
+async function _ivHubUnlockInner() {
+  var painted = IV_HUB_PAINTED;
   var user = await ivMe();
   ivApplyAuthUI(user);
 
@@ -1216,6 +1233,21 @@ function ivRenderHub(data) {
 }
 
 ivHubBoot();
+
+/* Self-heal a stale locked view. All three fire the same idempotent re-check,
+   which no-ops once unlocked:
+     pageshow(persisted) — restored from bfcache (Back after signing in); scripts
+                           don't re-run on that path, so the DOM would keep the
+                           signed-out banner and locked buttons indefinitely.
+     visibilitychange    — returning to a tab that was open during sign-in.
+     storage             — another tab wrote the access token. */
+window.addEventListener('pageshow', function (e) { if (e.persisted) ivHubTryUnlock(); });
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden) ivHubTryUnlock();
+});
+window.addEventListener('storage', function (e) {
+  if (!e.key || e.key === 'iv_portal_access') ivHubTryUnlock();
+});
 </script>
 </body>
 </html>
