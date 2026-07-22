@@ -941,8 +941,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const si = $('si-email');
     if (si) si.value = presetEmail;
   }
-  if ((location.hash || '').toLowerCase() === '#create') {
+  const hash = (location.hash || '').toLowerCase();
+  if (hash === '#create') {
     switchMode('create');
+  } else if (hash === '#request') {
+    // Deep-link used by /hub's "Request access": open Create account already
+    // switched to the Individual sub-tab, which POSTs /request-access for admin
+    // review rather than creating an instant institutional account.
+    switchMode('create');
+    pickSubTab('individual');
   } else if (presetEmail) {
     const sp = $('si-password');     // returning account → focus password directly
     if (sp) setTimeout(() => sp.focus(), 50);

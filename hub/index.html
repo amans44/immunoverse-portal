@@ -159,6 +159,14 @@ nav.topnav .inner {
 }
 [data-theme="dark"] .cta { background: var(--accent); color: #003731; border-color: var(--accent); }
 .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(20,184,166,0.25); }
+/* Secondary auth action in the topnav (Sign in), quieter than Create account. */
+.cta.ghost {
+  background: transparent; color: var(--text-2);
+  border-color: var(--border, rgba(127,127,127,.28));
+  margin-right: 8px;
+}
+.cta.ghost:hover { box-shadow: none; color: var(--text-1); }
+[data-theme="dark"] .cta.ghost { background: transparent; color: var(--text-2); }
 
 /* =========================================================
    HERO
@@ -503,28 +511,73 @@ footer {
   color: var(--text-3); font-size: 14px;
 }
 
-/* ---- Access gate -------------------------------------------------------
-   The Hub is permission-gated: the catalogue lives in a private bucket and is
-   fetched through the auth service. Everything below is what a visitor sees
-   when they aren't signed in, or are signed in without Hub access. */
-.gate {
-  max-width: 620px; margin: 0 auto; padding: 72px 24px; text-align: center;
+/* ---- Access banner + locked cards --------------------------------------
+   The Hub's CATALOGUE is public: anyone can see which cancers it holds and how
+   much data each has. Only the file bytes are gated. So instead of hiding the
+   page behind a wall, we show every card and lock the download buttons. */
+.gate-bar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 16px 20px; margin: 0 0 28px; border-radius: 14px;
+  background: var(--surface-2, rgba(127,127,127,.06));
+  border: 1px solid var(--border, rgba(127,127,127,.20));
 }
-.gate-lock {
-  width: 56px; height: 56px; margin: 0 auto 22px; border-radius: 16px;
+.gate-bar-lock {
+  width: 38px; height: 38px; border-radius: 11px; flex: none;
   display: grid; place-items: center;
-  background: var(--surface-2, rgba(127,127,127,.10));
+  background: var(--bg, rgba(255,255,255,.7));
   border: 1px solid var(--border, rgba(127,127,127,.22));
 }
-.gate-lock svg { width: 26px; height: 26px; stroke: var(--text-2); }
-.gate h2 { font-size: 22px; margin: 0 0 10px; letter-spacing: -.01em; }
-.gate p  { color: var(--text-3); font-size: 14.5px; line-height: 1.65; margin: 0 0 22px; }
-.gate-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.gate-note {
-  margin-top: 26px; font-size: 12.5px; color: var(--text-3);
-  border-top: 1px solid var(--border, rgba(127,127,127,.18)); padding-top: 18px;
+.gate-bar-lock svg { width: 18px; height: 18px; stroke: var(--text-2); }
+.gate-bar-text { min-width: 220px; flex: 1 1 320px; display: flex; flex-direction: column; gap: 3px; }
+.gate-bar-text strong { font-size: 14.5px; letter-spacing: -.01em; }
+.gate-bar-text span   { font-size: 13px; color: var(--text-3); line-height: 1.55; }
+.gate-bar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.gate-bar-actions .btn-primary,
+.gate-bar-actions .btn-secondary { padding: 9px 16px; font-size: 13px; }
+
+/* A locked download button: same footprint as the real one so the grid doesn't
+   shift when access resolves, but visibly inert. */
+.card-btn.locked { opacity: .55; cursor: pointer; }
+.card-btn.locked svg { opacity: .8; }
+
+/* ---- Whole-Hub (collection-level) downloads ---------------------------- */
+.collection { margin: 0 0 34px; }
+.collection-head h2 {
+  font-size: 17px; margin: 0 0 4px; letter-spacing: -.01em;
 }
-.is-gated .filter-bar, .is-gated .hero-stats { display: none; }
+.collection-head p {
+  margin: 0 0 14px; font-size: 13.5px; color: var(--text-3); line-height: 1.6;
+}
+.collection-list { display: grid; gap: 10px; }
+.collection-row {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 14px 18px; border-radius: 12px;
+  background: var(--surface, rgba(127,127,127,.04));
+  border: 1px solid var(--border, rgba(127,127,127,.18));
+}
+.collection-row .ci {
+  width: 34px; height: 34px; flex: none; border-radius: 9px; display: grid; place-items: center;
+  background: var(--surface-2, rgba(127,127,127,.08));
+  border: 1px solid var(--border, rgba(127,127,127,.18));
+}
+.collection-row .ci svg { width: 16px; height: 16px; stroke: var(--text-2); }
+.collection-main { flex: 1 1 320px; min-width: 220px; }
+.collection-name {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  font-size: 14px; font-weight: 600; margin-bottom: 3px;
+}
+.collection-file {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; font-weight: 500; color: var(--text-3);
+}
+.collection-desc { font-size: 12.5px; color: var(--text-3); line-height: 1.55; }
+.collection-meta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px; color: var(--text-3); white-space: nowrap;
+}
+/* .card-btn is flex:1 inside a card's action row; here it must stay its own size
+   rather than stretching across the remaining width of the row. */
+.collection-row .card-btn { flex: 0 0 auto; min-width: 148px; justify-content: center; }
 </style>
 </head>
 <body>
@@ -545,7 +598,12 @@ footer {
       <svg data-icon="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       <svg data-icon="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
     </button>
-    <a class="cta" href="#datasets">Browse datasets →</a>
+    <!-- Auth entry points live HERE so a visitor can create an account or sign in
+         from the Hub itself, instead of being bounced to the Atlas first.
+         ivApplyAuthUI() swaps these for the account link once signed in. -->
+    <a class="cta ghost" id="navSignin" href="#" hidden>Sign in</a>
+    <a class="cta" id="navCreate" href="#" hidden>Create account</a>
+    <a class="cta" id="navAccount" href="/account.html" hidden>My account</a>
   </div>
 </nav>
 
@@ -565,9 +623,9 @@ footer {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M12 4v16"/></svg>
             Getting started
           </a>
-          <a class="btn-secondary" href="/#contact">
+          <a class="btn-secondary" id="heroAuthBtn" href="/login.html">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Request access
+            <span id="heroAuthLabel">Create account</span>
           </a>
         </div>
         <div class="hero-stats">
@@ -633,25 +691,34 @@ footer {
 
 <section class="cards-section">
   <div class="container">
-    <div class="cards-grid" id="cardsGrid"></div>
-    <div class="empty-state" id="emptyState" hidden>No datasets match that filter.</div>
-
-    <!-- Access gate: shown when the visitor can't read the Hub. Populated by
-         the gated loader below; hidden entirely once access is confirmed. -->
-    <div class="gate" id="gate" hidden>
-      <div class="gate-lock">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <!-- Access banner. The catalogue itself is always visible — a visitor can see
+         WHICH cancers the Hub holds and how big each is. This bar explains why the
+         downloads are locked and how to unlock them. Hidden once access is granted. -->
+    <div class="gate-bar" id="gateBar" hidden>
+      <div class="gate-bar-lock" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
         </svg>
       </div>
-      <h2 id="gateTitle">This resource is private</h2>
-      <p id="gateBody">The ImmunoVerse Hub is available to approved members only. Sign in to continue.</p>
-      <div class="gate-actions" id="gateActions"></div>
-      <div class="gate-note">
-        Need access? Contact
-        <a href="mailto:matthew.yarmarkovich@nyulangone.org">matthew.yarmarkovich@nyulangone.org</a>.
+      <div class="gate-bar-text">
+        <strong id="gateTitle">Downloads are locked</strong>
+        <span id="gateBody">Browse the full catalogue below. Sign in to download metadata and SLURM scripts.</span>
       </div>
+      <div class="gate-bar-actions" id="gateActions"></div>
     </div>
+
+    <!-- Whole-Hub files (combined SDRF + notes). Populated from index.collection;
+         stays hidden if the sync didn't find them. -->
+    <section class="collection" id="collectionPanel" hidden>
+      <div class="collection-head">
+        <h2>Whole-Hub downloads</h2>
+        <p>Every cohort consolidated into one table, including extracted raw-file download links.</p>
+      </div>
+      <div class="collection-list" id="collectionList"></div>
+    </section>
+
+    <div class="cards-grid" id="cardsGrid"></div>
+    <div class="empty-state" id="emptyState" hidden>No datasets match that filter.</div>
   </div>
 </section>
 
@@ -680,7 +747,11 @@ footer {
       <div class="footer-col">
         <h4>Support</h4>
         <ul>
-          <li><a href="mailto:matthew.yarmarkovich@nyulangone.org">Contact</a></li>
+          <!-- Hub contact is Frank (Li Guangyuan), who maintains the Hub data.
+               The previous address here was matthew.yarmarkovich@nyulangone.org —
+               wrong on both counts: the PI is MARK Yarmarkovich, and Hub questions
+               should go to Frank, not the PI. -->
+          <li><a href="mailto:gli9@nd.edu">Contact</a></li>
           <li><a href="/#cite">Citation</a></li>
         </ul>
       </div>
@@ -800,37 +871,86 @@ async function ivMe() {
    ========================================================= */
 var HUB_DATASET = 'hub';
 var HUB_INDEX_PATH = '_index.json';
+var HUB_PUBLIC_INDEX = '/api/portal/data/hub/public-index';
+
+// Post-auth return target. NOTE: login.html reads `?return=`, NOT `?next=` —
+// with the wrong key it silently drops you on account.html instead of back here.
+var HUB_RETURN = encodeURIComponent('/hub/');
+var LOGIN_URL    = '/login.html?return=' + HUB_RETURN;              // sign-in tab
+var CREATE_URL   = '/login.html?return=' + HUB_RETURN + '#create';  // create-account tab
+var REQUEST_URL  = '/login.html?return=' + HUB_RETURN + '#request'; // "request access" sub-tab
+
+// Unlocked once the signed-in caller is confirmed to have Hub access.
+var IV_HUB_UNLOCKED = false;
 
 function ivHubFilePath(p) {
   return '/api/portal/data/datasets/' + encodeURIComponent(HUB_DATASET) +
          '/file?path=' + encodeURIComponent(p);
 }
 
-function showGate(title, body, actionsHtml) {
-  document.body.classList.add('is-gated');
-  var g = document.getElementById('gate');
+function showGateBar(title, body, actionsHtml) {
   document.getElementById('gateTitle').textContent = title;
   document.getElementById('gateBody').textContent = body;
   document.getElementById('gateActions').innerHTML = actionsHtml || '';
-  g.hidden = false;
-  document.getElementById('cardsGrid').innerHTML = '';
-  document.getElementById('emptyState').hidden = true;
-  ['statCancers', 'statSamples', 'statCohorts'].forEach(function (id) {
-    var el = document.getElementById(id); if (el) el.textContent = '—';
-  });
+  document.getElementById('gateBar').hidden = false;
 }
 
+function hideGateBar() { document.getElementById('gateBar').hidden = true; }
+
+// Topnav auth controls: Sign in / Create account for visitors, My account once
+// signed in. Set here (not in markup) so the hrefs carry the /hub/ return target.
+function ivApplyAuthUI(user) {
+  var si = document.getElementById('navSignin');
+  var cr = document.getElementById('navCreate');
+  var ac = document.getElementById('navAccount');
+  if (user) {
+    si.hidden = true; cr.hidden = true; ac.hidden = false;
+  } else {
+    si.href = LOGIN_URL;  si.hidden = false;
+    cr.href = CREATE_URL; cr.hidden = false;
+    ac.hidden = true;
+  }
+  // Hero secondary button follows the same state.
+  var hb = document.getElementById('heroAuthBtn');
+  var hl = document.getElementById('heroAuthLabel');
+  if (hb && hl) {
+    hb.href = user ? REQUEST_URL : CREATE_URL;
+    hl.textContent = user ? 'Request access' : 'Create account';
+  }
+}
+
+/* Boot in two passes so the catalogue paints immediately and never depends on
+   the auth round-trip:
+     1. PUBLIC  — unauthenticated teaser; every card renders, downloads locked.
+     2. UNLOCK  — if the session has Hub access, swap in the full index and
+                  enable the download buttons in place.
+   A visitor with no account still sees the whole catalogue; that's the point. */
 async function ivHubBoot() {
-  var next = encodeURIComponent('/hub/');
+  var painted = false;
+
+  try {
+    var pub = await ivAuthFetch(HUB_PUBLIC_INDEX, { credentials: 'omit' });
+    if (pub.ok) {
+      var pdata = await pub.json();
+      if (pdata && Array.isArray(pdata.cancers)) { ivRenderHub(pdata); painted = true; }
+    }
+  } catch (e) { /* fall through to the auth pass */ }
+
   var user = await ivMe();
+  ivApplyAuthUI(user);
 
   if (!user) {
-    showGate(
-      'This resource is private',
-      'The ImmunoVerse Hub is available to approved members only. Sign in to continue.',
-      '<a class="btn-primary" href="/login.html?next=' + next + '">Sign in</a>' +
-      '<a class="btn-secondary" href="/">Back to Atlas</a>'
-    );
+    if (!painted) {
+      showGateBar('Sign in to browse the Hub',
+        'The catalogue couldn’t be loaded anonymously. Sign in to continue.',
+        '<a class="btn-primary" href="' + LOGIN_URL + '">Sign in</a>' +
+        '<a class="btn-secondary" href="' + CREATE_URL + '">Create account</a>');
+      return;
+    }
+    showGateBar('Downloads are locked',
+      'Browse the full catalogue below. Sign in to download metadata and SLURM scripts.',
+      '<a class="btn-primary" href="' + LOGIN_URL + '">Sign in</a>' +
+      '<a class="btn-secondary" href="' + CREATE_URL + '">Create account</a>');
     return;
   }
 
@@ -841,48 +961,59 @@ async function ivHubBoot() {
       res = await ivAuthedFetch(ivHubFilePath(HUB_INDEX_PATH));
     }
   } catch (e) {
-    showGate('Couldn’t reach the Hub',
-             'The data service is unreachable right now. Please try again in a moment.',
-             '<a class="btn-secondary" href="/hub/">Retry</a>');
+    showGateBar('Couldn’t reach the data service',
+      'You’re signed in, but the download service is unreachable right now.',
+      '<a class="btn-secondary" href="/hub/">Retry</a>');
     return;
   }
 
   if (res.status === 403 || res.status === 404) {
-    showGate(
-      'You don’t have Hub access yet',
-      'You’re signed in as ' + (user.email || 'your account') +
-        ', but this account hasn’t been granted the ImmunoVerse Hub.',
-      '<a class="btn-primary" href="mailto:matthew.yarmarkovich@nyulangone.org' +
-        '?subject=ImmunoVerse%20Hub%20access%20request">Request access</a>' +
-      '<a class="btn-secondary" href="/">Back to Atlas</a>'
-    );
+    // Route access requests through the portal's own review queue (admin
+    // "In-house access" board), NOT the PI's personal inbox.
+    showGateBar('Your account doesn’t have Hub access yet',
+      'Signed in as ' + (user.email || 'your account') +
+        '. Request access and an admin will review it — usually within 1–2 business days.',
+      '<a class="btn-primary" href="' + REQUEST_URL + '">Request access</a>');
     return;
   }
   if (!res.ok) {
-    showGate('Couldn’t load the Hub',
-             'The catalogue failed to load (error ' + res.status + '). Please try again shortly.',
-             '<a class="btn-secondary" href="/hub/">Retry</a>');
+    showGateBar('Downloads unavailable',
+      'The catalogue loaded, but downloads failed to unlock (error ' + res.status + ').',
+      '<a class="btn-secondary" href="/hub/">Retry</a>');
     return;
   }
 
-  var data;
-  try { data = await res.json(); } catch (e) { data = null; }
+  var data = null;
+  try { data = await res.json(); } catch (e) {}
   if (!data || !Array.isArray(data.cancers)) {
-    showGate('Hub catalogue unavailable',
-             'The catalogue is being regenerated. Check back after the next refresh.', '');
+    showGateBar('Downloads unavailable',
+      'The full catalogue is being regenerated. Check back after the next refresh.', '');
     return;
   }
-  document.getElementById('gate').hidden = true;
-  document.body.classList.remove('is-gated');
-  ivRenderHub(data);
+
+  IV_HUB_UNLOCKED = true;
+  hideGateBar();
+  ivRenderHub(data);            // re-render with real, clickable download buttons
 }
 
 /* =========================================================
    RENDER STATS + GRID
    ========================================================= */
 function ivRenderHub(data) {
+  // Single source of truth for the rendered catalogue. The listeners below are
+  // bound once, on the first (public) pass, so their render() closure must read
+  // the CURRENT data here rather than the `data` it captured — otherwise
+  // filtering after unlock would repaint the stale locked cards.
+  window.IV_HUB_DATA = data;
+
   // Hero stats
   var fmt = function (n) { return (n || 0).toLocaleString(); };
+  var fmtBytes = function (b) {
+    b = b || 0;
+    if (b >= 1048576) return (b / 1048576).toFixed(1) + ' MB';
+    if (b >= 1024) return Math.round(b / 1024) + ' KB';
+    return b + ' B';
+  };
   document.getElementById('statCancers').textContent = fmt(data.totals.cancers);
   document.getElementById('statSamples').textContent = fmt(data.totals.samples);
   document.getElementById('statCohorts').textContent = fmt(data.totals.cohorts);
@@ -903,6 +1034,23 @@ function ivRenderHub(data) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
+  }
+
+  var DL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+  var LOCK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+
+  // One button, two states. Locked buttons keep the same label and footprint so
+  // the grid doesn't reflow when access resolves — they just carry a lock icon
+  // and, on click, send the visitor to sign in instead of downloading.
+  function dlBtn(path, label, extraClass) {
+    if (!path) return '';
+    if (IV_HUB_UNLOCKED) {
+      return '<button type="button" class="card-btn' + extraClass + '" data-dl="' +
+             escapeHtml(path) + '">' + DL_ICON + label + '</button>';
+    }
+    return '<button type="button" class="card-btn locked' + extraClass +
+           '" data-locked="1" title="Sign in to download ' + escapeHtml(path) + '">' +
+           LOCK_ICON + label + '</button>';
   }
 
   function cardHtml(c) {
@@ -952,20 +1100,42 @@ function ivRenderHub(data) {
           '</div>' +
         '</div>' +
         '<div class="card-actions">' +
-          '<button type="button" class="card-btn" data-dl="' + escapeHtml(sbatchPath) + '">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
-            'Sbatch' +
-          '</button>' +
-          '<button type="button" class="card-btn ghost" data-dl="' + escapeHtml(metadataPath) + '">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
-            'Metadata' +
-          '</button>' +
+          dlBtn(sbatchPath, 'Sbatch', '') +
+          dlBtn(metadataPath, 'Metadata', ' ghost') +
         '</div>' +
       '</article>';
   }
 
+  // Whole-Hub files (combined SDRF + notes). Same lock rules as the cards: the
+  // row and its stats are always visible, only the bytes are gated.
+  function renderCollection() {
+    var items = (window.IV_HUB_DATA || data).collection || [];
+    var panel = document.getElementById('collectionPanel');
+    var list = document.getElementById('collectionList');
+    if (!items.length) { panel.hidden = true; return; }
+    list.innerHTML = items.map(function (f) {
+      var unit = f.tabular ? 'rows' : 'lines';
+      return '' +
+        '<div class="collection-row">' +
+          '<div class="ci" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+          '</div>' +
+          '<div class="collection-main">' +
+            '<div class="collection-name">' + escapeHtml(f.label) +
+              '<span class="collection-file">' + escapeHtml(f.path) + '</span>' +
+            '</div>' +
+            '<div class="collection-desc">' + escapeHtml(f.desc || '') + '</div>' +
+          '</div>' +
+          '<span class="collection-meta">' + fmt(f.rows) + ' ' + unit + ' · ' + fmtBytes(f.bytes) + '</span>' +
+          dlBtn(f.path, 'Download', '') +
+        '</div>';
+    }).join('');
+    panel.hidden = false;
+  }
+
   function render() {
-    var rows = data.cancers.slice();
+    renderCollection();
+    var rows = (window.IV_HUB_DATA || data).cancers.slice();
     if (currentFilter !== 'all') {
       rows = rows.filter(function (c) { return c.category === currentFilter; });
     }
@@ -978,6 +1148,12 @@ function ivRenderHub(data) {
     emptyState.hidden = true;
     grid.innerHTML = rows.map(cardHtml).join('');
   }
+
+  // ivRenderHub runs TWICE (public teaser, then again after unlock). Bind the
+  // listeners once only — a second bind would fire every handler twice and
+  // double-trigger downloads.
+  if (window.__ivHubBound) { render(); return; }
+  window.__ivHubBound = true;
 
   // Filter chip clicks
   document.querySelectorAll('.chip').forEach(function (btn) {
@@ -999,7 +1175,11 @@ function ivRenderHub(data) {
   // proxy and save them as a Blob rather than navigating to a signed GCS URL:
   // the files are small, it keeps the correct filename, and a text/plain object
   // opened via a signed URL would render in the tab instead of downloading.
-  grid.addEventListener('click', async function (ev) {
+  async function onDownloadClick(ev) {
+    // Locked button → send them to sign in, preserving /hub/ as the return target.
+    var locked = ev.target.closest('[data-locked]');
+    if (locked) { window.location.href = LOGIN_URL; return; }
+
     var btn = ev.target.closest('[data-dl]');
     if (!btn) return;
     var path = btn.getAttribute('data-dl');
@@ -1025,7 +1205,12 @@ function ivRenderHub(data) {
     } finally {
       delete btn.dataset.busy;
     }
-  });
+  }
+
+  // Both surfaces carry download buttons: the per-cancer cards and the
+  // whole-Hub collection panel.
+  grid.addEventListener('click', onDownloadClick);
+  document.getElementById('collectionList').addEventListener('click', onDownloadClick);
 
   render();
 }

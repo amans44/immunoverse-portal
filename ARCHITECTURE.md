@@ -506,6 +506,43 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
+### 2026-07-22 — /hub: public catalogue, locked downloads + on-page sign-up
+
+**Files:** `hub/index.html`, `login.html`; private repo `hub_sync/hub_sync.py`,
+`portal_auth/dataset_routes.py`.
+
+**Why:** the first lockdown hid the Hub behind a wall — a signed-out visitor saw
+nothing, so the resource looked like it didn't exist. Aman's intent was the
+opposite: show WHICH cancers the Hub holds and how much data each has, and lock
+only the files.
+
+- **Two-pass boot.** The page first loads an anonymous teaser and paints all 36
+  cards, then (if the session has access) swaps in the full index and enables the
+  downloads in place. The catalogue never waits on the auth round-trip.
+- **Teaser is a whitelist**, built by `hub_sync.build_public_index()`: code,
+  display, category, sample/cohort/HLA counts, and file NAMES. It deliberately
+  omits `studies`, `biology`, `sample_included` and every byte of file content —
+  a field added to the full index must be opted IN, so nothing leaks by accident.
+  Served by `GET /api/portal/data/hub/public-index`, the ONLY unauthenticated
+  route in that router; dataset id and blob name are hard-coded so it can't be
+  walked into a general file reader.
+- **Locked buttons** keep the real button's label and footprint (lock icon,
+  dimmed) so the grid doesn't reflow when access resolves; clicking one goes to
+  sign-in with `/hub/` as the return target.
+- **Whole-Hub downloads panel** exposes the collection-level files that don't fit
+  the per-cancer grid: `sdrf.txt` (4,675 rows — every cohort in one table, with an
+  extracted raw-file download link per row) and `sdrf_notes.txt`. Same lock rules;
+  described in `COLLECTION_FILES` in `hub_sync.py`.
+- **Auth entry points on the Hub**: topnav Sign in / Create account (→ My account
+  when signed in) and a hero CTA, so nobody has to visit the Atlas to register.
+  **Bug fixed:** `login.html` reads `?return=`, NOT `?next=` — the previous gate
+  used `next` and silently dropped users on `account.html` instead of back on
+  /hub/. Added `#request` to `login.html` (opens Create account → Individual,
+  which POSTs `/request-access` for admin review).
+- **Contact corrected** to `gli9@nd.edu` (Frank, who maintains the Hub data). The
+  footer previously read `matthew.yarmarkovich@nyulangone.org` — wrong on both
+  counts; the PI is *Mark* Yarmarkovich, and Hub questions go to Frank.
+
 ### 2026-07-22 — /hub goes PRIVATE: own bucket, gated page, Dropbox auto-sync
 
 **Files:** `hub/index.html`, `.gitignore`, `.github/workflows/refresh-data.yml`,
