@@ -207,6 +207,8 @@ ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2022/04/PXD025345/190823_Pankaj_180
 
 # phase2_PXD034818
 declare -a samples=(
+ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2023/11/PXD034818/Breast_344_17T_TMT126_251119.raw
+ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2023/11/PXD034818/Breast_1160_16T_TMT126_251119.raw
 ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2023/11/PXD034818/Breast_231_18T_TMT0_060720_1.raw
 ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2023/11/PXD034818/Breast_231_18T_TMT0_060720_2.raw
 ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2023/11/PXD034818/Breast_333_18T_TMT0_050721_1.raw

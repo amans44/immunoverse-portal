@@ -3,7 +3,7 @@ window.IMMUNOVERSE_HUB_INDEX = {
   "source_url": "https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/ImmunoVerse_Hub/",
   "totals": {
     "cancers": 36,
-    "samples": 4673,
+    "samples": 4675,
     "cohorts": 164
   },
   "cancers": [
@@ -96,10 +96,10 @@ window.IMMUNOVERSE_HUB_INDEX = {
       "code": "BRCA",
       "display": "Breast Invasive Carcinoma",
       "category": "Solid",
-      "sample_count": 264,
-      "sample_included": 229,
+      "sample_count": 266,
+      "sample_included": 231,
       "cohort_count": 10,
-      "biology_count": 58,
+      "biology_count": 60,
       "hla_count": 44,
       "studies": [
         "PXD000394",
@@ -117,13 +117,13 @@ window.IMMUNOVERSE_HUB_INDEX = {
         "1029/17T/ER+/PR+/Her2neg",
         "1097/19T/ER-/PR-/HER-2/neu-neg",
         "1137/18/ER-/PR-/Her2neg",
+        "1160/16T/ER+/PR+/HER-2neg",
         "1192/17T/ER+/PR+/Her2neg",
         "1208/18/ER+/PR+/HER-2/neu-neg",
         "1305/19T/ER+/PR+/Her2neg",
         "1478/18/ER-/PR-/Her2neg",
         "1945/18T/ER+/PR+/HER-2/neu-neg",
-        "1949/16T/ER-/PR-/HER-2neg",
-        "2049/18T/ER-/PR-/HER-2neg"
+        "1949/16T/ER-/PR-/HER-2neg"
       ],
       "files": {
         "metadata": "data/raw/BRCA_metadata.txt",

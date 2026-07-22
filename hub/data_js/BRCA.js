@@ -3,10 +3,10 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
   "code": "BRCA",
   "display": "Breast Invasive Carcinoma",
   "category": "Solid",
-  "sample_count": 264,
-  "sample_included": 229,
+  "sample_count": 266,
+  "sample_included": 231,
   "cohort_count": 10,
-  "biology_count": 58,
+  "biology_count": 60,
   "hla_count": 44,
   "studies": [
     "PXD000394",
@@ -24,13 +24,13 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
     "1029/17T/ER+/PR+/Her2neg",
     "1097/19T/ER-/PR-/HER-2/neu-neg",
     "1137/18/ER-/PR-/Her2neg",
+    "1160/16T/ER+/PR+/HER-2neg",
     "1192/17T/ER+/PR+/Her2neg",
     "1208/18/ER+/PR+/HER-2/neu-neg",
     "1305/19T/ER+/PR+/Her2neg",
     "1478/18/ER-/PR-/Her2neg",
     "1945/18T/ER+/PR+/HER-2/neu-neg",
-    "1949/16T/ER-/PR-/HER-2neg",
-    "2049/18T/ER-/PR-/HER-2neg"
+    "1949/16T/ER-/PR-/HER-2neg"
   ],
   "files": {
     "metadata": "data/raw/BRCA_metadata.txt",
@@ -1141,6 +1141,24 @@ window.IMMUNOVERSE_HUB["BRCA"] = {
       "sample": "190823_Pankaj_1806CL.wiff",
       "biology": "HCC1806",
       "HLA": "A*23:01,A*68:01,B*51:01,B*15:03,C*02:02,C*02:10",
+      "special_note": "",
+      "acquisition": "DDA"
+    },
+    {
+      "study": "phase2_PXD034818",
+      "batch": "",
+      "sample": "Breast_344_17T_TMT126_251119.raw",
+      "biology": "344/17T/ER+/PR-/HER-2neg",
+      "HLA": "",
+      "special_note": "",
+      "acquisition": "DDA"
+    },
+    {
+      "study": "phase2_PXD034818",
+      "batch": "",
+      "sample": "Breast_1160_16T_TMT126_251119.raw",
+      "biology": "1160/16T/ER+/PR+/HER-2neg",
+      "HLA": "",
       "special_note": "",
       "acquisition": "DDA"
     },
