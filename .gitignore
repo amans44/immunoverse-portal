@@ -9,9 +9,21 @@ __pycache__/
 all_final_enhanced_all.csv
 *_final_enhanced.txt
 *_metadata.txt
-# Hub mirrors NYU metadata into the repo so the /hub download buttons
-# can serve them straight from GitHub Pages — re-allow them here.
-!hub/data/raw/*_metadata.txt
+# The Hub used to mirror NYU metadata INTO this public repo so /hub could serve
+# it from GitHub Pages. The Hub is permission-gated now: its data lives in a
+# private GCS bucket and is fetched through the auth service. Nothing Hub-related
+# may be committed here again — the *_metadata.txt rule above already covers it,
+# and these belt-and-braces rules cover the rest.
+hub/data/
+hub/data_js/
+
+# PRIVATE in-house data must never reach this PUBLIC repo. `_inhouse_test/` holds
+# real medulloblastoma peptides + assets pulled from the private bucket for local
+# testing; a bare `git add -A` would have committed all of it (caught 2026-07-22).
+_inhouse_test/
+in-house/
+# Editor/tool scratch files that accumulate at the repo root.
+*.tmp.*
 all_deepimmuno_immunogenicity.txt
 US_HLA_frequency.csv
 nature_cancer_submission_*.docx

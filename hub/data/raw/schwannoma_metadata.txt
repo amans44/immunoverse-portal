@@ -1,2 +1,0 @@
-study	batch	sample	biology	HLA	special_note	acquisition
-PXD013831		20171206_QE_HFX_LC2_JMI_HLApI_3989-HT_R01.raw	3989-HT	"A*03:01,B*14:01,B*35:08,C*04:01,C*07:02"		DDA

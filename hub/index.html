@@ -502,6 +502,29 @@ footer {
   text-align: center; padding: 80px 0;
   color: var(--text-3); font-size: 14px;
 }
+
+/* ---- Access gate -------------------------------------------------------
+   The Hub is permission-gated: the catalogue lives in a private bucket and is
+   fetched through the auth service. Everything below is what a visitor sees
+   when they aren't signed in, or are signed in without Hub access. */
+.gate {
+  max-width: 620px; margin: 0 auto; padding: 72px 24px; text-align: center;
+}
+.gate-lock {
+  width: 56px; height: 56px; margin: 0 auto 22px; border-radius: 16px;
+  display: grid; place-items: center;
+  background: var(--surface-2, rgba(127,127,127,.10));
+  border: 1px solid var(--border, rgba(127,127,127,.22));
+}
+.gate-lock svg { width: 26px; height: 26px; stroke: var(--text-2); }
+.gate h2 { font-size: 22px; margin: 0 0 10px; letter-spacing: -.01em; }
+.gate p  { color: var(--text-3); font-size: 14.5px; line-height: 1.65; margin: 0 0 22px; }
+.gate-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.gate-note {
+  margin-top: 26px; font-size: 12.5px; color: var(--text-3);
+  border-top: 1px solid var(--border, rgba(127,127,127,.18)); padding-top: 18px;
+}
+.is-gated .filter-bar, .is-gated .hero-stats { display: none; }
 </style>
 </head>
 <body>
@@ -516,7 +539,6 @@ footer {
       <a href="/">Atlas</a>
       <a href="/hub/" class="current">Hub</a>
       <a href="/demo/">Demo</a>
-      <a href="/reviewers/">Reviewers</a>
     </div>
     <div class="nav-spacer"></div>
     <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle theme">
@@ -543,9 +565,9 @@ footer {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M12 4v16"/></svg>
             Getting started
           </a>
-          <a class="btn-secondary" href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/ImmunoVerse_Hub/" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M21 3l-9 9M5 5h6M5 12v7h14v-6"/></svg>
-            View source on NYU
+          <a class="btn-secondary" href="/#contact">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Request access
           </a>
         </div>
         <div class="hero-stats">
@@ -574,7 +596,7 @@ footer {
           </div>
           <div class="hero-panel-bar"><span></span></div>
           <div class="hero-panel-meta">
-            <span>Mirroring NYU share</span>
+            <span>Private · access-controlled</span>
             <span>Daily auto-refresh</span>
           </div>
         </div>
@@ -613,6 +635,23 @@ footer {
   <div class="container">
     <div class="cards-grid" id="cardsGrid"></div>
     <div class="empty-state" id="emptyState" hidden>No datasets match that filter.</div>
+
+    <!-- Access gate: shown when the visitor can't read the Hub. Populated by
+         the gated loader below; hidden entirely once access is confirmed. -->
+    <div class="gate" id="gate" hidden>
+      <div class="gate-lock">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <h2 id="gateTitle">This resource is private</h2>
+      <p id="gateBody">The ImmunoVerse Hub is available to approved members only. Sign in to continue.</p>
+      <div class="gate-actions" id="gateActions"></div>
+      <div class="gate-note">
+        Need access? Contact
+        <a href="mailto:matthew.yarmarkovich@nyulangone.org">matthew.yarmarkovich@nyulangone.org</a>.
+      </div>
+    </div>
   </div>
 </section>
 
@@ -627,7 +666,6 @@ footer {
         <h4>Resources</h4>
         <ul>
           <li><a href="/">ImmunoVerse Atlas</a></li>
-          <li><a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/ImmunoVerse_Hub/" target="_blank" rel="noopener">NYU source share</a></li>
           <li><a href="/#methods">Methods</a></li>
           <li><a href="/#cite">Cite</a></li>
         </ul>
@@ -649,13 +687,15 @@ footer {
     </div>
     <div class="footer-bottom">
       <span>© 2026 Yarmarkovich Lab · NYU Langone Health</span>
-      <span id="footerSync">DAILY AUTO-REFRESH FROM NYU SHARE</span>
+      <span id="footerSync">PRIVATE · ACCESS-CONTROLLED · DAILY AUTO-REFRESH</span>
     </div>
   </div>
 </footer>
 
-<!-- Bundled Hub data (regenerated daily by sync_hub.py via GitHub Actions) -->
-<script src="data_js/_index.js"></script>
+<!-- NOTE: the Hub catalogue is NO LONGER bundled into this repo. It lives in a
+     private GCS bucket and is fetched at runtime through the auth service, which
+     access-checks the caller first. There is deliberately no anonymous path to
+     this data — see the gated loader below. -->
 
 <script>
 /* =========================================================
@@ -675,16 +715,172 @@ footer {
 })();
 
 /* =========================================================
-   RENDER STATS + GRID FROM IMMUNOVERSE_HUB_INDEX
+   AUTH PLUMBING (minimal mirror of index.html's chain)
+   ---------------------------------------------------------
+   Same multi-base fallback as the Atlas: a network/DNS failure on one base
+   falls through to the next, and the winner is cached for the session. Kept
+   deliberately small — the Hub only needs "who am I" + two data calls.
    ========================================================= */
-(function () {
-  var data = window.IMMUNOVERSE_HUB_INDEX;
-  if (!data) {
-    document.getElementById('emptyState').hidden = false;
-    document.getElementById('emptyState').textContent = 'Hub data is still being generated. Check back after the next daily refresh.';
+var IV_AUTH_BASES = (
+  window.IMMUNOVERSE_AUTH_BASES ? window.IMMUNOVERSE_AUTH_BASES :
+  ['https://auth-service-739605637035.us-central1.run.app',
+   'https://auth.immuno-verse.com',
+   'https://auth.immunoverse-chat.com',
+   'https://immunoverse-auth.amans44.deno.net']
+).map(function (s) { return String(s).replace(/\/+$/, ''); });
+
+var _ivBase = null;
+try { _ivBase = sessionStorage.getItem('iv_auth_base'); } catch (e) {}
+if (_ivBase && IV_AUTH_BASES.indexOf(_ivBase) === -1) _ivBase = null;
+
+async function ivAuthFetch(path, opts) {
+  var ordered = _ivBase
+    ? [_ivBase].concat(IV_AUTH_BASES.filter(function (b) { return b !== _ivBase; }))
+    : IV_AUTH_BASES.slice();
+  var lastErr;
+  for (var i = 0; i < ordered.length; i++) {
+    try {
+      var res = await fetch(ordered[i] + path, opts);
+      _ivBase = ordered[i];
+      try { sessionStorage.setItem('iv_auth_base', ordered[i]); } catch (e) {}
+      return res;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('auth endpoints unreachable');
+}
+
+function ivToken() { try { return localStorage.getItem('iv_portal_access'); } catch (e) { return null; } }
+
+function ivAuthedFetch(path, opts) {
+  opts = opts || {};
+  var headers = Object.assign({}, opts.headers || {});
+  var tok = ivToken();
+  if (tok && !headers.Authorization) headers.Authorization = 'Bearer ' + tok;
+  if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+  return ivAuthFetch(path, Object.assign({ credentials: 'include' }, opts, { headers }));
+}
+
+// Trade the refresh token for a fresh access token (cookie and/or localStorage).
+async function ivTryRefresh() {
+  var stored = null;
+  try { stored = localStorage.getItem('iv_portal_refresh'); } catch (e) {}
+  try {
+    var r = await ivAuthFetch('/api/portal/auth/refresh', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(stored ? { refresh_token: stored } : {}),
+    });
+    if (!r.ok) return false;
+    var d = await r.json().catch(function () { return {}; });
+    try {
+      if (d.access_token)  localStorage.setItem('iv_portal_access',  d.access_token);
+      if (d.refresh_token) localStorage.setItem('iv_portal_refresh', d.refresh_token);
+    } catch (e) {}
+    return true;
+  } catch (e) { return false; }
+}
+
+// Resolve the signed-in user, retrying once through a token refresh so a merely
+// *expired* access token reads as signed-in rather than bouncing to the gate.
+async function ivMe() {
+  try {
+    var r = await ivAuthedFetch('/api/portal/auth/me');
+    if (r.status === 401 && await ivTryRefresh()) r = await ivAuthedFetch('/api/portal/auth/me');
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) { return null; }
+}
+
+/* =========================================================
+   GATED HUB LOADER
+   ---------------------------------------------------------
+   Order matters: resolve the session first so we can tell "not signed in"
+   (offer sign-in) apart from "signed in without Hub access" (offer to request
+   it). Both end at the same gate, but the wording and CTA differ.
+   ========================================================= */
+var HUB_DATASET = 'hub';
+var HUB_INDEX_PATH = '_index.json';
+
+function ivHubFilePath(p) {
+  return '/api/portal/data/datasets/' + encodeURIComponent(HUB_DATASET) +
+         '/file?path=' + encodeURIComponent(p);
+}
+
+function showGate(title, body, actionsHtml) {
+  document.body.classList.add('is-gated');
+  var g = document.getElementById('gate');
+  document.getElementById('gateTitle').textContent = title;
+  document.getElementById('gateBody').textContent = body;
+  document.getElementById('gateActions').innerHTML = actionsHtml || '';
+  g.hidden = false;
+  document.getElementById('cardsGrid').innerHTML = '';
+  document.getElementById('emptyState').hidden = true;
+  ['statCancers', 'statSamples', 'statCohorts'].forEach(function (id) {
+    var el = document.getElementById(id); if (el) el.textContent = '—';
+  });
+}
+
+async function ivHubBoot() {
+  var next = encodeURIComponent('/hub/');
+  var user = await ivMe();
+
+  if (!user) {
+    showGate(
+      'This resource is private',
+      'The ImmunoVerse Hub is available to approved members only. Sign in to continue.',
+      '<a class="btn-primary" href="/login.html?next=' + next + '">Sign in</a>' +
+      '<a class="btn-secondary" href="/">Back to Atlas</a>'
+    );
     return;
   }
 
+  var res;
+  try {
+    res = await ivAuthedFetch(ivHubFilePath(HUB_INDEX_PATH));
+    if (res.status === 401 && await ivTryRefresh()) {
+      res = await ivAuthedFetch(ivHubFilePath(HUB_INDEX_PATH));
+    }
+  } catch (e) {
+    showGate('Couldn’t reach the Hub',
+             'The data service is unreachable right now. Please try again in a moment.',
+             '<a class="btn-secondary" href="/hub/">Retry</a>');
+    return;
+  }
+
+  if (res.status === 403 || res.status === 404) {
+    showGate(
+      'You don’t have Hub access yet',
+      'You’re signed in as ' + (user.email || 'your account') +
+        ', but this account hasn’t been granted the ImmunoVerse Hub.',
+      '<a class="btn-primary" href="mailto:matthew.yarmarkovich@nyulangone.org' +
+        '?subject=ImmunoVerse%20Hub%20access%20request">Request access</a>' +
+      '<a class="btn-secondary" href="/">Back to Atlas</a>'
+    );
+    return;
+  }
+  if (!res.ok) {
+    showGate('Couldn’t load the Hub',
+             'The catalogue failed to load (error ' + res.status + '). Please try again shortly.',
+             '<a class="btn-secondary" href="/hub/">Retry</a>');
+    return;
+  }
+
+  var data;
+  try { data = await res.json(); } catch (e) { data = null; }
+  if (!data || !Array.isArray(data.cancers)) {
+    showGate('Hub catalogue unavailable',
+             'The catalogue is being regenerated. Check back after the next refresh.', '');
+    return;
+  }
+  document.getElementById('gate').hidden = true;
+  document.body.classList.remove('is-gated');
+  ivRenderHub(data);
+}
+
+/* =========================================================
+   RENDER STATS + GRID
+   ========================================================= */
+function ivRenderHub(data) {
   // Hero stats
   var fmt = function (n) { return (n || 0).toLocaleString(); };
   document.getElementById('statCancers').textContent = fmt(data.totals.cancers);
@@ -710,8 +906,12 @@ footer {
   }
 
   function cardHtml(c) {
-    var sbatchPath = 'data/raw/' + c.code + '_download.sbatch';
-    var metadataPath = 'data/raw/' + c.code + '_metadata.txt';
+    // Bucket-relative paths from _index.json. These are NOT URLs — the bytes are
+    // pulled through the access-checked API on click (see the delegated handler
+    // below), so there is no link a signed-out visitor could follow.
+    var files = c.files || {};
+    var sbatchPath = files.sbatch || (c.code + '_download.sbatch');
+    var metadataPath = files.metadata || (c.code + '_metadata.txt');
     return '' +
       '<article class="card">' +
         '<div class="card-head">' +
@@ -752,14 +952,14 @@ footer {
           '</div>' +
         '</div>' +
         '<div class="card-actions">' +
-          '<a class="card-btn" href="' + sbatchPath + '" download>' +
+          '<button type="button" class="card-btn" data-dl="' + escapeHtml(sbatchPath) + '">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
             'Sbatch' +
-          '</a>' +
-          '<a class="card-btn ghost" href="' + metadataPath + '" download>' +
+          '</button>' +
+          '<button type="button" class="card-btn ghost" data-dl="' + escapeHtml(metadataPath) + '">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
             'Metadata' +
-          '</a>' +
+          '</button>' +
         '</div>' +
       '</article>';
   }
@@ -795,8 +995,42 @@ footer {
     render();
   });
 
+  // Delegated download handler. We pull the bytes through the access-checked
+  // proxy and save them as a Blob rather than navigating to a signed GCS URL:
+  // the files are small, it keeps the correct filename, and a text/plain object
+  // opened via a signed URL would render in the tab instead of downloading.
+  grid.addEventListener('click', async function (ev) {
+    var btn = ev.target.closest('[data-dl]');
+    if (!btn) return;
+    var path = btn.getAttribute('data-dl');
+    var label = btn.textContent.trim();
+    if (btn.dataset.busy) return;
+    btn.dataset.busy = '1';
+    btn.textContent = 'Downloading…';
+    try {
+      var r = await ivAuthedFetch(ivHubFilePath(path));
+      if (r.status === 401 && await ivTryRefresh()) r = await ivAuthedFetch(ivHubFilePath(path));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var blob = await r.blob();
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = path.split('/').pop();
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+      btn.textContent = label;
+    } catch (e) {
+      console.warn('[hub] download failed', path, e);
+      btn.textContent = 'Failed — retry';
+      setTimeout(function () { btn.textContent = label; }, 2500);
+    } finally {
+      delete btn.dataset.busy;
+    }
+  });
+
   render();
-})();
+}
+
+ivHubBoot();
 </script>
 </body>
 </html>

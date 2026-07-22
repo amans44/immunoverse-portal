@@ -40,7 +40,7 @@ it works that way*. It has two parts:
 | `/` | `index.html` | Main public landing — full atlas (21 cancers, all peptides, drawer, search, chatbot) | Production. All recent figure-rendering & proxy changes live here first. |
 | `/demo/` | `demo/index.html` | Public preview — curated subset (AML, NBL, SKCM only) | Intentionally pinned: Aman wants demo & reviewers untouched unless explicitly asked. |
 | `/reviewers/` | `reviewers/index.html` | Editor / paper-reviewer access | Same constraint as `/demo/`. |
-| `/hub/` | `hub/index.html` | Curated *unprocessed* immunopeptidomic datasets — metadata + SLURM download scripts. Separate from the Atlas. | Light theme by default, dark toggle (localStorage-persisted). 33 cancers driven by `hub/data_js/_index.js` + per-cancer JS modules. |
+| `/hub/` | `hub/index.html` | **PRIVATE (2026-07-22)** — curated *unprocessed* immunopeptidomic datasets, metadata + SLURM download scripts. Approved members only. | Light theme by default, dark toggle. 36 cancers fetched at runtime from a private GCS bucket through the auth service; **no data in this repo**. Signed-out or un-granted visitors get the access gate. |
 
 Pages share the topnav and link to each other via plain `/`, `/demo/`, `/reviewers/`, `/hub/`. The Hub link lives in the **footer "Explore" column** of the main portal (`index.html`) — kept out of the topnav to avoid crowding (search bar was overlapping the brand area when Hub was also a topnav link).
 
@@ -57,20 +57,43 @@ Two independent sync flows, both daily:
 - **Outputs:** `data_js/{CANCER}.js`, `data_js/{CANCER}_detail.js`, `data_js/_search_index.js`, `data_js/_summary.js`, and a `data/` folder with derived CSVs.
 - **Input columns it expects:** see the module docstring in `integrate_data.py`.
 
-### Hub data — NYU public share → `hub/data_js/`
-- **Script:** `sync_hub.py`
-- **Source:** `https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/ImmunoVerse_Hub/` (public HTTP directory, no auth needed).
-- **Inputs:** `{CANCER}_metadata.txt` (TSV: study, batch, sample, biology, HLA, special_note) and `{CANCER}_download.sbatch` (SLURM scripts pointing at PRIDE FTP URLs).
-- **Outputs:**
-  - `hub/data_js/{CANCER}.js` — per-cancer JS module (`window.IMMUNOVERSE_HUB[code] = {...}`).
-  - `hub/data_js/_index.js` — summary index with totals (cancers, samples, cohorts) used by the hero stats.
-  - `hub/data/raw/{CANCER}_metadata.txt` and `{CANCER}_download.sbatch` — raw mirrors so the per-card download buttons can serve the files straight from GitHub Pages.
-- **Regex for cancer codes:** `[A-Za-z0-9]+_metadata\.txt` (case-insensitive — `ependymoma` and `meningioma` are lowercase at NYU).
-- **Display-name map:** `CANCER_DISPLAY` in `sync_hub.py` (TCGA codes → human names; falls back to the code itself if unknown).
-- **Category map:** `CANCER_CATEGORY` (Leukemia / Lymphoma / Sarcoma / Pediatric / CNS / Solid). Drives the filter chips on `/hub`.
+### Hub data — Dropbox → private GCS (NOT this repo)
+**Changed 2026-07-22.** The Hub used to be public: `sync_hub.py` pulled the NYU
+open share and committed the results into `hub/data_js/` + `hub/data/raw/`, which
+GitHub Pages served to anyone. The Hub is now permission-gated, so **neither the
+data nor the source URL lives in this public repo any more**.
+
+- **Script:** `hub_sync/hub_sync.py` in the **PRIVATE** repo
+  (`amans44/ImmunoVerse_Chat_AgenticAI`). `sync_hub.py` here is deleted.
+- **Source:** a private Dropbox share. Its URL is a **bearer credential**
+  (possession = full access), so it lives in Secret Manager
+  (`immunoverse-hub-dropbox-url`) and never in a public repo or workflow file.
+- **Destination:** `gs://immunoverse-hub-private/` — the Hub's **own** bucket, a
+  sibling of `immunoverse-private-datasets`, files flat at the ROOT.
+- **Runner:** Cloud Run job `immunoverse-hub-sync` (project `immunoverse-chat`,
+  `us-central1`), service account `hub-sync@…` — scoped to `objectAdmin` on the
+  Hub bucket + `secretAccessor` on that one secret, nothing else. Cloud Scheduler
+  `immunoverse-hub-sync-daily` fires it at **06:45 UTC** daily (30 min after the
+  Atlas refresh). Uses the **v2** Run API URI
+  (`…/v2/projects/{p}/locations/{r}/jobs/{j}:run`) — the global
+  `run.googleapis.com/apis/…/namespaces/…` form returns NOT_FOUND for regional jobs.
+- **Outputs (in the bucket):** the raw `{CANCER}_metadata.txt` /
+  `{CANCER}_download.sbatch` files, plus `_index.json` — the catalogue the page
+  renders (totals + per-cancer summary + bucket-relative file paths).
+- **Idempotent:** unchanged files are skipped by size+MD5. Files that vanish from
+  Dropbox are **reported, never auto-deleted** — a silently truncated zip must not
+  be able to erase a cohort.
+- **Display/category maps:** `CANCER_DISPLAY` / `CANCER_CATEGORY` in
+  `hub_sync.py`. 36 codes as of the move — `OS`, `UCS`, `schwannoma` were added
+  then (they'd previously rendered as bare codes).
+- **Serving:** the page never touches the bucket. It calls
+  `/api/portal/data/datasets/hub/file?path=…` on the auth service, which
+  access-checks the caller first. See "Private in-house datasets".
 
 ### Gitignore note
-`*_metadata.txt` is globally ignored (the main portal pulls fresh metadata from Dropbox and doesn't store it). The Hub re-allows them via the negation rule `!hub/data/raw/*_metadata.txt` in `.gitignore`.
+`*_metadata.txt` is globally ignored. The Hub's old negation rule
+(`!hub/data/raw/*_metadata.txt`) is **removed** — `hub/data/` and `hub/data_js/`
+are now explicitly ignored so Hub data can never be re-committed here.
 
 ---
 
@@ -334,7 +357,11 @@ dynamically via `ivLoadInhouseGated`, no redeploy.
 - **Storage:** private GCS bucket `immunoverse-private-datasets` (project
   `immunoverse-chat`, public-access-prevention ENFORCED), one folder per cancer at
   the bucket ROOT (e.g. `medulloblastoma/{MB.js, MB_detail.js, MB_metadata.txt,
-  final_enhanced.txt, assets/}`). Raw `final_enhanced.txt` is transformed into the
+  final_enhanced.txt, assets/}`). **Per-dataset bucket override (2026-07-22):** a
+  dataset doc may set `storage_bucket` to read from a *different* bucket; omitted
+  (the case for all 5 in-house cohorts) means the default `PORTAL_PRIVATE_GCS_BUCKET`.
+  The Hub uses it to live in its own bucket. An empty `storage_prefix` is legal and
+  means the bucket root. Raw `final_enhanced.txt` is transformed into the
   explorer's `window.__PD__["MB"]={…}` format by **`integrate_inhouse.py`** (reuses
   `integrate_data.py` helpers; asset names carry NO code prefix). Never served from
   `/hub` (that page is public-only).
@@ -448,7 +475,9 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 | NYU public share | `https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/` | Root of all NYU-hosted assets (PNG figures, SVG figures, Hub metadata, Hub sbatch scripts). |
 | NYU `/assets/` | `…/ImmunoVerse/assets/` | PNG figures — `{CODE}_{PEP}_{percentile,rank_abundance,spectrum}.png`. 21 cancer codes present. |
 | NYU `/assets_svg/` | `…/ImmunoVerse/assets_svg/{CODE}/` | Interactive SVG figures — `{PEP}_{percentile,rank_abundance}.svg` and `spectrum_{PEP}.svg`. Only `NBL/` listed at the parent directory; other cancers TBD. |
-| NYU `/ImmunoVerse_Hub/` | `…/ImmunoVerse/ImmunoVerse_Hub/` | Curated dataset hub — `{CANCER}_metadata.txt` + `{CANCER}_download.sbatch`. 33 cancers. |
+| ~~NYU `/ImmunoVerse_Hub/`~~ | — | **RETIRED 2026-07-22.** The Hub moved off the NYU public share when it was locked down. Do not re-point anything at it. |
+| Hub private bucket | `gs://immunoverse-hub-private` | The Hub's own private bucket (PAP enforced, UBLA locked, versioned). 36 cohorts + `_index.json`. Served only via the auth service. |
+| Hub sync job | Cloud Run job `immunoverse-hub-sync` (`us-central1`) | Daily Dropbox → Hub-bucket sync, 06:45 UTC via Cloud Scheduler `immunoverse-hub-sync-daily`. Source in the private repo. |
 | Dropbox share | (in `integrate_data.py`) | Daily Dropbox refresh source for the Atlas. |
 | GoatCounter dashboard | `https://immuno-verse.goatcounter.com` | Private analytics dashboard. |
 
@@ -462,8 +491,11 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
   1. Checkout repo (fetch-depth: 0).
   2. Setup Python 3.11.
   3. Run `integrate_data.py` (rebuilds `data_js/` from Dropbox).
-  4. Run `sync_hub.py` (rebuilds `hub/data_js/` from the NYU public share). All NYU fetches go through `_fetch_text`, which retries transient errors (RemoteDisconnected / timeouts / **404** / 408 / 429 / 5xx) with exponential backoff — 4 attempts, 5→10→20 s. 404 is retried because NYU's degraded server emits spurious 404s (302→404); genuine client errors (400/401/403) still fail fast. If the NYU **listing** is still unreachable after retries, `sync_hub.py` keeps the existing `hub/data_js/` and exits 0 (non-fatal) so this secondary source can't block the Atlas commit in step 5. A reachable-but-empty listing (real layout change) stays fatal.
-  5. Stage `data_js/`, `data/`, `hub/data_js/`, `hub/data/` and commit only if changed (`chore(data): daily refresh from Dropbox`).
+  4. ~~Run `sync_hub.py`~~ — **removed 2026-07-22.** The Hub is private; its refresh
+     runs as the `immunoverse-hub-sync` Cloud Run job from the private repo, because
+     the Dropbox source URL must not appear in this public repo. Do not re-add a Hub
+     step to this workflow.
+  5. Stage `data_js/` and `data/` and commit only if changed (`chore(data): daily refresh from Dropbox`).
   6. Push to `main`.
   7. Notify via comment on a tracking GitHub issue (label `ci-refresh-success`). On failure, posts to a separate issue labeled `ci-refresh-failure`.
   8. **Email a direct summary to `amansharma.e44@gmail.com`** on every run (success or failure) via Gmail SMTP (`dawidd6/action-send-mail@v3`). Runs last so `${{ job.status }}` reflects the whole run; `continue-on-error` so a mail hiccup never fails the refresh. The subject flags whether new data was committed.
@@ -473,6 +505,55 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ---
 
 ## Change log
+
+### 2026-07-22 — /hub goes PRIVATE: own bucket, gated page, Dropbox auto-sync
+
+**Files:** `hub/index.html`, `.gitignore`, `.github/workflows/refresh-data.yml`,
+`sync_hub.py` (deleted), `hub/data_js/` + `hub/data/` (deleted, 109 files);
+in the private repo `portal_auth/{private_data.py, models.py, dataset_routes.py}`
+and the new `hub_sync/`.
+
+**Why:** `/hub` was fully public. Locking the *page* alone would have been
+cosmetic — the catalogue and all 72 raw files were committed to this public repo
+and served by GitHub Pages, so anyone could fetch
+`immuno-verse.com/hub/data/raw/AML_metadata.txt` directly. Closing the door meant
+moving the bytes out of the repo entirely.
+
+- **Own bucket, not a shared prefix.** `gs://immunoverse-hub-private` (US-CENTRAL1,
+  PAP enforced, UBLA locked, versioned, 7-day soft delete) — a sibling of
+  `immunoverse-private-datasets`, so the Hub and the in-house cohorts have separate
+  blast radii. 74 files at the root + generated `_index.json`.
+- **Backend gained per-dataset buckets.** `PrivateStore` resolved exactly one
+  bucket from `PORTAL_PRIVATE_GCS_BUCKET`; datasets varied only by prefix. Now a
+  dataset may carry `storage_bucket`, and buckets are cached per name. Omitted →
+  the default, so all 5 in-house cohorts are untouched. Also fixed `_join_prefix`,
+  which turned an empty prefix into a leading `/` (a different, non-existent blob)
+  — the Hub needs root-level access. In filesystem/dev mode an alternate bucket is
+  a **sibling** dir, never a child, or a root-prefix listing would walk into it.
+- **Access = its own board entry.** Firestore `portal_private_datasets/hub`
+  (`visibility: restricted`, `storage_prefix: ""`, `storage_bucket:
+  immunoverse-hub-private`) granted via the dedicated **`immunoverse-hub` group** —
+  deliberately NOT `yarmarkovichlab`, so Hub membership is chosen per person.
+  Starts empty: admins see it, nobody else until Aman adds them.
+- **Page is gated.** `hub/index.html` no longer includes any data. It resolves the
+  session (`/auth/me`, with a refresh retry so an expired token isn't mistaken for
+  signed-out), then fetches `_index.json` through the access-checked proxy. Three
+  distinct states: signed-out → "Sign in"; signed-in without access → "Request
+  access" naming the account; error → retry. Downloads stream through the proxy as
+  Blobs (correct filename; a signed GCS URL would render `.txt` inline instead).
+- **Reviewers link removed** from the Hub nav, plus every NYU public-share link.
+- **Auto-sync.** Cloud Run job `immunoverse-hub-sync` + Cloud Scheduler
+  `immunoverse-hub-sync-daily` (06:45 UTC) pull the Dropbox zip → bucket. The
+  Dropbox URL is a bearer credential, so it lives in Secret Manager and the job
+  runs from the PRIVATE repo — a GitHub Actions secret in this public repo would
+  still advertise the source and be exfiltratable by anyone with write access.
+  Dedicated `hub-sync@` SA: `objectAdmin` on the Hub bucket + `secretAccessor` on
+  one secret; the auth service keeps read-only.
+- **Verified:** 74/74 files byte-identical, anonymous GET → 403, index parsing
+  identical to the old public index across all 36 codes (only intended diffs:
+  3 new display names, BRCA +2 samples from newer Dropbox data), in-house MB still
+  resolves 974 files, cross-bucket reads return None, job + scheduler both green.
+
 
 Newest at the top. Each entry: date, headline, summary, files touched, commit SHA(s).
 
