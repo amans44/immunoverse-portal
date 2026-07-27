@@ -506,6 +506,14 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
+### 2026-07-27 — Hub download audit log
+
+Every private-file download (`/api/portal/data/datasets/{id}/file`) is recorded to
+Firestore `portal_download_log` (who / which file / when / size / ip). Admins view it in
+a new **Downloads** tab in `admin.html` (`GET /admin/download-log?dataset_id=hub`).
+Internal catalogue fetches (`_index.json`, `_public_index.json`) are excluded. Backend
+detail in `portal_auth/CHANGELOG.md` (2026-07-27).
+
 ### 2026-07-27 — Three fixes from Frank's report (queries pill, Hub request-access)
 
 - **Queries pill showed "1" after crossing 1,000.** `index.html` did

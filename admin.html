@@ -379,6 +379,7 @@ footer.page-footer a:hover { color: var(--text-0); }
   <button id="tabInq"   onclick="switchTab('inquiries')">Feedback <span class="count-badge" id="tabInqCount">0</span></button>
   <button id="tabAllow" onclick="switchTab('allow')">Admin allow-list <span class="count-badge" id="tabAllowCount">0</span></button>
   <button id="tabBoard" onclick="switchTab('board')">In-house access</button>
+  <button id="tabDl" onclick="switchTab('downloads')">Downloads</button>
 </div>
 
 <!-- ===== Access requests ===== -->
@@ -489,6 +490,22 @@ footer.page-footer a:hover { color: var(--text-0); }
     <p class="pb-title">Datasets <span class="pb-hint">who can see each in-house dataset</span></p>
     <div id="pbDatasets">Loading…</div>
   </div>
+</section>
+
+<!-- ===== Download log ===== -->
+<section class="card" id="cardDownloads" hidden>
+  <div class="card-head">
+    <h2><span>⬇️</span>Downloads</h2>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <select id="dlDataset" onchange="loadDownloads()" style="padding:7px 10px;border-radius:8px;">
+        <option value="hub">Hub</option>
+        <option value="">All private datasets</option>
+      </select>
+      <button class="btn" onclick="loadDownloads()">Refresh</button>
+    </div>
+  </div>
+  <div id="dlAlert"></div>
+  <div id="dlBody">Loading…</div>
 </section>
 
 <!-- ===== Users ===== -->
@@ -698,12 +715,15 @@ function switchTab(which) {
   $('cardInquiries').hidden = which !== 'inquiries';
   $('cardAllow').hidden     = which !== 'allow';
   $('cardBoard').hidden     = which !== 'board';
+  $('cardDownloads').hidden = which !== 'downloads';
   $('tabReq').classList.toggle('active',   which === 'requests');
   $('tabUsers').classList.toggle('active', which === 'users');
   $('tabInq').classList.toggle('active',   which === 'inquiries');
   $('tabAllow').classList.toggle('active', which === 'allow');
   $('tabBoard').classList.toggle('active', which === 'board');
+  $('tabDl').classList.toggle('active',    which === 'downloads');
   if (which === 'board') loadPortalBoard();
+  if (which === 'downloads') loadDownloads();
 }
 
 // ---------- Access requests ----------
@@ -1155,6 +1175,38 @@ async function removePortalDsEmail(id, email) {
 
 window.createPortalGroup = createPortalGroup;
 window.loadPortalBoard = loadPortalBoard;
+
+// ---------- Download log ----------
+async function loadDownloads() {
+  const body = $('dlBody');
+  if (!body) return;
+  clearAlert('dlAlert');
+  body.innerHTML = 'Loading…';
+  const ds = $('dlDataset') ? $('dlDataset').value : 'hub';
+  try {
+    const qs = ds ? ('?dataset_id=' + encodeURIComponent(ds) + '&limit=500') : '?limit=500';
+    const r = await authedFetch(PB_BASE + '/download-log' + qs);
+    if (!r.ok) throw new Error('Failed (' + r.status + ')');
+    const rows = await r.json();
+    if (!rows.length) { body.innerHTML = '<div class="empty-state">No downloads recorded yet.</div>'; return; }
+    const fmtB = b => b == null ? '—' : (b >= 1048576 ? (b/1048576).toFixed(1)+' MB' : b >= 1024 ? Math.round(b/1024)+' KB' : b+' B');
+    body.innerHTML = `<table class="tbl">
+      <thead><tr><th>When</th><th>Who</th><th>Dataset</th><th>File</th><th>Size</th><th>IP</th></tr></thead>
+      <tbody>${rows.map(x => `<tr>
+        <td>${esc(timeAgo(x.at))}</td>
+        <td class="email-mono">${esc(x.email || (x.via === 'share' ? 'share link' : 'unknown'))}</td>
+        <td>${esc(x.dataset_id)}</td>
+        <td class="email-mono">${esc(x.filename || x.path)}</td>
+        <td>${esc(fmtB(x.bytes))}</td>
+        <td class="email-mono" style="color:var(--text-3);">${esc(x.ip || '—')}</td>
+      </tr>`).join('')}</tbody></table>
+      <p style="margin-top:10px;color:var(--text-3);font-size:12.5px;">Showing the ${rows.length} most recent downloads. Catalogue/index fetches are not logged — only real file downloads.</p>`;
+  } catch (err) {
+    alert_('dlAlert', err.message, 'error');
+    body.innerHTML = '';
+  }
+}
+window.loadDownloads = loadDownloads;
 
 // ---------- Inquiries ----------
 let INQ_FILTER = 'new';
