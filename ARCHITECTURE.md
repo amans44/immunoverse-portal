@@ -506,6 +506,23 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
+### 2026-07-27 — Three fixes from Frank's report (queries pill, Hub request-access)
+
+- **Queries pill showed "1" after crossing 1,000.** `index.html` did
+  `parseInt(d.count)` on GoatCounter's `TOTAL.json`, whose `count` is a localized
+  STRING with a thousands separator (`"1 018"`). parseInt stops at the space → 1. Fix:
+  `parseInt(String(d.count).replace(/[^0-9]/g,''), 10)`.
+- **Hub "Request access" did nothing / never reached the admin board.** It linked to
+  the account-signup page (`/login.html#request`) — wrong for a user who already has an
+  account. Now the button (topnav hero + gate) calls the new
+  `POST /api/portal/data/datasets/hub/request-access`, which files a request into the
+  admin **Access requests** queue (labeled "🔒 dataset: hub" in `admin.html`). Approving
+  it grants the Hub to that email. A caller who already has access is told so instead of
+  queuing. Backend detail in `portal_auth/CHANGELOG.md` (2026-07-27).
+- **"Revoke didn't revoke" was not a bug.** Verified revoke immediately denies a normal
+  user; the reporter's account was a portal admin (bypass) + `yarmarkovichlab` member
+  (the Hub grants that group), so two other access paths remained.
+
 ### 2026-07-22 — /hub: public catalogue, locked downloads + on-page sign-up
 
 **Files:** `hub/index.html`, `login.html`; private repo `hub_sync/hub_sync.py`,

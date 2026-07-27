@@ -902,6 +902,38 @@ function showGateBar(title, body, actionsHtml) {
 
 function hideGateBar() { document.getElementById('gateBar').hidden = true; }
 
+// File a Hub access request (signed-in users only). Replaces the old redirect to
+// the account-signup page — that was wrong for an existing account and left the
+// admin board empty. This POSTs a real request that appears in the admin queue.
+async function ivRequestHubAccess(ev) {
+  var btn = ev && ev.currentTarget;
+  if (btn) { if (btn.dataset.busy) return; btn.dataset.busy = '1'; btn.textContent = 'Sending…'; }
+  try {
+    var r = await ivAuthedFetch('/api/portal/data/datasets/' + HUB_DATASET + '/request-access',
+                                { method: 'POST' });
+    if (r.status === 401 && await ivTryRefresh()) {
+      r = await ivAuthedFetch('/api/portal/data/datasets/' + HUB_DATASET + '/request-access', { method: 'POST' });
+    }
+    var d = await r.json().catch(function () { return {}; });
+    if (r.ok && d.status === 'already_has_access') {
+      // Access exists now (e.g. just granted) — reload to unlock in place.
+      window.location.reload(); return;
+    }
+    if (r.ok) {
+      showGateBar('Request sent ✓',
+        d.message || 'An admin will review your request, usually within 1–2 business days.', '');
+    } else {
+      if (btn) { btn.textContent = 'Request access'; delete btn.dataset.busy; }
+      showGateBar('Couldn’t send the request',
+        'Please try again in a moment' + (d && d.detail ? ' (' + d.detail + ')' : '') + '.',
+        '<button type="button" class="btn-primary" id="hubReqBtn">Retry</button>');
+      var rb = document.getElementById('hubReqBtn'); if (rb) rb.addEventListener('click', ivRequestHubAccess);
+    }
+  } catch (e) {
+    if (btn) { btn.textContent = 'Request access'; delete btn.dataset.busy; }
+  }
+}
+
 // Topnav auth controls: Sign in / Create account for visitors, My account once
 // signed in. Set here (not in markup) so the hrefs carry the /hub/ return target.
 function ivApplyAuthUI(user) {
@@ -915,12 +947,20 @@ function ivApplyAuthUI(user) {
     cr.href = CREATE_URL; cr.hidden = false;
     ac.hidden = true;
   }
-  // Hero secondary button follows the same state.
+  // Hero secondary button follows the same state. Signed-out → create account
+  // (a link). Signed-in → file a Hub access request (an action, not a redirect).
   var hb = document.getElementById('heroAuthBtn');
   var hl = document.getElementById('heroAuthLabel');
   if (hb && hl) {
-    hb.href = user ? REQUEST_URL : CREATE_URL;
     hl.textContent = user ? 'Request access' : 'Create account';
+    hb.onclick = null;
+    if (user) {
+      hb.removeAttribute('href');
+      hb.style.cursor = 'pointer';
+      hb.onclick = function (e) { e.preventDefault(); ivRequestHubAccess({ currentTarget: hb }); };
+    } else {
+      hb.href = CREATE_URL;
+    }
   }
 }
 
@@ -990,12 +1030,15 @@ async function _ivHubUnlockInner() {
   }
 
   if (res.status === 403 || res.status === 404) {
-    // Route access requests through the portal's own review queue (admin
-    // "In-house access" board), NOT the PI's personal inbox.
+    // Signed in but not granted. The button FILES a dataset-access request that
+    // lands in the admin's "Access requests" queue (it does NOT bounce to the
+    // account-signup page — this account already exists).
     showGateBar('Your account doesn’t have Hub access yet',
       'Signed in as ' + (user.email || 'your account') +
         '. Request access and an admin will review it — usually within 1–2 business days.',
-      '<a class="btn-primary" href="' + REQUEST_URL + '">Request access</a>');
+      '<button type="button" class="btn-primary" id="hubReqBtn">Request access</button>');
+    var rb = document.getElementById('hubReqBtn');
+    if (rb) rb.addEventListener('click', ivRequestHubAccess);
     return;
   }
   if (!res.ok) {

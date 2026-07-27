@@ -727,8 +727,9 @@ async function loadRequests() {
         <td>
           <div style="font-weight:600;color:var(--text-0);">${esc(req.name||'—')}</div>
           <div class="email-mono">${esc(req.email)}</div>
+          ${req.dataset_id ? `<div class="tag" style="margin-top:4px;background:var(--grad-primary-soft,rgba(20,184,166,.12));">🔒 dataset: ${esc(req.dataset_id)}</div>` : ''}
         </td>
-        <td>${esc(req.affiliation||'—')}</td>
+        <td>${esc(req.affiliation|| (req.dataset_id ? 'existing account' : '—'))}</td>
         <td>${esc(req.role_type||'—')}</td>
         <td class="reason-cell">${esc(req.reason||'')}</td>
         <td><div>${esc(timeAgo(req.created_at))}</div></td>

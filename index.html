@@ -9956,7 +9956,10 @@ window.addEventListener('popstate', async () => {
 
   fetch(GC_TOTAL, { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (d) { if (d) render(parseInt(d.count, 10)); })
+    // GoatCounter formats `count` as a localized STRING with a thousands
+    // separator ("1 018", or "1,000"). parseInt stops at the first separator,
+    // so at ≥1000 the raw value became "1". Strip every non-digit first.
+    .then(function (d) { if (d) render(parseInt(String(d.count).replace(/[^0-9]/g, ''), 10)); })
     .catch(function () {});
 
   // Fire-and-forget: still log query actions to the private Worker counter,
