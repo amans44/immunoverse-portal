@@ -136,7 +136,7 @@ Three layers, in increasing visibility:
 
 ## Figure rendering (drawer)
 
-**Only `index.html` has the SVG-first rendering path. `demo/index.html` and `reviewers/index.html` still use the original PNG-first path** — they were intentionally pinned at user's request because they were perceived to be working as before.
+**`index.html` and `reviewers/index.html` have the SVG-first rendering path; `demo/index.html` still uses the original PNG-first path.** `reviewers/index.html` was refreshed to the current `index.html` on 2026-08-06 (explicit ask), so it now matches the main portal; `demo/` remains intentionally pinned.
 
 ### Drawer section order (main `index.html`)
 
@@ -438,7 +438,7 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 `_proxiedFetch(targetUrl)` iterates the array; first proxy to return a 2xx wins.
 
-`demo/index.html` and `reviewers/index.html` still use a single `IMG_PROXY = 'https://immunoverse-proxy.amansharma-e44.workers.dev/?url='`.
+`demo/index.html` still uses a single `IMG_PROXY = 'https://immunoverse-proxy.amansharma-e44.workers.dev/?url='`. `reviewers/index.html` now uses the same multi-proxy `IMG_PROXIES` array as root (refreshed 2026-08-06).
 
 ### Why two proxies
 - **Deno Deploy** (`immunoverse-proxy.amans44.deno.net`): runs on Deno's network, reliably reaches NYU. Primary.
@@ -505,6 +505,26 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ---
 
 ## Change log
+
+### 2026-08-06 — /reviewers/ refreshed to current main site (data + UI)
+**Why:** `/reviewers/` had drifted stale. The daily `refresh-data.yml` Action only
+rebuilds/commits root `data_js/` + `data/` and never ran `sync_reviewers.py`, so the
+reviewers mirror was frozen at its last manual sync (~May 7 data, June 3 UI). At
+Aman's explicit request, reviewers must show the *current* immuno-verse.com.
+**What:**
+- Pulled `origin/main` (local was 5 bot-data commits behind), then ran
+  `sync_reviewers.py` → mirrored current `data_js/`, `data/`, `pancancer_image.png`.
+- Manually copied `index.html` → `reviewers/index.html` and `chatbot/chatbot.js` →
+  `reviewers/chatbot/chatbot.js` (the documented "push a UI change by hand" path;
+  `sync_reviewers.py` `COPY_INDEX` stays `False`). Safe because `index.html` detects
+  the `/reviewers/` path via `IV_BYPASS_LOCK` and auto-disables all gating/login/modal,
+  so the mirror stays fully open + account-free.
+- Reviewers now has the SVG-first rendering path and the multi-proxy `IMG_PROXIES`
+  array (previously PNG-first + single proxy).
+**Note:** This is a point-in-time refresh, NOT a new automation — the daily Action
+still does not sync reviewers (Aman declined a recurring sync). `/reviewers/` will
+drift again until manually re-synced. **Files:** `reviewers/` (index.html,
+chatbot/chatbot.js, data_js/, data/, pancancer_image.png), `ARCHITECTURE.md`.
 
 ### 2026-07-27 — Hub download audit log
 
