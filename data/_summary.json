@@ -16,7 +16,7 @@
         "variant": 8,
         "nuORF": 641
       },
-      "genes": 399,
+      "genes": 410,
       "totalSamples": 125
     },
     {
@@ -30,7 +30,7 @@
         "self_gene": 13,
         "nuORF": 7
       },
-      "genes": 20,
+      "genes": 19,
       "totalSamples": 2
     },
     {
@@ -50,7 +50,7 @@
         "fusion": 2,
         "nuORF": 374
       },
-      "genes": 274,
+      "genes": 281,
       "totalSamples": 49
     },
     {
@@ -69,7 +69,7 @@
         "variant": 47,
         "nuORF": 434
       },
-      "genes": 354,
+      "genes": 350,
       "totalSamples": 15
     },
     {
@@ -83,7 +83,7 @@
         "self_gene": 3,
         "nuORF": 2
       },
-      "genes": 4,
+      "genes": 3,
       "totalSamples": 4
     },
     {
@@ -103,7 +103,7 @@
         "fusion": 1,
         "nuORF": 1100
       },
-      "genes": 1078,
+      "genes": 1081,
       "totalSamples": 63
     },
     {
@@ -141,7 +141,7 @@
         "fusion": 1,
         "nuORF": 55
       },
-      "genes": 98,
+      "genes": 91,
       "totalSamples": 7
     },
     {
@@ -160,7 +160,7 @@
         "variant": 61,
         "nuORF": 967
       },
-      "genes": 605,
+      "genes": 588,
       "totalSamples": 33
     },
     {
@@ -180,7 +180,7 @@
         "fusion": 2,
         "nuORF": 169
       },
-      "genes": 225,
+      "genes": 239,
       "totalSamples": 56
     },
     {
@@ -198,7 +198,7 @@
         "variant": 24,
         "nuORF": 311
       },
-      "genes": 221,
+      "genes": 223,
       "totalSamples": 72
     },
     {
@@ -217,7 +217,7 @@
         "variant": 60,
         "nuORF": 517
       },
-      "genes": 405,
+      "genes": 395,
       "totalSamples": 72
     },
     {
@@ -236,7 +236,7 @@
         "variant": 295,
         "nuORF": 807
       },
-      "genes": 738,
+      "genes": 718,
       "totalSamples": 55
     },
     {
@@ -256,7 +256,7 @@
         "fusion": 2,
         "nuORF": 802
       },
-      "genes": 774,
+      "genes": 753,
       "totalSamples": 55
     },
     {
@@ -272,7 +272,7 @@
         "variant": 1,
         "nuORF": 68
       },
-      "genes": 49,
+      "genes": 56,
       "totalSamples": 7
     },
     {
@@ -291,7 +291,7 @@
         "variant": 1,
         "nuORF": 83
       },
-      "genes": 99,
+      "genes": 108,
       "totalSamples": 16
     },
     {
@@ -331,7 +331,7 @@
         "fusion": 1,
         "nuORF": 712
       },
-      "genes": 439,
+      "genes": 440,
       "totalSamples": 20
     },
     {
@@ -348,7 +348,7 @@
         "TE_chimeric_transcript": 1,
         "nuORF": 14
       },
-      "genes": 22,
+      "genes": 25,
       "totalSamples": 23
     },
     {
@@ -368,7 +368,7 @@
         "variant": 956,
         "nuORF": 2917
       },
-      "genes": 2179,
+      "genes": 2147,
       "totalSamples": 101
     },
     {
@@ -385,7 +385,7 @@
         "variant": 1,
         "nuORF": 6
       },
-      "genes": 20,
+      "genes": 19,
       "totalSamples": 2
     }
   ],
@@ -413,7 +413,7 @@
   "totals": {
     "targets": 26603,
     "tumorSpecific": 23970,
-    "genes": 8559
+    "genes": 8502
   },
   "labels": {
     "self_gene": "Canonical self-antigen",
