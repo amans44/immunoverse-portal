@@ -530,6 +530,29 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
+### 2026-08-31 — Fix "Atlas" colliding with the search field on a signed-in nav
+
+**Why:** reported straight after the logo shipped — on a signed-in (admin) nav
+the "Atlas" subtitle sat flush against the search box. Measured: `.brand` is
+`flex:0 1 auto`, so the layout squeezed it to 217px while its contents needed
+230px. Its children are inline SVGs (`flex:0 0 auto`) that cannot shrink, so the
+overflow spilled out of the brand's own box and "Atlas" ended up **1px** from
+`.search-wrap`. The SVG wordmark is simply wider than the bold live text it
+replaced, so the old width budget no longer held.
+
+**What:**
+- `.brand { flex-shrink: 0 }` — the lockup must never be compressed, because
+  nothing inside it can give. Nav pressure now goes to `.search-wrap`
+  (`flex:0 1 200px`, 130px floor), which is the element designed to absorb it.
+- Trimmed `.brand .wordmark` from `0.95em` to `0.84em` so the lockup's natural
+  width (214px) fits the budget without forcing the search field under its floor.
+
+**Result** (measured at the 1600px cap, all three nav states, no overlaps):
+anonymous 25px gap / search 200px; signed-in member 18px / 200px; signed-in admin
+16px / 131px (search at its floor — the designed absorption).
+
+**Files:** `index.html`.
+
 ### 2026-08-31 — Real brand logo + first favicon
 
 **Why:** the nav "logo" was a placeholder — a 32px gradient square with a

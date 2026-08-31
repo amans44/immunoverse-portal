@@ -169,6 +169,13 @@ nav.topnav .inner {
   nav.topnav .inner { gap: 16px; padding: 14px 28px; }
 }
 .brand {
+  /* flex-shrink:0 — the brand lockup must never be squeezed. Its children
+     (inline SVG mark + SVG wordmark) cannot shrink, so when the flex layout
+     compressed .brand the contents simply overflowed its box and the "Atlas"
+     subtitle collided with the search field on a signed-in nav. The element
+     designed to absorb nav pressure is .search-wrap (`flex:0 1 200px` with a
+     130px floor), so let the slack come out of there instead. */
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -216,9 +223,18 @@ nav.topnav .inner {
    The visible SVG is aria-hidden and the real word is kept in .iv-sr-only, so
    screen readers and crawlers still get "ImmunoVerse Atlas" as text. */
 .brand .wordmark {
-  height: 0.95em;
+  /* 0.84em, not the 0.95em this first shipped at. The SVG wordmark is wider
+     than the bold live text it replaced, and `.brand` is `flex:0 1 auto`, so
+     on a signed-in nav the layout squeezed .brand to 217px while its contents
+     still needed 230px — the "Atlas" subtitle then overflowed the brand's own
+     box and ended up 1px from the search field. Trimming the wordmark keeps
+     the whole lockup inside .brand so the 16px nav gap survives.
+     If you scale this back up, re-check the signed-in ADMIN nav at >=1600px —
+     that is the tightest state (see the min-width:1600 block above). */
+  height: 0.84em;
   display: block;
   flex: none;
+  min-width: 0;
 }
 .brand .wordmark svg {
   height: 100%;
