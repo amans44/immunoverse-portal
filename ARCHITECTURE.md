@@ -121,6 +121,18 @@ Three layers, in increasing visibility:
 - **Admin-only visibility:** the pill carries inline `style="display:none"` and is revealed only for signed-in admins by `setQueriesPillVisible(user)` (called from `showAccount`/`showSignIn`). It clears the inline style for admins rather than forcing a value, so the responsive `@media` hide rules below still apply.
 - **Hidden on screens < 560px** to avoid topnav crowding.
 
+### Brand mark, wordmark and favicon
+
+- **Source of truth:** `ImmunoVerse_Logo 1.ai` in the repo's PARENT folder (alongside `immuno-verse-portal/`, `in-house/`, `database/`). It is NOT in the site repo. The file is PDF-backed (`%PDF-1.6`), so the vector art can be read directly — no Illustrator needed. Page 1 is the horizontal lockup; page 2 is a brand sheet (mark on dark/light app-icon tiles, plus crimson/green variants).
+- **Extraction (2026-08-31):** rendered with PyMuPDF, then split into two inline SVGs — the mark (4 paths, ~1.3 KB) and the wordmark (21 paths, ~4.9 KB). Pure vector: no rasters, no font dependencies, single source colour `#231f20` rewritten to `currentColor`. Both are inlined directly in `index.html` (nav + footer) rather than loaded as files, so there is no extra request and they inherit theme colour.
+- **Two extraction traps, both hit and fixed — read before re-extracting:**
+  1. `page.get_drawings()` returns 25 shapes but the SVG has **26 paths**. The one it omits is the leading "I" of "ImmunoVerse", so a viewBox computed from `get_drawings()` alone silently clips it and the wordmark renders as "MMUNOVERSE". Compute the wordmark's left edge from the SVG path transforms, not from `get_drawings()`.
+  2. Every exported page carries a full-page **clip rectangle** path (`M0 232.655H1217.106V0H0Z`). The viewBox hides it, but the moment anything sets `overflow: visible` it paints as a giant stroked box around the logo. Strip that path at extraction time; do not rely on clipping.
+- **Nav + footer lockup:** mark in `var(--accent-violet)`, wordmark in `var(--text-0)` — both already theme-aware, so light/dark needs no second colour list. The mark is sized `height: 26px` (optical alignment to the wordmark's cap height, not the old 32px tile box, because the glyph is tall and narrow). The wordmark is sized `height: 0.95em` so it inherits the existing responsive `.brand` font-size steps instead of needing its own breakpoints.
+- **Why not live text:** the mark is a 4pt monoline and the previous nav text was system-weight-800, which read as two different brands. The `.ai` wordmark is the lettering the mark was actually drawn against, so the weights match by construction.
+- **Accessibility:** the SVGs are `aria-hidden="true"`, with the real word kept in a `.iv-sr-only` span, so the brand link's accessible name is still "ImmunoVerse Atlas" for screen readers and crawlers.
+- **Favicon:** `favicon.svg` (~1.5 KB) — the mark on the brand gradient tile, linked from `<head>`. **The portal previously had no favicon at all**, so tabs fell back to the browser default.
+
 ### ImmunoVerse Chat pill (topnav)
 - **HTML:** `index.html` — `<a class="iv-chat-pill" href="https://immunoverse-chat.com" target="_blank" rel="noopener">` inside `<nav class="topnav">`, immediately after the `.links` block and before `#liveStat`.
 - **Why it is NOT a `.links` item:** every entry in `.links` is a same-page `#anchor`, and the whole group collapses into the hamburger below 1366 px. Chat is an *external destination* that must stay clickable in the bar at every width, so it is a standalone pill (same structural pattern as the in-house pill).
@@ -517,6 +529,30 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ---
 
 ## Change log
+
+### 2026-08-31 — Real brand logo + first favicon
+
+**Why:** the nav "logo" was a placeholder — a 32px gradient square with a
+conic-gradient `::after` blob — so the actual ImmunoVerse mark had never shipped.
+The portal also had no favicon at all. Both assets already existed in
+`ImmunoVerse_Logo 1.ai` one folder up.
+
+**What:**
+- Extracted the mark and wordmark from the (PDF-backed) `.ai` as pure-vector
+  inline SVG and wired them into the nav and footer brand lockups. Details,
+  including two extraction traps, in "Brand mark, wordmark and favicon" above.
+- Mark uses `var(--accent-violet)`, wordmark `var(--text-0)`; both variables are
+  already redefined per theme, so light/dark is handled by the existing palette.
+- Replaced the bold live-text wordmark with the real lettering so its weight
+  matches the monoline mark; kept the word as `.iv-sr-only` text for a11y/SEO.
+- Added `favicon.svg` (mark on the brand gradient tile) and linked it in `<head>`.
+- Reviewed against the alternatives (gradient tile, bare neutral mark, live text
+  at weights 300/500/600, accent-coloured text) in local previews before picking.
+
+**Files:** `index.html` (brand CSS + nav/footer markup + favicon link),
+`favicon.svg` (new), `ARCHITECTURE.md`.
+
+**Commit:** see below.
 
 ### 2026-08-31 — Fix topnav crowding introduced (and exposed) by the Chat pill
 

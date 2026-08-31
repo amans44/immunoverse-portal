@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+  <!-- Favicon: the ImmunoVerse mark on the brand gradient tile. The portal
+       had no favicon at all before this, so tabs fell back to the browser
+       default. SVG so it stays crisp at every density. -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ImmunoVerse — A Pan-Cancer Atlas of Therapeutic T Cell Targets</title>
 <meta name="description" content="ImmunoVerse: 16,687 empirically defined tumor-specific T-cell targets across 21 cancer types, integrating 1,823 immunopeptidomes, 7,188 RNA-Seq, 17,384 normal controls, and 594 single-cell datasets." />
@@ -174,23 +178,64 @@ nav.topnav .inner {
   color: var(--text-0);
 }
 .brand .logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--grad-primary);
-  position: relative;
-  box-shadow: 0 6px 22px rgba(129,140,248,0.45);
+  /* The real ImmunoVerse mark (extracted from `ImmunoVerse_Logo 1.ai`, which is
+     PDF-backed so the vector survived intact). Drawn bare — no tile — in the
+     brand accent, which is the treatment Aman picked over the gradient tile.
+
+     Sizing is optical, not mechanical: the mark is a tall/narrow glyph (~71x123
+     in art units), so matching it to the old 32px tile box made it tower over
+     the 17px wordmark. 26px lines its body up with the wordmark's cap height
+     instead, and `align-self:center` keeps it centred on the text baseline box.
+
+     Colour is var(--accent-violet), which is already redefined per theme
+     (#a78bfa on dark, #6d28d9 on light) — so light/dark is handled by the
+     existing palette with no second colour list to maintain. */
+  height: 26px;
+  width: auto;
+  display: grid;
+  place-items: center;
+  align-self: center;
   flex: none;
 }
-.brand .logo::after {
-  content: "";
+.brand .logo svg {
+  height: 100%;
+  width: auto;
+  display: block;
+  color: var(--accent-violet);
+  stroke-width: 5.5;   /* art is a 4pt hairline; thickened so it holds at 26px */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Real ImmunoVerse wordmark (same `ImmunoVerse_Logo 1.ai` source as the mark).
+   Live text was system-bold 800, which fought the hairline mark; this is the
+   lettering the mark was actually designed against, so the weights match by
+   construction rather than by picking a font-weight that approximates it.
+
+   Height is in `em`, NOT px, so it inherits the existing responsive .brand
+   font-size steps (17px default, 15px below 1399px) with no extra breakpoints.
+   The visible SVG is aria-hidden and the real word is kept in .iv-sr-only, so
+   screen readers and crawlers still get "ImmunoVerse Atlas" as text. */
+.brand .wordmark {
+  height: 0.95em;
+  display: block;
+  flex: none;
+}
+.brand .wordmark svg {
+  height: 100%;
+  width: auto;
+  display: block;
+  color: var(--text-0);   /* follows the theme, same as the old live text */
+  stroke-width: 6;
+}
+.iv-sr-only {
   position: absolute;
-  inset: 4px;
-  border-radius: 5px;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 50%),
-              conic-gradient(from 210deg at 50% 50%, #22d3ee, #a78bfa, #f472b6, #22d3ee);
-  mix-blend-mode: screen;
-  opacity: 0.85;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 .brand span.sub { color: var(--text-2); font-weight: 400; margin-left: 2px; font-size: 14px; }
 nav .links { display: flex; gap: 4px; align-items: center; }
@@ -3179,8 +3224,35 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 <nav class="topnav">
   <div class="inner">
     <a href="#top" class="brand">
-      <span class="logo"></span>
-      ImmunoVerse <span class="sub">Atlas</span>
+      <span class="logo"><svg aria-hidden="true" focusable="false" viewBox="110.20 39.01 76.87 128.96" fill="none" stroke="currentColor">
+<path transform="matrix(1,0,0,-1,129.664,48.4758)" stroke-width="2" stroke-linecap="round" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="currentColor" d="M0 0C4.742 0 4.742-3.794 9.484-3.794 14.225-3.794 14.225 0 18.966 0 23.71 0 23.71-3.794 28.454-3.794 33.198-3.794 33.198 0 37.942 0"/>
+<path transform="matrix(1,0,0,-1,113.2017,108.2799)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-85.039"/>
+<path transform="matrix(1,0,0,-1,183.9532,136.6283)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C0-15.655-12.691-28.346-28.346-28.346-44.002-28.346-56.693-15.655-56.693 0-56.693 15.655-44.002 28.346-28.346 28.346-12.691 28.346 0 15.655 0 0Z"/>
+<path transform="matrix(1,0,0,-1,113.2017,99.8069)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.782 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+</svg></span>
+      <span class="wordmark"><svg aria-hidden="true" focusable="false" viewBox="273.93 76.93 775.35 78.77" fill="none" stroke="currentColor">
+<path transform="matrix(1,0,0,-1,278.925,79.933399)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-70.866"/>
+<path transform="matrix(1,0,0,-1,675.7755,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C0-15.655-12.691-28.346-28.346-28.346-44.002-28.346-56.693-15.655-56.693 0-56.693 15.655-44.002 28.346-28.346 28.346-12.691 28.346 0 15.655 0 0Z"/>
+<path transform="matrix(1,0,0,-1,477.3503,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-27.708C0-43.181 12.13-56.285 27.598-56.683 43.595-57.095 56.693-44.25 56.693-28.346V0"/>
+<path transform="matrix(1,0,0,-1,548.2164,150.8016)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V51.015C0 56.066 6.107 58.595 9.678 55.024L47.014 1.674C50.586-1.898 56.692 .632 56.692 5.682V56.694"/>
+<path transform="matrix(1,0,0,-1,689.9487,79.933399)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0 30.362-67.733C32.452-71.912 38.415-71.912 40.504-67.733L70.866 0"/>
+<path transform="matrix(1,0,0,-1,831.681,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-44.002 0-56.693-12.691-56.693-28.347-56.693-44.002-44.002-56.694-28.346-56.693-14.173-56.693 0-56.693 0-56.693"/>
+<path transform="matrix(1,0,0,-1,803.3345,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,1044.2794,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-44.002 0-56.693-12.691-56.693-28.347-56.693-44.002-44.002-56.694-28.346-56.693-14.173-56.693 0-56.693 0-56.693"/>
+<path transform="matrix(1,0,0,-1,1015.9329,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,888.3738,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-36.174 0-42.52-6.346-42.52-14.173V-56.694"/>
+<path transform="matrix(1,0,0,-1,888.3738,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-42.52"/>
+<path transform="matrix(1,0,0,-1,888.3738,94.1087)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C7.828 0 14.173-6.346 14.173-14.173 14.173-22.001 7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,930.8936,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H42.52"/>
+<path transform="matrix(1,0,0,-1,930.8936,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H28.346"/>
+<path transform="matrix(1,0,0,-1,930.8936,94.1087)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C-7.828 0-14.173-6.346-14.173-14.173-14.173-22.001-7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,959.24,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,959.24,150.8004)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-42.52"/>
+<path transform="matrix(1,0,0,-1,959.24,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C7.828 0 14.173-6.346 14.173-14.173 14.173-22.001 7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,902.5471,150.8004)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0-20.044 20.044C-25.36 25.36-32.57 28.346-40.088 28.346H-56.693"/>
+<path transform="matrix(1,0,0,-1,307.2715,150.79959)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.781 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+<path transform="matrix(1,0,0,-1,392.3109,150.79959)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.781 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+</svg></span><span class="iv-sr-only">ImmunoVerse</span> <span class="sub">Atlas</span>
     </a>
     <div class="search-wrap" role="search">
       <div class="search-input-row">
@@ -3847,7 +3919,34 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
   <div class="container">
     <div class="cols">
       <div>
-        <div class="brand" style="font-size:16px; margin-bottom: 12px;"><span class="logo"></span> ImmunoVerse Atlas</div>
+        <div class="brand" style="font-size:16px; margin-bottom: 12px;"><span class="logo"><svg aria-hidden="true" focusable="false" viewBox="110.20 39.01 76.87 128.96" fill="none" stroke="currentColor">
+<path transform="matrix(1,0,0,-1,129.664,48.4758)" stroke-width="2" stroke-linecap="round" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="currentColor" d="M0 0C4.742 0 4.742-3.794 9.484-3.794 14.225-3.794 14.225 0 18.966 0 23.71 0 23.71-3.794 28.454-3.794 33.198-3.794 33.198 0 37.942 0"/>
+<path transform="matrix(1,0,0,-1,113.2017,108.2799)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-85.039"/>
+<path transform="matrix(1,0,0,-1,183.9532,136.6283)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C0-15.655-12.691-28.346-28.346-28.346-44.002-28.346-56.693-15.655-56.693 0-56.693 15.655-44.002 28.346-28.346 28.346-12.691 28.346 0 15.655 0 0Z"/>
+<path transform="matrix(1,0,0,-1,113.2017,99.8069)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.782 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+</svg></span><span class="wordmark"><svg aria-hidden="true" focusable="false" viewBox="273.93 76.93 775.35 78.77" fill="none" stroke="currentColor">
+<path transform="matrix(1,0,0,-1,278.925,79.933399)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-70.866"/>
+<path transform="matrix(1,0,0,-1,675.7755,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C0-15.655-12.691-28.346-28.346-28.346-44.002-28.346-56.693-15.655-56.693 0-56.693 15.655-44.002 28.346-28.346 28.346-12.691 28.346 0 15.655 0 0Z"/>
+<path transform="matrix(1,0,0,-1,477.3503,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-27.708C0-43.181 12.13-56.285 27.598-56.683 43.595-57.095 56.693-44.25 56.693-28.346V0"/>
+<path transform="matrix(1,0,0,-1,548.2164,150.8016)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V51.015C0 56.066 6.107 58.595 9.678 55.024L47.014 1.674C50.586-1.898 56.692 .632 56.692 5.682V56.694"/>
+<path transform="matrix(1,0,0,-1,689.9487,79.933399)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0 30.362-67.733C32.452-71.912 38.415-71.912 40.504-67.733L70.866 0"/>
+<path transform="matrix(1,0,0,-1,831.681,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-44.002 0-56.693-12.691-56.693-28.347-56.693-44.002-44.002-56.694-28.346-56.693-14.173-56.693 0-56.693 0-56.693"/>
+<path transform="matrix(1,0,0,-1,803.3345,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,1044.2794,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-44.002 0-56.693-12.691-56.693-28.347-56.693-44.002-44.002-56.694-28.346-56.693-14.173-56.693 0-56.693 0-56.693"/>
+<path transform="matrix(1,0,0,-1,1015.9329,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,888.3738,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-36.174 0-42.52-6.346-42.52-14.173V-56.694"/>
+<path transform="matrix(1,0,0,-1,888.3738,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-42.52"/>
+<path transform="matrix(1,0,0,-1,888.3738,94.1087)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C7.828 0 14.173-6.346 14.173-14.173 14.173-22.001 7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,930.8936,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H42.52"/>
+<path transform="matrix(1,0,0,-1,930.8936,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H28.346"/>
+<path transform="matrix(1,0,0,-1,930.8936,94.1087)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C-7.828 0-14.173-6.346-14.173-14.173-14.173-22.001-7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,959.24,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,959.24,150.8004)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-42.52"/>
+<path transform="matrix(1,0,0,-1,959.24,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C7.828 0 14.173-6.346 14.173-14.173 14.173-22.001 7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,902.5471,150.8004)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0-20.044 20.044C-25.36 25.36-32.57 28.346-40.088 28.346H-56.693"/>
+<path transform="matrix(1,0,0,-1,307.2715,150.79959)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.781 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+<path transform="matrix(1,0,0,-1,392.3109,150.79959)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.781 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+</svg></span><span class="iv-sr-only">ImmunoVerse</span> <span class="sub">Atlas</span></div>
         <div style="color:var(--text-2); font-size:13px; max-width: 420px; line-height:1.65;">
           A pan-cancer atlas of therapeutic T cell targets. Developed by the Yarmarkovich Lab at NYU Grossman School of Medicine,
           in collaboration with Tesorai and collaborators across the Cancer Grand Challenges NexTGen team.
