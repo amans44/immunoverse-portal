@@ -216,6 +216,36 @@ nav .cta {
 }
 nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211,238,0.4); color: #0a0e1a; }
 
+/* ImmunoVerse Chat pill — the topnav entry point to the sibling chat product at
+   https://immunoverse-chat.com. Deliberately NOT a `.links` item: those are all
+   same-page anchors and collapse into the hamburger below 1366px, whereas Chat
+   is an external destination that must stay visible in the bar at every width.
+   Outlined violet so it reads as secondary to the "Explore atlas" CTA and is not
+   confused with the cyan in-house pill. Swap IV_CHAT_URL (one place, the href
+   below + the footer link) if the chat ever moves to chat.immuno-verse.com. */
+nav .iv-chat-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--accent-violet) 45%, transparent);
+  background: color-mix(in srgb, var(--accent-violet) 13%, transparent);
+  color: var(--accent-violet); font-size: 13px; font-weight: 600;
+  white-space: nowrap; line-height: 1; flex: none;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+nav .iv-chat-pill:hover {
+  background: color-mix(in srgb, var(--accent-violet) 24%, transparent);
+  border-color: color-mix(in srgb, var(--accent-violet) 70%, transparent);
+  color: var(--accent-violet); transform: translateY(-1px);
+}
+nav .iv-chat-pill svg { width: 15px; height: 15px; flex: none; }
+nav .iv-chat-pill .ivc-ext { font-size: 10px; opacity: 0.7; }
+/* Text label collapses to the bubble icon only in the two bands where the nav is
+   tightest. 1367-1599px: all 8 section links are still in the bar. <=520px: phone.
+   Between 521 and 1366px the links live in the hamburger, so the label fits. */
+@media (max-width: 1599px) { nav .iv-chat-pill .ivc-text, nav .iv-chat-pill .ivc-ext { display: none; } nav .iv-chat-pill { padding: 7px 9px; } }
+@media (max-width: 1366px) { nav .iv-chat-pill .ivc-text { display: inline; } nav .iv-chat-pill { padding: 7px 12px; } }
+@media (max-width: 520px)  { nav .iv-chat-pill .ivc-text { display: none; }   nav .iv-chat-pill { padding: 7px 9px; } }
+
 /* Live visitor counter pill (fed by GoatCounter) */
 .live-stat {
   display: inline-flex;
@@ -3054,6 +3084,26 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   .iv-inhouse-pill .ihp-text { display: none; }   /* in-house pill → lock icon only */
   .iv-inhouse-pill { padding: 7px 9px; }
 }
+/* Widest band, signed in. `nav .inner` is capped at max-width:1600px, so at any
+   viewport >=1600 the bar renders at exactly 1600px — it does NOT keep growing.
+   A signed-in member adds the in-house pill + account chip, and an admin also
+   gets the live query counter, which pushed content to ~1779px inside that
+   1600px bar. Because .search-wrap is `flex:0 1 200px; min-width:130px` it
+   absorbed only the first 70px and then bottomed out, after which the flexible
+   `.links` (Atlas..Cite) were compressed — the exact crowding the 2026-05-20
+   Hub-link regression caused. The max-width:1599 block below already compacts
+   these same controls for narrower screens; this is its mirror for >=1600,
+   scoped to `body.iv-signed-in` so anonymous visitors (who fit in 1533px and
+   have room to spare) keep the full labels. */
+@media (min-width: 1600px) {
+  body.iv-signed-in nav .iv-chat-pill .ivc-text,
+  body.iv-signed-in nav .iv-chat-pill .ivc-ext { display: none; }
+  body.iv-signed-in nav .iv-chat-pill { padding: 7px 9px; }
+  body.iv-signed-in .live-stat .live-label { display: none; }  /* keep the count, drop "Queries" */
+  body.iv-signed-in .live-stat { gap: 6px; padding: 5px 10px; }
+  body.iv-signed-in .iv-inhouse-pill .ihp-text { display: none; }  /* -> lock icon only */
+  body.iv-signed-in .iv-inhouse-pill { padding: 7px 9px; }
+}
 @media (max-width: 1399px) {
   .brand .sub { display: none; }                 /* drop the "Atlas" subtitle */
   .brand { font-size: 15px; gap: 8px; }          /* compact the logo+wordmark */
@@ -3155,6 +3205,16 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <a href="#downloads">Data</a>
       <a href="#cite">Cite</a>
     </div>
+    <!-- ImmunoVerse Chat — sibling product (separate domain). Opens in a new tab so
+         the visitor never loses their place in the atlas. Sits outside `.links`
+         on purpose: those are same-page anchors that hide in the hamburger below
+         1366px, and this destination must stay reachable at every width. -->
+    <a class="iv-chat-pill" href="https://immunoverse-chat.com" target="_blank" rel="noopener"
+       title="ImmunoVerse Chat - ask the AI agent about targets, peptides and cohorts (opens in a new tab)"
+       aria-label="Open ImmunoVerse Chat in a new tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <span class="ivc-text">Chat</span><span class="ivc-ext" aria-hidden="true">&#8599;</span>
+    </a>
     <!-- Live query counter: hidden by default; revealed only for signed-in
          admins by the auth bootstrap below (showAccount). Anonymous and
          non-admin visitors never see it. Query counting still runs for all. -->
@@ -3800,6 +3860,7 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
         <a href="#classes">Aberration classes</a>
         <a href="#highlights">Highlights</a>
         <a href="/hub/">ImmunoVerse Hub</a>
+        <a href="https://immunoverse-chat.com" target="_blank" rel="noopener">ImmunoVerse Chat</a>
       </div>
       <div>
         <h6>Resources</h6>
@@ -9388,11 +9449,17 @@ window.addEventListener('popstate', async () => {
     if (a) a.style.display = '';
     if (m) m.style.display = 'none';
     setQueriesPillVisible(null);
+    // Signed out: restore the full-width nav labels (see the min-width:1600 block).
+    try { document.body.classList.remove('iv-signed-in'); } catch (e) {}
   }
   function showAccount(user) {
     const a = document.getElementById('ivSignInBtn');
     const m = document.getElementById('ivUserMenu');
     if (a) a.style.display = 'none';
+    // Marks the nav as carrying the signed-in-only controls (in-house pill,
+    // account chip, admin query counter) so the min-width:1600 rules can
+    // compact them and keep the section links from being squeezed.
+    try { document.body.classList.add('iv-signed-in'); } catch (e) {}
     if (!m) return;
     m.style.display = '';
     const display = user.name || user.email.split('@')[0];

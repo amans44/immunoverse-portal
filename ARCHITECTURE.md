@@ -42,7 +42,7 @@ it works that way*. It has two parts:
 | `/reviewers/` | `reviewers/index.html` | Editor / paper-reviewer access | Same constraint as `/demo/`. |
 | `/hub/` | `hub/index.html` | **PRIVATE (2026-07-22)** — curated *unprocessed* immunopeptidomic datasets, metadata + SLURM download scripts. Approved members only. | Light theme by default, dark toggle. 36 cancers fetched at runtime from a private GCS bucket through the auth service; **no data in this repo**. Signed-out or un-granted visitors get the access gate. |
 
-Pages share the topnav and link to each other via plain `/`, `/demo/`, `/reviewers/`, `/hub/`. The Hub link lives in the **footer "Explore" column** of the main portal (`index.html`) — kept out of the topnav to avoid crowding (search bar was overlapping the brand area when Hub was also a topnav link).
+Pages share the topnav and link to each other via plain `/`, `/demo/`, `/reviewers/`, `/hub/`. The Hub link lives in the **footer "Explore" column** of the main portal (`index.html`) — kept out of the topnav to avoid crowding (search bar was overlapping the brand area when Hub was also a topnav link). The **ImmunoVerse Chat** link (`https://immunoverse-chat.com`, a separate site, not part of this repo) *is* in the topnav — as a standalone pill outside `.links`, so it does not re-create that crowding; it is also listed in the footer "Explore" column.
 
 ---
 
@@ -120,6 +120,17 @@ Three layers, in increasing visibility:
 - **Hooks that fire `__bumpQueryCounter`:** `runSearch` (debounced typeahead in `#globalSearch`), the `results` click handler (search-result selection), and the chatbot `send()` function in `chatbot/chatbot.js`.
 - **Admin-only visibility:** the pill carries inline `style="display:none"` and is revealed only for signed-in admins by `setQueriesPillVisible(user)` (called from `showAccount`/`showSignIn`). It clears the inline style for admins rather than forcing a value, so the responsive `@media` hide rules below still apply.
 - **Hidden on screens < 560px** to avoid topnav crowding.
+
+### ImmunoVerse Chat pill (topnav)
+- **HTML:** `index.html` — `<a class="iv-chat-pill" href="https://immunoverse-chat.com" target="_blank" rel="noopener">` inside `<nav class="topnav">`, immediately after the `.links` block and before `#liveStat`.
+- **Why it is NOT a `.links` item:** every entry in `.links` is a same-page `#anchor`, and the whole group collapses into the hamburger below 1366 px. Chat is an *external destination* that must stay clickable in the bar at every width, so it is a standalone pill (same structural pattern as the in-house pill).
+- **Style:** outlined violet — `color-mix(in srgb, var(--accent-violet) …)` for border/background so it follows the light/dark theme automatically. Deliberately secondary to the cyan→violet "Explore atlas →" CTA, and visually distinct from the cyan `.iv-inhouse-pill`.
+- **Responsive:** label + `↗` collapse to the bubble icon only in the two tightest bands — `≤1599px` (all 8 section links are still in the bar) and `≤520px` (phone). Between 521–1366 px the links live in the hamburger, so the "Chat" label fits and is re-shown.
+- **Signed-in crowding (fixed 2026-08-31).** The 67 px headroom originally measured at ≥1600 px was the **anonymous** case only. `nav .inner` is capped at `max-width:1600px`, so the bar never grows past 1600 px no matter how wide the display is, while a signed-in user adds the in-house pill + account chip and an admin also gets the live query counter. Measured content width in that 1600 px bar: **anonymous 1533 px (fits), signed-in member 1627 px, signed-in admin 1779 px.** Because `.search-wrap` is `flex:0 1 200px; min-width:130px` it absorbed only the first 70 px and then bottomed out, after which the flexible `.links` (Atlas…Cite) were compressed — the same failure mode as the 2026-05-20 Hub-link regression. Note the admin case already overflowed by 69 px *before* the Chat pill existed; the pill turned the member case from fitting into overflowing. Fixed by a `@media (min-width:1600px)` block scoped to `body.iv-signed-in` that mirrors the `≤1599px` compaction into the widest band: Chat pill → icon only, live counter → number without the "Queries" word, in-house pill → lock icon only. That reclaims 179 px, bringing the admin case to **1600 px — fits outright**, with `.links` left uncompressed (633 px) and the search field recovered off its 130 px floor to 143 px. Signed-in member lands at 1576 px (24 px headroom); anonymous is untouched (no class, full labels).
+- **`body.iv-signed-in` hook:** added/removed by `showAccount()` / `showSignIn()` in `index.html`. It exists purely so CSS can tell whether the signed-in-only nav controls are present — there is no other way to express "nav is carrying 3 extra chips" in a media query.
+- **Also in the footer** "Explore" column as "ImmunoVerse Chat", below "ImmunoVerse Hub".
+- **Does NOT fire `__bumpQueryCounter`.** Navigating away to the chat site is not an atlas query, and the chat site has its own GoatCounter — counting it here would inflate the admin "Queries" pill.
+- **Known limitation:** NYU's campus network DNS-sinkholes `immunoverse-chat.com` (Palo Alto firewall — see the auth fallback-chain comment in `index.html`). On NYU WiFi this link will fail to resolve. The fix, if wanted, is a `chat.immuno-verse.com` CNAME on the portal's own (un-sinkholed) domain pointing at the chat host; then swap the two `href`s (topnav + footer).
 
 ### Global search
 - **Input:** `#globalSearch` in the topnav. **Expand-on-focus pattern:** the wrap takes a fixed `flex: 0 0 220px` slot so neighbors (queries pill, theme toggle, CTA) never shift. The inner `.search-input-row` is `position: absolute` on top of the wrap and grows to `min(520px, calc(100vw - 80px))` on `:focus-within`, overlaying neighbors. Click out → transitions back to 220 px. Below 960 px viewport, a media query resets this and the search drops to its own full-width row (`flex: 1 1 100%; position: relative`).
@@ -471,6 +482,7 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 |---|---|---|
 | GitHub Pages (production) | `https://immuno-verse.com` | Hosts the portal (CNAME → GitHub Pages). |
 | GitHub repo | `https://github.com/amans44/immunoverse-portal` | Source of truth. |
+| ImmunoVerse Chat (sibling site) | `https://immunoverse-chat.com` | The full chat product (separate repo: `immunoVerse_agent/web/`). Linked from the portal topnav pill + footer. **Blocked on NYU's network** (DNS sinkhole) — a `chat.immuno-verse.com` CNAME would be the workaround. |
 | Chatbot agent | `https://immunoverse-agent-739605637035.us-central1.run.app` | Cloud Run service. Sets `window.IMMUNOVERSE_AGENT_BASE` in `index.html` (and demo/reviewers via `chatbot/chatbot.js`). |
 | NYU public share | `https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/` | Root of all NYU-hosted assets (PNG figures, SVG figures, Hub metadata, Hub sbatch scripts). |
 | NYU `/assets/` | `…/ImmunoVerse/assets/` | PNG figures — `{CODE}_{PEP}_{percentile,rank_abundance,spectrum}.png`. 21 cancer codes present. |
@@ -505,6 +517,64 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ---
 
 ## Change log
+
+### 2026-08-31 — Fix topnav crowding introduced (and exposed) by the Chat pill
+
+**Why:** Aman asked that the new Chat pill not overshadow the section links or the
+other topnav buttons. Measuring the bar showed it did — but also that the nav was
+already over-subscribed for signed-in users before Chat existed. `nav .inner` is
+capped at `max-width:1600px`, so the bar never grows past 1600 px however wide the
+monitor is. Content needed: anonymous 1533 px (fits), signed-in member 1627 px,
+signed-in admin 1779 px. `.search-wrap` (`flex:0 1 200px; min-width:130px`) absorbs
+only 70 px before bottoming out, after which the flexible `.links` get squeezed —
+the same failure as the 2026-05-20 Hub-link regression. The admin case was already
+69 px over without the Chat pill; the pill (110 px incl. gap) pushed the member case
+over too. Aman is both admin and lab member, so he saw the worst case.
+
+**What:**
+- New `@media (min-width: 1600px)` block scoped to `body.iv-signed-in`, mirroring the
+  existing `max-width:1599px` compaction into the widest band: Chat pill → bubble icon
+  only, `.live-stat` → count without the "Queries" label, `.iv-inhouse-pill` → lock icon
+  only. Anonymous visitors are unaffected (no class) and keep every full label.
+- `showAccount()` adds `body.iv-signed-in`; `showSignIn()` removes it. CSS otherwise has
+  no way to know the nav is carrying the three signed-in-only chips.
+- Reclaims 179 px: signed-in admin 1779 → **1600 px, fits outright**, `.links` left at
+  their full 633 px and the search field back off its 130 px floor to 143 px. Signed-in
+  member 1627 → 1576 px (24 px headroom).
+- Verified by measuring every nav child's box in the browser at the 1600 px cap in all
+  three states, before and after; confirmed the new rules parse into the CSSOM.
+
+**Files:** `index.html` (nav CSS + `showAccount`/`showSignIn`), `ARCHITECTURE.md`.
+
+**Commit:** _not yet committed — held local at Aman's request._
+
+### 2026-08-26 — Add ImmunoVerse Chat to the portal topnav
+**Why:** Aman wanted `immunoverse-chat.com` reachable from the top navigation of
+`immuno-verse.com`. The portal previously only exposed the small floating chatbot
+widget (bottom-right, `chatbot/chatbot.js`), which is a site guide — the full chat
+product on its own domain had no entry point at all from the atlas.
+**What:**
+- New `.iv-chat-pill` anchor in `<nav class="topnav">` of `index.html`, placed after
+  `.links` and before `#liveStat`: bubble icon + "Chat" + `↗`, `target="_blank"
+  rel="noopener"`, with a descriptive `title`/`aria-label`.
+- Deliberately **not** added to `.links`. Those are all same-page anchors and hide
+  in the hamburger below 1366 px; an external destination must stay in the bar.
+  This is also why the 2026-05-20 "Hub link crowds the topnav" regression does not
+  repeat — the pill is ~31 px in the tight band, not a 9th link.
+- Styling uses `color-mix()` over `var(--accent-violet)` so it is theme-aware
+  (verified in both dark and light). Violet keeps it distinct from the cyan
+  in-house pill and subordinate to the "Explore atlas →" CTA.
+- Three-step responsive cascade (`≤1599` icon-only → `≤1366` label back → `≤520`
+  icon-only). Verified by measuring nav content width per band in a real browser:
+  1533/1600 px at the widest band, 1318 px needed at 1400 px, 1174 px at 1367 px —
+  no overflow, sign-in chip and CTA stay visible everywhere.
+- Added "ImmunoVerse Chat" to the footer "Explore" column under "ImmunoVerse Hub".
+- Intentionally **not** wired to `window.__bumpQueryCounter` — a click-out is not an
+  atlas query and the chat site counts its own traffic.
+**Caveat (not fixed here):** NYU DNS-sinkholes `immunoverse-chat.com`, so the link
+is dead on campus WiFi. Needs a `chat.immuno-verse.com` CNAME to solve; that is DNS
+work outside this repo. Both `href`s live in `index.html` (topnav + footer).
+**Files:** `index.html` (topnav CSS + markup, footer), `ARCHITECTURE.md`.
 
 ### 2026-08-06 — /reviewers/ refreshed to current main site (data + UI)
 **Why:** `/reviewers/` had drifted stale. The daily `refresh-data.yml` Action only
