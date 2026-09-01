@@ -115,15 +115,15 @@ nav.topnav .inner {
   display: flex; align-items: center; gap: 20px;
 }
 .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 18px; letter-spacing: -0.02em; color: var(--text-0); }
-.brand .logo {
-  width: 30px; height: 30px; border-radius: 8px;
-  background: linear-gradient(135deg, #4fdbc8 0%, #14b8a6 100%);
-  position: relative; box-shadow: 0 4px 14px rgba(20, 184, 166, 0.35);
-}
-.brand .logo::after {
-  content: ""; position: absolute; inset: 4px; border-radius: 5px;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 55%);
-  mix-blend-mode: screen;
+/* Real ImmunoVerse mark, same artwork as index.html (from ImmunoVerse_Logo 1.ai).
+   Replaces the placeholder gradient square. Inked in the hub's own teal accent:
+   the MARK is what makes the brand consistent across pages, while each page keeps
+   its own accent colour. */
+.brand .logo { height: 26px; width: auto; display: grid; place-items: center; flex: none; }
+.brand .logo svg {
+  height: 100%; width: auto; display: block;
+  color: var(--accent-strong);
+  stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round;
 }
 .brand .sub { color: var(--text-2); font-weight: 500; margin-left: 2px; font-size: 14px; }
 .nav-links { display: flex; gap: 4px; align-items: center; margin-left: 24px; }
@@ -590,7 +590,12 @@ footer {
 <nav class="topnav">
   <div class="inner">
     <a href="/" class="brand">
-      <span class="logo"></span>
+      <span class="logo"><svg aria-hidden="true" focusable="false" viewBox="110.20 39.01 76.87 128.96" fill="none" stroke="currentColor">
+<path transform="matrix(1,0,0,-1,129.664,48.4758)" stroke-width="2" stroke-linecap="round" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="currentColor" d="M0 0C4.742 0 4.742-3.794 9.484-3.794 14.225-3.794 14.225 0 18.966 0 23.71 0 23.71-3.794 28.454-3.794 33.198-3.794 33.198 0 37.942 0"/>
+<path transform="matrix(1,0,0,-1,113.2017,108.2799)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-85.039"/>
+<path transform="matrix(1,0,0,-1,183.9532,136.6283)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C0-15.655-12.691-28.346-28.346-28.346-44.002-28.346-56.693-15.655-56.693 0-56.693 15.655-44.002 28.346-28.346 28.346-12.691 28.346 0 15.655 0 0Z"/>
+<path transform="matrix(1,0,0,-1,113.2017,99.8069)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.782 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+</svg></span>
       ImmunoVerse <span class="sub">Hub</span>
     </a>
     <div class="nav-links">

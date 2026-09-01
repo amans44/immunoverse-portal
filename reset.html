@@ -63,8 +63,13 @@ body {
   border-radius: var(--radius-lg); padding: 40px; box-shadow: var(--shadow-lg);
   backdrop-filter: blur(12px);
 }
+/* The mark sits inside the gradient pill, inked in the pill's own text
+   colour so it reads as part of the badge, not a separate element. */
+.brand .iv-mark { height: 1.5em; display: grid; place-items: center; flex: none; }
+.brand .iv-mark svg { height: 100%; width: auto; display: block; color: #05070e;
+  stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; }
 .brand {
-  display: inline-block; padding: 7px 13px; border-radius: var(--radius-pill);
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: var(--radius-pill);
   background: var(--grad-primary); color: #05070e; font-size: 11px;
   font-weight: 800; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 22px;
 }
@@ -112,7 +117,12 @@ h1 { font-size: 24px; margin: 0 0 8px; }
 <button class="theme-fab" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme">◐</button>
 
 <div class="card">
-  <span class="brand">ImmunoVerse Portal</span>
+  <span class="brand"><span class="iv-mark"><svg aria-hidden="true" focusable="false" viewBox="110.20 39.01 76.87 128.96" fill="none" stroke="currentColor">
+<path transform="matrix(1,0,0,-1,129.664,48.4758)" stroke-width="2" stroke-linecap="round" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="currentColor" d="M0 0C4.742 0 4.742-3.794 9.484-3.794 14.225-3.794 14.225 0 18.966 0 23.71 0 23.71-3.794 28.454-3.794 33.198-3.794 33.198 0 37.942 0"/>
+<path transform="matrix(1,0,0,-1,113.2017,108.2799)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-85.039"/>
+<path transform="matrix(1,0,0,-1,183.9532,136.6283)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C0-15.655-12.691-28.346-28.346-28.346-44.002-28.346-56.693-15.655-56.693 0-56.693 15.655-44.002 28.346-28.346 28.346-12.691 28.346 0 15.655 0 0Z"/>
+<path transform="matrix(1,0,0,-1,113.2017,99.8069)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.782 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+</svg></span>ImmunoVerse Portal</span>
 
   <div id="alert" class="alert hidden" role="alert"></div>
 

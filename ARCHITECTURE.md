@@ -133,6 +133,11 @@ Three layers, in increasing visibility:
 - **Accessibility:** the SVGs are `aria-hidden="true"`, with the real word kept in a `.iv-sr-only` span, so the brand link's accessible name is still "ImmunoVerse Atlas" for screen readers and crawlers.
 - **Favicon:** `favicon.svg` (~1.5 KB) — the mark on the brand gradient tile, linked from `<head>`. **The portal previously had no favicon at all**, so tabs fell back to the browser default.
 
+- **Where the mark appears:** the real mark is now on `index.html` (nav + footer), `account.html`, `admin.html`, `login.html` (large, above the wordmark on the sign-in panel), `reset.html` (inside the gradient pill), `share.html` and `hub/index.html`. Each page keeps its own accent colour — the MARK is what makes the brand consistent, not a single colour: violet on the atlas/account pages, teal (`--accent-strong`) on `/hub/`, white on login's violet panel, and `#05070e` inside reset's gradient pill.
+- **Deliberately NOT changed:** `reviewers/` (frozen — under review for the paper, do not touch) and `demo/` (intentionally pinned to the older build).
+- **Gotchas when adding the mark to another page:** size it in `em` (`height: 1.5em`) so it tracks that page's brand font-size; add `-webkit-text-fill-color: currentColor` on the SVG wherever `.brand` uses `background-clip: text` (admin/account), or the gradient text-fill blanks the mark; and give the colour a literal fallback (`var(--accent-violet, #a78bfa)`) because `admin.html` and `share.html` never define that variable and would otherwise silently inherit the surrounding text colour.
+- **Wordmark:** only `index.html` uses the real SVG wordmark. The other pages keep live text for their page title, which is why their "ImmunoVerse" still renders in the page's own type/gradient.
+
 ### ImmunoVerse Chat pill (topnav)
 - **HTML:** `index.html` — `<a class="iv-chat-pill" href="https://immunoverse-chat.com" target="_blank" rel="noopener">` inside `<nav class="topnav">`, immediately after the `.links` block and before `#liveStat`.
 - **Why it is NOT a `.links` item:** every entry in `.links` is a same-page `#anchor`, and the whole group collapses into the hamburger below 1366 px. Chat is an *external destination* that must stay clickable in the bar at every width, so it is a standalone pill (same structural pattern as the in-house pill).
@@ -545,6 +550,28 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ---
 
 ## Change log
+
+### 2026-09-01 — Brand mark made consistent across the portal's pages
+
+**Why:** the real ImmunoVerse mark shipped only on `index.html`, so navigating to
+Account, Admin, Sign-in, Reset, Share or Hub showed either a plain text brand or
+the old placeholder gradient square. Reported by Aman.
+
+**What:** added the same inline SVG mark to `account.html`, `admin.html`,
+`login.html`, `reset.html`, `share.html` and `hub/index.html`, adapted to each
+page's own brand treatment (see "Brand mark, wordmark and favicon" above). The
+`/hub/` placeholder gradient square was removed in the process.
+
+**Not touched:** `reviewers/` (frozen for paper review) and `demo/` (pinned).
+
+**Verified:** each page rendered locally in the browser. `account.html` and
+`admin.html` redirect to sign-in when signed out, so their headers were rendered
+in isolation from the real markup + CSS to confirm. One contrast bug was caught
+and fixed this way: on login's violet brand panel an accent-violet mark was
+near-invisible, so it is white there.
+
+**Files:** `account.html`, `admin.html`, `login.html`, `reset.html`, `share.html`,
+`hub/index.html`, `ARCHITECTURE.md`.
 
 ### 2026-09-01 — Cloudflare R2 mirror as a secondary figure source
 
