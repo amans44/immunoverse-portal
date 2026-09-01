@@ -209,6 +209,19 @@ Rank-abundance SVGs are noticeably larger than the corresponding PNGs (often 400
 - `AML/` — per Aman; subdirectory listing returns 404 to our HTTP probe but specific files may exist
 - All others → `<img>` 404s, falls back to PNG silently
 
+### Secondary figure source — Cloudflare R2 mirror
+
+On 2026-08-31 `genome.med.nyu.edu` went down and the portal rendered **no figures at all**. The cause was structural: every hop of the render chain (SVG then PNG) pointed at that one host, so there was no path to a figure when NYU was unreachable.
+
+- **Mirror:** Cloudflare R2 bucket `immunoverse`, public base `https://pub-1401efdd186340ed829e8c3c2e07533e.r2.dev`, key prefix `assets/`. Holds a byte-identical copy of all **191,222 PNGs** (7.55 GB) from the NYU `/assets/` tree, mirrored 2026-09-01.
+- **NYU remains the sole primary.** The mirror URL is only ever *constructed* inside the `onerror` fallbacks, so R2 is never contacted for a request NYU satisfied. Verified both ways: with NYU healthy the image is served by `genome.med.nyu.edu` and R2 receives **0** requests; with NYU failing the chain falls through and a real image loads from R2.
+- **Chain (each step runs only because the previous failed):**
+  1. SVG @ NYU  2. PNG @ NYU  3. **PNG @ R2 (secondary)**  4. `.no-plot` / "spectrum not available"
+- **Implementation:** `IV_NYU_ASSETS` + `IV_ASSET_MIRROR` consts and `window._ivMirrorUrl()` in `index.html`, used by `_figFallbackToPng`, `_spectrumFallbackToPng` and the new `_rankFallback` (rank-abundance is PNG-first, so it gets a single secondary hop). Setting `IV_ASSET_MIRROR = ''` disables the secondary source entirely.
+- **What is deliberately NOT mirrored:** `assets_svg/` (SVGs), and the six bulk research directories (`database/` 256.8 GB, `molecular_catalogue/` 291.0 GB, `raw_MS_result/` 200.1 GB, `normal/` 14.0 GB, `search_space_nt/` 8.1 GB, `search_space_tesorai/` 1.6 GB — ~785 GB total). The portal makes **zero** requests to those six, so mirroring them would not have prevented the outage.
+- **Prefix-matching gotcha:** `_ivMirrorUrl` matches on `IV_NYU_ASSETS + '/'`, not the bare prefix. Without the trailing slash, `.../ImmunoVerse/assets_svg/...` also matches (since `assets` is a prefix of `assets_svg`) and un-mirrored SVGs get rewritten to dead mirror URLs.
+- **In-house cohorts are never mirrored.** Their figures come from `_ih.base` (signed private GCS URLs) which cannot match the NYU public prefix, so they can never be rewritten to a public bucket. See [private datasets] and the in-house hosting rules.
+
 ### Right-click protection
 - Each drawer `<img>` carries `oncontextmenu="return false;"` — blocks the browser's "Save image as…" menu.
 - Soft restriction only — determined users can grab SVGs via DevTools or the public NYU URL directly.
@@ -529,6 +542,29 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ---
 
 ## Change log
+
+### 2026-09-01 — Cloudflare R2 mirror as a secondary figure source
+
+**Why:** the 2026-08-31 NYU outage blanked every figure in the portal. Both hops
+of the render chain pointed at `genome.med.nyu.edu`, so an unreachable NYU meant
+no figures at all, for all 21 cancers.
+
+**What:**
+- Mirrored all **191,222 PNGs (7.55 GB)** from the NYU `/assets/` tree into
+  Cloudflare R2 bucket `immunoverse`. Object count matches the NYU listing
+  exactly; zero download errors; files spot-checked byte-for-byte against NYU.
+- Added R2 as the **third and final** step of the figure `onerror` chain. NYU
+  stays the sole primary — the mirror URL is only constructed after a NYU
+  request has already failed.
+- New `_ivMirrorUrl()` plus `_rankFallback()`; `_figFallbackToPng` and
+  `_spectrumFallbackToPng` reworked from a boolean flag to a step machine.
+- Verified both directions: NYU healthy -> served by NYU, R2 gets 0 requests;
+  NYU failing -> falls through and a real 802x487 image loads from R2.
+
+**Deliberately not mirrored:** `assets_svg/`, and the ~785 GB of bulk research
+directories the portal never requests. Details in the section above.
+
+**Files:** `index.html`, `ARCHITECTURE.md`.
 
 ### 2026-08-31 — Fix "Atlas" colliding with the search field on a signed-in nav
 

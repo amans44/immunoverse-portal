@@ -7556,25 +7556,85 @@ function mountInteractiveSvg(host, svgText, opts) {
 // load failure), swap in the PNG from /assets/. If the PNG also fails,
 // mark the wrap as no-plot. No proxy needed — <img> handles cross-origin
 // images without CORS for both PNG and SVG.
+// ---- Cloudflare R2 mirror of the NYU /assets/ PNGs -----------------------
+// STRICTLY SECONDARY. NYU is always the primary source and is always tried
+// first; a URL on the mirror is only ever produced AFTER a NYU request has
+// already failed. Added 2026-09-01 because on 2026-08-31 genome.med.nyu.edu
+// went down and, since every hop of the render chain pointed at that one host,
+// the drawer rendered no figures at all.
+//
+// Only the public /assets/ PNG tree is mirrored (191,222 files). SVGs are NOT
+// mirrored, and in-house/private cohort figures (which come from `_ih.base`,
+// a signed private GCS URL) deliberately never match this prefix and so are
+// never rewritten to a public bucket.
+//
+// Leave IV_ASSET_MIRROR as '' to disable the fallback entirely (no-op).
+const IV_NYU_ASSETS  = 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/assets';
+const IV_ASSET_MIRROR = 'https://pub-1401efdd186340ed829e8c3c2e07533e.r2.dev/assets';
+// ^ Cloudflare R2 public bucket 'immunoverse', holding a byte-identical copy of
+//   the 191,222 PNGs under the NYU /assets/ tree (mirrored 2026-09-01).
+//   Swap this for a custom domain (e.g. https://assets.immuno-verse.com/assets)
+//   if a DNS record is ever added; nothing else needs to change.
+//   Set it back to '' to disable the secondary source entirely.
+
+window._ivMirrorUrl = function (nyuUrl) {
+  if (!IV_ASSET_MIRROR || !nyuUrl) return '';
+  // NB: must match on the prefix PLUS its trailing slash. Without it,
+  // '.../ImmunoVerse/assets_svg/...' also matches (because 'assets' is a
+  // prefix of 'assets_svg') and SVGs — which are NOT mirrored — would be
+  // rewritten to dead mirror URLs.
+  return nyuUrl.indexOf(IV_NYU_ASSETS + '/') === 0
+    ? IV_ASSET_MIRROR + nyuUrl.slice(IV_NYU_ASSETS.length)
+    : '';                     // not a mirrored public NYU asset -> left alone
+};
+
+// Render chain, in order. Each step only runs because the previous one failed:
+//   1. SVG @ NYU   (initial src)
+//   2. PNG @ NYU   (step 'png')
+//   3. PNG @ R2    (step 'mirror')  <- secondary, only if NYU did not respond
+//   4. give up     -> .no-plot
 window._figFallbackToPng = function (img, pngUrl) {
-  if (img.dataset.fellback) {
-    img.parentNode.classList.add('no-plot');
-    img.remove();
+  var step = img.dataset.fbStep || '';
+  if (!step) {                       // SVG failed -> try the NYU PNG
+    img.dataset.fbStep = 'png';
+    img.dataset.pngUrl = pngUrl;
+    img.src = pngUrl;
     return;
   }
-  img.dataset.fellback = '1';
-  img.src = pngUrl;
+  if (step === 'png') {              // NYU PNG failed -> try the R2 mirror
+    var m = window._ivMirrorUrl(img.dataset.pngUrl || pngUrl);
+    if (m) { img.dataset.fbStep = 'mirror'; img.src = m; return; }
+  }
+  img.parentNode.classList.add('no-plot');   // mirror failed too, or disabled
+  img.remove();
 };
 
 // Same idea but for the spectrum slot, which has a custom "not available"
 // message instead of the generic no-plot when even the PNG is missing.
 window._spectrumFallbackToPng = function (img, pngUrl) {
-  if (img.dataset.fellback) {
-    img.parentNode.innerHTML = '<div class="no-spectrum">Annotated spectrum not available for this peptide. Spectra are pre-generated for the most recurrent peptides; rare or private peptides may not have a rendered spectrum.<br><a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank">Browse ImmunoVerse data ↗</a></div>';
+  var step = img.dataset.fbStep || '';
+  if (!step) {                       // SVG failed -> NYU PNG
+    img.dataset.fbStep = 'png';
+    img.dataset.pngUrl = pngUrl;
+    img.src = pngUrl;
     return;
   }
-  img.dataset.fellback = '1';
-  img.src = pngUrl;
+  if (step === 'png') {              // NYU PNG failed -> R2 mirror (secondary)
+    var m = window._ivMirrorUrl(img.dataset.pngUrl || pngUrl);
+    if (m) { img.dataset.fbStep = 'mirror'; img.src = m; return; }
+  }
+  img.parentNode.innerHTML = '<div class="no-spectrum">Annotated spectrum not available for this peptide. Spectra are pre-generated for the most recurrent peptides; rare or private peptides may not have a rendered spectrum.<br><a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank">Browse ImmunoVerse data ↗</a></div>';
+};
+
+// Rank-abundance starts on the NYU PNG (no SVG-first step), so it only needs
+// the one secondary hop before giving up.
+window._rankFallback = function (img) {
+  if (!img.dataset.fbStep) {
+    var m = window._ivMirrorUrl(img.src);
+    if (m) { img.dataset.fbStep = 'mirror'; img.src = m; return; }
+  }
+  img.parentNode.classList.add('no-plot');
+  img.remove();
 };
 
 // Probe whether an SVG version of a figure exists at NYU, and reveal the
@@ -7679,7 +7739,7 @@ function _renderPngFallback(wrap, pngUrl, kind, code, pep) {
     <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${pngUrl}','${kind}')">${DL_ICON}PNG</button>
     ${canReturnToSvg ? `<button class="dl-figure-btn iv-back-to-svg" data-act="back-to-svg" title="Back to interactive view">↶ SVG view</button>` : ''}
     <button class="expand-btn" onclick="openLightbox('${pngUrl}','${expandTitle}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
-    <img src="${pngUrl}" alt="${kind}" onload="this.classList.add('ok')" onclick="openLightbox('${pngUrl}','${expandTitle}')" onerror="this.parentNode.classList.add('no-plot');this.remove();" />
+    <img src="${pngUrl}" alt="${kind}" onload="this.classList.add('ok')" onclick="openLightbox('${pngUrl}','${expandTitle}')" onerror="_rankFallback(this)" />
     <div class="plot-caption">${kind.replace(/_/g, ' ')} · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>`;
   // Wire the "back to SVG" button if it rendered.
   const back = wrap.querySelector('[data-act="back-to-svg"]');
