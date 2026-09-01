@@ -222,6 +222,9 @@ On 2026-08-31 `genome.med.nyu.edu` went down and the portal rendered **no figure
 - **Prefix-matching gotcha:** `_ivMirrorUrl` matches on `IV_NYU_ASSETS + '/'`, not the bare prefix. Without the trailing slash, `.../ImmunoVerse/assets_svg/...` also matches (since `assets` is a prefix of `assets_svg`) and un-mirrored SVGs get rewritten to dead mirror URLs.
 - **In-house cohorts are never mirrored.** Their figures come from `_ih.base` (signed private GCS URLs) which cannot match the NYU public prefix, so they can never be rewritten to a public bucket. See [private datasets] and the in-house hosting rules.
 
+- **Refreshing the mirror:** `scripts/resync_r2_mirror.sh`. Run it after Frank uploads a new batch of figures to NYU. It is INCREMENTAL — lists NYU, lists R2, transfers only the difference — so a routine top-up moves a few MB rather than the full 7.5 GB. `--dry-run` reports what would move without changing anything. Needs a temporary R2 API token (`R2_ACCOUNT_ID`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`); issue one scoped to the `immunoverse` bucket with an expiry, and delete it when the sync finishes. R2 being S3-compatible is the only reason the `aws` CLI appears here — no AWS account is involved.
+- **Never upload figures straight to R2.** Anything added only to the mirror is invisible in normal operation and would surface only during an NYU outage. NYU is where figures are published; the mirror is derived from it.
+
 ### Right-click protection
 - Each drawer `<img>` carries `oncontextmenu="return false;"` — blocks the browser's "Save image as…" menu.
 - Soft restriction only — determined users can grab SVGs via DevTools or the public NYU URL directly.
