@@ -142,7 +142,14 @@ a { color: var(--link); text-decoration: none; transition: color .15s; }
 a:hover { color: var(--text-0); }
 
 /* ===================== LAYOUT ===================== */
-.container { max-width: 1400px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 1; }
+/* Fluid page measure. Was a fixed `max-width: 1400px` (set at the initial
+   release and never revisited), which does not respond to screen size at all:
+   fine on a 1280px laptop (~95% fill) but only ~61% on a 2276px viewport, so the
+   content sat marooned in the middle with ~440px dead space each side.
+   `min(94vw, 1800px)` tracks the display up to a ceiling. The ceiling matters as
+   much as the fluidity — without it, text lines on an ultrawide get too long to
+   read comfortably. */
+.container { width: min(94vw, 1800px); margin: 0 auto; padding: 0 32px; position: relative; z-index: 1; }
 section { padding: 96px 0; position: relative; z-index: 1; }
 section + section { border-top: 1px solid var(--border); }
 
@@ -157,7 +164,11 @@ nav.topnav {
   border-bottom: 1px solid var(--border);
 }
 nav.topnav .inner {
-  max-width: 1600px;
+  /* Raised 1600 -> 1800 to line up with the fluid .container on wide screens.
+     Deliberately a CAP, not a fluid width: making the nav itself 94vw would take
+     ~90px off it on ~1500px screens, and the signed-in ADMIN nav needs all of
+     1600px (see the min-width:1600 compaction block below). */
+  max-width: 1800px;
   margin: 0 auto;
   padding: 14px 24px;
   display: flex;
@@ -3145,8 +3156,11 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   .iv-inhouse-pill .ihp-text { display: none; }   /* in-house pill → lock icon only */
   .iv-inhouse-pill { padding: 7px 9px; }
 }
-/* Widest band, signed in. `nav .inner` is capped at max-width:1600px, so at any
-   viewport >=1600 the bar renders at exactly 1600px — it does NOT keep growing.
+/* Widest band, signed in. `nav .inner` is capped at max-width:1800px (raised from
+   1600 when .container went fluid), so the bar tops out at 1800px rather than
+   growing without limit. The 1600px figures below are the ORIGINAL measurements
+   taken at the old 1600px cap — they are the worst case, and the extra 200px
+   only ever makes this roomier, never tighter.
    A signed-in member adds the in-house pill + account chip, and an admin also
    gets the live query counter, which pushed content to ~1779px inside that
    1600px bar. Because .search-wrap is `flex:0 1 200px; min-width:130px` it
@@ -3221,7 +3235,11 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   .iv-signin-link { font-size: 13px; padding: 6px 10px; }
 }
 @media (max-width: 640px) {
-  .container { padding: 0 20px; }
+  /* Phones/tablets: go edge-to-edge again. The 94vw inset is there to give big
+     screens a breathing margin; on a 360px phone that same 6% is just lost
+     content width, so below 520px the container is full width and only the
+     padding insets it — exactly the behaviour before the fluid change. */
+  .container { width: 100%; padding: 0 20px; }
   section { padding: 48px 0; }
   .explorer { padding: 20px; }
   .hero { padding: 32px 0 16px; }

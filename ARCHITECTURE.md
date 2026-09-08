@@ -552,6 +552,38 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
+### 2026-09-08 — Page measure made fluid (content no longer marooned on wide screens)
+
+**Why:** Aman reported the portal looked "narrowed". Measured on his machine:
+viewport 2276px (browser at ~75% zoom) but `.container` had a fixed
+`max-width: 1400px` — so content filled only **61%**, with ~440px of dead space
+each side, and the nav (capped 1600px) ran 200px wider than the content beneath
+it. The 1400px cap dated from the initial release (2026-04-14) and had never
+been revisited; it was not a regression, it simply does not respond to screen
+size.
+
+**What:**
+- `.container` → `width: min(94vw, 1800px)`. Tracks the display up to a ceiling.
+  The ceiling matters as much as the fluidity: without it, text lines on an
+  ultrawide become too long to read.
+- `nav.topnav .inner` cap 1600 → 1800 so the nav lines up with the content on
+  wide screens. Deliberately a CAP, not a fluid width — making the nav itself
+  94vw would cost ~90px on ~1500px screens, and the signed-in admin nav needs
+  all 1600px.
+- Below 520px the container returns to full width, so phones do not lose 6% to
+  the inset.
+
+**Measured fill after the change:** iPhone 96%, iPad 11" (portrait and landscape)
+94%, 13" laptop 94%, 15" laptop 94%, 1080p 94% (hits the 1800 ceiling), then
+79% at 2276px and 52% on a 3440px ultrawide.
+
+**Pre-existing issue found, NOT caused by this and NOT fixed:** at phone widths
+the page overflows horizontally by ~250–280px, from a `<th>` in the explorer
+data table. Verified identical before and after the change by serving both
+versions side by side.
+
+**Files:** `index.html`, `ARCHITECTURE.md`.
+
 ### 2026-09-01 — Brand mark made consistent across the portal's pages
 
 **Why:** the real ImmunoVerse mark shipped only on `index.html`, so navigating to
