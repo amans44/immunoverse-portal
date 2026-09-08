@@ -552,6 +552,30 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
+### 2026-09-08 — Type scale bumped ~10%
+
+**Why:** with the page measure now fluid, the type read too small — body text was
+15px and most UI text sat at 10–13px, which is tight for a data-heavy site.
+
+**What:** scaled all **268** `font-size` declarations in `index.html` — ×1.10 for
+body/UI text (≤18px), ×1.05 for display type so headlines don't balloon and start
+wrapping. Body 15→16.5px; the common 11/12/13px UI sizes → 12/13/14.5px.
+
+**Note the file has no rem/em at all** — every size is a hardcoded px value, so
+there is no single root lever. Changing `body { font-size }` moves almost nothing
+because nearly every element sets its own size. Any future global type change has
+to be a scripted rescale like this one.
+
+**Nav re-verified after the bump** (larger text widens it, and the signed-in ADMIN
+nav is the tight case): no overlaps and section links still in the bar at 1440,
+1512, 1600, 1707 and 1800px. The 1800px cap shipped earlier absorbed the increase.
+Search still bottoms out at its 130px floor on 1440–1600 in admin state — that was
+already true beforehand, it is the designed absorption.
+
+**Only `index.html`.** The other pages keep their original sizes.
+
+**Files:** `index.html`, `ARCHITECTURE.md`.
+
 ### 2026-09-08 — Page measure made fluid (content no longer marooned on wide screens)
 
 **Why:** Aman reported the portal looked "narrowed". Measured on his machine:
