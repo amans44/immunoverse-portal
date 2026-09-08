@@ -57,7 +57,7 @@ html, body { margin:0; padding:0; }
 body {
   min-height: 100vh; background: var(--bg-0); background-image: var(--grad-hero);
   color: var(--text-0); font-family: 'Inter', system-ui, sans-serif;
-  font-size: 15px; line-height: 1.55;
+  font-size: 16.5px; line-height: 1.55;
 }
 
 /* ===== Top nav ===== */
@@ -69,14 +69,14 @@ body {
 }
 :root[data-theme="light"] .topnav { background: rgba(255,255,255,0.85); }
 .topnav-inner {
-  max-width: 1440px; margin: 0 auto;
+  width: min(94vw, 1800px); margin: 0 auto;
   padding: 14px 28px;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
 }
 .brand {
   display: inline-flex; align-items: center; gap: 10px;
   text-decoration: none; color: var(--text-0);
-  font-size: 20px; font-weight: 700; letter-spacing: -0.01em;
+  font-size: 21px; font-weight: 700; letter-spacing: -0.01em;
   background: var(--grad-primary);
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
@@ -102,12 +102,12 @@ body {
   display: inline-flex; align-items: center; gap: 6px;
   background: var(--primary-soft); color: var(--primary);
   border-radius: 9999px; padding: 4px 10px;
-  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
   margin-left: 6px;
 }
 .topnav nav { display: flex; gap: 18px; align-items: center; }
 .topnav nav a {
-  color: var(--text-2); text-decoration: none; font-size: 14px; font-weight: 500;
+  color: var(--text-2); text-decoration: none; font-size: 15.5px; font-weight: 500;
 }
 .topnav nav a:hover { color: var(--text-0); }
 .theme-toggle-btn {
@@ -122,13 +122,13 @@ body {
 :root[data-theme="light"] .theme-toggle-btn .icon-moon { display: none; }
 
 main {
-  max-width: 1440px; margin: 0 auto;
+  width: min(94vw, 1800px); margin: 0 auto;
   padding: 32px 28px 64px;
 }
 
 .page-head { margin-bottom: 28px; display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
-.page-head h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 4px; }
-.page-head p  { color: var(--text-2); font-size: 14px; margin: 0; }
+.page-head h1 { font-size: 29.5px; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 4px; }
+.page-head p  { color: var(--text-2); font-size: 15.5px; margin: 0; }
 
 /* Tabs */
 .tabs {
@@ -140,7 +140,7 @@ main {
 .tabs button {
   background: transparent; border: 0;
   color: var(--text-2); font-family: inherit;
-  font-size: 13px; font-weight: 500;
+  font-size: 14.5px; font-weight: 500;
   padding: 8px 18px;
   border-radius: var(--radius-pill);
   cursor: pointer;
@@ -155,7 +155,7 @@ main {
   border-radius: 9999px;
   padding: 1px 7px;
   margin-left: 6px;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 700;
 }
 .tabs button:not(.active) .count-badge {
@@ -176,8 +176,8 @@ main {
   border-radius: var(--radius);
   padding: 16px 18px;
 }
-.stat-card .label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
-.stat-card .value { font-family: var(--mono); font-size: 26px; font-weight: 700; color: var(--text-0); margin-top: 4px; }
+.stat-card .label { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+.stat-card .value { font-family: var(--mono); font-size: 27.5px; font-weight: 700; color: var(--text-0); margin-top: 4px; }
 .stat-card.amber .value { color: var(--accent-amber); }
 .stat-card.primary .value { color: var(--primary); }
 .stat-card.lime .value { color: var(--accent-lime); }
@@ -197,25 +197,25 @@ main {
   border-bottom: 1px solid var(--border);
   padding-bottom: 12px; margin-bottom: 14px;
 }
-.card-head h2 { font-size: 17px; font-weight: 700; margin: 0; display:inline-flex; align-items:center; gap:8px; }
+.card-head h2 { font-size: 18.5px; font-weight: 700; margin: 0; display:inline-flex; align-items:center; gap:8px; }
 
 /* Filter row */
 .filter-row { display:flex; gap:8px; flex-wrap:wrap; }
 .filter-chip {
   background: var(--bg-2); border: 1px solid var(--border);
   border-radius: 9999px; padding: 4px 12px;
-  font-size: 12px; font-weight: 500; color: var(--text-2);
+  font-size: 13px; font-weight: 500; color: var(--text-2);
   cursor: pointer;
 }
 .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
 /* Table */
 .tbl {
-  width: 100%; border-collapse: collapse; font-size: 13.5px;
+  width: 100%; border-collapse: collapse; font-size: 15px;
 }
 .tbl th {
   text-align: left; padding: 10px;
-  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
   color: var(--text-3); border-bottom: 1px solid var(--border);
 }
 .tbl td {
@@ -229,7 +229,7 @@ main {
   display: inline-block;
   padding: 2px 9px;
   border-radius: 9999px;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -249,7 +249,7 @@ main {
 .btn {
   background: var(--primary); color: #fff;
   border: 0; border-radius: 9999px;
-  padding: 6px 14px; font-size: 12px; font-weight: 600;
+  padding: 6px 14px; font-size: 13px; font-weight: 600;
   cursor: pointer; font-family: inherit;
 }
 .btn:hover { background: var(--primary-strong); }
@@ -267,21 +267,21 @@ main {
 
 .reason-cell {
   max-width: 360px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-2);
   line-height: 1.5;
   white-space: pre-wrap;
 }
-.email-mono { font-family: var(--mono); font-size: 12.5px; color: var(--text-0); }
+.email-mono { font-family: var(--mono); font-size: 14px; color: var(--text-0); }
 
 .empty-state {
   padding: 36px 18px; text-align: center;
-  color: var(--text-2); font-size: 14px;
+  color: var(--text-2); font-size: 15.5px;
 }
 
 .alert {
   border-radius: 12px; padding: 11px 14px;
-  font-size: 13px; margin-bottom: 14px;
+  font-size: 14.5px; margin-bottom: 14px;
 }
 .alert.hidden { display: none; }
 .alert-error   { background: rgba(248,113,113,0.10); border: 1px solid rgba(248,113,113,0.35); color: var(--danger); }
@@ -305,15 +305,15 @@ main {
   padding: 28px;
   box-shadow: var(--shadow-lg);
 }
-.modal-card h3 { margin: 0 0 4px; font-size: 18px; }
-.modal-card p { font-size: 13.5px; color: var(--text-2); line-height: 1.55; margin: 0 0 14px; }
+.modal-card h3 { margin: 0 0 4px; font-size: 20px; }
+.modal-card p { font-size: 15px; color: var(--text-2); line-height: 1.55; margin: 0 0 14px; }
 .otp-box {
   font-family: var(--mono);
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
-  font-size: 14px;
+  font-size: 15.5px;
   color: var(--text-0);
   word-break: break-all;
   margin-bottom: 14px;
@@ -323,15 +323,15 @@ main {
 .otp-box button {
   background: var(--primary); color: #fff;
   border: 0; border-radius: 8px;
-  padding: 6px 12px; font-size: 12px; cursor: pointer;
+  padding: 6px 12px; font-size: 13px; cursor: pointer;
 }
 
 footer.page-footer {
   border-top: 1px solid var(--border);
   padding: 22px 28px;
   display: flex; justify-content: space-between; align-items: center;
-  max-width: 1440px; margin: 0 auto;
-  font-size: 13px; color: var(--text-3);
+  width: min(94vw, 1800px); margin: 0 auto;
+  font-size: 14.5px; color: var(--text-3);
   flex-wrap: wrap; gap: 14px;
 }
 footer.page-footer a { color: var(--text-2); text-decoration: none; }
@@ -462,7 +462,7 @@ footer.page-footer a:hover { color: var(--text-0); }
     <h2><span>🛡</span>Admin allow-list</h2>
   </div>
   <div id="allowAlert" class="alert hidden"></div>
-  <p style="font-size:13px; color:var(--text-2); margin: 0 0 14px; line-height:1.55;">
+  <p style="font-size: 14.5px; color:var(--text-2); margin: 0 0 14px; line-height:1.55;">
     Emails on this list become admin automatically — if the user has already
     registered, they're promoted immediately; if they haven't, they're
     promoted at the moment of sign-up. Two sources are merged:
@@ -474,7 +474,7 @@ footer.page-footer a:hover { color: var(--text-0); }
     <input id="allowEmailInput" type="email" required placeholder="new-admin@example.com"
       style="flex:1; min-width:240px; background:var(--bg-2); border:1px solid var(--border);
              border-radius:9999px; padding:10px 16px; color:var(--text-0); font-family:inherit;
-             font-size:14px; outline:none;" />
+             font-size: 15.5px; outline:none;" />
     <button class="btn" type="submit" id="addAllowBtn">Add to allow-list</button>
   </form>
   <div id="allowBody">Loading…</div>
@@ -488,25 +488,25 @@ footer.page-footer a:hover { color: var(--text-0); }
 <!-- ===== In-house access board (granular, per-dataset) ===== -->
 <style>
   .pb-panel { background: var(--bg-2); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
-  .pb-title { font-weight: 700; font-size: 15px; color: var(--text-0); margin: 0 0 12px; }
-  .pb-hint { font-weight: 400; font-size: 12px; color: var(--text-2); margin-left: 8px; }
+  .pb-title { font-weight: 700; font-size: 16.5px; color: var(--text-0); margin: 0 0 12px; }
+  .pb-hint { font-weight: 400; font-size: 13px; color: var(--text-2); margin-left: 8px; }
   .pb-ds { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
-  .pb-ds-head { font-weight: 700; font-size: 14px; color: var(--text-0); margin-bottom: 10px; }
-  .pb-ds-head .pb-code { font-family: ui-monospace, monospace; color: var(--accent, #8b6cff); margin-left: 8px; font-size: 12px; }
+  .pb-ds-head { font-weight: 700; font-size: 15.5px; color: var(--text-0); margin-bottom: 10px; }
+  .pb-ds-head .pb-code { font-family: ui-monospace, monospace; color: var(--accent, #8b6cff); margin-left: 8px; font-size: 13px; }
   .pb-row { display:flex; align-items:flex-start; gap:10px; margin-bottom: 9px; }
-  .pb-lbl { flex-shrink:0; width: 60px; font-size: 11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color: var(--text-2); padding-top: 6px; }
+  .pb-lbl { flex-shrink:0; width: 60px; font-size: 12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color: var(--text-2); padding-top: 6px; }
   .pb-chips { flex:1; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-  .pb-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 8px 4px 10px; border-radius:9999px; font-size:12px; background: var(--bg-1, #1b1b22); color: var(--text-0); border:1px solid var(--border); }
+  .pb-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 8px 4px 10px; border-radius:9999px; font-size: 13px; background: var(--bg-1, #1b1b22); color: var(--text-0); border:1px solid var(--border); }
   .pb-chip.grp { background: rgba(139,108,255,.16); color: var(--accent, #b9a4ff); border-color: rgba(139,108,255,.35); }
-  .pb-chip .x { cursor:pointer; opacity:.6; font-size:14px; line-height:1; }
+  .pb-chip .x { cursor:pointer; opacity:.6; font-size: 15.5px; line-height:1; }
   .pb-chip .x:hover { opacity:1; }
-  .pb-empty { font-size:12px; color: var(--text-2); padding-top: 5px; }
+  .pb-empty { font-size: 13px; color: var(--text-2); padding-top: 5px; }
   .pb-add { display:flex; gap:6px; margin: 2px 0 0 70px; }
-  .pb-add input, .pb-add select { padding:6px 10px; border:1px solid var(--border); border-radius:8px; background: var(--bg-1, #15151b); color: var(--text-0); font-size:13px; }
+  .pb-add input, .pb-add select { padding:6px 10px; border:1px solid var(--border); border-radius:8px; background: var(--bg-1, #15151b); color: var(--text-0); font-size: 14.5px; }
   .pb-add .btn { padding:6px 14px; }
-  .pb-grpchip { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:10px; background: rgba(139,108,255,.16); color: var(--accent, #b9a4ff); border:1px solid rgba(139,108,255,.35); font-size:13px; font-weight:600; margin:0 8px 8px 0; cursor:pointer; }
+  .pb-grpchip { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:10px; background: rgba(139,108,255,.16); color: var(--accent, #b9a4ff); border:1px solid rgba(139,108,255,.35); font-size: 14.5px; font-weight:600; margin:0 8px 8px 0; cursor:pointer; }
   .pb-grpchip.active { outline: 2px solid var(--accent, #8b6cff); }
-  .pb-grpchip .gc { font-weight:400; font-size:11px; opacity:.8; }
+  .pb-grpchip .gc { font-weight:400; font-size: 12px; opacity:.8; }
   .pb-grpdetail { background: var(--bg-1, #15151b); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
 </style>
 <section class="card" id="cardBoard" hidden>
@@ -514,7 +514,7 @@ footer.page-footer a:hover { color: var(--text-0); }
     <h2><span>🔐</span>In-house access</h2>
   </div>
   <div id="boardAlert" class="alert hidden"></div>
-  <p style="font-size:13px; color:var(--text-2); margin: 0 0 16px; line-height:1.55;">
+  <p style="font-size: 14.5px; color:var(--text-2); margin: 0 0 16px; line-height:1.55;">
     Grant access to each in-house <b>dataset</b> by <b>group</b> (reusable, e.g. the whole lab)
     or by individual <b>email</b> (e.g. an outside collaborator). Admins always see every dataset.
     This is the portal's own board — <b>separate</b> from the immunoVerse-chat access board. Changes
@@ -525,7 +525,7 @@ footer.page-footer a:hover { color: var(--text-0); }
     <p class="pb-title">Groups <span class="pb-hint">reusable sets of people you assign to datasets</span></p>
     <form onsubmit="return createPortalGroup(event)" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; max-width:540px;">
       <input id="pbGroupName" type="text" required placeholder="group name (e.g. yarmarkovianlab)"
-        style="flex:1; min-width:220px; background:var(--bg-1,#15151b); border:1px solid var(--border); border-radius:9999px; padding:10px 16px; color:var(--text-0); font-size:14px; outline:none;" />
+        style="flex:1; min-width:220px; background:var(--bg-1,#15151b); border:1px solid var(--border); border-radius:9999px; padding:10px 16px; color:var(--text-0); font-size: 15.5px; outline:none;" />
       <button class="btn" type="submit">Create group</button>
     </form>
     <div id="pbGroups">Loading…</div>
@@ -701,20 +701,20 @@ async function boot() {
   const u = await me.json();
   if (u.role !== 'admin') {
     document.body.innerHTML = `<div style="max-width:520px;margin:120px auto;padding:32px;text-align:center;font-family:'Inter',sans-serif;color:var(--text-0);">
-      <h1 style="font-size:28px;font-weight:700;margin:0 0 6px;">🛡 Admin only</h1>
+      <h1 style="font-size: 29.5px;font-weight:700;margin:0 0 6px;">🛡 Admin only</h1>
       <p style="color:var(--text-2);margin:0 0 22px;line-height:1.55;">
         You're signed in as <b style="font-family:var(--mono);color:var(--text-1)">${esc(u.email)}</b>,
         which doesn't have portal admin privileges.
       </p>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-        <button type="button" onclick="adminElevate()" style="background:var(--primary);color:#fff;border:0;border-radius:9999px;padding:10px 20px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;">
+        <button type="button" onclick="adminElevate()" style="background:var(--primary);color:#fff;border:0;border-radius:9999px;padding:10px 20px;font-family:inherit;font-size: 15.5px;font-weight:600;cursor:pointer;">
           Sign in with an admin account
         </button>
-        <a href="account.html" style="background:transparent;color:var(--text-1);border:1px solid var(--border-2);border-radius:9999px;padding:10px 20px;font-size:14px;font-weight:600;text-decoration:none;">
+        <a href="account.html" style="background:transparent;color:var(--text-1);border:1px solid var(--border-2);border-radius:9999px;padding:10px 20px;font-size: 15.5px;font-weight:600;text-decoration:none;">
           ← Back to my account
         </a>
       </div>
-      <p style="margin:18px 0 0;font-size:12px;color:var(--text-3);">
+      <p style="margin:18px 0 0;font-size: 13px;color:var(--text-3);">
         If you should have admin access, ask another admin to promote your account from their
         Admin → Users tab, or add your email to the allow-list.
       </p>
@@ -994,7 +994,7 @@ async function loadAllowList() {
           statusCell = `<span class="tag tag-active">Has account · not admin</span>`;
         }
         const removeBtn = e.source === 'env'
-          ? `<span style="font-size:11px;color:var(--text-3);font-style:italic;">env-locked</span>`
+          ? `<span style="font-size: 12px;color:var(--text-3);font-style:italic;">env-locked</span>`
           : `<button class="btn btn-danger" data-rm="${esc(e.email)}">Remove</button>`;
         return `<tr>
           <td class="email-mono">${esc(e.email)}</td>
@@ -1094,7 +1094,7 @@ function renderPortalGroups() {
       : '<span class="pb-empty">No members yet.</span>';
     html += `<div class="pb-grpdetail">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <b style="font-size:13px;">${esc(g.name)} — members</b>
+        <b style="font-size: 14.5px;">${esc(g.name)} — members</b>
         <button class="btn btn-danger" data-delgrp="${esc(g.name)}">Delete group</button>
       </div>
       <div class="pb-chips" style="margin-bottom:10px;">${members}</div>
@@ -1245,7 +1245,7 @@ async function loadDownloads() {
         <td>${esc(fmtB(x.bytes))}</td>
         <td class="email-mono" style="color:var(--text-3);">${esc(x.ip || '—')}</td>
       </tr>`).join('')}</tbody></table>
-      <p style="margin-top:10px;color:var(--text-3);font-size:12.5px;">Showing the ${rows.length} most recent downloads. Catalogue/index fetches are not logged — only real file downloads.</p>`;
+      <p style="margin-top:10px;color:var(--text-3);font-size: 14px;">Showing the ${rows.length} most recent downloads. Catalogue/index fetches are not logged — only real file downloads.</p>`;
   } catch (err) {
     alert_('dlAlert', err.message, 'error');
     body.innerHTML = '';
@@ -1282,10 +1282,10 @@ async function loadInquiries() {
         const typeMap = { bug: 'tag-suspended', feature: 'tag-admin', feedback: 'tag-active', data_issue: 'tag-pending', other: '' };
         const typeCls = typeMap[inq.inquiry_type] || '';
         const where = inq.page_url
-          ? `<a href="${esc(inq.page_url)}" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none;font-size:11px;" title="${esc(inq.page_url)}">${esc(inq.page_url.replace(/^https?:\/\//, '').slice(0, 36))}…</a>`
-          : '<span style="color:var(--text-3);font-size:11px;">—</span>';
+          ? `<a href="${esc(inq.page_url)}" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none;font-size: 12px;" title="${esc(inq.page_url)}">${esc(inq.page_url.replace(/^https?:\/\//, '').slice(0, 36))}…</a>`
+          : '<span style="color:var(--text-3);font-size: 12px;">—</span>';
         const actions = inq.status === 'resolved'
-          ? `<span style="font-size:11px;color:var(--text-3);">${inq.admin_note ? 'Note: ' + esc(inq.admin_note) : 'No note'}</span>`
+          ? `<span style="font-size: 12px;color:var(--text-3);">${inq.admin_note ? 'Note: ' + esc(inq.admin_note) : 'No note'}</span>`
           : `<div class="row-actions">
               ${inq.status === 'new' ? `<button class="btn btn-ghost" data-inq-act="in_review" data-id="${esc(inq.id)}">Mark in review</button>` : ''}
               <button class="btn" data-inq-act="resolve" data-id="${esc(inq.id)}">Resolve</button>
@@ -1294,13 +1294,13 @@ async function loadInquiries() {
           <td>
             <div style="font-weight:600;color:var(--text-0);">${esc(inq.name || '—')}</div>
             <div class="email-mono">${esc(inq.email)}</div>
-            ${inq.user_id ? `<div style="font-size:11px;color:var(--text-3);margin-top:2px;">signed-in</div>` : `<div style="font-size:11px;color:var(--text-3);margin-top:2px;">anonymous</div>`}
+            ${inq.user_id ? `<div style="font-size: 12px;color:var(--text-3);margin-top:2px;">signed-in</div>` : `<div style="font-size: 12px;color:var(--text-3);margin-top:2px;">anonymous</div>`}
           </td>
           <td><span class="tag ${typeCls}">${esc(inq.inquiry_type)}</span></td>
           <td style="max-width:420px;">
             <div style="font-weight:600;color:var(--text-0);">${esc(inq.subject)}</div>
             <div class="reason-cell" style="margin-top:4px;">${esc(inq.message)}</div>
-            <div style="margin-top:6px;font-size:11px;color:var(--text-3);font-family:var(--mono);">${esc(ua)}</div>
+            <div style="margin-top:6px;font-size: 12px;color:var(--text-3);font-family:var(--mono);">${esc(ua)}</div>
           </td>
           <td>${where}</td>
           <td>${esc(timeAgo(inq.created_at))}</td>

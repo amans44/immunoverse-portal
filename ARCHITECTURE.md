@@ -552,6 +552,35 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
+### 2026-09-08 — Fluid measure + type scale rolled out to the other pages
+
+**Why:** `index.html` alone had the fluid measure and the bigger type, so Account,
+Admin, Hub, Sign-in, Reset and Share looked narrower and smaller than the atlas.
+
+**What:**
+- **Fluid measure** applied to the three pages with real layout containers:
+  `account.html` (`.topnav-inner`, `main`, footer — was `max-width: 1280px`),
+  `admin.html` (same three — was `1440px`) and `hub/index.html` (`.container` and
+  `nav.topnav .inner` — was `1400px`). All now `width: min(94vw, 1800px)`.
+- **Type scale ×1.10 / ×1.05** applied to all six pages, matching the atlas. Body
+  type is now 16.5px everywhere.
+- **Width deliberately NOT changed** on `login.html`, `reset.html` and
+  `share.html`: those are centred card layouts (largest caps 1180 / 440 / 880px).
+  A sign-in form or a reset card should not span 1800px, so they got the type
+  bump only.
+
+**`reviewers/` untouched — frozen for paper review. `demo/` untouched — pinned.**
+
+**Verified** at a 1600px viewport: every page free of horizontal overflow and nav
+overlaps, body type 16.5px. Note `account.html` and `admin.html` redirect to
+sign-in when signed out, so an iframe probe silently measures `login.html`
+instead — they must be checked by fetching the page, stripping its `<script>`
+tags and rendering the markup + CSS in isolation. Both then measured 1504px for
+nav and main at a 1600px viewport, exactly `min(94vw, 1800px)`.
+
+**Files:** `account.html`, `admin.html`, `login.html`, `reset.html`, `share.html`,
+`hub/index.html`, `ARCHITECTURE.md`.
+
 ### 2026-09-08 — Type scale bumped ~10%
 
 **Why:** with the page measure now fluid, the type read too small — body text was
