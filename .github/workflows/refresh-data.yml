@@ -1,10 +1,11 @@
 name: Refresh ImmunoVerse data from Dropbox
 
 on:
-  # Daily at 06:15 UTC — a few hours after Frank typically updates Dropbox,
-  # so the deployed site picks up the new annotations on its next page load.
+  # Weekly, Mondays 06:15 UTC (was daily). Matches the agent's weekly rebuild and Hub sync
+  # (changed 2026-09-15 to cut refresh churn). Use "Run workflow" in the Actions tab to pull
+  # new Dropbox data sooner.
   schedule:
-    - cron: '15 6 * * *'
+    - cron: '15 6 * * 1'
   # Allow manual trigger from the Actions tab.
   workflow_dispatch:
 
@@ -57,7 +58,7 @@ jobs:
             echo "files_changed=0" >> "$GITHUB_OUTPUT"
           else
             FILES=$(git diff --cached --name-only | wc -l | tr -d ' ')
-            git commit -m "chore(data): daily refresh from Dropbox"
+            git commit -m "chore(data): weekly refresh from Dropbox"
             git push
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "files_changed=$FILES" >> "$GITHUB_OUTPUT"
@@ -133,9 +134,9 @@ jobs:
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
           from: ImmunoVerse Bot <${{ secrets.GMAIL_USER }}>
           to: amansharma.e44@gmail.com
-          subject: "ImmunoVerse daily refresh: ${{ job.status }}${{ steps.commit.outputs.changed == 'true' && ' — new data committed' || '' }}"
+          subject: "ImmunoVerse weekly refresh: ${{ job.status }}${{ steps.commit.outputs.changed == 'true' && ' — new data committed' || '' }}"
           body: |
-            ImmunoVerse daily Dropbox refresh finished — status: ${{ job.status }}.
+            ImmunoVerse weekly Dropbox refresh finished — status: ${{ job.status }}.
 
             Data changed:  ${{ steps.commit.outputs.changed || 'n/a (run did not reach the commit step)' }}
             Files changed: ${{ steps.commit.outputs.files_changed || '0' }}
