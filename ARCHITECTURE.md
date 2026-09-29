@@ -57,6 +57,37 @@ Two independent sync flows, both daily:
 - **Outputs:** `data_js/{CANCER}.js`, `data_js/{CANCER}_detail.js`, `data_js/_search_index.js`, `data_js/_summary.js`, and a `data/` folder with derived CSVs.
 - **Input columns it expects:** see the module docstring in `integrate_data.py`.
 
+#### Per-HLA immunogenicity (two models)
+
+Each entry of a row's `bind` array (row index 13) is
+`[allele, rank%, nM, category, nSamples, deepimmuno, nTotal, recurrence, prime_rank]`.
+The last two immunogenicity slots come from **`final_immunogenicity.txt`** via
+`load_dual_immunogenicity()`, joined on **exact peptide + normalized allele**
+(`A*02:01`) — never a best-across-alleles value:
+
+| slot | metric | direction | absent when |
+|---|---|---|---|
+| `[5]` | DeepImmuno potential, 0–1 | **higher** is more favorable | peptide length ∉ {9,10} (DeepImmuno-CNN limit) |
+| `[8]` | PRIME %rank | **lower** is more favorable | `HLA-C*03:01` (unsupported allele) or length > 14 |
+
+`all_deepimmuno_immunogenicity.txt` is now only a **fallback + consistency check**;
+all 180,236 of its values match the combined table exactly. Missing is stored as
+`None`/`null`, never 0 — **0 is a legal score for both models**. In-house cohorts
+have no immunogenicity run, so their bind rows stop at slot 7 and the frontend
+reads `b[8]` as `undefined`, which it treats identically to `null`.
+
+`augment_immunogenicity.py` backfills slot 8 into already-built `data_js/*.js`
+without a full rebuild (the Dropbox cache can be months older than the live
+`data_js/`, so re-running the whole pipeline would roll the tables back). It
+imports the pipeline's own loader and normalizer, so the two joins cannot drift.
+`--check` reports without writing; `--restore` reverts from the `.bak.preprime`
+copies.
+
+Frontend: `IMMUNO_CFG` in `index.html` holds both thresholds and a
+`primeSemanticsConfirmed` flag; `immunoInterpret()` turns a pair of scores into
+one of seven deterministic states (**no LLM**), and `immunoEvidence()` exposes the
+result as structured read-only evidence on `window.__IV_IMMUNO_EVIDENCE`.
+
 ### Hub data — Dropbox → private GCS (NOT this repo)
 **Changed 2026-07-22.** The Hub used to be public: `sync_hub.py` pulled the NYU
 open share and committed the results into `hub/data_js/` + `hub/data/raw/`, which
@@ -392,7 +423,8 @@ admin console) is served by a **separate backend**, not by these static pages.
 ## Private in-house datasets (lab-only cancers)
 
 In-house cohorts (**MB** medulloblastoma, **OS** osteosarcoma, **DIPG**, **NEPC**,
-**CHORDOMA** — 5 live as of 2026-06-15) are hosted privately and folded into the
+**CHORDOMA** — 5 live as of 2026-06-15; plus **CTEC**, cortical thymic epithelial
+cells, a normal-tissue dataset added 2026-09-22 as admins-only) are hosted privately and folded into the
 **same explorer** as the 21 public cancers, so they're directly comparable — not a
 separate page. Visible ONLY to a lab allow-list;
 invisible to everyone else (nav, dropdown, grid, search). Adding a cohort is purely
@@ -551,6 +583,71 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ---
 
 ## Change log
+
+### 2026-09-29 — Dual-model immunogenicity (DeepImmuno + PRIME) — AWAITING REVIEW
+
+**Status: prepared locally, NOT committed or deployed.** Preview served from
+`python -m http.server 8777` in the repo root.
+
+**Where:** `integrate_data.py` (new `load_dual_immunogenicity()`, bind slot 8),
+new `augment_immunogenicity.py`, `index.html` (`IMMUNO_CFG`, `immunoInterpret()`,
+`immunoBadgeHtml()`, `immunoEvidence()`, per-HLA table columns, CSV exports,
+compare modal, `interp()`), `data_js/*.js` (slot 8 backfilled).
+
+- **What:** every peptide–HLA row now shows **both** predictions side by side plus
+  a deterministic interpretation badge. The two are never averaged and no combined
+  probability is derived. Seven states: concordant favorable / discordant /
+  neither / single-model / unavailable / interpretation-pending.
+- **Thresholds** (portal triage heuristics, **not** published clinical cutoffs):
+  DeepImmuno ≥ 0.5, PRIME %rank ≤ 0.5. The PRIME cutoff is deliberately *not*
+  justified by the NetMHCpan 0.5% strong-binder rank — that one is about binding.
+- **Why both:** Spearman(DeepImmuno, PRIME) = **+0.08** over 202,285 pairs. Since
+  DeepImmuno is higher-is-better and PRIME lower-is-better, agreement would show as
+  a *negative* correlation. They are close to uncorrelated — complementary, not
+  redundant. 36% of live pairs are discordant; that is the data, not a bug.
+- **Open provenance:** the PRIME model version is recorded nowhere in either repo,
+  and it is unconfirmed whether the column is PRIME's immunogenicity `%Rank` or its
+  `%RankBinding` passthrough. Evidence it is an allele-specific percentile rank:
+  range 0.001–92.383 (a raw score is bounded by [0,1]), 3-decimal grid,
+  per-allele medians differ, and the same peptide varies across its alleles.
+  Setting `IMMUNO_CFG.primeSemanticsConfirmed = false` makes every pair render
+  "Interpretation pending" instead — one line to flip if this is not settled.
+- **Accessibility:** the global tooltip handler gained `focusin`/`focusout`,
+  click/tap and Escape, so **every** `[data-tip]` in the portal is now reachable by
+  keyboard and touch, not just by hover. Two bugs found and fixed while testing:
+  `hide()` ignored the pinned state, and a mouse click's own `focusin` + `click`
+  pair immediately toggled the tooltip back off.
+- **No LLM is involved.** There is no LLM-backed therapy function in this repo —
+  `interp()` is deterministic string building and `chatbot.js` sends free text
+  only. `window.__IV_IMMUNO_EVIDENCE(pep, code, bindRow)` is the seam for one:
+  it hands out the scores, missingness *with reasons*, the deterministic state,
+  the thresholds and provenance, plus explicit constraints (never fill a missing
+  score, never re-classify, keep predicted immunogenicity separate from MS
+  evidence / selectivity / normal-tissue risk, and never let low predicted
+  endogenous immunogenicity exclude engineered binders).
+- **Data:** uploaded to
+  `gs://immunoverse-private-datasets/reference/immunogenicity/v2026-09-29/`
+  (both files + `MANIFEST.json` with checksums and row counts). New prefix; no
+  production object or bucket permission was touched.
+
+### 2026-09-22 — cTEC added as a 6th in-house dataset (admins only)
+
+**Where:** data only — bucket `immunoverse-private-datasets/cTEC/` + Firestore
+`portal_private_datasets/ctec`. No frontend or backend code change, no deploy
+(`ivLoadInhouseGated` discovers it).
+- **What:** cortical thymic epithelial cells, normal tissue, not a cancer.
+  475 peptides (332 unique), all `self_gene`, 1 sample (`20250305_HLA1`). Built with
+  `integrate_inhouse.py --code CTEC --name "cTEC — Cortical Thymic Epithelial Cell
+  (in-house)" --group In-house`. Audit: 0 broken figure refs, all 282 gene boxplots
+  attach, and every peptide has percentile/rank/spectrum figures.
+- **Access:** `visibility:restricted`, with **no** groups or emails, so only admins
+  see it. Grant it on the In-house access board (e.g. the `yarmarkovichlab` group)
+  when ready.
+- **Gotcha:** `portal_auth/scripts/upload_dataset.py` still defaults to the stale
+  `datasets/<slug>/` prefix. Live cohorts sit at the bucket root, so pass
+  `--storage-prefix <Folder>` or upload with `gcloud storage cp -r`.
+- **Not yet in chat:** chat in-house cohorts are hard-coded in several agent files,
+  and the agent treats in-house cohorts as tumour, so cTEC is portal-only for now.
 
 ### 2026-09-08 — Fluid measure + type scale rolled out to the other pages
 

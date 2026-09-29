@@ -4,7 +4,10 @@ Integrate all ImmunoVerse data from Dropbox into the portal's data_js/ files.
 Data sources (live from the shared Dropbox folder — downloaded automatically):
   - {CANCER}_final_enhanced.txt  — per-cancer peptide tables with full annotations
   - {CANCER}_metadata.txt        — per-sample HLA types for computing recurrency
-  - all_deepimmuno_immunogenicity.txt — DeepImmuno immunogenicity predictions
+  - final_immunogenicity.txt     — two-model immunogenicity table (DeepImmuno +
+                                   PRIME %rank) per peptide-HLA pair; primary source
+  - all_deepimmuno_immunogenicity.txt — DeepImmuno-only predictions; the legacy
+                                   fallback used when the combined table is absent
   - US_HLA_frequency.csv         — US population HLA allele frequencies
 
 On every run this script checks the local cache (default: ~24h). If the cache is
@@ -267,6 +270,81 @@ def load_immunogenicity(filepath):
                     immuno[(pep, hla)] = round(score, 4)
     print(f'  Loaded {len(immuno)} immunogenicity scores')
     return immuno
+
+
+def load_dual_immunogenicity(combined_path, deep_path=None):
+    """Load the two-model immunogenicity table into two separate lookups.
+
+    `final_immunogenicity.txt` columns: pep, hla, length,
+    deepimmuno_immunogenicity, PRIME_immunogenicity. Returns
+
+        ({(pep, hla): deepimmuno}, {(pep, hla): prime_rank}, stats)
+
+    keyed on the peptide sequence plus the *normalized* allele (A*02:01), so
+    HLA-A*0201 and HLA-A*02:01 land on the same key. Each model keeps its own
+    dict because their missingness is independent and has different causes:
+
+      - DeepImmuno is absent for every peptide whose length is not 9 or 10
+        (DeepImmuno-CNN only accepts 9/10-mers).
+      - PRIME is absent for HLA-C*03:01 (not in the allele list of the model
+        version that produced this file) and for 15-mers (over its length
+        ceiling).
+
+    Absent stays absent: a missing cell is stored as no key at all, never as 0.
+    Zero is a legal score for either model and is preserved. A pair that shows
+    up twice with *different* values for a model is dropped for that model and
+    counted in `stats['conflicts']` — we never silently pick a winner.
+
+    `deep_path` is the legacy DeepImmuno-only file; when the combined table is
+    missing it is used on its own so an older Dropbox snapshot still fills the
+    DeepImmuno column (PRIME then stays empty everywhere).
+    """
+    stats = {'rows': 0, 'deep': 0, 'prime': 0, 'conflicts': 0, 'bad_allele': 0}
+    deep, prime = {}, {}
+
+    if not combined_path or not Path(combined_path).exists():
+        if deep_path and Path(deep_path).exists():
+            print(f'  {Path(combined_path).name if combined_path else "combined table"} not found — '
+                  f'falling back to DeepImmuno-only file (PRIME column stays empty)')
+            deep = load_immunogenicity(deep_path)
+            stats['deep'] = len(deep)
+        return deep, prime, stats
+
+    def put(store, key, value, label):
+        if value is None:
+            return
+        prev = store.get(key)
+        if prev is not None and abs(prev - value) > 1e-9:
+            stats['conflicts'] += 1
+            print(f'  CONFLICT {label} {key[0]} {key[1]}: {prev} vs {value} — dropping both')
+            store.pop(key, None)
+            return
+        store[key] = value
+
+    with open(combined_path, 'r') as f:
+        for row in csv.DictReader(f, delimiter='\t'):
+            stats['rows'] += 1
+            pep = (row.get('pep') or '').strip()
+            hla_raw = (row.get('hla') or '').strip()
+            if not pep or not hla_raw:
+                continue
+            hla = normalize_hla(hla_raw)
+            if not hla:
+                stats['bad_allele'] += 1
+                continue
+            key = (pep, hla)
+            # `safe_float` maps '', 'nan' and 'None' to None — and 0.0 to 0.0.
+            d = safe_float(row.get('deepimmuno_immunogenicity'))
+            p = safe_float(row.get('PRIME_immunogenicity'))
+            put(deep, key, None if d is None else round(d, 4), 'DeepImmuno')
+            put(prime, key, None if p is None else round(p, 3), 'PRIME')
+
+    stats['deep'], stats['prime'] = len(deep), len(prime)
+    print(f'  Loaded {stats["rows"]:,} peptide-HLA rows: '
+          f'{stats["deep"]:,} DeepImmuno, {stats["prime"]:,} PRIME %rank'
+          + (f', {stats["conflicts"]} conflicts dropped' if stats['conflicts'] else '')
+          + (f', {stats["bad_allele"]} unparseable alleles' if stats['bad_allele'] else ''))
+    return deep, prime, stats
 
 
 def load_metadata(filepath):
@@ -743,7 +821,7 @@ def build_gene_expression_map(enhanced_file):
     return by_gene, by_ensg
 
 
-def process_cancer(code, immuno_lookup, immuno_stats, transcript_map=None):
+def process_cancer(code, immuno_lookup, immuno_stats, transcript_map=None, prime_lookup=None):
     enhanced_file = EXTRACTED_DIR / f'{code}_final_enhanced.txt'
     metadata_file = EXTRACTED_DIR / f'{code}_metadata.txt'
 
@@ -837,6 +915,13 @@ def process_cancer(code, immuno_lookup, immuno_stats, transcript_map=None):
                 b.append(n_total)  # index 6: #Total patients with this HLA
                 hla_rec = round(n_detected / n_total, 4) if n_total > 0 else None
                 b.append(hla_rec)  # index 7: per-HLA recurrence
+                # index 8: PRIME %rank for THIS allele (lower = more favorable).
+                # Looked up on the same (peptide, normalized allele) key as the
+                # DeepImmuno score at index 5 — never a best-across-alleles value.
+                # Stays None when PRIME has no prediction for this pair; in-house
+                # cohorts have no PRIME run at all, so their rows stop at index 7
+                # and the frontend reads b[8] as undefined === not available.
+                b.append((prime_lookup or {}).get((pep, allele)))
 
             # Parse additional_query for extended binding predictions
             addq_raw = safe_eval(r.get('additional_query', ''))
@@ -868,6 +953,8 @@ def process_cancer(code, immuno_lookup, immuno_stats, transcript_map=None):
                 immuno_stats['total'] += 1
                 if b[5] is not None:
                     immuno_stats['hits'] += 1
+                if len(b) > 8 and b[8] is not None:
+                    immuno_stats['prime_hits'] = immuno_stats.get('prime_hits', 0) + 1
 
             # Class-specific extras (mutation, pathogen) surfaced in the drawer.
             extra = {}
@@ -1204,8 +1291,26 @@ def main():
     ensure_raw_data()
 
     print('Loading immunogenicity data...')
-    immuno_file = EXTRACTED_DIR / 'all_deepimmuno_immunogenicity.txt'
-    immuno_lookup = load_immunogenicity(immuno_file) if immuno_file.exists() else {}
+    immuno_lookup, prime_lookup, _immuno_load_stats = load_dual_immunogenicity(
+        EXTRACTED_DIR / 'final_immunogenicity.txt',
+        EXTRACTED_DIR / 'all_deepimmuno_immunogenicity.txt',
+    )
+    # The portal ships a PRIME %rank column. If the combined table ever goes
+    # missing from the Dropbox share, the DeepImmuno-only fallback above would
+    # quietly rebuild every data_js/ file with an empty PRIME column and the
+    # scheduled job would commit that — the feature would disappear with no
+    # error anywhere. Fail loudly instead; the workflow emails its status, so a
+    # hard failure is seen, whereas a silent wipe is not.
+    # Set IMMUNOVERSE_ALLOW_NO_PRIME=1 to deliberately rebuild without PRIME.
+    if not prime_lookup and os.environ.get('IMMUNOVERSE_ALLOW_NO_PRIME', '0') != '1':
+        sys.exit(
+            "\nFATAL: no PRIME %rank values were loaded.\n"
+            f"  Expected: {EXTRACTED_DIR / 'final_immunogenicity.txt'}\n"
+            "  That file must be present in the Dropbox share alongside the\n"
+            "  *_final_enhanced.txt tables. Refusing to rebuild data_js/, because\n"
+            "  doing so would silently blank the portal's PRIME column.\n"
+            "  To rebuild without PRIME on purpose: IMMUNOVERSE_ALLOW_NO_PRIME=1\n"
+        )
 
     print('Resolving transcript -> gene via Ensembl REST (cached)...')
     transcript_map = resolve_transcript_genes(EXTRACTED_DIR)
@@ -1215,7 +1320,7 @@ def main():
     cancers = []
     for code in sorted(CANCER_META.keys()):
         print(f'\n--- {code} ---')
-        meta = process_cancer(code, immuno_lookup, immuno_stats, transcript_map)
+        meta = process_cancer(code, immuno_lookup, immuno_stats, transcript_map, prime_lookup)
         if meta:
             cancers.append(meta)
 
@@ -1224,6 +1329,9 @@ def main():
     total = immuno_stats['total'] or 1
     pct = 100 * immuno_stats['hits'] / total
     print(f"\nImmunogenicity coverage: {immuno_stats['hits']:,}/{immuno_stats['total']:,} per-HLA binds ({pct:.1f}%)")
+    prime_hits = immuno_stats.get('prime_hits', 0)
+    print(f"PRIME %rank coverage:    {prime_hits:,}/{immuno_stats['total']:,} per-HLA binds "
+          f"({100 * prime_hits / total:.1f}%)")
     print('Done! Updated data_js/ and data/ directories.')
 
 

@@ -2890,6 +2890,44 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   white-space: pre-line;
 }
 
+/* ===== Dual-model immunogenicity badge =====================================
+   Compact per-(peptide, HLA) interpretation chip. It is a real <button> so it
+   is in the tab order and activates on Enter/Space as well as click/tap; the
+   global tooltip handler also opens it on hover and on focus. Every state
+   carries an icon and a text label, so the meaning never rests on color. */
+.immuno-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11px; font-weight: 600; line-height: 1.2;
+  letter-spacing: .01em;
+  padding: 3px 8px; border-radius: 999px;
+  border: 1px solid currentColor; background: transparent;
+  cursor: pointer; white-space: nowrap; max-width: 100%;
+}
+.immuno-badge .ib-icon { font-size: 10px; opacity: .9; }
+.immuno-badge .ib-text { overflow: hidden; text-overflow: ellipsis; }
+.immuno-badge:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+.immuno-badge.tone-good    { color: var(--accent-lime); }
+.immuno-badge.tone-warn    { color: var(--accent-amber); }
+.immuno-badge.tone-single  { color: var(--accent-cyan); }
+.immuno-badge.tone-pending { color: var(--accent-violet); }
+.immuno-badge.tone-muted   { color: var(--text-3); }
+/* In the dense per-HLA table, show the icon only and let the tooltip carry the
+   wording — the full label returns at wider viewports. */
+.bind-table .immuno-badge { padding: 3px 7px; }
+@media (max-width: 900px) {
+  .bind-table .immuno-badge .ib-text { display: none; }
+}
+/* Standing explanatory note under the per-HLA table. */
+.immuno-note {
+  font-size: 12.5px; line-height: 1.6; color: var(--text-2);
+  background: var(--bg-3); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 8px; padding: 10px 13px; margin: 10px 0 4px;
+}
+.immuno-note b { color: var(--text-1); }
+.immuno-note .immuno-pending-flag { color: var(--accent-violet); }
+
 /* One-liner description that sits directly under a section title so
    the user doesn't have to hover to learn what a figure shows. */
 .drawer .section-subtitle {
@@ -4615,6 +4653,289 @@ const COL = {
   recurrence:17, totalSamples:18, code:19
 };
 const DETAIL_CACHE = {};  // {code: {pep: [addq, intens], ...}}
+
+/* ===== Dual-model immunogenicity: DeepImmuno + PRIME ======================
+   Two independent predictions for the SAME (peptide, HLA) pair, shown side by
+   side. They are never averaged, and no combined probability is derived.
+
+     DeepImmuno — immunogenicity potential in [0,1]; HIGHER is more favorable.
+                  bind index 5.
+     PRIME      — percentile rank; LOWER is more favorable. bind index 8.
+
+   Missingness has a known cause for every pair in the current table, and it is
+   never an unfavorable prediction:
+     - DeepImmuno is absent for every peptide whose length is not 9 or 10
+       (DeepImmuno-CNN accepts only 9/10-mers).
+     - PRIME is absent for HLA-C*03:01 (not in the allele list of the model
+       version that produced our table) and for 15-mers (over its length
+       ceiling).
+     - In-house cohorts have no immunogenicity run at all, so their bind rows
+       stop at index 7 and b[8] reads back as undefined.
+
+   Both cutoffs are PORTAL TRIAGE HEURISTICS, not published clinical cutoffs.
+   Set primeSemanticsConfirmed=false and every pair falls back to
+   "Interpretation pending" — the honest state while provenance is open.       */
+const IMMUNO_CFG = {
+  // Evidence that PRIME_immunogenicity is an allele-specific percentile rank:
+  // observed range 0.001–92.383 (a raw PRIME score is bounded by [0,1]); values
+  // on a 3-decimal grid; different values for the same peptide on different
+  // alleles; allele-specific medians (A*02:01 0.33 vs C*07:01 1.51). Still
+  // unconfirmed from source: the PRIME version, and whether the column is
+  // PRIME's immunogenicity %Rank or its passthrough binding %RankBinding.
+  primeSemanticsConfirmed: true,
+  deep: {
+    label: 'DeepImmuno',
+    favorable: 0.5,
+    better: 'higher',
+    fmt: v => v.toFixed(3),
+    unit: '',
+    basis: 'portal triage heuristic — the midpoint of the model’s [0,1] output. ' +
+           'DeepImmuno does not publish a single universal operating threshold.',
+    absent: 'DeepImmuno-CNN accepts only 9- and 10-mer peptides.',
+    // Why is there no value? Derived from the pair itself, so the tooltip never
+    // asserts a model limitation that does not actually apply to this peptide.
+    absentReason: (pep, allele) => (pep && (pep.length < 9 || pep.length > 10))
+      ? `DeepImmuno-CNN accepts only 9- and 10-mer peptides, and this one is ${pep.length} residues long.`
+      : 'This peptide–HLA pair is not present in the immunogenicity table, so DeepImmuno was ' +
+        'never run on it. The reason it was not run is not recorded.',
+  },
+  prime: {
+    label: 'PRIME %rank',
+    favorable: 0.5,
+    better: 'lower',
+    fmt: v => v.toFixed(3),
+    unit: '%',
+    basis: 'portal triage heuristic — a stringent %rank cutoff. It is NOT the ' +
+           'NetMHCpan 0.5% strong-binder rank; that cutoff is about HLA binding, ' +
+           'this one is about predicted immunogenicity.',
+    absent: 'PRIME has no prediction for HLA-C*03:01 in the model version used, ' +
+            'and none for peptides longer than 14 residues.',
+    absentReason: (pep, allele) => {
+      if (allele === 'C*03:01') {
+        return 'PRIME returned no value for HLA-C*03:01 anywhere in this table — that allele is ' +
+               'outside the allele list of the model version used.';
+      }
+      if (pep && pep.length > 14) {
+        return `PRIME’s length ceiling is 14 residues, and this peptide is ${pep.length}.`;
+      }
+      return 'This peptide–HLA pair is not present in the immunogenicity table, so PRIME was ' +
+             'never run on it. The reason it was not run is not recorded.';
+    },
+  },
+};
+
+// Read the two scores off a bind row. `== null` catches both null (no
+// prediction) and undefined (cohort with no immunogenicity run). 0 is a legal
+// value for either model and survives this untouched.
+function immunoPair(b) {
+  const d = (b && b[5] != null) ? b[5] : null;
+  const p = (b && b[8] != null) ? b[8] : null;
+  return { deep: d, prime: p };
+}
+
+/* How far a value sits from its cutoff, phrased the way each metric actually
+   varies. DeepImmuno is a bounded [0,1] potential, so an absolute gap reads
+   naturally; PRIME %rank spans four orders of magnitude, so a fold change is the
+   honest summary (0.007 vs 0.5 is "71x below", not "0.493 below"). */
+function immunoDeepMargin(v) {
+  const t = IMMUNO_CFG.deep.favorable, d = v - t;
+  if (Math.abs(d) < 5e-4) return `exactly at the ${t} cutoff`;
+  return `${Math.abs(d).toFixed(3)} ${d > 0 ? 'above' : 'below'} the ${t} cutoff`;
+}
+function immunoPrimeMargin(v) {
+  const t = IMMUNO_CFG.prime.favorable, u = IMMUNO_CFG.prime.unit;
+  if (Math.abs(v - t) < 5e-4) return `exactly at the ${t}${u} cutoff`;
+  const fold = v < t ? t / Math.max(v, 1e-9) : v / t;
+  const f = fold >= 10 ? Math.round(fold) : fold.toFixed(1);
+  return `${f}× ${v < t ? 'below' : 'above'} the ${t}${u} cutoff`;
+}
+
+/* Where this allele stands among the SAME peptide's other alleles. This is what
+   makes a per-row tooltip about the row rather than about the state — two pairs
+   in the same state get different text because they rank differently. */
+function immunoRankPhrase(siblings, allele, slot, better) {
+  if (!Array.isArray(siblings)) return null;
+  const scored = siblings.filter(x => x && x[slot] != null);
+  if (scored.length < 2) return null;
+  const sorted = scored.slice().sort((a, b) =>
+    better === 'higher' ? b[slot] - a[slot] : a[slot] - b[slot]);
+  const pos = sorted.findIndex(x => x[0] === allele);
+  if (pos < 0) return null;
+  const n = scored.length;
+  if (pos === 0) return `the strongest of this peptide’s ${n} scored alleles`;
+  if (pos === n - 1) return `the weakest of this peptide’s ${n} scored alleles`;
+  return `#${pos + 1} of ${n} scored alleles for this peptide`;
+}
+
+/* Deterministic interpretation. No model call, no randomness — the same pair
+   always yields the same state. Returns {state, label, tone, icon, tip}.
+
+   The tooltip deliberately does NOT restate the rationale for the thresholds:
+   that text is identical on every row and already appears once in the standing
+   note under the table and in the column-header tooltips. The cutoffs themselves
+   still appear inline on the two value lines. */
+function immunoInterpret(deep, prime, ctx) {
+  const C = IMMUNO_CFG;
+  const pep = ctx && ctx.pep || null;
+  const allele = ctx && ctx.allele || null;
+  const whyDeep = C.deep.absentReason(pep, allele);
+  const whyPrime = C.prime.absentReason(pep, allele);
+  const dv = deep == null ? null : deep;
+  const pv = prime == null ? null : prime;
+  const dStr = dv == null ? 'Not available' : C.deep.fmt(dv);
+  const pStr = pv == null ? 'Not available' : C.prime.fmt(pv) + C.prime.unit;
+
+  const header =
+    `${C.deep.label}: ${dStr}  (higher = more favorable; favorable at ≥ ${C.deep.favorable})\n` +
+    `${C.prime.label}: ${pStr}  (lower = more favorable; favorable at ≤ ${C.prime.favorable}${C.prime.unit})`;
+
+  // Provenance unresolved -> we decline to classify at all.
+  if (!C.primeSemanticsConfirmed) {
+    return {
+      state: 'pending', label: 'Interpretation pending', tone: 'pending', icon: '?',
+      tip: header + '\n\n' +
+        'The semantics of the PRIME column are not yet confirmed, so no agreement ' +
+        'state is asserted. The supplied values are shown exactly as provided.\n\n' +
+        'Needs clarification: the PRIME version, and whether this column is PRIME’s ' +
+        'immunogenicity %Rank or its binding %RankBinding passthrough.',
+    };
+  }
+
+  const dFav = dv == null ? null : dv >= C.deep.favorable;
+  const pFav = pv == null ? null : pv <= C.prime.favorable;
+
+  // Pair-specific detail: margin from each cutoff plus this allele's standing
+  // among the peptide's other alleles. Replaces the block of threshold prose
+  // that used to repeat verbatim on every row.
+  const sib = ctx && ctx.siblings;
+  const bits = [];
+  if (dv != null) {
+    const r = immunoRankPhrase(sib, allele, 5, 'higher');
+    bits.push(`${C.deep.label} ${C.deep.fmt(dv)} is ${immunoDeepMargin(dv)}` +
+              (r ? ` — ${r}` : '') + '.');
+  }
+  if (pv != null) {
+    const r = immunoRankPhrase(sib, allele, 8, 'lower');
+    bits.push(`${C.prime.label} ${C.prime.fmt(pv)}${C.prime.unit} is ${immunoPrimeMargin(pv)}` +
+              (r ? ` — ${r}` : '') + '.');
+  }
+  const detail = bits.length ? '\n\n' + bits.join(' ') : '';
+
+  if (dFav === null && pFav === null) {
+    return {
+      state: 'unavailable', label: 'Predictions unavailable', tone: 'muted', icon: '—',
+      tip: header + '\n\nNeither model returned a prediction for this peptide–HLA pair, so ' +
+        'no interpretation is possible.\n\n' +
+        `${C.deep.label}: ${whyDeep}\n${C.prime.label}: ${whyPrime}` +
+        '\n\nAbsence of a prediction is not evidence of low immunogenicity.',
+    };
+  }
+
+  if (dFav === null || pFav === null) {
+    const have = dFav === null ? C.prime : C.deep;
+    const miss = dFav === null ? C.deep : C.prime;
+    const why = dFav === null ? whyDeep : whyPrime;
+    const favorable = dFav === null ? pFav : dFav;
+    return {
+      state: 'single', label: 'Single-model prediction', tone: 'single', icon: '◐',
+      tip: header + '\n\n' +
+        `Only ${have.label} is available for this peptide–HLA pair, and it ` +
+        `${favorable ? 'meets' : 'does not meet'} its favorable threshold. Agreement ` +
+        'between models cannot be assessed.\n\n' +
+        `${miss.label} returned no value: ${why}` + detail,
+    };
+  }
+
+  if (dFav && pFav) {
+    return {
+      state: 'concordant-favorable', label: 'Concordant favorable predictions',
+      tone: 'good', icon: '✓✓',
+      tip: header + detail +
+        '\n\nBoth models meet the configured favorable thresholds. This supports ' +
+        'prioritization for experimental evaluation; it does not establish immunogenicity. ' +
+        'Agreement between two computational models is not independent experimental ' +
+        'confirmation.',
+    };
+  }
+
+  if (dFav !== pFav) {
+    const dir = dFav
+      ? `${C.deep.label} is favorable (${dStr} ≥ ${C.deep.favorable}) while ${C.prime.label} ` +
+        `is not (${pStr} > ${C.prime.favorable}${C.prime.unit}).`
+      : `${C.prime.label} is favorable (${pStr} ≤ ${C.prime.favorable}${C.prime.unit}) while ` +
+        `${C.deep.label} is not (${dStr} < ${C.deep.favorable}).`;
+    return {
+      state: 'discordant', label: 'Discordant predictions', tone: 'warn', icon: '⇅',
+      tip: header + detail + '\n\nThe two models disagree: ' + dir +
+        ' Neither overrides the other — across this dataset the two scores are close to ' +
+        'uncorrelated, which is why both are shown rather than merged.',
+    };
+  }
+
+  return {
+    state: 'neither', label: 'Neither meets favorable thresholds', tone: 'muted', icon: '··',
+    tip: header + detail +
+      '\n\nNeither model meets its favorable threshold. This deprioritizes endogenous ' +
+      'T-cell recognition only — it does not mean the peptide is non-immunogenic, and it ' +
+      'does not rule out engineered binder approaches (TCR-mimic antibodies, PC-CAR, ' +
+      'bispecifics), which do not depend on the natural T-cell repertoire.',
+  };
+}
+
+// Compact, accessible badge. Reachable by hover, keyboard focus and click/tap;
+// carries text + icon as well as color so it never relies on color alone.
+function immunoBadgeHtml(b, pep, siblings, extraCls) {
+  const { deep, prime } = immunoPair(b);
+  const r = immunoInterpret(deep, prime, { pep: pep, allele: b && b[0], siblings: siblings });
+  const tip = r.tip.replace(/"/g, '&quot;');
+  return `<button type="button" class="immuno-badge tone-${r.tone}${extraCls ? ' ' + extraCls : ''}"
+    data-tip="${tip}" data-tip-wide aria-label="${r.label}. Activate for details."
+    ><span class="ib-icon" aria-hidden="true">${r.icon}</span><span class="ib-text">${r.label}</span></button>`;
+}
+
+// Structured, read-only evidence for downstream consumers (e.g. an LLM asked to
+// explain a peptide). The deterministic classification is computed HERE; a
+// consumer may narrate it but must not recompute, override, or fill it in.
+function immunoEvidence(pep, code, b, siblings) {
+  const { deep, prime } = immunoPair(b);
+  const r = immunoInterpret(deep, prime, { pep: pep, allele: b && b[0], siblings: siblings });
+  return {
+    peptide: pep, cancer: code, hla: b && b[0] || null,
+    deepimmuno: { value: deep, available: deep != null, direction: 'higher_is_more_favorable',
+                  favorable_threshold: IMMUNO_CFG.deep.favorable,
+                  threshold_basis: IMMUNO_CFG.deep.basis,
+                  absent_reason: deep == null ? IMMUNO_CFG.deep.absentReason(pep, b && b[0]) : null },
+    prime_rank: { value: prime, available: prime != null, direction: 'lower_is_more_favorable',
+                  favorable_threshold: IMMUNO_CFG.prime.favorable,
+                  threshold_basis: IMMUNO_CFG.prime.basis,
+                  absent_reason: prime == null ? IMMUNO_CFG.prime.absentReason(pep, b && b[0]) : null },
+    interpretation: { state: r.state, label: r.label, deterministic: true,
+                      computed_by: 'portal immunoInterpret()' },
+    provenance: { prime_semantics_confirmed: IMMUNO_CFG.primeSemanticsConfirmed,
+                  source_file: 'final_immunogenicity.txt',
+                  matched_on: 'exact peptide sequence + normalized HLA allele',
+                  best_allele_substitution: false },
+    constraints: [
+      'These are computational predictions; they require experimental validation.',
+      'A missing prediction is not an unfavorable prediction.',
+      'Do not convert either score into a probability of clinical response.',
+      'Do not average the two metrics or derive a combined score.',
+      'Predicted immunogenicity is separate from MS evidence of presentation, tumor ' +
+        'selectivity, normal-tissue risk, HLA eligibility, antigen heterogeneity, immune ' +
+        'escape, and binder specificity.',
+      'Low predicted endogenous T-cell immunogenicity does not exclude a target from ' +
+        'engineered binder approaches (TCR-mimic antibody, PC-CAR, bispecific).',
+      'Frame any output as a research modality consideration, not a therapy recommendation.',
+    ],
+  };
+}
+// Exposed so a future "explain this peptide" hook can hand the model the
+// deterministic result instead of letting it infer one.
+window.__IV_IMMUNO_EVIDENCE = immunoEvidence;
+
+const IMMUNO_NOTE = 'DeepImmuno and PRIME provide complementary computational predictions ' +
+  'for each peptide–HLA pair. Both are displayed to support scientific interpretation. ' +
+  'Missing results do not imply low immunogenicity. Predictions require experimental validation.';
 const CLASS_LABELS = {
   self_gene:'Canonical self-antigen',
   splicing:'Alternative splicing',
@@ -5764,12 +6085,18 @@ async function downloadAllForPeptide(row, code, btnEl) {
     }, null, 2));
 
     // 2. Per-HLA observed binding CSV.
-    const obsRows = (row[COL.bind] || []).map(b => [
-      b[0], b[1], b[2], b[3], b[5], b[4], b[6], b[7] != null ? (b[7] * 100).toFixed(1) + '%' : '',
+    // Blank cells below mean "no prediction", never zero — see IMMUNO_CFG.
+    const sibs = row[COL.bind] || [];
+    const obsRows = sibs.map(b => [
+      b[0], b[1], b[2], b[3],
+      b[5] != null ? b[5] : '', b[8] != null ? b[8] : '',
+      immunoInterpret(b[5] != null ? b[5] : null, b[8] != null ? b[8] : null, {pep: pep, allele: b[0], siblings: sibs}).label,
+      b[4], b[6], b[7] != null ? (b[7] * 100).toFixed(1) + '%' : '',
     ]);
     if (obsRows.length) {
       zip.file(`${stem}/per_hla_observed.csv`, _buildCsv(
-        ['HLA', 'Rank %', 'nM', 'Category', 'Immunogenicity', '#Detected', '#TotalPatients', 'Recurrence'],
+        ['HLA', 'Rank %', 'nM', 'Category', 'DeepImmuno (higher=favorable)',
+         'PRIME %rank (lower=favorable)', 'Interpretation', '#Detected', '#TotalPatients', 'Recurrence'],
         obsRows,
       ));
     }
@@ -5874,12 +6201,18 @@ function downloadObservedHlaCsv() {
   const r = _drawerRow();
   if (!r) return;
   const code = DRAWER_CODE, pep = r[COL.pep];
-  const rows = (r[COL.bind] || []).map(b => [
-    b[0], b[1], b[2], b[3], b[5], b[4], b[6], b[7] != null ? (b[7] * 100).toFixed(1) + '%' : '',
+  // Blank cells below mean "no prediction", never zero — see IMMUNO_CFG.
+  const sibs = r[COL.bind] || [];
+  const rows = sibs.map(b => [
+    b[0], b[1], b[2], b[3],
+    b[5] != null ? b[5] : '', b[8] != null ? b[8] : '',
+    immunoInterpret(b[5] != null ? b[5] : null, b[8] != null ? b[8] : null, {pep: pep, allele: b[0], siblings: sibs}).label,
+    b[4], b[6], b[7] != null ? (b[7] * 100).toFixed(1) + '%' : '',
   ]);
   if (!rows.length) { _toast('No observed-HLA records to export', 'err'); return; }
   downloadCsv(
-    ['HLA', 'Rank %', 'nM', 'Category', 'Immunogenicity', '#Detected', '#TotalPatients', 'Recurrence'],
+    ['HLA', 'Rank %', 'nM', 'Category', 'DeepImmuno (higher=favorable)',
+     'PRIME %rank (lower=favorable)', 'Interpretation', '#Detected', '#TotalPatients', 'Recurrence'],
     rows,
     _safeFilename(`${code}_${pep}_per_hla_observed.csv`),
   );
@@ -8141,12 +8474,22 @@ async function openCompareModal() {
     if (!parts.length) parts.push(`<span class="mono">${b.map(x=>x[0]).join(', ')}</span>`);
     return parts.join('<br>');
   };
+  // Best value per model across this peptide's alleles, reported separately.
+  // The two maxima can come from DIFFERENT alleles, so no agreement state is
+  // claimed here — per-pair interpretation lives in the per-HLA table below.
   const immunoSummary = r => {
     const b = r[COL.bind] || [];
-    const scored = b.map(x => x[5]).filter(x => x != null);
-    if (!scored.length) return '—';
-    const max = Math.max(...scored);
-    return `<span style="color:${max>=0.5?'var(--accent-lime)':'var(--accent-amber)'}">${max.toFixed(2)}</span> <span style="color:var(--text-3);font-size: 12px">max of ${scored.length}</span>`;
+    const d = b.map(x => x[5]).filter(x => x != null);
+    if (!d.length) return '<span style="color:var(--text-3)">Not available</span>';
+    const max = Math.max(...d);
+    return `<span style="color:${max>=IMMUNO_CFG.deep.favorable?'var(--accent-lime)':'var(--accent-amber)'}">${max.toFixed(3)}</span> <span style="color:var(--text-3);font-size: 12px">best of ${d.length}</span>`;
+  };
+  const primeSummary = r => {
+    const b = r[COL.bind] || [];
+    const p = b.map(x => x[8]).filter(x => x != null);
+    if (!p.length) return '<span style="color:var(--text-3)">Not available</span>';
+    const min = Math.min(...p);
+    return `<span style="color:${min<=IMMUNO_CFG.prime.favorable?'var(--accent-lime)':'var(--accent-amber)'}">${min.toFixed(3)}</span> <span style="color:var(--text-3);font-size: 12px">best of ${p.length}</span>`;
   };
   const atlasSummary = r => {
     const a = r[COL.atlas] || [];
@@ -8171,18 +8514,22 @@ async function openCompareModal() {
       const cat = (b[3]||'').toUpperCase();
       const catCls = cat === 'SB' ? 'bind-sb' : (cat === 'WB' ? 'bind-wb' : 'bind-nb');
       const immuno = b[5];
-      const immunoCol = immuno != null ? (immuno >= 0.5 ? 'var(--accent-lime)' : 'var(--accent-amber)') : 'var(--text-3)';
+      const immunoCol = immuno != null ? (immuno >= IMMUNO_CFG.deep.favorable ? 'var(--accent-lime)' : 'var(--accent-amber)') : 'var(--text-3)';
+      const prime = b[8] != null ? b[8] : null;
+      const primeCol = prime != null ? (prime <= IMMUNO_CFG.prime.favorable ? 'var(--accent-lime)' : 'var(--accent-amber)') : 'var(--text-3)';
       const rec = b[7];
       return `<tr>
         <td><span class="hla-tag">${b[0]}</span></td>
         <td class="num">${b[1] != null ? b[1].toFixed(2) : '—'}</td>
         <td class="num">${b[2] != null ? b[2].toFixed(0) : '—'}</td>
         <td><span class="bind-cat ${catCls}">${cat||'—'}</span></td>
-        <td class="num" style="color:${immunoCol}">${immuno != null ? immuno.toFixed(2) : '—'}</td>
+        <td class="num" style="color:${immunoCol}">${immuno != null ? immuno.toFixed(3) : 'n/a'}</td>
+        <td class="num" style="color:${primeCol}">${prime != null ? prime.toFixed(3) : 'n/a'}</td>
+        <td>${immunoBadgeHtml(b, pep, bind)}</td>
         <td class="num">${b[4]||0}${b[6] ? '/' + b[6] : ''}</td>
         <td class="num">${rec != null ? (rec*100).toFixed(0)+'%' : '—'}</td>
       </tr>`;
-    }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-3);padding:10px 0;">No per-HLA records on file.</td></tr>';
+    }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--text-3);padding:10px 0;">No per-HLA records on file.</td></tr>';
 
     const mutBlock = (() => {
       const d = (DETAIL_CACHE[code]||{})[pep];
@@ -8259,7 +8606,7 @@ async function openCompareModal() {
       ${pathBlock}
       <div class="cmp-sub">Per-HLA binding (all ${bind.length})</div>
       <div class="bind-wrap"><table class="bind-table">
-        <thead><tr><th>HLA</th><th>Rank%</th><th>nM</th><th>Cat</th><th>Immuno</th><th>#Det</th><th>Recur</th></tr></thead>
+        <thead><tr><th>HLA</th><th>Rank%</th><th>nM</th><th>Cat</th><th>DeepImm</th><th>PRIME</th><th>Interp.</th><th>#Det</th><th>Recur</th></tr></thead>
         <tbody>${bindRows}</tbody>
       </table></div>
       <div class="cmp-sub">Figures</div>
@@ -8351,7 +8698,8 @@ async function openCompareModal() {
         ${attr('Unique', r => r[COL.unique]===1 ? 'yes' : 'no')}
         ${attr('Atlas safety', atlasSummary, {html:true})}
         ${attr('HLAs (all)', bindSummary, {html:true})}
-        ${attr('Max immunogenicity', immunoSummary, {html:true})}
+        ${attr('Best DeepImmuno', immunoSummary, {html:true})}
+        ${attr('Best PRIME %rank', primeSummary, {html:true})}
         ${attr('ENSG', r => r[COL.ensg] || '—')}
       </tbody>
     </table>
@@ -8526,8 +8874,13 @@ async function openDrawer(r, opts) {
     const freq = hlaFreq(allele);
     const freqStr = freq != null ? (freq * 100).toFixed(1) + '%' : '—';
     const freqCls = freq != null ? (freq >= 0.10 ? 'color:var(--accent-lime)' : (freq >= 0.03 ? 'color:var(--accent-amber)' : 'color:var(--text-2)')) : 'color:var(--text-3)';
-    const immunoStr = immunoScore != null ? immunoScore.toFixed(2) : '—';
-    const immunoCls = immunoScore != null ? (immunoScore >= 0.5 ? 'color:var(--accent-lime)' : 'color:var(--accent-amber)') : 'color:var(--text-3)';
+    // Both models are read off THIS row, i.e. this exact (peptide, allele) pair —
+    // never a best-across-alleles value. `== null` keeps a legitimate 0 visible.
+    const primeScore = b[8] != null ? b[8] : null;
+    const immunoStr = immunoScore != null ? immunoScore.toFixed(3) : 'Not available';
+    const immunoCls = immunoScore != null ? (immunoScore >= IMMUNO_CFG.deep.favorable ? 'color:var(--accent-lime)' : 'color:var(--accent-amber)') : 'color:var(--text-3)';
+    const primeStr = primeScore != null ? primeScore.toFixed(3) : 'Not available';
+    const primeCls = primeScore != null ? (primeScore <= IMMUNO_CFG.prime.favorable ? 'color:var(--accent-lime)' : 'color:var(--accent-amber)') : 'color:var(--text-3)';
     const recStr = hlaRec != null ? (hlaRec * 100).toFixed(0) + '%' : '—';
     return `<tr>
       <td><span class="hla-tag">${allele}</span></td>
@@ -8536,10 +8889,12 @@ async function openDrawer(r, opts) {
       <td><span class="bind-cat ${catCls}">${cat||'—'}</span></td>
       <td class="num" style="${freqCls}">${freqStr}</td>
       <td class="num" style="${immunoCls}">${immunoStr}</td>
+      <td class="num" style="${primeCls}">${primeStr}</td>
+      <td>${immunoBadgeHtml(b, pep, bindSorted)}</td>
       <td class="num">${nDetected}${nTotal ? '/' + nTotal : ''}</td>
       <td class="num">${recStr}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--text-3);padding:14px 0;">No per-HLA binding records on file.<br><span style="font-size: 11.5px;font-style:italic;">This can occur when the peptide was detected in samples where HLA typing was unavailable, or when the presenting allele could not be confidently assigned by NetMHCpan. The peptide was still empirically identified by mass spectrometry.</span></td></tr>';
+  }).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--text-3);padding:14px 0;">No per-HLA binding records on file.<br><span style="font-size: 11.5px;font-style:italic;">This can occur when the peptide was detected in samples where HLA typing was unavailable, or when the presenting allele could not be confidently assigned by NetMHCpan. The peptide was still empirically identified by mass spectrometry.</span></td></tr>';
 
   // MS/MS spectrum hotlink. Public cancers -> NYU server with {CODE}_-prefixed
   // names; in-house cancers -> their private asset base with NON-prefixed names
@@ -8977,17 +9332,28 @@ async function openDrawer(r, opts) {
     ${intensBlock}` : ''}
 
     <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples${bind.length ? `<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadObservedHlaCsv()">${DL_ICON}<span>CSV</span></button>` : ''}</div>
-    <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, DeepImmuno score, and per-patient recurrence.</div>
+    <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, both immunogenicity predictions for that exact allele, and per-patient recurrence.</div>
     <div class="bind-wrap">
       <table class="bind-table">
-        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th><th>Immuno.</th><th>#Det/#Tot</th><th>Recur.</th></tr></thead>
+        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th>
+          <th data-tip="DeepImmuno immunogenicity potential for this peptide on this exact allele. Range 0–1; HIGHER indicates greater predicted immunogenic potential. This is not a probability of clinical response.">DeepImmuno</th>
+          <th data-tip="PRIME percentile rank for this peptide on this exact allele. LOWER indicates a more favorable prediction. This is an immunogenicity rank — it is not the NetMHCpan binding rank shown in the 'Rank %' column.">PRIME %rank</th>
+          <th data-tip="Deterministic agreement state between the two models, computed in the portal from fixed thresholds — not by a language model. Hover, focus or click a badge for the exact values, directions, thresholds, and which model supports the reading.">Interpretation</th>
+          <th>#Det/#Tot</th><th>Recur.</th></tr></thead>
         <tbody>${bindRows}</tbody>
       </table>
       <div class="bind-legend">
         <span class="bind-cat bind-sb">SB</span> strong binder (rank ≤ 0.5%)
         <span class="bind-cat bind-wb">WB</span> weak binder (rank ≤ 2%)
-        · Immuno. = DeepImmuno immunogenicity score
+        · DeepImmuno: higher = more favorable (favorable at ≥ ${IMMUNO_CFG.deep.favorable})
+        · PRIME %rank: lower = more favorable (favorable at ≤ ${IMMUNO_CFG.prime.favorable}%)
         · Recur. = #Detected / #Total patients with this HLA
+      </div>
+      <div class="immuno-note">${IMMUNO_NOTE}${IMMUNO_CFG.primeSemanticsConfirmed ? '' : ' <b class="immuno-pending-flag">The semantics of the PRIME column are not yet confirmed, so no agreement state is asserted.</b>'}
+        <br><b>Thresholds are portal triage heuristics, not published clinical cutoffs.</b>
+        DeepImmuno ≥ ${IMMUNO_CFG.deep.favorable} is the midpoint of the model's 0–1 output.
+        PRIME %rank ≤ ${IMMUNO_CFG.prime.favorable}% is a stringent immunogenicity-rank cutoff and is
+        <i>not</i> the NetMHCpan ${IMMUNO_CFG.prime.favorable}% strong-binder rank, which measures HLA binding rather than immunogenicity.
       </div>
     </div>
 
@@ -9073,7 +9439,55 @@ function interp(r) {
   if (cls === 'variant') bits.push(`Mutation-derived neoantigen — cross-reference tumor WGS/WES.`);
   if (cls === 'ERV' || cls === 'TE_chimeric_transcript') bits.push(`Transposable element origin — assess off-target binding.`);
   if (cls === 'pathogen') bits.push(`Microbial/viral origin — cross-reference tumor microbiome data.`);
-  return bits.join(' ');
+  bits.push(immunoInterpSentence(r));
+  return bits.filter(Boolean).join(' ');
+}
+
+/* Immunogenicity clause for the therapeutic-interpretation paragraph.
+   Deterministic, like the rest of interp(). It deliberately stays a research
+   modality consideration: it never names a therapy as recommended, never mixes
+   these predictions with MS evidence / tumor selectivity / normal-tissue risk,
+   and never lets a low or missing score exclude engineered binder approaches. */
+function immunoInterpSentence(r) {
+  const bind = r[COL.bind] || [];
+  if (!bind.length) return '';
+  const tally = {};
+  bind.forEach(b => {
+    const { deep, prime } = immunoPair(b);
+    const s = immunoInterpret(deep, prime, {pep: r[COL.pep], allele: b[0]}).state;
+    (tally[s] = tally[s] || []).push(b[0]);
+  });
+  if (!IMMUNO_CFG.primeSemanticsConfirmed) {
+    return 'Immunogenicity interpretation pending — the PRIME metric’s semantics are ' +
+      'unconfirmed, so the two predictions are displayed without an agreement call.';
+  }
+  const conc = tally['concordant-favorable'] || [];
+  const disc = tally['discordant'] || [];
+  const none = tally['neither'] || [];
+  const single = tally['single'] || [];
+  const out = [];
+  if (conc.length) {
+    out.push(`DeepImmuno and PRIME both meet their favorable thresholds on ` +
+      `${conc.length} allele${conc.length > 1 ? 's' : ''} (${conc.slice(0, 3).join(', ')}` +
+      `${conc.length > 3 ? ', …' : ''}) — supports prioritizing those pairs for experimental ` +
+      `evaluation; it does not establish immunogenicity.`);
+  }
+  if (disc.length) {
+    out.push(`The two models disagree on ${disc.length} allele${disc.length > 1 ? 's' : ''}; ` +
+      `neither overrides the other.`);
+  }
+  if (single.length && !conc.length && !disc.length) {
+    out.push(`Only one model returned a prediction here, so agreement cannot be assessed.`);
+  }
+  if (!conc.length && !disc.length && none.length) {
+    out.push(`Neither model meets its favorable threshold on any observed allele. That ` +
+      `deprioritizes endogenous T-cell recognition only — it does not rule out TCR-mimic ` +
+      `antibody, PC-CAR, or bispecific approaches, which do not depend on the natural ` +
+      `T-cell repertoire.`);
+  }
+  if (!out.length) return '';
+  return out.join(' ') + ' Predicted immunogenicity is separate from the MS, expression, and ' +
+    'safety evidence above, and requires experimental validation.';
 }
 
 function updateCsvLink(filt) {
@@ -9087,10 +9501,11 @@ function updateCsvLink(filt) {
   const rows = filt.slice(0, 10000).map(r => {
     const tExp = r[COL.tumorExp], nExp = r[COL.normalExp];
     const ratio = tExp && nExp != null ? (tExp / Math.max(nExp, 0.01)).toFixed(2) : '';
-    // binding_detail: allele|rank|nM|cat|freq|immunogenicity|detected/total|recurrence
+    // binding_detail: allele|rank|nM|cat|freq|deepimmuno|prime_rank|detected/total|recurrence
+    // An empty deepimmuno/prime_rank field means "no prediction", never zero.
     const bindDetail = (r[COL.bind]||[]).map(b => {
       const freq = hlaFreq(b[0]);
-      return `${b[0]}|${b[1]!=null?b[1]:''}|${b[2]!=null?b[2]:''}|${b[3]||''}|${freq!=null?(freq*100).toFixed(1)+'%':''}|${b[5]!=null?b[5]:''}|${b[4]||0}/${b[6]||'?'}|${b[7]!=null?(b[7]*100).toFixed(0)+'%':''}`;
+      return `${b[0]}|${b[1]!=null?b[1]:''}|${b[2]!=null?b[2]:''}|${b[3]||''}|${freq!=null?(freq*100).toFixed(1)+'%':''}|${b[5]!=null?b[5]:''}|${b[8]!=null?b[8]:''}|${b[4]||0}/${b[6]||'?'}|${b[7]!=null?(b[7]*100).toFixed(0)+'%':''}`;
     }).join(';');
     return [
       r[COL.code], r[COL.pep], r[COL.pep].length, r[COL.gene]||'', r[COL.ensg]||'',
@@ -9488,7 +9903,12 @@ window.addEventListener('popstate', async () => {
     tip.style.left = x + 'px';
     tip.style.top = y + 'px';
   }
+  let pinned = null;
   function hide() {
+    // A tooltip opened by click/tap or keyboard focus stays up until it is
+    // explicitly dismissed. Without this guard the mouseout that fires when the
+    // pointer crosses into a child element tears down a just-pinned tooltip.
+    if (pinned) return;
     hideTimer = setTimeout(() => tip.classList.remove('show'), 80);
   }
 
@@ -9509,6 +9929,47 @@ window.addEventListener('popstate', async () => {
   document.addEventListener('mouseout', e => {
     const el = e.target.closest('[data-tip]') || e.target.closest('[title]');
     if (el || e.target === activeEl) { hide(); activeEl = null; }
+  });
+
+  // Keyboard + touch parity. Hover alone leaves tooltip content unreachable for
+  // keyboard and touch users, which matters most for the immunogenicity badges,
+  // where the tooltip carries the whole explanation. A tooltip opened by click
+  // or focus is pinned until it is dismissed, rather than fading on a timer.
+  let pinnedAt = 0;
+  function open(el) {
+    const text = el.getAttribute('data-tip') || el.getAttribute('title');
+    if (!text) return;
+    clearTimeout(hideTimer);
+    activeEl = el; pinned = el; pinnedAt = Date.now();
+    show(el, text);
+  }
+  function unpin() {
+    pinned = null; activeEl = null;
+    clearTimeout(hideTimer);
+    tip.classList.remove('show');
+  }
+  document.addEventListener('focusin', e => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (el) open(el);
+  });
+  document.addEventListener('focusout', e => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (el && el === pinned) unpin();
+  });
+  document.addEventListener('click', e => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (!el) { if (pinned) unpin(); return; }
+    // Clicking a button also focuses it, and that focusin already pinned the
+    // tooltip. Without the age check the click half of the same gesture would
+    // immediately toggle it back off, so a mouse click would never open it.
+    if (el === pinned) {
+      if (Date.now() - pinnedAt > 250) unpin();   // a genuine second tap closes
+      return;
+    }
+    open(el);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && pinned) unpin();
   });
 })();
 </script>

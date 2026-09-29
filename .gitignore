@@ -30,3 +30,6 @@ nature_cancer_submission_*.docx
 cancer_discovery-*/
 cancer_discovery-*.zip
 dropbox.zip
+
+# Pre-feature backups written by augment_immunogenicity.py
+*.bak.preprime
