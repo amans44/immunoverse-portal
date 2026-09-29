@@ -33,3 +33,5 @@ dropbox.zip
 
 # Pre-feature backups written by augment_immunogenicity.py
 *.bak.preprime
+# Pre-split backups written by resplit_nuorf_classes.py
+*.bak.presplit

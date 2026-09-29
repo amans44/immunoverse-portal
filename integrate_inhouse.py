@@ -159,8 +159,11 @@ def _gene_from_record(cls, parts):
             fam = head.split('_dup')[0]
             if fam and not _is_sample(fam):
                 return fam
-        elif cls == 'nuORF':
-            # ENST....._N_chr:..|nuORF|sample -> the transcript id
+        elif cls in ('nuORF', 'lncRNA', 'pseudogene'):
+            # ENST....._N_chr:..|nuORF|sample -> the transcript id.
+            # lncRNA/pseudogene are split out of nuORF but keep its source shape,
+            # so they must resolve their gene through this same branch.
+            # (See I.refine_nuorf_class.)
             m = re.match(r'(ENST\d+)', parts[0] or '')
             if m:
                 return m.group(1)
@@ -309,6 +312,10 @@ def process_inhouse(source_dir: Path, code: str, name: str, group: str):
             nuorf_type = (r.get('nuorf_type') or '').strip()
             if nuorf_type in ('nan', 'None', ''):
                 nuorf_type = ''
+            # Same nuORF subtype split as the public pipeline — in-house cohorts
+            # carry lncRNA and Pseudogene rows too, and the explorer shows both
+            # side by side, so the class vocabulary has to match exactly.
+            cls = I.refine_nuorf_class(cls, nuorf_type)
 
             expr_inherited = False
             if cls != 'self_gene' and tumor is None and normal is None:
@@ -409,7 +416,7 @@ def process_inhouse(source_dir: Path, code: str, name: str, group: str):
             # nuORF qualitative figure: Frank ships nuorf_qualitative_<pep>.png for some
             # cryptic ORFs (currently only chordoma). Keyed by the peptide; emit only
             # when the asset exists so no broken link appears for cohorts without them.
-            if cls == 'nuORF':
+            if cls in ('nuORF', 'lncRNA', 'pseudogene'):
                 _q = f'nuorf_qualitative_{pep}.png'
                 if _q in asset_set:
                     extra['nuorfQual'] = _q

@@ -115,11 +115,18 @@ CLASS_LABELS = {
     'splicing': 'Alternative splicing',
     'variant': 'Variant / neoantigen',
     'nuORF': 'Cryptic / non-canonical ORF',
+    'lncRNA': 'lncRNA ORF',
+    'pseudogene': 'Pseudogene ORF',
     'ERV': 'Endogenous retrovirus',
     'TE_chimeric_transcript': 'TE chimeric transcript',
     'intron_retention': 'Intron retention',
     'fusion': 'Gene fusion',
     'pathogen': 'Pathogen-derived',
+    # Only ever populated by in-house cohorts, but they still need a label here:
+    # this dict is what builds the search index's class metadata, so a class
+    # missing from it is a class nobody can search for.
+    'rna_edit': 'RNA editing',
+    'circRNA': 'Circular RNA',
 }
 
 
@@ -253,6 +260,34 @@ def normalize_hla(allele):
         if m:
             a = f'{m.group(1)}*{m.group(2)}:{m.group(3)}'
     return a if '*' in a else None
+
+
+# --- nuORF subtype -> its own aberration class -------------------------------
+# The raw tables put every non-canonical ORF in one `typ` bucket ("nuORF") and
+# record what kind it is in `nuorf_type`. Two of those subtypes are distinct
+# enough biologically to deserve their own class in the portal: peptides
+# translated from long non-coding RNAs and from pseudogenes. The rest (uORF,
+# dORF, out-of-frame, overlap, "Other") stay under "Cryptic ORF (nuORF)".
+#
+# `nuorf_type` survives unchanged at row index 16, so the drawer still shows the
+# precise subtype for every one of these rows, including the two split out.
+NUORF_SUBTYPE_CLASS = {
+    'lncrna': 'lncRNA',
+    'pseudogene': 'pseudogene',
+}
+
+
+def refine_nuorf_class(cls, nuorf_type):
+    """Reassign nuORF rows whose subtype earns its own class.
+
+    Matching is case-folded and whitespace-trimmed because the raw column is
+    human-entered ("lncRNA", "Pseudogene"). Anything unrecognised — including an
+    empty subtype — stays 'nuORF', so a new subtype appearing upstream degrades
+    into the existing bucket rather than inventing a class nothing renders.
+    """
+    if cls != 'nuORF':
+        return cls
+    return NUORF_SUBTYPE_CLASS.get((nuorf_type or '').strip().lower(), 'nuORF')
 
 
 def load_immunogenicity(filepath):
@@ -883,6 +918,11 @@ def process_cancer(code, immuno_lookup, immuno_stats, transcript_map=None, prime
             nuorf_type = r.get('nuorf_type', '').strip()
             if nuorf_type in ('nan', 'None', ''):
                 nuorf_type = ''
+            # lncRNA- and pseudogene-derived ORFs become their own classes. Done
+            # here, after nuorf_type is parsed and before `cls` reaches the class
+            # counts and the emitted row. `clean_gene()` above reads the RAW typ
+            # column, so gene resolution for these rows is unaffected.
+            cls = refine_nuorf_class(cls, nuorf_type)
 
             # Parent-gene expression fallback for non-self classes (splicing,
             # variant, ERV, etc.). Also backfill ENSG so the NYU boxplot URL

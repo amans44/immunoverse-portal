@@ -649,6 +649,10 @@ nav .iv-chat-pill .ivc-ext { font-size: 11px; opacity: 0.7; }
 .c-splicing { background: #a78bfa; }
 .c-variant { background: #f472b6; }
 .c-nuORF { background: #fbbf24; }
+/* lncRNA / pseudogene ORFs are split out of the nuORF bucket — kept in the same
+   amber family as .c-nuORF so the kinship reads at a glance, but distinct. */
+.c-lncRNA { background: #fcd34d; }
+.c-pseudogene { background: #d97706; }
 .c-ERV { background: #86efac; }
 .c-TE_chimeric_transcript { background: #60a5fa; }
 .c-intron_retention { background: #fb923c; }
@@ -2542,6 +2546,8 @@ table.atlas tbody td.col-gene .gene {
 .classcard:has(.c-splicing-icon)               { color: #a78bfa; }
 .classcard:has(.c-variant-icon)                { color: #f472b6; }
 .classcard:has(.c-nuORF-icon)                  { color: #fbbf24; }
+.classcard:has(.c-lncRNA-icon)                 { color: #fcd34d; }
+.classcard:has(.c-pseudogene-icon)             { color: #d97706; }
 .classcard:has(.c-ERV-icon)                    { color: #86efac; }
 .classcard:has(.c-TE_chimeric_transcript-icon) { color: #60a5fa; }
 .classcard:has(.c-intron_retention-icon)       { color: #fb923c; }
@@ -4456,7 +4462,9 @@ const CLASS_TIPS = {
   self_gene:'Canonical self-antigen: normal protein over-expressed or aberrantly presented by tumors',
   splicing:'Alternative splicing: peptide from a tumor-specific splice variant not found in normal tissue',
   variant:'Mutation neoantigen: peptide containing a somatic mutation (SNV, indel, frameshift)',
-  nuORF:"Cryptic ORF: peptide translated from a non-canonical open reading frame (5'UTR, 3'UTR, lncRNA, pseudogene)",
+  nuORF:"Cryptic ORF: peptide translated from a non-canonical open reading frame — 5'/3' UTR uORFs and dORFs, out-of-frame and overlapping frames",
+  lncRNA:'lncRNA ORF: peptide translated from a long non-coding RNA, a transcript annotated as non-protein-coding',
+  pseudogene:'Pseudogene ORF: peptide translated from a pseudogene, a disabled copy of a parent gene normally presumed silent',
   ERV:'Endogenous retroelement: peptide encoded by reactivated endogenous retroviruses or LINE/SINE elements',
   TE_chimeric_transcript:'TE chimeric transcript: fusion transcript driven by a transposable element promoter',
   intron_retention:'Intron retention: peptide from an unspliced intron retained in tumor mRNA',
@@ -4941,6 +4949,8 @@ const CLASS_LABELS = {
   splicing:'Alternative splicing',
   variant:'Mutation neoantigen',
   nuORF:'Cryptic ORF (nuORF)',
+  lncRNA:'lncRNA ORF',
+  pseudogene:'Pseudogene ORF',
   ERV:'Endogenous retroelement',
   TE_chimeric_transcript:'TE chimeric transcript',
   intron_retention:'Intron retention',
@@ -4955,6 +4965,8 @@ const CLASS_ICONS = {
   splicing:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>',
   variant:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 15.4 6.7 18.1l1-5.8L3.5 8.2l5.9-.9z"/></svg>',
   nuORF:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/><circle cx="18" cy="18" r="2.5"/></svg>',
+  lncRNA:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c3-6 6 6 9 0s6-6 9 0"/><circle cx="5" cy="7" r="1.4"/><circle cx="12" cy="7" r="1.4"/><circle cx="19" cy="7" r="1.4"/></svg>',
+  pseudogene:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5"/><path d="M7 12h3M14 12h3"/><path d="M4 20L20 4"/></svg>',
   ERV:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4c4 3 8 3 12 0M6 12c4 3 8 3 12 0M6 20c4 3 8 3 12 0"/></svg>',
   TE_chimeric_transcript: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="8" height="4" rx="1"/><rect x="13" y="13" width="8" height="4" rx="1"/><path d="M11 9h2v6"/></svg>',
   intron_retention: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="5" height="6" rx="1"/><rect x="16" y="9" width="5" height="6" rx="1"/><path d="M8 12h8" stroke-dasharray="2 2"/><path d="M10 7v10M14 7v10" opacity=".5"/></svg>',
@@ -4967,7 +4979,9 @@ const CLASS_DESC = {
   self_gene:'Lineage-restricted or tumor-enriched proteins, the classic PC-CAR and TCR target class.',
   splicing:'Peptides spanning tumor-specific alternative splice junctions, including exon skips and cryptic sites.',
   variant:'Mutation-derived neoantigens from SNVs and indels in TCGA/TARGET, empirically confirmed on HLA.',
-  nuORF:'Cryptic ORFs from UTRs, pseudogenes, and overlapping frames — 69% of the non-canonical repertoire.',
+  nuORF:'Cryptic ORFs from UTRs and overlapping or out-of-frame reading frames — the largest non-canonical class.',
+  lncRNA:'ORFs translated from long non-coding RNAs — transcripts annotated as non-coding yet demonstrably presented on HLA.',
+  pseudogene:'ORFs translated from pseudogenes — disabled gene copies presumed silent, but re-expressed and presented in tumors.',
   ERV:'Endogenous retroviral / LINE-type retroelements, including the LINE1 ORF2 pan-cancer target.',
   TE_chimeric_transcript:'Transposable elements acting as alternative promoters, donors, or acceptors for host transcripts.',
   intron_retention:'Retained-intron-derived peptides, enriched in AML and other splicing-disrupted cancers.',
@@ -4976,10 +4990,34 @@ const CLASS_DESC = {
   rna_edit:'A-to-I (ADAR) RNA-edited peptides — recoded at the transcript level, absent from the genome.',
   circRNA:'Peptides spanning back-spliced circular-RNA junctions.',
 };
-// Canonical full set of known aberration classes. The last two (rna_edit, circRNA)
-// only appear in in-house cohorts; the public landing cards/body-map hide any class
-// with a zero global count, so they surface only where they actually have peptides.
-const CLASS_ORDER = ['self_gene','splicing','variant','nuORF','ERV','TE_chimeric_transcript','intron_retention','fusion','pathogen','rna_edit','circRNA'];
+// Canonical full set of known aberration classes, in display order. lncRNA and
+// pseudogene sit next to nuORF because all three are non-canonical ORFs: the
+// pipeline splits them out of the nuORF bucket on the `nuorf_type` subtype.
+const CLASS_ORDER = ['self_gene','splicing','variant','nuORF','lncRNA','pseudogene','ERV','TE_chimeric_transcript','intron_retention','fusion','pathogen','rna_edit','circRNA'];
+
+// The 11 classes the public atlas is built around. A per-cancer breakdown lists
+// all of them even at zero, so "this cancer has no gene fusions" is visible as a
+// fact rather than as an absent row the reader has to notice is missing.
+//
+// rna_edit and circRNA are deliberately NOT here: they have no peptides anywhere
+// in the public atlas and occur only in in-house cohorts. They are still in
+// CLASS_ORDER, so wherever they do have peptides they render normally — they
+// just don't pad every public cancer with two guaranteed zeros.
+const PUBLIC_CLASS_ORDER = CLASS_ORDER.filter(k => k !== 'rna_edit' && k !== 'circRNA');
+
+// nuORF, lncRNA and pseudogene are one family: all three come from the raw
+// `nuORF` bucket and share its source-annotation shape, hg19 coordinates and
+// subtype field. Anything that used to test `cls === 'nuORF'` must test this
+// instead, or the two split-out classes silently lose drawer features.
+const NUORF_FAMILY = ['nuORF', 'lncRNA', 'pseudogene'];
+const isNuorfFamily = cls => NUORF_FAMILY.includes(cls);
+
+// Classes to list for one cancer: the fixed public 11, plus any other class that
+// actually has peptides here (i.e. rna_edit / circRNA in an in-house cohort).
+function classRowsFor(classes) {
+  const extra = CLASS_ORDER.filter(k => !PUBLIC_CLASS_ORDER.includes(k) && (classes[k] || 0) > 0);
+  return [...PUBLIC_CLASS_ORDER, ...extra];
+}
 
 // Gene aliases — maps a user-facing search term to a list of forms the raw data
 // might use. Keeps backend canonicalization (integrate_data.py) in sync with
@@ -5125,7 +5163,7 @@ function renderCancerGrid(summary) {
       return `<span class="c-${k}" style="width:${w}%" title="${CLASS_LABELS[k]}: ${v.toLocaleString()} (${(v/classSum*100).toFixed(1)}%)"></span>`;
     }).join('');
     // Build class breakdown tooltip
-    const breakdown = CLASS_ORDER.filter(k => (c.classes[k]||0) > 0)
+    const breakdown = classRowsFor(c.classes)
       .map(k => `${CLASS_LABELS[k]}: ${(c.classes[k]||0).toLocaleString()}`).join(' · ');
     const locked = isLocked(c.code);
     const tileTitle = locked ? `Sign in to explore ${c.name}` : `${c.name} — ${breakdown}`;
@@ -5192,7 +5230,8 @@ const BODY_POSITIONS = {
 function classColor(k) {
   const map = {
     self_gene:'#22d3ee', splicing:'#a78bfa', variant:'#f472b6',
-    nuORF:'#fbbf24', ERV:'#86efac', TE_chimeric_transcript:'#60a5fa',
+    nuORF:'#fbbf24', lncRNA:'#fcd34d', pseudogene:'#d97706',
+    ERV:'#86efac', TE_chimeric_transcript:'#60a5fa',
     intron_retention:'#f87171', fusion:'#fb923c', pathogen:'#c084fc',
     rna_edit:'#2dd4bf', circRNA:'#fda4af'
   };
@@ -5236,14 +5275,15 @@ function showBodyInfo(code) {
   const box = document.getElementById('bodymapInfo');
   if (!c || !box) return;
   const classSum = CLASS_ORDER.reduce((a,k)=> a + (c.classes[k]||0), 0) || 1;
-  const breakdown = CLASS_ORDER
-    .filter(k => (c.classes[k]||0) > 0)
+  // Every molecular-event class for this cancer, biggest first, with the
+  // zero-count ones kept and pushed to the bottom — an explicit "0" is a result,
+  // and dropping the row would hide it.
+  const breakdown = classRowsFor(c.classes)
     .sort((a,b)=> (c.classes[b]||0) - (c.classes[a]||0))
-    .slice(0, 6)
     .map(k => {
       const v = c.classes[k] || 0;
       const pct = (v/classSum*100).toFixed(1);
-      return `<div class="cb-row">
+      return `<div class="cb-row${v ? '' : ' cb-zero'}">
         <div class="cb-lbl">${CLASS_LABELS[k]}</div>
         <div class="cb-bar"><span style="width:${pct}%; background:${classColor(k)}"></span></div>
         <div class="cb-v">${v.toLocaleString()}</div>
@@ -9048,7 +9088,7 @@ async function openDrawer(r, opts) {
         ${gn ? `<span class="hero-meta"><b>Gene</b> <span class="mono">${gn}</span></span>` : ''}
       </div>
     </div>`;
-  } else if (rawSource && ['splicing', 'ERV', 'TE_chimeric_transcript', 'intron_retention', 'nuORF', 'fusion'].includes(r[COL.cls])) {
+  } else if (rawSource && ['splicing', 'ERV', 'TE_chimeric_transcript', 'intron_retention', 'fusion'].includes(r[COL.cls]) || isNuorfFamily(r[COL.cls])) {
     // Pull coordinate, transcript, and TE/retroelement fragments from the
     // structured source string so users can read location at a glance instead
     // of parsing the raw pipe-blob. Two coordinate formats appear in the raw
@@ -9071,6 +9111,7 @@ async function openDrawer(r, opts) {
       splicing: 'Splice junction', ERV: 'Retroelement',
       TE_chimeric_transcript: 'TE chimeric transcript',
       intron_retention: 'Retained intron', nuORF: 'Cryptic ORF',
+      lncRNA: 'lncRNA ORF', pseudogene: 'Pseudogene ORF',
       fusion: 'Gene fusion',
     }[r[COL.cls]] || 'Source annotation';
     // Pick the best primary identifier: gene > retroelement family > transcript.
@@ -9086,7 +9127,7 @@ async function openDrawer(r, opts) {
         ${txMeta && txMeta.ensg ? `<span class="hero-meta"><b>ENSG</b> <span class="mono">${txMeta.ensg}</span></span>` : ''}
         ${txMeta && txMeta.biotype ? `<span class="hero-meta"><b>Biotype</b> ${txMeta.biotype.replace(/_/g, ' ')}</span>` : ''}
         ${teFamily && teFamily !== primary ? `<span class="hero-meta"><b>TE family</b> <span class="mono">${teFamily}</span></span>` : ''}
-        ${r[COL.cls] === 'nuORF' && r[COL.nuorf] ? `<span class="hero-meta"><b>Subtype</b> ${r[COL.nuorf]}</span>` : ''}
+        ${isNuorfFamily(r[COL.cls]) && r[COL.nuorf] ? `<span class="hero-meta"><b>Subtype</b> ${r[COL.nuorf]}</span>` : ''}
       </div>
       ${(() => {
         const links = [];
@@ -9095,7 +9136,7 @@ async function openDrawer(r, opts) {
         // GRCh38 Ensembl links and the GRCh37 region link disagree with the
         // hg19 ORF coordinates the row actually shows, so they just add
         // noise. Skip the txMeta-derived links entirely for this class.
-        if (cls !== 'nuORF') {
+        if (!isNuorfFamily(cls)) {
           // Preferred route: the robust useast Gene/Summary URL with g/r/t
           // params (this is what the Ensembl search feature actually generates
           // and survives edge outages that break the bare transcript page).
@@ -9119,7 +9160,7 @@ async function openDrawer(r, opts) {
           // from the NeoVerse pipeline which aligns to GRCh38 → hg38.
           const ucscHg19 = `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg19 ↗</a>`;
           const ucscHg38 = `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg38 ↗</a>`;
-          if (cls === 'nuORF') {
+          if (isNuorfFamily(cls)) {
             links.push(ucscHg19);
           } else {
             links.push(`<a class="xref" href="https://useast.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh38 region ↗</a>`);
@@ -9435,6 +9476,8 @@ function interp(r) {
   else if (r[COL.tumorExp]) bits.push(`Narrow tumor/normal window (${ratio.toFixed(1)}×) — check normal tissue safety carefully.`);
   if (r[COL.depmap] != null && r[COL.depmap] < -0.5) bits.push(`Strongly essential in DepMap (${r[COL.depmap].toFixed(2)}) — tumor dependency.`);
   if (cls === 'nuORF') bits.push(`Cryptic ORF — validate with Ribo-Seq.`);
+  if (cls === 'lncRNA') bits.push(`Translated from a long non-coding RNA — confirm the ORF with Ribo-Seq.`);
+  if (cls === 'pseudogene') bits.push(`Pseudogene-derived — confirm the ORF with Ribo-Seq and check read mapping against the parent gene.`);
   if (cls === 'splicing') bits.push(`Splicing-derived — verify junction specificity vs normal tissue.`);
   if (cls === 'variant') bits.push(`Mutation-derived neoantigen — cross-reference tumor WGS/WES.`);
   if (cls === 'ERV' || cls === 'TE_chimeric_transcript') bits.push(`Transposable element origin — assess off-target binding.`);

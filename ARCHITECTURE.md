@@ -57,6 +57,43 @@ Two independent sync flows, both daily:
 - **Outputs:** `data_js/{CANCER}.js`, `data_js/{CANCER}_detail.js`, `data_js/_search_index.js`, `data_js/_summary.js`, and a `data/` folder with derived CSVs.
 - **Input columns it expects:** see the module docstring in `integrate_data.py`.
 
+#### Aberration classes — 13 in the vocabulary, 11 public
+
+`CLASS_ORDER` (index.html) is the master list and the display order. The public
+atlas uses **11** of them; `rna_edit` and `circRNA` have no peptides in any public
+cancer and occur only in in-house cohorts, so `PUBLIC_CLASS_ORDER` drops them.
+
+Per-cancer breakdowns list **all 11 even at zero** (`classRowsFor()`), plus any
+other class that actually has peptides there — so "this cancer has no gene
+fusions" reads as a result rather than an absent row. The class *chips* still hide
+zero counts, because a filter that returns nothing is a dead end.
+
+**nuORF is split three ways** on the raw `nuorf_type` subtype
+(`refine_nuorf_class()` in `integrate_data.py`, shared with `integrate_inhouse.py`):
+
+| `nuorf_type` | class | label |
+|---|---|---|
+| `lncRNA` | `lncRNA` | lncRNA ORF |
+| `Pseudogene` | `pseudogene` | Pseudogene ORF |
+| everything else (uORF, dORF, out-of-frame, overlap, Other) | `nuORF` | Cryptic ORF (nuORF) |
+
+This makes the portal match the manuscript, which defines **11 peptide sources**
+with lncRNAs, pseudogenes and cryptic ORFs as three separate entries (Figure 1C
+and main text — note Figure 1B is the *pipeline* schematic, not a class taxonomy).
+`nuorf_type` is unchanged at row index 16, so the drawer still shows the precise
+subtype for all three.
+
+The three are **one family** for everything else: `isNuorfFamily()` gates the
+drawer's Subtype chip, the structured source-annotation block, the Ensembl-link
+skip and the **UCSC hg19** coordinate build. Anything testing `cls === 'nuORF'`
+literally must use that predicate instead, or lncRNA/pseudogene rows silently lose
+those features. Same trap in `integrate_inhouse.py` (`_gene_from_record`, the
+`nuorf_qualitative` figure gate).
+
+`resplit_nuorf_classes.py` applies the split to already-built artifacts without a
+full rebuild — rows, per-cancer `classes`, `_summary`, `_search_index` and the
+`data/*.json` mirrors — for the same reason `augment_immunogenicity.py` exists.
+
 #### Per-HLA immunogenicity (two models)
 
 Each entry of a row's `bind` array (row index 13) is
@@ -584,10 +621,42 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
-### 2026-09-29 — Dual-model immunogenicity (DeepImmuno + PRIME) — AWAITING REVIEW
+### 2026-09-29 — nuORF split into Cryptic ORF / lncRNA / Pseudogene
 
-**Status: prepared locally, NOT committed or deployed.** Preview served from
-`python -m http.server 8777` in the repo root.
+**Where:** `integrate_data.py` (`refine_nuorf_class`, `CLASS_LABELS`),
+`integrate_inhouse.py`, new `resplit_nuorf_classes.py`, `index.html`
+(CLASS_ORDER / LABELS / ICONS / DESC / TIPS, `classColor`, two CSS colour maps,
+`PUBLIC_CLASS_ORDER`, `classRowsFor`, `isNuorfFamily`, body-map panel, card
+tooltip, `interp`), `data_js/` + `data/`.
+
+- **What:** 2,302 peptides move out of the nuORF bucket — **lncRNA 1,940** and
+  **pseudogene 362** — leaving nuORF at **8,405**. Public class count goes 9 → 11.
+- **Why:** the manuscript defines 11 peptide sources with lncRNAs, pseudogenes and
+  cryptic ORFs listed separately; the interface was collapsing those three into
+  one. A reviewer flagged the interface's nine categories against the paper's 11.
+  The split is manuscript-faithful: the raw `nuorf_type` values map 1:1.
+- **Per-cancer breakdowns now list all 11 including zeros.** Previously the
+  body-map panel showed only the top 6 non-zero, so e.g. SKCM never displayed
+  Intron retention (6) or Gene fusion (0) at all.
+- **Class-literal gates widened.** The drawer gated its Subtype chip, source
+  annotation, Ensembl links and hg19 coordinate build on `cls === 'nuORF'`;
+  reclassified rows would have lost all of them silently. Now `isNuorfFamily()`.
+  Same fix in the in-house gene resolver and `nuorf_qualitative` figure gate.
+- **`rna_edit` / `circRNA`** stay in the vocabulary but out of the public 11 — no
+  public peptides, in-house only. Also added to the Python `CLASS_LABELS`, which
+  builds the search index, so they are searchable for the first time.
+- **ERV label unchanged** ("Endogenous retroelement") by explicit decision, even
+  though the manuscript calls it "self-translating transposable elements".
+- **Known gap:** 14 search-index rows (7 peptides appearing twice in one cancer
+  with conflicting classes) are left at their old class rather than guessed —
+  2 of 26,603 rows, quick-search dropdown only. A full rebuild resolves them.
+- **Not done:** the portal's Methods section still doesn't state how a peptide is
+  assigned to a class (the manuscript's multi-mapping rules). Deferred.
+
+### 2026-09-29 — Dual-model immunogenicity (DeepImmuno + PRIME) — LIVE
+
+**Status: shipped in `85ed341`, live on immuno-verse.com.** Approved after local
+review; provenance shipped as "PRIME %rank" by explicit decision.
 
 **Where:** `integrate_data.py` (new `load_dual_immunogenicity()`, bind slot 8),
 new `augment_immunogenicity.py`, `index.html` (`IMMUNO_CFG`, `immunoInterpret()`,
