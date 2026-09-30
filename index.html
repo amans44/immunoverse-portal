@@ -53,6 +53,7 @@
   --accent-violet: #a78bfa;
   --accent-pink: #f472b6;
   --accent-lime: #86efac;
+  --immuno-borderline: #bef264;   /* yellow-green: borderline sits next to concordant, not next to red */
   --accent-amber: #fbbf24;
   --link: #22d3ee;
   --grad-primary: linear-gradient(135deg, #22d3ee 0%, #818cf8 45%, #c084fc 100%);
@@ -88,6 +89,7 @@
   --accent-violet: #6d28d9;
   --accent-pink: #be185d;
   --accent-lime: #15803d;
+  --immuno-borderline: #4d7c0f;   /* darker yellow-green for light mode contrast */
   --accent-amber: #b45309;
   --link: #0369a1;
   --grad-primary: linear-gradient(135deg, #0891b2 0%, #6366f1 45%, #9333ea 100%);
@@ -2908,13 +2910,14 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   letter-spacing: .01em;
   padding: 3px 8px; border-radius: 999px;
   border: 1px solid currentColor; background: transparent;
-  cursor: pointer; white-space: nowrap; max-width: 100%;
+  white-space: nowrap; max-width: 100%;
 }
 .immuno-badge .ib-icon { font-size: 10px; opacity: .9; }
 .immuno-badge .ib-text { overflow: hidden; text-overflow: ellipsis; }
 .immuno-badge:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
 .immuno-badge.tone-good    { color: var(--accent-lime); }
-.immuno-badge.tone-warn    { color: var(--accent-amber); }
+.immuno-badge.tone-warn    { color: var(--immuno-borderline); }
+.immuno-badge.tone-bad     { color: #f87171; }
 .immuno-badge.tone-single  { color: var(--accent-cyan); }
 .immuno-badge.tone-pending { color: var(--accent-violet); }
 .immuno-badge.tone-muted   { color: var(--text-3); }
@@ -2924,6 +2927,13 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 @media (max-width: 900px) {
   .bind-table .immuno-badge .ib-text { display: none; }
 }
+/* Legend rows under the per-HLA table. Each badge and its wording are one
+   nowrap unit, so "WB" can never end up stranded on the line above its own
+   label; the rows then break at the semantic boundaries instead. */
+.bind-legend .lg-row { display: block; margin-bottom: 3px; }
+.bind-legend .lg-row:last-child { margin-bottom: 0; }
+.bind-legend .lg-item { white-space: nowrap; display: inline-block; margin-right: 16px; }
+
 /* Standing explanatory note under the per-HLA table. */
 .immuno-note {
   font-size: 12.5px; line-height: 1.6; color: var(--text-2);
@@ -4694,6 +4704,11 @@ const IMMUNO_CFG = {
   deep: {
     label: 'DeepImmuno',
     favorable: 0.5,
+    // Below `favorable` but at or above `borderline` counts as a near miss rather
+    // than a real disagreement. 0.35 is ~0.15 under the cutoff and sits at the
+    // median of the sub-threshold DeepImmuno values (0.365), so it splits the
+    // near misses from the genuinely low scores. Portal heuristic.
+    borderline: 0.35,
     better: 'higher',
     fmt: v => v.toFixed(3),
     unit: '',
@@ -4709,13 +4724,19 @@ const IMMUNO_CFG = {
   },
   prime: {
     label: 'PRIME %rank',
-    favorable: 0.5,
+    // 2% is the cutoff used in PRIME's own publication. Note this is NOT the
+    // NetMHCpan strong-binder rank (<0.5%) shown in the Rank % column: that one
+    // is about HLA binding, this one about predicted immunogenicity.
+    favorable: 2,
+    // Up to 5x the cutoff is a near miss; beyond that the models genuinely part
+    // company. Portal heuristic.
+    borderline: 10,
     better: 'lower',
     fmt: v => v.toFixed(3),
     unit: '%',
-    basis: 'portal triage heuristic — a stringent %rank cutoff. It is NOT the ' +
-           'NetMHCpan 0.5% strong-binder rank; that cutoff is about HLA binding, ' +
-           'this one is about predicted immunogenicity.',
+    basis: 'the cutoff used in PRIME’s own publication. It is NOT the NetMHCpan ' +
+           '0.5% strong-binder rank; that cutoff is about HLA binding, this one ' +
+           'is about predicted immunogenicity.',
     absent: 'PRIME has no prediction for HLA-C*03:01 in the model version used, ' +
             'and none for peptides longer than 14 residues.',
     absentReason: (pep, allele) => {
@@ -4866,15 +4887,28 @@ function immunoInterpret(deep, prime, ctx) {
     };
   }
 
+  // Disagreement is graded, not binary. One model favorable while the other sits
+  // just under its cutoff is a near miss; one model favorable while the other is
+  // far outside is a real parting of the ways. The badge names WHICH model is
+  // favorable, so a colour and a direction are carried at once.
   if (dFav !== pFav) {
+    const near = dFav ? (pv <= C.prime.borderline) : (dv >= C.deep.borderline);
+    const only = dFav ? C.deep.label : C.prime.label;
     const dir = dFav
       ? `${C.deep.label} is favorable (${dStr} ≥ ${C.deep.favorable}) while ${C.prime.label} ` +
         `is not (${pStr} > ${C.prime.favorable}${C.prime.unit}).`
       : `${C.prime.label} is favorable (${pStr} ≤ ${C.prime.favorable}${C.prime.unit}) while ` +
         `${C.deep.label} is not (${dStr} < ${C.deep.favorable}).`;
-    return {
-      state: 'discordant', label: 'Discordant predictions', tone: 'warn', icon: '⇅',
-      tip: header + detail + '\n\nThe two models disagree: ' + dir +
+    return near ? {
+      state: 'borderline', label: `${only} favorable — borderline`,
+      tone: 'warn', icon: '≈',
+      tip: header + detail + '\n\nBorderline. ' + dir +
+        ' The other model falls only just short of its threshold, so this is a near miss ' +
+        'rather than a clear disagreement.',
+    } : {
+      state: 'discordant', label: `${only} favorable only`,
+      tone: 'bad', icon: '⇅',
+      tip: header + detail + '\n\nThe two models disagree substantially: ' + dir +
         ' Neither overrides the other — across this dataset the two scores are close to ' +
         'uncorrelated, which is why both are shown rather than merged.',
     };
@@ -4895,10 +4929,8 @@ function immunoInterpret(deep, prime, ctx) {
 function immunoBadgeHtml(b, pep, siblings, extraCls) {
   const { deep, prime } = immunoPair(b);
   const r = immunoInterpret(deep, prime, { pep: pep, allele: b && b[0], siblings: siblings });
-  const tip = r.tip.replace(/"/g, '&quot;');
-  return `<button type="button" class="immuno-badge tone-${r.tone}${extraCls ? ' ' + extraCls : ''}"
-    data-tip="${tip}" data-tip-wide aria-label="${r.label}. Activate for details."
-    ><span class="ib-icon" aria-hidden="true">${r.icon}</span><span class="ib-text">${r.label}</span></button>`;
+  return `<span class="immuno-badge tone-${r.tone}${extraCls ? ' ' + extraCls : ''}"
+    ><span class="ib-icon" aria-hidden="true">${r.icon}</span><span class="ib-text">${r.label}</span></span>`;
 }
 
 // Structured, read-only evidence for downstream consumers (e.g. an LLM asked to
@@ -4941,9 +4973,57 @@ function immunoEvidence(pep, code, b, siblings) {
 // deterministic result instead of letting it infer one.
 window.__IV_IMMUNO_EVIDENCE = immunoEvidence;
 
-const IMMUNO_NOTE = 'DeepImmuno and PRIME provide complementary computational predictions ' +
-  'for each peptide–HLA pair. Both are displayed to support scientific interpretation. ' +
-  'Missing results do not imply low immunogenicity. Predictions require experimental validation.';
+/* Per-allele modality summary for one peptide. Deterministic — it reads the same
+   states the badges do and turns them into prose, naming the actual alleles.
+
+   The split is mechanistic, not a ranking: approaches that rely on the natural
+   T-cell repertoire (vaccine, TIL) need predicted immunogenicity to be favorable,
+   whereas engineered binders (PC-CAR, BiTE, TCR-mimic) do not, so a low prediction
+   deprioritizes the former without ruling out the latter. */
+function immunoTherapyHtml(bind, pep) {
+  if (!Array.isArray(bind) || !bind.length) return '';
+  const g = { green: [], amber: [], low: [], none: [] };
+  bind.forEach(b => {
+    const { deep, prime } = immunoPair(b);
+    const st = immunoInterpret(deep, prime, { pep: pep, allele: b[0], siblings: bind }).state;
+    if (st === 'concordant-favorable') g.green.push(b[0]);
+    else if (st === 'borderline') g.amber.push(b[0]);
+    else if (st === 'discordant' || st === 'neither') g.low.push(b[0]);
+    else g.none.push(b[0]);          // single-model, unavailable, pending
+  });
+  const list = a => a.map(x => `<span class="mono">${x}</span>`).join(', ');
+  const out = [];
+  if (g.green.length) {
+    out.push(`<b>Concordant immunogenicity</b> on ${list(g.green)} — both models favorable. ` +
+      `Approaches that depend on the natural T-cell repertoire are on the table here: ` +
+      `cancer vaccine, TIL expansion, or TCR-T.`);
+  }
+  if (g.amber.length) {
+    out.push(`<b>Borderline</b> on ${list(g.amber)} — one model favorable, the other just short. ` +
+      `Treat as provisional and weigh alongside the MS and expression evidence above.`);
+  }
+  if (g.low.length) {
+    out.push(`<b>Low or conflicting predicted immunogenicity</b> on ${list(g.low)}. ` +
+      `This deprioritizes vaccine and TIL routes for those alleles, but not engineered ` +
+      `binders — PC-CAR, BiTEs, or TCR-T where a naive antigen-specific TCR can be ` +
+      `recovered from patients or healthy donors — which do not depend on the natural repertoire.`);
+  }
+  if (g.none.length) {
+    out.push(`<b>No prediction</b> for ${list(g.none)}, so no modality inference is drawn for ` +
+      `those alleles. A missing prediction is not a low one.`);
+  }
+  if (!out.length) return '';
+  return `<div class="immuno-note">
+      <div style="font-weight:700;color:var(--text-1);margin-bottom:6px;">Modality considerations by allele</div>
+      ${out.map(x => `<div style="margin-bottom:6px;">${x}</div>`).join('')}
+      <div style="color:var(--text-3);font-size:12px;font-style:italic;margin-top:8px;">
+        Research considerations from computational predictions only — not clinical guidance.
+        These predictions require experimental validation, and HLA eligibility, tumor
+        selectivity, normal-tissue risk and binder specificity all still apply.
+      </div>
+    </div>`;
+}
+
 const CLASS_LABELS = {
   self_gene:'Canonical self-antigen',
   splicing:'Alternative splicing',
@@ -9372,30 +9452,30 @@ async function openDrawer(r, opts) {
     <div class="section-subtitle">Normalized MS intensity in the individual patient samples that detected this peptide — consistent high bars across samples indicate a shared, robustly presented target.</div>
     ${intensBlock}` : ''}
 
-    <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples${bind.length ? `<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadObservedHlaCsv()">${DL_ICON}<span>CSV</span></button>` : ''}</div>
+    <div class="section-title" data-tip="Every HLA allele on which this peptide was actually detected. SB = NetMHCpan strong binder (rank &lt; 0.5%). US Freq is the share of the population carrying that allele. DeepImmuno and PRIME %rank are two independent immunogenicity predictions for that exact allele; the definitions and cutoffs are stated in the grey text under the table. Recurrence is the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples${bind.length ? `<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadObservedHlaCsv()">${DL_ICON}<span>CSV</span></button>` : ''}</div>
     <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, both immunogenicity predictions for that exact allele, and per-patient recurrence.</div>
     <div class="bind-wrap">
       <table class="bind-table">
         <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th>
-          <th data-tip="DeepImmuno immunogenicity potential for this peptide on this exact allele. Range 0–1; HIGHER indicates greater predicted immunogenic potential. This is not a probability of clinical response.">DeepImmuno</th>
-          <th data-tip="PRIME percentile rank for this peptide on this exact allele. LOWER indicates a more favorable prediction. This is an immunogenicity rank — it is not the NetMHCpan binding rank shown in the 'Rank %' column.">PRIME %rank</th>
-          <th data-tip="Deterministic agreement state between the two models, computed in the portal from fixed thresholds — not by a language model. Hover, focus or click a badge for the exact values, directions, thresholds, and which model supports the reading.">Interpretation</th>
+          <th>DeepImmuno</th>
+          <th>PRIME %rank</th>
+          <th>Interpretation</th>
           <th>#Det/#Tot</th><th>Recur.</th></tr></thead>
         <tbody>${bindRows}</tbody>
       </table>
       <div class="bind-legend">
-        <span class="bind-cat bind-sb">SB</span> strong binder (rank ≤ 0.5%)
-        <span class="bind-cat bind-wb">WB</span> weak binder (rank ≤ 2%)
-        · DeepImmuno: higher = more favorable (favorable at ≥ ${IMMUNO_CFG.deep.favorable})
-        · PRIME %rank: lower = more favorable (favorable at ≤ ${IMMUNO_CFG.prime.favorable}%)
-        · Recur. = #Detected / #Total patients with this HLA
+        <div class="lg-row">
+          <span class="lg-item"><span class="bind-cat bind-sb">SB</span> NetMHCpan strong binder (rank &lt; 0.5%)</span>
+          <span class="lg-item"><span class="bind-cat bind-wb">WB</span> weak binder (rank ≤ 2%)</span>
+        </div>
+        <div class="lg-row">DeepImmuno: higher = more favorable, favorable at ≥ ${IMMUNO_CFG.deep.favorable}
+          · PRIME %rank: lower = more favorable, favorable at ≤ ${IMMUNO_CFG.prime.favorable}% (the cutoff used in PRIME's publication) — an immunogenicity rank, not the NetMHCpan binding rank</div>
+        <div class="lg-row">Interpretation: <b style="color:var(--accent-lime)">green</b> both models favorable ·
+          <b style="color:var(--immuno-borderline)">yellow-green</b> one favorable, the other just short ·
+          <b style="color:#f87171">red</b> the two models disagree substantially</div>
+        <div class="lg-row">Recur. = #Detected / #Total patients with this HLA</div>
       </div>
-      <div class="immuno-note">${IMMUNO_NOTE}${IMMUNO_CFG.primeSemanticsConfirmed ? '' : ' <b class="immuno-pending-flag">The semantics of the PRIME column are not yet confirmed, so no agreement state is asserted.</b>'}
-        <br><b>Thresholds are portal triage heuristics, not published clinical cutoffs.</b>
-        DeepImmuno ≥ ${IMMUNO_CFG.deep.favorable} is the midpoint of the model's 0–1 output.
-        PRIME %rank ≤ ${IMMUNO_CFG.prime.favorable}% is a stringent immunogenicity-rank cutoff and is
-        <i>not</i> the NetMHCpan ${IMMUNO_CFG.prime.favorable}% strong-binder rank, which measures HLA binding rather than immunogenicity.
-      </div>
+      ${immunoTherapyHtml(bindSorted, pep)}
     </div>
 
     ${bind.length ? (() => {

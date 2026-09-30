@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+  <!-- Favicon: the ImmunoVerse mark on the brand gradient tile. The portal
+       had no favicon at all before this, so tabs fell back to the browser
+       default. SVG so it stays crisp at every density. -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ImmunoVerse — A Pan-Cancer Atlas of Therapeutic T Cell Targets</title>
 <meta name="description" content="ImmunoVerse: 16,687 empirically defined tumor-specific T-cell targets across 21 cancer types, integrating 1,823 immunopeptidomes, 7,188 RNA-Seq, 17,384 normal controls, and 594 single-cell datasets." />
@@ -49,6 +53,7 @@
   --accent-violet: #a78bfa;
   --accent-pink: #f472b6;
   --accent-lime: #86efac;
+  --immuno-borderline: #bef264;   /* yellow-green: borderline sits next to concordant, not next to red */
   --accent-amber: #fbbf24;
   --link: #22d3ee;
   --grad-primary: linear-gradient(135deg, #22d3ee 0%, #818cf8 45%, #c084fc 100%);
@@ -84,6 +89,7 @@
   --accent-violet: #6d28d9;
   --accent-pink: #be185d;
   --accent-lime: #15803d;
+  --immuno-borderline: #4d7c0f;   /* darker yellow-green for light mode contrast */
   --accent-amber: #b45309;
   --link: #0369a1;
   --grad-primary: linear-gradient(135deg, #0891b2 0%, #6366f1 45%, #9333ea 100%);
@@ -103,7 +109,7 @@ body {
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   background: var(--bg-0);
   color: var(--text-0);
-  font-size: 15px;
+  font-size: 16.5px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -138,7 +144,14 @@ a { color: var(--link); text-decoration: none; transition: color .15s; }
 a:hover { color: var(--text-0); }
 
 /* ===================== LAYOUT ===================== */
-.container { max-width: 1400px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 1; }
+/* Fluid page measure. Was a fixed `max-width: 1400px` (set at the initial
+   release and never revisited), which does not respond to screen size at all:
+   fine on a 1280px laptop (~95% fill) but only ~61% on a 2276px viewport, so the
+   content sat marooned in the middle with ~440px dead space each side.
+   `min(94vw, 1800px)` tracks the display up to a ceiling. The ceiling matters as
+   much as the fluidity — without it, text lines on an ultrawide get too long to
+   read comfortably. */
+.container { width: min(94vw, 1800px); margin: 0 auto; padding: 0 32px; position: relative; z-index: 1; }
 section { padding: 96px 0; position: relative; z-index: 1; }
 section + section { border-top: 1px solid var(--border); }
 
@@ -153,7 +166,11 @@ nav.topnav {
   border-bottom: 1px solid var(--border);
 }
 nav.topnav .inner {
-  max-width: 1600px;
+  /* Raised 1600 -> 1800 to line up with the fluid .container on wide screens.
+     Deliberately a CAP, not a fluid width: making the nav itself 94vw would take
+     ~90px off it on ~1500px screens, and the signed-in ADMIN nav needs all of
+     1600px (see the min-width:1600 compaction block below). */
+  max-width: 1800px;
   margin: 0 auto;
   padding: 14px 24px;
   display: flex;
@@ -165,38 +182,95 @@ nav.topnav .inner {
   nav.topnav .inner { gap: 16px; padding: 14px 28px; }
 }
 .brand {
+  /* flex-shrink:0 — the brand lockup must never be squeezed. Its children
+     (inline SVG mark + SVG wordmark) cannot shrink, so when the flex layout
+     compressed .brand the contents simply overflowed its box and the "Atlas"
+     subtitle collided with the search field on a signed-in nav. The element
+     designed to absorb nav pressure is .search-wrap (`flex:0 1 200px` with a
+     130px floor), so let the slack come out of there instead. */
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
   font-weight: 700;
-  font-size: 17px;
+  font-size: 18.5px;
   letter-spacing: -0.01em;
   color: var(--text-0);
 }
 .brand .logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--grad-primary);
-  position: relative;
-  box-shadow: 0 6px 22px rgba(129,140,248,0.45);
+  /* The real ImmunoVerse mark (extracted from `ImmunoVerse_Logo 1.ai`, which is
+     PDF-backed so the vector survived intact). Drawn bare — no tile — in the
+     brand accent, which is the treatment Aman picked over the gradient tile.
+
+     Sizing is optical, not mechanical: the mark is a tall/narrow glyph (~71x123
+     in art units), so matching it to the old 32px tile box made it tower over
+     the 17px wordmark. 26px lines its body up with the wordmark's cap height
+     instead, and `align-self:center` keeps it centred on the text baseline box.
+
+     Colour is var(--accent-violet), which is already redefined per theme
+     (#a78bfa on dark, #6d28d9 on light) — so light/dark is handled by the
+     existing palette with no second colour list to maintain. */
+  height: 26px;
+  width: auto;
+  display: grid;
+  place-items: center;
+  align-self: center;
   flex: none;
 }
-.brand .logo::after {
-  content: "";
-  position: absolute;
-  inset: 4px;
-  border-radius: 5px;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 50%),
-              conic-gradient(from 210deg at 50% 50%, #22d3ee, #a78bfa, #f472b6, #22d3ee);
-  mix-blend-mode: screen;
-  opacity: 0.85;
+.brand .logo svg {
+  height: 100%;
+  width: auto;
+  display: block;
+  color: var(--accent-violet);
+  stroke-width: 5.5;   /* art is a 4pt hairline; thickened so it holds at 26px */
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-.brand span.sub { color: var(--text-2); font-weight: 400; margin-left: 2px; font-size: 14px; }
+/* Real ImmunoVerse wordmark (same `ImmunoVerse_Logo 1.ai` source as the mark).
+   Live text was system-bold 800, which fought the hairline mark; this is the
+   lettering the mark was actually designed against, so the weights match by
+   construction rather than by picking a font-weight that approximates it.
+
+   Height is in `em`, NOT px, so it inherits the existing responsive .brand
+   font-size steps (17px default, 15px below 1399px) with no extra breakpoints.
+   The visible SVG is aria-hidden and the real word is kept in .iv-sr-only, so
+   screen readers and crawlers still get "ImmunoVerse Atlas" as text. */
+.brand .wordmark {
+  /* 0.84em, not the 0.95em this first shipped at. The SVG wordmark is wider
+     than the bold live text it replaced, and `.brand` is `flex:0 1 auto`, so
+     on a signed-in nav the layout squeezed .brand to 217px while its contents
+     still needed 230px — the "Atlas" subtitle then overflowed the brand's own
+     box and ended up 1px from the search field. Trimming the wordmark keeps
+     the whole lockup inside .brand so the 16px nav gap survives.
+     If you scale this back up, re-check the signed-in ADMIN nav at >=1600px —
+     that is the tightest state (see the min-width:1600 block above). */
+  height: 0.84em;
+  display: block;
+  flex: none;
+  min-width: 0;
+}
+.brand .wordmark svg {
+  height: 100%;
+  width: auto;
+  display: block;
+  color: var(--text-0);   /* follows the theme, same as the old live text */
+  stroke-width: 6;
+}
+.iv-sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.brand span.sub { color: var(--text-2); font-weight: 400; margin-left: 2px; font-size: 15.5px; }
 nav .links { display: flex; gap: 4px; align-items: center; }
 nav .links a {
   color: var(--text-1);
-  font-size: 14px;
+  font-size: 15.5px;
   font-weight: 500;
   padding: 8px 14px;
   border-radius: 8px;
@@ -209,12 +283,42 @@ nav .cta {
   color: #0a0e1a;
   border-radius: 10px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15.5px;
   white-space: nowrap;
   box-shadow: 0 4px 20px rgba(34,211,238,0.25);
   transition: transform .15s, box-shadow .15s;
 }
 nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211,238,0.4); color: #0a0e1a; }
+
+/* ImmunoVerse Chat pill — the topnav entry point to the sibling chat product at
+   https://immunoverse-chat.com. Deliberately NOT a `.links` item: those are all
+   same-page anchors and collapse into the hamburger below 1366px, whereas Chat
+   is an external destination that must stay visible in the bar at every width.
+   Outlined violet so it reads as secondary to the "Explore atlas" CTA and is not
+   confused with the cyan in-house pill. Swap IV_CHAT_URL (one place, the href
+   below + the footer link) if the chat ever moves to chat.immuno-verse.com. */
+nav .iv-chat-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--accent-violet) 45%, transparent);
+  background: color-mix(in srgb, var(--accent-violet) 13%, transparent);
+  color: var(--accent-violet); font-size: 14.5px; font-weight: 600;
+  white-space: nowrap; line-height: 1; flex: none;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+nav .iv-chat-pill:hover {
+  background: color-mix(in srgb, var(--accent-violet) 24%, transparent);
+  border-color: color-mix(in srgb, var(--accent-violet) 70%, transparent);
+  color: var(--accent-violet); transform: translateY(-1px);
+}
+nav .iv-chat-pill svg { width: 15px; height: 15px; flex: none; }
+nav .iv-chat-pill .ivc-ext { font-size: 11px; opacity: 0.7; }
+/* Text label collapses to the bubble icon only in the two bands where the nav is
+   tightest. 1367-1599px: all 8 section links are still in the bar. <=520px: phone.
+   Between 521 and 1366px the links live in the hamburger, so the label fits. */
+@media (max-width: 1599px) { nav .iv-chat-pill .ivc-text, nav .iv-chat-pill .ivc-ext { display: none; } nav .iv-chat-pill { padding: 7px 9px; } }
+@media (max-width: 1366px) { nav .iv-chat-pill .ivc-text { display: inline; } nav .iv-chat-pill { padding: 7px 12px; } }
+@media (max-width: 520px)  { nav .iv-chat-pill .ivc-text { display: none; }   nav .iv-chat-pill { padding: 7px 9px; } }
 
 /* Live visitor counter pill (fed by GoatCounter) */
 .live-stat {
@@ -244,7 +348,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
 }
 .live-stat .live-num {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--text-0);
@@ -252,7 +356,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
 }
 .live-stat .live-label {
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.08em;
   color: var(--text-2);
@@ -285,7 +389,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   background: var(--grad-primary-soft);
   border: 1px solid var(--border-2);
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-1);
   letter-spacing: 0.06em;
@@ -313,7 +417,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   color: transparent;
 }
 .hero .lede {
-  font-size: 14px;
+  font-size: 15.5px;
   color: var(--text-1);
   max-width: 640px;
   line-height: 1.55;
@@ -326,7 +430,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   padding: 9px 16px;
   border-radius: 10px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14.5px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -375,7 +479,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
 .stat:hover::before { opacity: 1; }
 .stat > * { position: relative; }
 .stat .num {
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 800;
   letter-spacing: -0.015em;
   background: var(--grad-primary);
@@ -385,7 +489,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   line-height: 1.1;
 }
 .stat .label {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--text-2);
   margin-top: 2px;
   font-weight: 500;
@@ -400,7 +504,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
 /* ===================== SECTION HEADERS ===================== */
 .section-head { max-width: 900px; margin-bottom: 20px; }
 .section-head .kicker {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--accent-cyan);
   letter-spacing: 0.16em;
@@ -416,7 +520,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   color: var(--text-0);
 }
 .section-head p {
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--text-1);
   line-height: 1.55;
   margin: 0;
@@ -467,11 +571,11 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
 }
 .ctile:hover::before { opacity: 1; }
 .ctile .tile-head { grid-column: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.ctile .code { font-size: 15px; font-weight: 700; color: var(--text-0); letter-spacing: -0.01em; font-family: var(--mono); }
+.ctile .code { font-size: 16.5px; font-weight: 700; color: var(--text-0); letter-spacing: -0.01em; font-family: var(--mono); }
 .ctile .group {
   display: inline-block;
   width: fit-content;
-  font-size: 9.5px;
+  font-size: 10.5px;
   color: var(--text-3);
   background: rgba(120,150,220,0.08);
   padding: 1px 6px;
@@ -483,7 +587,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
 }
 .ctile .name {
   grid-column: 1 / -1;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-2);
   line-height: 1.35;
   min-height: 1.35em;
@@ -498,8 +602,8 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   position: relative;
 }
 .ctile .donut svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
-.ctile .donut .dc { font-size: 14px; font-weight: 700; color: var(--text-0); line-height: 1; }
-.ctile .donut .dsub { font-size: 8px; color: var(--text-3); letter-spacing: 0.04em; text-transform: uppercase; margin-top: 2px; line-height: 1; }
+.ctile .donut .dc { font-size: 15.5px; font-weight: 700; color: var(--text-0); line-height: 1; }
+.ctile .donut .dsub { font-size: 9px; color: var(--text-3); letter-spacing: 0.04em; text-transform: uppercase; margin-top: 2px; line-height: 1; }
 .ctile .donut .dcenter {
   position: absolute; inset: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -515,8 +619,8 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   border-top: 1px dashed rgba(120,150,220,0.12);
 }
 .ctile .tile-stats .ts { display: flex; flex-direction: column; }
-.ctile .tile-stats .tsv { font-size: 13px; font-weight: 700; color: var(--text-0); font-family: var(--mono); line-height: 1.1; }
-.ctile .tile-stats .tsk { font-size: 9.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.ctile .tile-stats .tsv { font-size: 14.5px; font-weight: 700; color: var(--text-0); font-family: var(--mono); line-height: 1.1; }
+.ctile .tile-stats .tsk { font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
 .ctile .bar {
   grid-column: 1 / -1;
   display: flex;
@@ -533,7 +637,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   border: 1px solid var(--border);
   color: var(--text-2);
   padding: 6px 12px;
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-family: inherit;
   border-radius: 6px;
   cursor: pointer;
@@ -547,6 +651,10 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
 .c-splicing { background: #a78bfa; }
 .c-variant { background: #f472b6; }
 .c-nuORF { background: #fbbf24; }
+/* lncRNA / pseudogene ORFs are split out of the nuORF bucket — kept in the same
+   amber family as .c-nuORF so the kinship reads at a glance, but distinct. */
+.c-lncRNA { background: #fcd34d; }
+.c-pseudogene { background: #d97706; }
 .c-ERV { background: #86efac; }
 .c-TE_chimeric_transcript { background: #60a5fa; }
 .c-intron_retention { background: #fb923c; }
@@ -565,9 +673,9 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   box-shadow: var(--shadow-lg);
 }
 .exp-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 24px; }
-.exp-head h3 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
-.exp-head .meta { font-size: 13px; color: var(--text-2); }
-.exp-head .meta b { color: var(--accent-cyan); font-family: var(--mono); font-size: 14px; }
+.exp-head h3 { margin: 0; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+.exp-head .meta { font-size: 14.5px; color: var(--text-2); }
+.exp-head .meta b { color: var(--accent-cyan); font-family: var(--mono); font-size: 15.5px; }
 
 .filters {
   display: grid;
@@ -581,7 +689,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   gap: 6px;
 }
 .filters .ltxt {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-2);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -593,7 +701,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   border-radius: 10px;
   padding: 10px 12px;
   color: var(--text-0);
-  font-size: 13.5px;
+  font-size: 15px;
   font-family: inherit;
   outline: none;
   transition: border .15s, background .15s;
@@ -613,7 +721,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   background: var(--bg-1);
   border: 1px solid var(--border);
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-1);
   cursor: pointer;
   transition: all .15s;
@@ -622,7 +730,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
 .chip:hover { border-color: var(--border-2); color: var(--text-0); }
 .chip.active { background: var(--grad-primary); color: #0a0e1a; border-color: transparent; font-weight: 600; }
 .chip .sw { width: 8px; height: 8px; border-radius: 2px; }
-.chip .n { color: var(--text-3); font-size: 11px; margin-left: 4px; font-family: var(--mono); }
+.chip .n { color: var(--text-3); font-size: 12px; margin-left: 4px; font-family: var(--mono); }
 .chip.active .n { color: rgba(10,14,26,0.7); }
 
 .table-wrap {
@@ -635,7 +743,7 @@ nav .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(34,211
   -webkit-overflow-scrolling: touch;
 }
 table.atlas { min-width: 900px; }
-table.atlas { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.atlas { width: 100%; border-collapse: collapse; font-size: 14.5px; }
 table.atlas thead th {
   position: sticky;
   top: 0;
@@ -643,7 +751,7 @@ table.atlas thead th {
   backdrop-filter: blur(8px);
   padding: 12px 14px;
   text-align: left;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-1);
   text-transform: uppercase;
@@ -657,7 +765,7 @@ table.atlas thead th:hover { color: var(--accent-cyan); }
 table.atlas thead th.sortable::after {
   content: " ↕";
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
 }
 table.atlas thead th.sort-asc::after { content: " ↑"; color: var(--accent-cyan); }
 table.atlas thead th.sort-desc::after { content: " ↓"; color: var(--accent-cyan); }
@@ -700,7 +808,7 @@ table.atlas td.col-hlas .hlas {
   line-height: 1.5;
   color: var(--text-1);
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 12.5px;
 }
 /* Compact view — hide secondary columns */
 table.atlas.compact th[data-col="score"],
@@ -712,7 +820,7 @@ table.atlas.compact td:nth-child(9),
 table.atlas.compact th[data-col="homo"],
 table.atlas.compact td:nth-child(10) { display: none; }
 #compactBtn.active { background: var(--grad-primary-soft); border-color: var(--accent-cyan); color: var(--text-0); }
-.pep { font-family: var(--mono); font-weight: 600; color: var(--text-0); font-size: 12.5px; letter-spacing: 0.02em; }
+.pep { font-family: var(--mono); font-weight: 600; color: var(--text-0); font-size: 14px; letter-spacing: 0.02em; }
 .gene { font-weight: 600; color: var(--text-0); }
 /* Gene column: cap the width and WRAP fully, so peptides mapping to long multi-gene
    lists (e.g. histone clusters like H2AFX/HIST1H2AL/HIST1H2AJ/HIST1H2AB/…) don't
@@ -737,7 +845,7 @@ table.atlas tbody td.col-gene .gene {
   gap: 6px;
   padding: 3px 9px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   border: 1px solid var(--border-2);
   background: var(--bg-1);
@@ -748,7 +856,7 @@ table.atlas tbody td.col-gene .gene {
   position: relative;
   min-width: 80px;
 }
-.bar-cell .val { position: relative; z-index: 1; font-family: var(--mono); font-size: 12px; color: var(--text-0); }
+.bar-cell .val { position: relative; z-index: 1; font-family: var(--mono); font-size: 13px; color: var(--text-0); }
 .bar-cell .fill {
   position: absolute; left: 0; top: 50%; transform: translateY(-50%);
   height: 18px; border-radius: 4px;
@@ -756,7 +864,7 @@ table.atlas tbody td.col-gene .gene {
   border-left: 2px solid var(--accent-cyan);
   pointer-events: none;
 }
-.hlas { font-family: var(--mono); font-size: 11px; color: var(--text-2); }
+.hlas { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
 .hlas b { color: var(--text-1); }
 .window { display: inline-flex; align-items: center; gap: 6px; }
 .window .dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -768,7 +876,7 @@ table.atlas tbody td.col-gene .gene {
   padding: 40px;
   text-align: center;
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 14.5px;
 }
 .loader::before {
   content: "";
@@ -791,7 +899,7 @@ table.atlas tbody td.col-gene .gene {
   padding: 14px 18px;
   border-top: 1px solid var(--border);
   background: color-mix(in srgb, var(--bg-2) 85%, transparent);
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-2);
   flex-wrap: wrap;
   gap: 10px;
@@ -805,7 +913,7 @@ table.atlas tbody td.col-gene .gene {
   padding: 6px 12px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 13px;
   transition: all .15s;
 }
 .pagination button:hover:not(:disabled) { background: var(--bg-3); color: var(--text-0); }
@@ -872,7 +980,7 @@ table.atlas tbody td.col-gene .gene {
   width: 34px; height: 34px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
   display: flex; align-items: center; justify-content: center;
   z-index: 10;
@@ -891,7 +999,7 @@ table.atlas tbody td.col-gene .gene {
 }
 .drawer h3 {
   margin: 0 0 4px;
-  font-size: 24px;
+  font-size: 25px;
   font-family: var(--mono);
   letter-spacing: 0.02em;
   background: var(--grad-primary);
@@ -899,19 +1007,19 @@ table.atlas tbody td.col-gene .gene {
   background-clip: text;
   color: transparent;
 }
-.drawer .sub { color: var(--text-2); font-size: 13px; margin-bottom: 22px; }
+.drawer .sub { color: var(--text-2); font-size: 14.5px; margin-bottom: 22px; }
 .drawer .kv {
   display: grid;
   grid-template-columns: 140px 1fr;
   gap: 8px 16px;
   padding: 18px 0;
   border-top: 1px solid var(--border);
-  font-size: 13px;
+  font-size: 14.5px;
 }
 .drawer .kv dt { color: var(--text-2); font-weight: 500; }
-.drawer .kv dd { margin: 0; color: var(--text-0); font-family: var(--mono); font-size: 12.5px; word-break: break-word; }
+.drawer .kv dd { margin: 0; color: var(--text-0); font-family: var(--mono); font-size: 14px; word-break: break-word; }
 .drawer .section-title {
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-3);
@@ -924,19 +1032,19 @@ table.atlas tbody td.col-gene .gene {
   grid-template-columns: 110px 1fr 60px;
   align-items: center;
   gap: 10px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .drawer .gbar .lbl { color: var(--text-2); }
 .drawer .gbar .track { height: 8px; background: var(--bg-3); border-radius: 4px; overflow: hidden; }
 .drawer .gbar .fill { height: 100%; background: var(--grad-primary); border-radius: 4px; }
-.drawer .gbar .v { font-family: var(--mono); color: var(--text-0); text-align: right; font-size: 11.5px; }
+.drawer .gbar .v { font-family: var(--mono); color: var(--text-0); text-align: right; font-size: 12.5px; }
 .hla-grid { display: flex; flex-wrap: wrap; gap: 6px; }
 .hla-tag {
   background: rgba(34,211,238,0.08);
   border: 1px solid rgba(34,211,238,0.24);
   color: var(--text-0);
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 12.5px;
   padding: 4px 10px;
   border-radius: 6px;
 }
@@ -952,7 +1060,7 @@ table.atlas tbody td.col-gene .gene {
   color: var(--text-2);
   padding: 5px 10px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-family: var(--mono);
   cursor: pointer;
 }
@@ -965,7 +1073,7 @@ table.atlas tbody td.col-gene .gene {
   color: var(--text-2);
   padding: 3px 9px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-family: var(--mono);
 }
 .drawer .pill-mini b { color: var(--text-0); font-weight: 600; }
@@ -975,7 +1083,7 @@ table.atlas tbody td.col-gene .gene {
   color: var(--accent-lime);
   padding: 3px 9px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -986,19 +1094,19 @@ table.atlas tbody td.col-gene .gene {
   color: var(--accent-amber);
   padding: 3px 9px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .drawer .bind-wrap { background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px 10px; }
-.drawer .bind-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.drawer .bind-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .drawer .bind-table th {
   text-align: center;
   color: var(--text-3);
   font-weight: 600;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 4px 6px;
@@ -1013,13 +1121,13 @@ table.atlas tbody td.col-gene .gene {
 }
 .drawer .bind-table td.num { text-align: center; color: var(--text-0); }
 .drawer .bind-table tr:last-child td { border-bottom: none; }
-.drawer .bind-table td .hla-tag { padding: 2px 7px; font-size: 11px; }
+.drawer .bind-table td .hla-tag { padding: 2px 7px; font-size: 12px; }
 
 .bind-cat {
   display: inline-block;
   padding: 1px 7px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -1064,7 +1172,7 @@ table.atlas tbody td.col-gene .gene {
 }
 .cmp-bar.open { transform: translateX(-50%) translateY(0); }
 .cmp-bar-inner { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.cmp-bar-label { font-size: 12.5px; color: var(--text-2); white-space: nowrap; }
+.cmp-bar-label { font-size: 14px; color: var(--text-2); white-space: nowrap; }
 .cmp-bar-label b { color: var(--text-0); }
 .cmp-bar-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .cmp-pill {
@@ -1073,16 +1181,16 @@ table.atlas tbody td.col-gene .gene {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 4px 10px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-1);
 }
 .cmp-pill-x {
   background: transparent; border: none; color: var(--text-3);
-  cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px;
+  cursor: pointer; font-size: 15.5px; line-height: 1; padding: 0 2px;
 }
 .cmp-pill-x:hover { color: var(--text-0); }
 .cmp-bar-actions { display: flex; gap: 8px; margin-left: auto; }
-.cmp-bar-actions .btn { padding: 8px 14px; font-size: 12.5px; }
+.cmp-bar-actions .btn { padding: 8px 14px; font-size: 14px; }
 
 .compare-modal {
   position: fixed;
@@ -1136,7 +1244,7 @@ table.atlas tbody td.col-gene .gene {
   background: transparent; color: var(--text-2);
   border: 1px solid var(--border);
   width: 32px; height: 32px; border-radius: 8px;
-  cursor: pointer; font-size: 18px;
+  cursor: pointer; font-size: 20px;
   display: flex; align-items: center; justify-content: center;
 }
 .compare-modal .close:hover { background: var(--bg-3); color: var(--text-0); }
@@ -1144,7 +1252,7 @@ table.atlas tbody td.col-gene .gene {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 12.5px;
+  font-size: 14px;
 }
 .compare-table th, .compare-table td {
   padding: 10px 14px;
@@ -1170,7 +1278,7 @@ table.atlas tbody td.col-gene .gene {
   background: var(--bg-1);
   color: var(--text-0);
   font-weight: 600;
-  font-size: 12px;
+  font-size: 13px;
   padding-top: 8px;
   padding-bottom: 10px;
   border-bottom: 2px solid var(--border-2);
@@ -1187,7 +1295,7 @@ table.atlas tbody td.col-gene .gene {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: 10.5px;
+  font-size: 11.5px;
   border-right: 2px solid var(--border-2);
 }
 .compare-table thead th.rowlbl {
@@ -1210,11 +1318,11 @@ table.atlas tbody td.col-gene .gene {
 .cmp-sel-bar::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 999px; }
 .cmp-sel-row, .cmp-add-row {
   display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .cmp-add-row { margin-top: 8px; color: var(--text-3); }
 .cmp-sel-label, .cmp-add-label {
-  color: var(--text-3); font-size: 11.5px; margin-right: 4px; white-space: nowrap;
+  color: var(--text-3); font-size: 12.5px; margin-right: 4px; white-space: nowrap;
 }
 .cmp-sel-label b { color: var(--text-0); }
 .cmp-sel-chip {
@@ -1223,13 +1331,13 @@ table.atlas tbody td.col-gene .gene {
   color: var(--text-1);
   border-radius: 999px;
   padding: 4px 6px 4px 10px;
-  font-size: 11.5px;
+  font-size: 12.5px;
   cursor: pointer;
   display: inline-flex; align-items: center; gap: 4px;
   transition: border-color .1s, background .1s;
 }
 .cmp-sel-chip:hover { border-color: #f87171; background: color-mix(in srgb, #f87171 10%, var(--bg-3)); }
-.cmp-sel-x { color: var(--text-3); font-size: 14px; line-height: 1; padding: 0 4px; }
+.cmp-sel-x { color: var(--text-3); font-size: 15.5px; line-height: 1; padding: 0 4px; }
 .cmp-sel-chip:hover .cmp-sel-x { color: #f87171; }
 .cmp-add-chip {
   background: transparent;
@@ -1237,7 +1345,7 @@ table.atlas tbody td.col-gene .gene {
   color: var(--text-2);
   border-radius: 999px;
   padding: 3px 10px;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   transition: border-color .1s, color .1s, background .1s;
 }
@@ -1253,7 +1361,7 @@ table.atlas tbody td.col-gene .gene {
   color: var(--text-3);
   border-radius: 4px;
   width: 20px; height: 20px;
-  font-size: 14px; line-height: 1;
+  font-size: 15.5px; line-height: 1;
   cursor: pointer;
   margin-left: 6px;
   vertical-align: middle;
@@ -1267,7 +1375,7 @@ table.atlas tbody td.col-gene .gene {
 }
 
 .cmp-deep-head {
-  font-size: 12.5px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-3);
@@ -1291,7 +1399,7 @@ table.atlas tbody td.col-gene .gene {
   gap: 10px;
 }
 .cmp-col-head {
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--text-1);
   padding: 0 0 10px;
   border-bottom: 1px solid var(--border);
@@ -1303,7 +1411,7 @@ table.atlas tbody td.col-gene .gene {
   z-index: 1;
 }
 .cmp-sub {
-  font-size: 10.5px;
+  font-size: 11.5px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-3);
@@ -1317,11 +1425,11 @@ table.atlas tbody td.col-gene .gene {
   padding: 6px 8px;
   overflow-x: auto;
 }
-.cmp-col .bind-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.cmp-col .bind-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .cmp-col .bind-table th {
   text-align: center;
   padding: 4px 6px;
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1333,7 +1441,7 @@ table.atlas tbody td.col-gene .gene {
   padding: 4px 6px;
   border-bottom: 1px solid var(--border);
   color: var(--text-1);
-  font-size: 11px;
+  font-size: 12px;
   text-align: center;
 }
 .cmp-col .bind-table td.num { text-align: center; font-family: var(--mono); color: var(--text-0); }
@@ -1345,14 +1453,14 @@ table.atlas tbody td.col-gene .gene {
   border: 1px solid var(--border);
   border-radius: 4px;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--text-0);
 }
 .cmp-col .bind-cat {
   display: inline-block;
   padding: 1px 5px;
   border-radius: 3px;
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -1372,7 +1480,7 @@ table.atlas tbody td.col-gene .gene {
   overflow: hidden;
 }
 .cmp-plots .cmp-plot-title {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--accent-cyan);
   letter-spacing: 0.03em;
@@ -1385,7 +1493,7 @@ table.atlas tbody td.col-gene .gene {
   background: color-mix(in srgb, var(--accent-cyan) 8%, transparent);
 }
 .cmp-plots .cmp-plot-title .cmp-plot-sub {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text-2);
   letter-spacing: 0;
@@ -1415,7 +1523,7 @@ table.atlas tbody td.col-gene .gene {
   display: none;
   align-items: center;
   justify-content: center;
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--text-3);
   font-style: italic;
   background: var(--bg-2);
@@ -1428,12 +1536,12 @@ table.atlas tbody td.col-gene .gene {
   .cmp-deep-grid { grid-template-columns: 1fr !important; }
 }
 
-.mono { font-family: var(--mono); font-size: 11.5px; color: var(--text-1); }
+.mono { font-family: var(--mono); font-size: 12.5px; color: var(--text-1); }
 .mut-tag {
   display: inline-block;
   padding: 2px 7px;
   border-radius: 4px;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1465,7 +1573,7 @@ table.atlas tbody td.col-gene .gene {
   border-color: color-mix(in srgb, var(--accent-cyan) 26%, var(--border-2));
 }
 .hero-kicker {
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1487,24 +1595,24 @@ table.atlas tbody td.col-gene .gene {
 }
 .hero-gene {
   font-weight: 800;
-  font-size: 20px;
+  font-size: 21px;
   letter-spacing: -0.01em;
   color: var(--text-0);
   font-family: var(--mono);
 }
 .hero-pchg {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 17.5px;
   color: var(--accent-pink);
   font-family: var(--mono);
 }
 .hero-callout.hero-pathogen .hero-gene { color: var(--accent-violet); font-family: inherit; letter-spacing: 0; }
-.hero-callout.hero-source  .hero-gene { color: var(--accent-cyan); font-family: var(--mono); font-size: 17px; }
+.hero-callout.hero-source  .hero-gene { color: var(--accent-cyan); font-family: var(--mono); font-size: 18.5px; }
 .hero-mut-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 14px 20px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-1);
 }
 .hero-meta b {
@@ -1512,13 +1620,13 @@ table.atlas tbody td.col-gene .gene {
   color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: 10.5px;
+  font-size: 11.5px;
   margin-right: 6px;
 }
 .hero-raw-details { margin-top: 10px; }
 .hero-raw-details summary {
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-3);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1531,7 +1639,7 @@ table.atlas tbody td.col-gene .gene {
   border: 1px solid var(--border);
   border-radius: 6px;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-1);
   word-break: break-all;
   line-height: 1.55;
@@ -1539,7 +1647,7 @@ table.atlas tbody td.col-gene .gene {
 
 .drawer .bind-legend {
   margin-top: 8px;
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--text-3);
   display: flex;
   flex-wrap: wrap;
@@ -1554,7 +1662,7 @@ table.atlas tbody td.col-gene .gene {
 
 .drawer .window-interp {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-2);
   padding: 8px 10px;
   background: var(--bg-3);
@@ -1582,7 +1690,7 @@ table.atlas tbody td.col-gene .gene {
 .drawer .spectrum-wrap img.ok { opacity: 1; }
 .drawer .spectrum-caption {
   margin-top: 4px;
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: #6b7280;
   text-align: center;
   padding: 2px 0 4px;
@@ -1592,14 +1700,14 @@ table.atlas tbody td.col-gene .gene {
   padding: 18px 14px;
   color: #6b7280;
   text-align: center;
-  font-size: 12px;
+  font-size: 13px;
 }
 .drawer .no-spectrum a { color: #0ea5e9; text-decoration: none; }
 
 .drawer .xref-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .drawer .xref {
   padding: 5px 10px;
-  font-size: 11px;
+  font-size: 12px;
   font-family: var(--mono);
   background: var(--bg-3);
   border: 1px solid var(--border);
@@ -1615,7 +1723,7 @@ table.atlas tbody td.col-gene .gene {
   border: 1px solid rgba(163,230,53,0.3);
   border-radius: 8px;
   padding: 12px 14px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-1);
   line-height: 1.55;
 }
@@ -1626,17 +1734,17 @@ table.atlas tbody td.col-gene .gene {
   border-radius: 8px;
   padding: 12px 14px;
 }
-.drawer .sw-head { color: #fca5a5; font-weight: 600; font-size: 12.5px; margin-bottom: 8px; }
+.drawer .sw-head { color: #fca5a5; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
 .drawer .sw-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .drawer .sw-list .tissue {
   padding: 3px 9px; border-radius: 999px;
   background: rgba(248,113,113,0.13);
   border: 1px solid rgba(248,113,113,0.3);
   color: #fecaca;
-  font-size: 11px;
+  font-size: 12px;
   font-family: var(--mono);
 }
-.drawer .sw-note { margin-top: 8px; font-size: 11.5px; color: var(--text-2); font-style: italic; }
+.drawer .sw-note { margin-top: 8px; font-size: 12.5px; color: var(--text-2); font-style: italic; }
 .drawer .intens-wrap {
   background: var(--bg-3);
   border: 1px solid var(--border);
@@ -1649,7 +1757,7 @@ table.atlas tbody td.col-gene .gene {
   display: grid; grid-template-columns: 1fr 2fr 60px; gap: 10px; align-items: center;
 }
 .drawer .int-lbl {
-  font-family: var(--mono); font-size: 11px; color: var(--text-2);
+  font-family: var(--mono); font-size: 12px; color: var(--text-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .drawer .int-bar { height: 6px; background: var(--bg-2); border-radius: 3px; overflow: hidden; }
@@ -1658,8 +1766,8 @@ table.atlas tbody td.col-gene .gene {
   background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
   border-radius: 3px;
 }
-.drawer .int-v { font-family: var(--mono); font-size: 11px; color: var(--text-1); text-align: right; }
-.drawer .int-more { font-size: 11px; color: var(--text-3); text-align: center; padding-top: 4px; }
+.drawer .int-v { font-family: var(--mono); font-size: 12px; color: var(--text-1); text-align: right; }
+.drawer .int-more { font-size: 12px; color: var(--text-3); text-align: center; padding-top: 4px; }
 .drawer .plot-wrap {
   background: #fff;
   border: 1px solid var(--border);
@@ -1695,7 +1803,7 @@ table.atlas tbody td.col-gene .gene {
   border: 1px solid rgba(255,255,255,0.2);
   border-radius: 6px;
   padding: 4px 8px;
-  font-size: 11px;
+  font-size: 12px;
   font-family: inherit;
   cursor: pointer;
   z-index: 5;
@@ -1719,7 +1827,7 @@ table.atlas tbody td.col-gene .gene {
   border: 1px solid rgba(255,255,255,0.2);
   border-radius: 6px;
   padding: 4px 8px;
-  font-size: 11px;
+  font-size: 12px;
   font-family: inherit;
   cursor: pointer;
   z-index: 5;
@@ -1769,7 +1877,7 @@ table.atlas tbody td.col-gene .gene {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 3px 8px;
-  font-size: 11px;
+  font-size: 12px;
   font-family: inherit;
   font-weight: 500;
   cursor: pointer;
@@ -1794,7 +1902,7 @@ table.atlas tbody td.col-gene .gene {
   border: 0;
   border-radius: 8px;
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -1826,7 +1934,7 @@ table.atlas tbody td.col-gene .gene {
   display: inline-flex; align-items: center; gap: 6px;
   background: #0a1526; border: 1px solid #1a2740;
   padding: 3px 10px; border-radius: 20px;
-  font-size: 9px; color: #00d4ff; letter-spacing: 0.1em;
+  font-size: 10px; color: #00d4ff; letter-spacing: 0.1em;
   margin-bottom: 6px;
 }
 :root[data-theme="light"] .iv-scifi-pill {
@@ -1838,7 +1946,7 @@ table.atlas tbody td.col-gene .gene {
 }
 @keyframes ivPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .iv-scifi-title {
-  font-size: 15px; font-weight: 600; color: #f1f5f9;
+  font-size: 16.5px; font-weight: 600; color: #f1f5f9;
   letter-spacing: 0.12em; text-align: center; margin: 4px 0 14px;
 }
 :root[data-theme="light"] .iv-scifi-title { color: #0b1220; }
@@ -1858,7 +1966,7 @@ table.atlas tbody td.col-gene .gene {
 }
 .iv-scifi-ylabel {
   writing-mode: vertical-rl; transform: rotate(180deg);
-  font-size: 9.5px; color: #94a3b8; letter-spacing: 0.05em;
+  font-size: 10.5px; color: #94a3b8; letter-spacing: 0.05em;
   align-self: center; justify-self: center;
   white-space: nowrap;
 }
@@ -1866,7 +1974,7 @@ table.atlas tbody td.col-gene .gene {
 .iv-scifi-yaxis {
   display: flex; flex-direction: column; justify-content: space-between;
   align-items: flex-end; padding-right: 4px;
-  font-size: 9px; color: #64748b;
+  font-size: 10px; color: #64748b;
   height: 200px;
   align-self: flex-start; margin-top: 0;
 }
@@ -1893,7 +2001,7 @@ table.atlas tbody td.col-gene .gene {
   align-items: flex-start;
 }
 .iv-scifi-tlabel {
-  font-size: 8.5px; line-height: 1; color: #94a3b8;
+  font-size: 9.5px; line-height: 1; color: #94a3b8;
   writing-mode: vertical-rl; transform: rotate(180deg);
   text-align: right; white-space: nowrap; padding-right: 2px;
   flex: 1; min-width: 0; cursor: pointer;
@@ -1916,14 +2024,14 @@ table.atlas tbody td.col-gene .gene {
 :root[data-theme="light"] .iv-scifi-legend { background: #ffffff; border-color: #cfd9ea; }
 .iv-scifi-legend-row {
   display: flex; align-items: center; gap: 8px;
-  font-size: 10px; color: #94a3b8; line-height: 1.3;
+  font-size: 11px; color: #94a3b8; line-height: 1.3;
 }
 :root[data-theme="light"] .iv-scifi-legend-row { color: #475569; }
 .iv-scifi-legend-dot {
   width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
 }
 .iv-scifi-legend-label {
-  font-size: 9.5px; word-break: break-word;
+  font-size: 10.5px; word-break: break-word;
 }
 
 /* Tissue filter active rules: when a tissue is locked / hovered, dim
@@ -1960,7 +2068,7 @@ table.atlas tbody td.col-gene .gene {
   border-collapse: collapse; font-family: inherit; width: max-content;
 }
 .iv-scifi-htable th, .iv-scifi-htable td {
-  font-size: 10px; padding: 3px 4px; text-align: center;
+  font-size: 11px; padding: 3px 4px; text-align: center;
   border: 1px solid #0f1a2e;
 }
 :root[data-theme="light"] .iv-scifi-htable th,
@@ -1970,7 +2078,7 @@ table.atlas tbody td.col-gene .gene {
   padding: 0 10px 0 6px; white-space: nowrap;
 }
 .iv-scifi-htable th.iv-scifi-htcol {
-  font-weight: 400; color: #64748b; font-size: 8px;
+  font-weight: 400; color: #64748b; font-size: 9px;
   vertical-align: bottom; padding: 4px 2px 6px;
   height: 80px; max-width: 26px; min-width: 22px;
 }
@@ -2107,7 +2215,7 @@ table.atlas tbody td.col-gene .gene {
   pointer-events: none;
   background: rgba(13,18,30,0.95);
   color: #f0f4f9;
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-family: var(--mono);
   padding: 6px 10px;
   border-radius: 6px;
@@ -2121,11 +2229,11 @@ table.atlas tbody td.col-gene .gene {
 }
 .svg-viewer .svg-tooltip.show { opacity: 1; }
 .svg-viewer .svg-tooltip .ttip-key { color: #94d8e8; }
-.svg-viewer .svg-tooltip .ttip-clear { color: var(--accent-amber); margin-top: 2px; display: block; font-size: 10.5px; }
+.svg-viewer .svg-tooltip .ttip-clear { color: var(--accent-amber); margin-top: 2px; display: block; font-size: 11.5px; }
 .svg-viewer .svg-hint {
   position: absolute;
   top: 8px; right: 12px;
-  font-size: 11px;
+  font-size: 12px;
   color: #6b7280;
   background: rgba(255,255,255,0.85);
   border: 1px solid #e5e7eb;
@@ -2139,7 +2247,7 @@ table.atlas tbody td.col-gene .gene {
 .svg-viewer .svg-clear-btn {
   position: absolute;
   top: 8px; right: 12px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--accent-amber);
   background: rgba(255,255,255,0.95);
   border: 1px solid var(--accent-amber);
@@ -2165,7 +2273,7 @@ table.atlas tbody td.col-gene .gene {
   color: #4b5670;
   border-radius: 6px;
   padding: 3px 8px;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-family: inherit;
   cursor: pointer;
   display: inline-flex;
@@ -2178,7 +2286,7 @@ table.atlas tbody td.col-gene .gene {
   padding: 20px;
   text-align: center;
   color: #b91c1c;
-  font-size: 12px;
+  font-size: 13px;
   background: #fff;
 }
 
@@ -2192,7 +2300,7 @@ table.atlas tbody td.col-gene .gene {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 16px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-0);
   box-shadow: 0 12px 36px rgba(0,0,0,0.45);
   opacity: 0;
@@ -2238,7 +2346,7 @@ table.atlas tbody td.col-gene .gene {
   color: #fff;
   width: 36px; height: 36px;
   border-radius: 50%;
-  font-size: 20px;
+  font-size: 21px;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
@@ -2249,7 +2357,7 @@ table.atlas tbody td.col-gene .gene {
   left: 50%;
   transform: translateX(-50%);
   color: rgba(255,255,255,0.7);
-  font-size: 12px;
+  font-size: 13px;
   font-family: var(--mono);
   background: rgba(0,0,0,0.5);
   padding: 6px 16px;
@@ -2264,10 +2372,10 @@ table.atlas tbody td.col-gene .gene {
 }
 .drawer .plot-wrap.no-plot::before {
   content: "Plot not available for this peptide. This is expected for rare peptides, non-canonical ORFs, retroelements, and neoantigens where figures were not pre-generated.";
-  color: var(--text-3); font-size: 12px; font-style: italic;
+  color: var(--text-3); font-size: 13px; font-style: italic;
 }
 .drawer .plot-caption {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-2);
   margin-top: 6px;
   text-align: center;
@@ -2284,7 +2392,7 @@ table.atlas tbody td.col-gene .gene {
   width: 14px; height: 14px;
   border-radius: 50%;
   text-align: center;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 14px;
   margin-left: 4px;
@@ -2306,7 +2414,7 @@ table.atlas tbody td.col-gene .gene {
   align-items: center;
 }
 .hl-chips .hl-label {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--text-2);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2318,7 +2426,7 @@ table.atlas tbody td.col-gene .gene {
   border: 1px solid rgba(34,211,238,0.30);
   color: var(--text-1);
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 12.5px;
   padding: 5px 12px;
   border-radius: 999px;
   cursor: pointer;
@@ -2360,7 +2468,7 @@ table.atlas tbody td.col-gene .gene {
 }
 .hcard .tag {
   display: inline-block;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--accent-cyan);
   letter-spacing: 0.12em;
@@ -2368,7 +2476,7 @@ table.atlas tbody td.col-gene .gene {
   margin-bottom: 14px;
 }
 .hcard h4 {
-  font-size: 20px;
+  font-size: 21px;
   margin: 0 0 10px;
   letter-spacing: -0.01em;
   font-weight: 700;
@@ -2377,18 +2485,18 @@ table.atlas tbody td.col-gene .gene {
   display: inline-block;
   padding: 3px 10px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   background: var(--grad-primary-soft);
   border: 1px solid var(--border-2);
   border-radius: 6px;
   color: var(--text-0);
   margin: 0 0 14px;
 }
-.hcard p { font-size: 13.5px; color: var(--text-1); line-height: 1.65; margin: 0 0 14px; }
+.hcard p { font-size: 15px; color: var(--text-1); line-height: 1.65; margin: 0 0 14px; }
 .hcard .metrics { display: flex; gap: 18px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); flex-wrap: wrap; }
 .hcard .m { }
-.hcard .m .v { font-size: 18px; font-weight: 700; color: var(--text-0); font-family: var(--mono); }
-.hcard .m .k { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+.hcard .m .v { font-size: 20px; font-weight: 700; color: var(--text-0); font-family: var(--mono); }
+.hcard .m .k { font-size: 12px; color: var(--text-2); margin-top: 2px; }
 
 /* ===================== CLASS BROWSER ===================== */
 .class-browser {
@@ -2432,14 +2540,16 @@ table.atlas tbody td.col-gene .gene {
   width: 10px; height: 10px; border-radius: 50%;
   display: inline-block; vertical-align: middle; margin-right: 8px;
 }
-.classcard h5 { margin: 0 0 4px; font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-0); }
-.classcard .count { font-size: 24px; font-weight: 800; color: var(--text-0); letter-spacing: -0.02em; font-family: var(--mono); }
-.classcard .desc { font-size: 11.5px; color: var(--text-2); line-height: 1.5; margin-top: 4px; }
+.classcard h5 { margin: 0 0 4px; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-0); }
+.classcard .count { font-size: 25px; font-weight: 800; color: var(--text-0); letter-spacing: -0.02em; font-family: var(--mono); }
+.classcard .desc { font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin-top: 4px; }
 /* Per-class accent colors (text/border via currentColor) */
 .classcard:has(.c-self_gene-icon)              { color: #22d3ee; }
 .classcard:has(.c-splicing-icon)               { color: #a78bfa; }
 .classcard:has(.c-variant-icon)                { color: #f472b6; }
 .classcard:has(.c-nuORF-icon)                  { color: #fbbf24; }
+.classcard:has(.c-lncRNA-icon)                 { color: #fcd34d; }
+.classcard:has(.c-pseudogene-icon)             { color: #d97706; }
 .classcard:has(.c-ERV-icon)                    { color: #86efac; }
 .classcard:has(.c-TE_chimeric_transcript-icon) { color: #60a5fa; }
 .classcard:has(.c-intron_retention-icon)       { color: #fb923c; }
@@ -2494,7 +2604,7 @@ table.atlas tbody td.col-gene .gene {
   color: var(--accent-cyan);
   font-family: var(--mono);
   font-weight: 700;
-  font-size: 12px;
+  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2504,14 +2614,14 @@ table.atlas tbody td.col-gene .gene {
 .mcard:nth-child(n+4) .mstep { border-color: var(--accent-violet); color: var(--accent-violet); box-shadow: 0 0 0 4px var(--bg-0), 0 0 18px rgba(167,139,250,0.4); }
 .mcard .mnum {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-3);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin: 0;
 }
-.mcard h5 { margin: 0 0 4px; font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; }
-.mcard p { font-size: 12px; color: var(--text-1); line-height: 1.5; margin: 0; }
+.mcard h5 { margin: 0 0 4px; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; }
+.mcard p { font-size: 13px; color: var(--text-1); line-height: 1.5; margin: 0; }
 @media (max-width: 1100px) {
   .methods-grid { grid-template-columns: repeat(3, 1fr); }
   .methods-grid::before { display: none; }
@@ -2528,8 +2638,8 @@ table.atlas tbody td.col-gene .gene {
   padding: 36px;
   backdrop-filter: blur(6px);
 }
-.downloads h3 { margin: 0 0 8px; font-size: 22px; font-weight: 700; }
-.downloads p { margin: 0 0 24px; color: var(--text-1); font-size: 14px; max-width: 720px; }
+.downloads h3 { margin: 0 0 8px; font-size: 23px; font-weight: 700; }
+.downloads p { margin: 0 0 24px; color: var(--text-1); font-size: 15.5px; max-width: 720px; }
 .dl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
 .dl-grid a {
   background: var(--bg-1);
@@ -2540,13 +2650,13 @@ table.atlas tbody td.col-gene .gene {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--text-1);
   transition: all .15s;
 }
 .dl-grid a:hover { background: var(--bg-3); border-color: var(--border-2); color: var(--text-0); }
 .dl-grid a b { font-family: var(--mono); color: var(--text-0); font-weight: 600; }
-.dl-grid a .sz { color: var(--text-3); font-size: 11px; font-family: var(--mono); }
+.dl-grid a .sz { color: var(--text-3); font-size: 12px; font-family: var(--mono); }
 
 /* ===================== BODY MAP ===================== */
 .bodymap-wrap {
@@ -2588,7 +2698,7 @@ table.atlas tbody td.col-gene .gene {
   backdrop-filter: blur(8px);
 }
 .bodymap-info h4 {
-  font-size: 18px;
+  font-size: 20px;
   margin: 0 0 4px;
   color: var(--text-0);
   letter-spacing: -0.01em;
@@ -2596,7 +2706,7 @@ table.atlas tbody td.col-gene .gene {
 .bodymap-info .code-badge {
   display: inline-block;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   padding: 3px 10px;
   background: rgba(34,211,238,0.1);
   border: 1px solid rgba(34,211,238,0.3);
@@ -2606,14 +2716,14 @@ table.atlas tbody td.col-gene .gene {
 }
 .bodymap-info .info-row { display: flex; gap: 26px; flex-wrap: wrap; margin-top: 18px; margin-bottom: 18px; }
 .bodymap-info .info-stat .v {
-  font-size: 22px;
+  font-size: 23px;
   font-weight: 700;
   color: var(--text-0);
   display: block;
   line-height: 1;
 }
 .bodymap-info .info-stat .k {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -2621,16 +2731,16 @@ table.atlas tbody td.col-gene .gene {
   display: block;
 }
 .bodymap-info .class-breakdown { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
-.bodymap-info .cb-row { display: grid; grid-template-columns: 130px 1fr 60px; gap: 10px; align-items: center; font-size: 11.5px; }
+.bodymap-info .cb-row { display: grid; grid-template-columns: 130px 1fr 60px; gap: 10px; align-items: center; font-size: 12.5px; }
 .bodymap-info .cb-lbl { color: var(--text-2); }
 .bodymap-info .cb-bar { height: 6px; background: var(--bg-3); border-radius: 3px; overflow: hidden; }
 .bodymap-info .cb-bar span { display: block; height: 100%; border-radius: 3px; }
-.bodymap-info .cb-v { text-align: right; font-family: var(--mono); color: var(--text-1); font-size: 11px; }
+.bodymap-info .cb-v { text-align: right; font-family: var(--mono); color: var(--text-1); font-size: 12px; }
 .bodymap-info .open-btn {
   display: inline-block;
   margin-top: 20px;
   padding: 8px 18px;
-  font-size: 12px;
+  font-size: 13px;
   background: var(--grad-primary);
   color: #0a0e1a;
   border-radius: 8px;
@@ -2641,7 +2751,7 @@ table.atlas tbody td.col-gene .gene {
 }
 .bodymap-placeholder {
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 14.5px;
   font-style: italic;
   text-align: center;
   padding: 40px 20px;
@@ -2654,15 +2764,15 @@ footer.ftr {
   border-top: 1px solid var(--border);
   padding: 48px 0 36px;
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 14.5px;
   position: relative;
   z-index: 1;
 }
 footer.ftr .cols { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; margin-bottom: 32px; }
-footer.ftr h6 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-0); margin: 0 0 12px; font-weight: 600; }
-footer.ftr a { display: block; color: var(--text-2); padding: 4px 0; font-size: 13px; }
+footer.ftr h6 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-0); margin: 0 0 12px; font-weight: 600; }
+footer.ftr a { display: block; color: var(--text-2); padding: 4px 0; font-size: 14.5px; }
 footer.ftr a:hover { color: var(--text-0); }
-footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--text-3); }
+footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--text-3); }
 
 /* ===================== QUICK-START GUIDE ===================== */
 .guide-toggle {
@@ -2671,7 +2781,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   color: var(--accent-cyan);
   padding: 7px 14px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -2685,16 +2795,16 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   border-radius: var(--radius);
   padding: 20px 24px;
   margin-bottom: 18px;
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--text-1);
   line-height: 1.7;
 }
 .guide-box.open { display: block; }
-.guide-box h4 { margin: 0 0 10px; font-size: 15px; color: var(--text-0); }
+.guide-box h4 { margin: 0 0 10px; font-size: 16.5px; color: var(--text-0); }
 .guide-box ol { margin: 0; padding-left: 20px; }
 .guide-box ol li { margin-bottom: 6px; }
 .guide-box ol li b { color: var(--accent-cyan); }
-.guide-box .guide-close { float: right; background: none; border: 1px solid var(--border); color: var(--text-2); border-radius: 6px; padding: 3px 10px; font-size: 11px; cursor: pointer; font-family: inherit; }
+.guide-box .guide-close { float: right; background: none; border: 1px solid var(--border); color: var(--text-2); border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; font-family: inherit; }
 .guide-box .guide-close:hover { color: var(--text-0); border-color: var(--border-2); }
 
 /* ===================== FILTER SUMMARY STATS ===================== */
@@ -2703,7 +2813,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   flex-wrap: wrap;
   gap: 10px;
   padding: 10px 0 4px;
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--text-2);
 }
 .filter-stats .fs {
@@ -2715,7 +2825,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   border: 1px solid var(--border);
   border-radius: 6px;
 }
-.filter-stats .fs b { color: var(--text-0); font-family: var(--mono); font-size: 12px; }
+.filter-stats .fs b { color: var(--text-0); font-family: var(--mono); font-size: 13px; }
 .filter-stats .fs .bar { width: 40px; height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden; }
 .filter-stats .fs .bar span { display: block; height: 100%; border-radius: 2px; background: var(--grad-primary); }
 
@@ -2759,7 +2869,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   background: #151b2e;
   color: #f2f5ff;
   font-family: 'Inter', system-ui, sans-serif;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.55;
   letter-spacing: 0;
@@ -2783,15 +2893,61 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 .iv-tooltip.wide {
   max-width: min(720px, calc(100vw - 40px));
   padding: 14px 18px;
-  font-size: 13px;
+  font-size: 14.5px;
   line-height: 1.6;
   white-space: pre-line;
 }
 
+/* ===== Dual-model immunogenicity badge =====================================
+   Compact per-(peptide, HLA) interpretation chip. It is a real <button> so it
+   is in the tab order and activates on Enter/Space as well as click/tap; the
+   global tooltip handler also opens it on hover and on focus. Every state
+   carries an icon and a text label, so the meaning never rests on color. */
+.immuno-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11px; font-weight: 600; line-height: 1.2;
+  letter-spacing: .01em;
+  padding: 3px 8px; border-radius: 999px;
+  border: 1px solid currentColor; background: transparent;
+  white-space: nowrap; max-width: 100%;
+}
+.immuno-badge .ib-icon { font-size: 10px; opacity: .9; }
+.immuno-badge .ib-text { overflow: hidden; text-overflow: ellipsis; }
+.immuno-badge:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+.immuno-badge.tone-good    { color: var(--accent-lime); }
+.immuno-badge.tone-warn    { color: var(--immuno-borderline); }
+.immuno-badge.tone-bad     { color: #f87171; }
+.immuno-badge.tone-single  { color: var(--accent-cyan); }
+.immuno-badge.tone-pending { color: var(--accent-violet); }
+.immuno-badge.tone-muted   { color: var(--text-3); }
+/* In the dense per-HLA table, show the icon only and let the tooltip carry the
+   wording — the full label returns at wider viewports. */
+.bind-table .immuno-badge { padding: 3px 7px; }
+@media (max-width: 900px) {
+  .bind-table .immuno-badge .ib-text { display: none; }
+}
+/* Legend rows under the per-HLA table. Each badge and its wording are one
+   nowrap unit, so "WB" can never end up stranded on the line above its own
+   label; the rows then break at the semantic boundaries instead. */
+.bind-legend .lg-row { display: block; margin-bottom: 3px; }
+.bind-legend .lg-row:last-child { margin-bottom: 0; }
+.bind-legend .lg-item { white-space: nowrap; display: inline-block; margin-right: 16px; }
+
+/* Standing explanatory note under the per-HLA table. */
+.immuno-note {
+  font-size: 12.5px; line-height: 1.6; color: var(--text-2);
+  background: var(--bg-3); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 8px; padding: 10px 13px; margin: 10px 0 4px;
+}
+.immuno-note b { color: var(--text-1); }
+.immuno-note .immuno-pending-flag { color: var(--accent-violet); }
+
 /* One-liner description that sits directly under a section title so
    the user doesn't have to hover to learn what a figure shows. */
 .drawer .section-subtitle {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-2);
   line-height: 1.55;
   margin: -4px 0 10px;
@@ -2848,7 +3004,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   -webkit-text-fill-color: var(--text-0);
   caret-color: var(--accent-cyan);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15.5px;
   outline: none;
   transition: border-color .15s, background .15s, box-shadow .15s;
 }
@@ -2884,7 +3040,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   gap: 2px;
   align-items: center;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--text-3);
   background: var(--bg-3);
@@ -2921,19 +3077,19 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   max-height: 70vh;
   overflow-y: auto;
   z-index: 200;
-  font-size: 13px;
+  font-size: 14.5px;
 }
 .search-results[hidden] { display: none; }
 .search-empty {
   padding: 18px 16px;
   color: var(--text-3);
-  font-size: 12.5px;
+  font-size: 14px;
   text-align: center;
   line-height: 1.6;
 }
 .search-empty .search-tips {
   margin-top: 8px;
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--text-3);
 }
 .search-empty code {
@@ -2950,7 +3106,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 .search-group:first-child { border-top: 0; }
 .search-group-head {
   padding: 6px 14px 4px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-3);
@@ -2982,7 +3138,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   text-overflow: ellipsis;
 }
 .search-item .si-meta {
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--text-2);
   margin-top: 2px;
   white-space: nowrap;
@@ -2990,7 +3146,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   text-overflow: ellipsis;
 }
 .search-item .si-tail {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-3);
   font-family: var(--mono);
   white-space: nowrap;
@@ -2999,7 +3155,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   display: inline-block;
   padding: 1px 7px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 600;
   margin-right: 4px;
 }
@@ -3012,14 +3168,14 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 .search-item.target-hit .si-primary::after {
   content: "🎯";
   margin-left: 6px;
-  font-size: 12px;
+  font-size: 13px;
 }
 .search-target-badge {
   display: inline-block;
   background: color-mix(in srgb, var(--accent-amber) 22%, transparent);
   color: var(--accent-amber);
   border: 1px solid color-mix(in srgb, var(--accent-amber) 45%, transparent);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   padding: 1px 6px;
@@ -3050,16 +3206,39 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 @media (max-width: 1599px) {
   nav.topnav .inner { gap: 12px; padding: 12px 22px; }
   .live-stat { display: none; }                  /* admin-only decorative pill */
-  nav .links a { padding: 7px 9px; font-size: 12.5px; }
+  nav .links a { padding: 7px 9px; font-size: 14px; }
   .iv-inhouse-pill .ihp-text { display: none; }   /* in-house pill → lock icon only */
   .iv-inhouse-pill { padding: 7px 9px; }
 }
+/* Widest band, signed in. `nav .inner` is capped at max-width:1800px (raised from
+   1600 when .container went fluid), so the bar tops out at 1800px rather than
+   growing without limit. The 1600px figures below are the ORIGINAL measurements
+   taken at the old 1600px cap — they are the worst case, and the extra 200px
+   only ever makes this roomier, never tighter.
+   A signed-in member adds the in-house pill + account chip, and an admin also
+   gets the live query counter, which pushed content to ~1779px inside that
+   1600px bar. Because .search-wrap is `flex:0 1 200px; min-width:130px` it
+   absorbed only the first 70px and then bottomed out, after which the flexible
+   `.links` (Atlas..Cite) were compressed — the exact crowding the 2026-05-20
+   Hub-link regression caused. The max-width:1599 block below already compacts
+   these same controls for narrower screens; this is its mirror for >=1600,
+   scoped to `body.iv-signed-in` so anonymous visitors (who fit in 1533px and
+   have room to spare) keep the full labels. */
+@media (min-width: 1600px) {
+  body.iv-signed-in nav .iv-chat-pill .ivc-text,
+  body.iv-signed-in nav .iv-chat-pill .ivc-ext { display: none; }
+  body.iv-signed-in nav .iv-chat-pill { padding: 7px 9px; }
+  body.iv-signed-in .live-stat .live-label { display: none; }  /* keep the count, drop "Queries" */
+  body.iv-signed-in .live-stat { gap: 6px; padding: 5px 10px; }
+  body.iv-signed-in .iv-inhouse-pill .ihp-text { display: none; }  /* -> lock icon only */
+  body.iv-signed-in .iv-inhouse-pill { padding: 7px 9px; }
+}
 @media (max-width: 1399px) {
   .brand .sub { display: none; }                 /* drop the "Atlas" subtitle */
-  .brand { font-size: 15px; gap: 8px; }          /* compact the logo+wordmark */
+  .brand { font-size: 16.5px; gap: 8px; }          /* compact the logo+wordmark */
   .brand .logo { width: 26px; height: 26px; }
-  nav .links a { padding: 6px 8px; font-size: 12px; }
-  nav .cta { padding: 7px 13px; font-size: 12.5px; }
+  nav .links a { padding: 6px 8px; font-size: 13px; }
+  nav .cta { padding: 7px 13px; font-size: 14px; }
   .theme-toggle { width: 32px; height: 32px; }
   nav.topnav .inner { gap: 10px; }
 }
@@ -3083,7 +3262,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
     z-index: 60;
   }
   nav .links.open { display: flex; }
-  nav .links a { padding: 10px 14px; font-size: 15px; }
+  nav .links a { padding: 10px 14px; font-size: 16.5px; }
 }
 
 /* ≤960px: search drops to its own full-width row below the bar. */
@@ -3102,15 +3281,19 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 }
 @media (max-width: 520px) {
   nav.topnav .inner { gap: 8px; padding: 10px 14px; }
-  .brand { font-size: 15px; }
+  .brand { font-size: 16.5px; }
   .brand .sub { display: none; }
   .theme-toggle { width: 32px; height: 32px; }
-  nav .cta { padding: 7px 12px; font-size: 12.5px; }
+  nav .cta { padding: 7px 12px; font-size: 14px; }
   .iv-acc-chip .iv-acc-name { display: none; }
-  .iv-signin-link { font-size: 13px; padding: 6px 10px; }
+  .iv-signin-link { font-size: 14.5px; padding: 6px 10px; }
 }
 @media (max-width: 640px) {
-  .container { padding: 0 20px; }
+  /* Phones/tablets: go edge-to-edge again. The 94vw inset is there to give big
+     screens a breathing margin; on a 360px phone that same 6% is just lost
+     content width, so below 520px the container is full width and only the
+     padding insets it — exactly the behaviour before the fluid change. */
+  .container { width: 100%; padding: 0 20px; }
   section { padding: 48px 0; }
   .explorer { padding: 20px; }
   .hero { padding: 32px 0 16px; }
@@ -3129,8 +3312,35 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 <nav class="topnav">
   <div class="inner">
     <a href="#top" class="brand">
-      <span class="logo"></span>
-      ImmunoVerse <span class="sub">Atlas</span>
+      <span class="logo"><svg aria-hidden="true" focusable="false" viewBox="110.20 39.01 76.87 128.96" fill="none" stroke="currentColor">
+<path transform="matrix(1,0,0,-1,129.664,48.4758)" stroke-width="2" stroke-linecap="round" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="currentColor" d="M0 0C4.742 0 4.742-3.794 9.484-3.794 14.225-3.794 14.225 0 18.966 0 23.71 0 23.71-3.794 28.454-3.794 33.198-3.794 33.198 0 37.942 0"/>
+<path transform="matrix(1,0,0,-1,113.2017,108.2799)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-85.039"/>
+<path transform="matrix(1,0,0,-1,183.9532,136.6283)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C0-15.655-12.691-28.346-28.346-28.346-44.002-28.346-56.693-15.655-56.693 0-56.693 15.655-44.002 28.346-28.346 28.346-12.691 28.346 0 15.655 0 0Z"/>
+<path transform="matrix(1,0,0,-1,113.2017,99.8069)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.782 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+</svg></span>
+      <span class="wordmark"><svg aria-hidden="true" focusable="false" viewBox="273.93 76.93 775.35 78.77" fill="none" stroke="currentColor">
+<path transform="matrix(1,0,0,-1,278.925,79.933399)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-70.866"/>
+<path transform="matrix(1,0,0,-1,675.7755,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C0-15.655-12.691-28.346-28.346-28.346-44.002-28.346-56.693-15.655-56.693 0-56.693 15.655-44.002 28.346-28.346 28.346-12.691 28.346 0 15.655 0 0Z"/>
+<path transform="matrix(1,0,0,-1,477.3503,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-27.708C0-43.181 12.13-56.285 27.598-56.683 43.595-57.095 56.693-44.25 56.693-28.346V0"/>
+<path transform="matrix(1,0,0,-1,548.2164,150.8016)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V51.015C0 56.066 6.107 58.595 9.678 55.024L47.014 1.674C50.586-1.898 56.692 .632 56.692 5.682V56.694"/>
+<path transform="matrix(1,0,0,-1,689.9487,79.933399)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0 30.362-67.733C32.452-71.912 38.415-71.912 40.504-67.733L70.866 0"/>
+<path transform="matrix(1,0,0,-1,831.681,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-44.002 0-56.693-12.691-56.693-28.347-56.693-44.002-44.002-56.694-28.346-56.693-14.173-56.693 0-56.693 0-56.693"/>
+<path transform="matrix(1,0,0,-1,803.3345,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,1044.2794,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-44.002 0-56.693-12.691-56.693-28.347-56.693-44.002-44.002-56.694-28.346-56.693-14.173-56.693 0-56.693 0-56.693"/>
+<path transform="matrix(1,0,0,-1,1015.9329,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,888.3738,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-36.174 0-42.52-6.346-42.52-14.173V-56.694"/>
+<path transform="matrix(1,0,0,-1,888.3738,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-42.52"/>
+<path transform="matrix(1,0,0,-1,888.3738,94.1087)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C7.828 0 14.173-6.346 14.173-14.173 14.173-22.001 7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,930.8936,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H42.52"/>
+<path transform="matrix(1,0,0,-1,930.8936,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H28.346"/>
+<path transform="matrix(1,0,0,-1,930.8936,94.1087)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C-7.828 0-14.173-6.346-14.173-14.173-14.173-22.001-7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,959.24,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,959.24,150.8004)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-42.52"/>
+<path transform="matrix(1,0,0,-1,959.24,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C7.828 0 14.173-6.346 14.173-14.173 14.173-22.001 7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,902.5471,150.8004)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0-20.044 20.044C-25.36 25.36-32.57 28.346-40.088 28.346H-56.693"/>
+<path transform="matrix(1,0,0,-1,307.2715,150.79959)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.781 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+<path transform="matrix(1,0,0,-1,392.3109,150.79959)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.781 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+</svg></span><span class="iv-sr-only">ImmunoVerse</span> <span class="sub">Atlas</span>
     </a>
     <div class="search-wrap" role="search">
       <div class="search-input-row">
@@ -3155,6 +3365,16 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
       <a href="#downloads">Data</a>
       <a href="#cite">Cite</a>
     </div>
+    <!-- ImmunoVerse Chat — sibling product (separate domain). Opens in a new tab so
+         the visitor never loses their place in the atlas. Sits outside `.links`
+         on purpose: those are same-page anchors that hide in the hamburger below
+         1366px, and this destination must stay reachable at every width. -->
+    <a class="iv-chat-pill" href="https://immunoverse-chat.com" target="_blank" rel="noopener"
+       title="ImmunoVerse Chat - ask the AI agent about targets, peptides and cohorts (opens in a new tab)"
+       aria-label="Open ImmunoVerse Chat in a new tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <span class="ivc-text">Chat</span><span class="ivc-ext" aria-hidden="true">&#8599;</span>
+    </a>
     <!-- Live query counter: hidden by default; revealed only for signed-in
          admins by the auth bootstrap below (showAccount). Anonymous and
          non-admin visitors never see it. Query counting still runs for all. -->
@@ -3215,7 +3435,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   padding: 3px 4px 3px 3px;
   color: var(--text-1);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 500;
   transition: border-color 0.18s;
   flex: none;
@@ -3227,7 +3447,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   background: var(--grad-primary);
   color: #fff;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3245,7 +3465,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   .iv-acc-name { max-width: 130px; padding-right: 4px; }
   .iv-acc-chip { padding: 3px 8px 3px 3px; gap: 8px; }
 }
-.iv-acc-caret { font-size: 10px; color: var(--text-2); transition: transform 0.15s; margin-right: 4px; }
+.iv-acc-caret { font-size: 11px; color: var(--text-2); transition: transform 0.15s; margin-right: 4px; }
 .iv-acc-chip[aria-expanded="true"] .iv-acc-caret { transform: rotate(180deg); }
 .iv-user-menu { position: relative; flex: none; }
 .iv-user-dropdown {
@@ -3267,13 +3487,13 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
   border-bottom: 1px solid var(--border);
   margin-bottom: 4px;
 }
-.iv-dd-name { font-size: 13.5px; font-weight: 600; color: var(--text-0); }
-.iv-dd-email { font-size: 12px; color: var(--text-2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iv-dd-name { font-size: 15px; font-weight: 600; color: var(--text-0); }
+.iv-dd-email { font-size: 13px; color: var(--text-2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .iv-user-dropdown a,
 .iv-user-dropdown button[role="menuitem"] {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 12px; border-radius: 8px;
-  font-size: 13.5px; color: var(--text-1);
+  font-size: 15px; color: var(--text-1);
   text-decoration: none; border: 0; background: transparent;
   cursor: pointer; font-family: inherit; width: 100%; text-align: left;
 }
@@ -3290,11 +3510,11 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
    the next click will prompt them to switch accounts. */
 .iv-user-dropdown a[data-needs-elevation] { color: var(--text-2); }
 .iv-user-dropdown a[data-needs-elevation]::after {
-  content: '🔒'; margin-left: auto; opacity: 0.7; font-size: 11px;
+  content: '🔒'; margin-left: auto; opacity: 0.7; font-size: 12px;
 }
 .iv-dd-icon {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; font-size: 13px; color: var(--text-2);
+  width: 22px; font-size: 14.5px; color: var(--text-2);
 }
 .iv-dd-sep { height: 1px; background: var(--border); margin: 6px 4px; }
 .iv-dd-signout { color: #f87171 !important; }
@@ -3302,7 +3522,7 @@ footer.ftr .bar { border-top: 1px solid var(--border); padding-top: 24px; displa
 /* Sign-in is a quiet text link, not a CTA — we don't want two big colored
    buttons competing for attention. */
 .iv-signin-link {
-  font-size: 14px;
+  font-size: 15.5px;
   font-weight: 500;
   color: var(--text-1);
   padding: 8px 12px;
@@ -3417,16 +3637,16 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
         </div>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
           <button class="guide-toggle" onclick="document.getElementById('guideBox').classList.toggle('open')">? How to use</button>
-          <button class="btn btn-ghost" id="compactBtn" title="Hide secondary columns" style="padding:9px 14px;font-size:13px;">
+          <button class="btn btn-ghost" id="compactBtn" title="Hide secondary columns" style="padding:9px 14px;font-size: 14.5px;">
             Compact view
           </button>
-          <button class="btn btn-ghost" id="resetBtn" style="padding:9px 14px;font-size:13px;">
+          <button class="btn btn-ghost" id="resetBtn" style="padding:9px 14px;font-size: 14.5px;">
             Reset filters
           </button>
-          <button class="btn btn-ghost" id="saveSearchBtn" style="padding:9px 14px;font-size:13px;" title="Sign in to save this filter as a named search">
+          <button class="btn btn-ghost" id="saveSearchBtn" style="padding:9px 14px;font-size: 14.5px;" title="Sign in to save this filter as a named search">
             <span style="margin-right:4px;">★</span> Save this search
           </button>
-          <a class="btn btn-primary" id="dlCsv" href="#" style="padding:9px 16px;font-size:13px;" download>Download CSV</a>
+          <a class="btn btn-primary" id="dlCsv" href="#" style="padding:9px 16px;font-size: 14.5px;" download>Download CSV</a>
         </div>
       </div>
 
@@ -3442,7 +3662,7 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
           <li><b>Hover anything</b> — every column header, cancer code, class tag, and section title has an explanatory tooltip.</li>
           <li><b>Download</b> — click "Download CSV" to export the currently filtered results with all annotations.</li>
         </ol>
-        <p style="margin:10px 0 0;font-size:12px;color:var(--text-3);">Keyboard: press <b style="color:var(--text-2)">Esc</b> to close the detail drawer.</p>
+        <p style="margin:10px 0 0;font-size: 13px;color:var(--text-3);">Keyboard: press <b style="color:var(--text-2)">Esc</b> to close the detail drawer.</p>
       </div>
 
       <div class="filter-stats" id="filterStats"></div>
@@ -3572,7 +3792,7 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
           <div class="btns">
             <button id="prevPg">← Prev</button>
             <button id="nextPg">Next →</button>
-            <select id="pgSize" style="background:var(--bg-1);border:1px solid var(--border);color:var(--text-1);border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;">
+            <select id="pgSize" style="background:var(--bg-1);border:1px solid var(--border);color:var(--text-1);border-radius:6px;padding:5px 8px;font-size: 13px;font-family:inherit;">
               <option value="25">25 / page</option>
               <option value="50" selected>50 / page</option>
               <option value="100">100 / page</option>
@@ -3594,7 +3814,7 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
       <p>Each tile's donut (<b>NC</b> = non-canonical) shows the fraction of the repertoire from <b style="color:var(--accent-violet)">non-canonical</b> sources — splicing, cryptic ORFs, retroelements, mutations, fusions, microbial. Click a tile to filter the explorer above.</p>
     </div>
     <div style="margin: 6px 0 12px; display: flex; align-items: baseline; justify-content: space-between;">
-      <span style="font-size: 11.5px; color: var(--text-3);">Sorted by target count · click to filter explorer</span>
+      <span style="font-size: 12.5px; color: var(--text-3);">Sorted by target count · click to filter explorer</span>
     </div>
     <div class="cancer-grid" id="cancerGrid"></div>
   </div>
@@ -3775,7 +3995,7 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
       <button class="btn btn-primary" onclick="openCitation()">View citation ↗</button>
       <a class="btn btn-ghost" href="https://doi.org/10.1101/2025.01.22.634237" target="_blank" rel="noopener">Open on bioRxiv ↗</a>
     </div>
-    <div style="margin-top:24px; color: var(--text-2); font-size:13.5px;">
+    <div style="margin-top:24px; color: var(--text-2); font-size: 15px;">
       Correspondence: <a href="mailto:Mark.Yarmarkovich@nyulangone.org">Mark.Yarmarkovich@nyulangone.org</a> ·
       <a href="https://yarmarkovichlab.org" target="_blank" rel="noopener">Yarmarkovich Lab</a> ·
       Perlmutter Cancer Center, NYU Grossman School of Medicine
@@ -3787,8 +4007,35 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
   <div class="container">
     <div class="cols">
       <div>
-        <div class="brand" style="font-size:16px; margin-bottom: 12px;"><span class="logo"></span> ImmunoVerse Atlas</div>
-        <div style="color:var(--text-2); font-size:13px; max-width: 420px; line-height:1.65;">
+        <div class="brand" style="font-size: 17.5px; margin-bottom: 12px;"><span class="logo"><svg aria-hidden="true" focusable="false" viewBox="110.20 39.01 76.87 128.96" fill="none" stroke="currentColor">
+<path transform="matrix(1,0,0,-1,129.664,48.4758)" stroke-width="2" stroke-linecap="round" stroke-miterlimit="10" stroke-linejoin="miter" fill="none" stroke="currentColor" d="M0 0C4.742 0 4.742-3.794 9.484-3.794 14.225-3.794 14.225 0 18.966 0 23.71 0 23.71-3.794 28.454-3.794 33.198-3.794 33.198 0 37.942 0"/>
+<path transform="matrix(1,0,0,-1,113.2017,108.2799)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-85.039"/>
+<path transform="matrix(1,0,0,-1,183.9532,136.6283)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C0-15.655-12.691-28.346-28.346-28.346-44.002-28.346-56.693-15.655-56.693 0-56.693 15.655-44.002 28.346-28.346 28.346-12.691 28.346 0 15.655 0 0Z"/>
+<path transform="matrix(1,0,0,-1,113.2017,99.8069)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.782 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+</svg></span><span class="wordmark"><svg aria-hidden="true" focusable="false" viewBox="273.93 76.93 775.35 78.77" fill="none" stroke="currentColor">
+<path transform="matrix(1,0,0,-1,278.925,79.933399)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-70.866"/>
+<path transform="matrix(1,0,0,-1,675.7755,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C0-15.655-12.691-28.346-28.346-28.346-44.002-28.346-56.693-15.655-56.693 0-56.693 15.655-44.002 28.346-28.346 28.346-12.691 28.346 0 15.655 0 0Z"/>
+<path transform="matrix(1,0,0,-1,477.3503,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V-27.708C0-43.181 12.13-56.285 27.598-56.683 43.595-57.095 56.693-44.25 56.693-28.346V0"/>
+<path transform="matrix(1,0,0,-1,548.2164,150.8016)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V51.015C0 56.066 6.107 58.595 9.678 55.024L47.014 1.674C50.586-1.898 56.692 .632 56.692 5.682V56.694"/>
+<path transform="matrix(1,0,0,-1,689.9487,79.933399)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0 30.362-67.733C32.452-71.912 38.415-71.912 40.504-67.733L70.866 0"/>
+<path transform="matrix(1,0,0,-1,831.681,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-44.002 0-56.693-12.691-56.693-28.347-56.693-44.002-44.002-56.694-28.346-56.693-14.173-56.693 0-56.693 0-56.693"/>
+<path transform="matrix(1,0,0,-1,803.3345,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,1044.2794,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-44.002 0-56.693-12.691-56.693-28.347-56.693-44.002-44.002-56.694-28.346-56.693-14.173-56.693 0-56.693 0-56.693"/>
+<path transform="matrix(1,0,0,-1,1015.9329,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,888.3738,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346C-36.174 0-42.52-6.346-42.52-14.173V-56.694"/>
+<path transform="matrix(1,0,0,-1,888.3738,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-42.52"/>
+<path transform="matrix(1,0,0,-1,888.3738,94.1087)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C7.828 0 14.173-6.346 14.173-14.173 14.173-22.001 7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,930.8936,94.1075)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H42.52"/>
+<path transform="matrix(1,0,0,-1,930.8936,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H28.346"/>
+<path transform="matrix(1,0,0,-1,930.8936,94.1087)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C-7.828 0-14.173-6.346-14.173-14.173-14.173-22.001-7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,959.24,122.453899)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-28.346"/>
+<path transform="matrix(1,0,0,-1,959.24,150.8004)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0H-42.52"/>
+<path transform="matrix(1,0,0,-1,959.24,122.4551)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0C7.828 0 14.173-6.346 14.173-14.173 14.173-22.001 7.828-28.346 0-28.346"/>
+<path transform="matrix(1,0,0,-1,902.5471,150.8004)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0-20.044 20.044C-25.36 25.36-32.57 28.346-40.088 28.346H-56.693"/>
+<path transform="matrix(1,0,0,-1,307.2715,150.79959)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.781 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+<path transform="matrix(1,0,0,-1,392.3109,150.79959)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="currentColor" d="M0 0V53.875C0 56.723 3.729 57.793 5.238 55.378L16.203 37.834C25.085 23.623 45.781 23.623 54.663 37.834L65.628 55.378C67.137 57.793 70.866 56.723 70.866 53.875V0"/>
+</svg></span><span class="iv-sr-only">ImmunoVerse</span> <span class="sub">Atlas</span></div>
+        <div style="color:var(--text-2); font-size: 14.5px; max-width: 420px; line-height:1.65;">
           A pan-cancer atlas of therapeutic T cell targets. Developed by the Yarmarkovich Lab at NYU Grossman School of Medicine,
           in collaboration with Tesorai and collaborators across the Cancer Grand Challenges NexTGen team.
         </div>
@@ -3800,6 +4047,7 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
         <a href="#classes">Aberration classes</a>
         <a href="#highlights">Highlights</a>
         <a href="/hub/">ImmunoVerse Hub</a>
+        <a href="https://immunoverse-chat.com" target="_blank" rel="noopener">ImmunoVerse Chat</a>
       </div>
       <div>
         <h6>Resources</h6>
@@ -3938,13 +4186,13 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
   position: absolute; top: 16px; right: 16px;
   width: 34px; height: 34px;
   background: transparent; border: 0;
-  color: var(--text-2); font-size: 24px; line-height: 1;
+  color: var(--text-2); font-size: 25px; line-height: 1;
   cursor: pointer; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .iv-wb-close:hover { color: var(--text-0); background: var(--bg-2); }
-.iv-wb-title { font-size: 34px; font-weight: 700; color: var(--text-0); margin: 6px 0 10px; letter-spacing: -0.01em; }
-.iv-wb-sub   { color: var(--text-2); font-size: 15px; margin: 0 0 26px; }
+.iv-wb-title { font-size: 35.5px; font-weight: 700; color: var(--text-0); margin: 6px 0 10px; letter-spacing: -0.01em; }
+.iv-wb-sub   { color: var(--text-2); font-size: 16.5px; margin: 0 0 26px; }
 .iv-wb-acct {
   display: flex; align-items: center; gap: 16px;
   width: 100%; text-align: left;
@@ -3959,21 +4207,21 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
 .iv-wb-avatar {
   flex: none; width: 48px; height: 48px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 16px; color: #06281f;
+  font-weight: 700; font-size: 17.5px; color: #06281f;
   background: var(--grad-primary);
 }
 .iv-wb-acct-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.iv-wb-acct-name  { font-weight: 700; font-size: 16px; color: var(--text-0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.iv-wb-acct-email { font-size: 13.5px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iv-wb-acct-name  { font-weight: 700; font-size: 17.5px; color: var(--text-0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iv-wb-acct-email { font-size: 15px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .iv-wb-forget {
   flex: none; width: 28px; height: 28px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  color: var(--text-3); font-size: 18px; cursor: pointer;
+  color: var(--text-3); font-size: 20px; cursor: pointer;
 }
 .iv-wb-forget:hover { color: var(--text-0); background: rgba(255,255,255,0.08); }
 .iv-wb-or {
   display: flex; align-items: center; gap: 14px;
-  color: var(--text-3); font-size: 12px; font-weight: 600; letter-spacing: 0.1em;
+  color: var(--text-3); font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
   margin: 22px 2px;
 }
 .iv-wb-or::before, .iv-wb-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
@@ -3983,14 +4231,14 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
   border: 1px solid var(--border-2);
   border-radius: 9999px;
   padding: 13px 18px;
-  font-family: inherit; font-size: 15px; font-weight: 600;
+  font-family: inherit; font-size: 16.5px; font-weight: 600;
   color: var(--text-0); cursor: pointer; text-decoration: none;
   transition: all 0.15s ease;
 }
 .iv-wb-btn + .iv-wb-btn { margin-top: 12px; }
 .iv-wb-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
 @media (max-width: 480px) {
-  .iv-wb-title { font-size: 28px; }
+  .iv-wb-title { font-size: 29.5px; }
   .iv-wb-card { padding: 34px 22px 24px; }
 }
 
@@ -3999,7 +4247,7 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
 .ctile-inhouse-badge {
   position: absolute; top: 8px; right: 8px; z-index: 2;
   background: linear-gradient(135deg,#7c3aed,#22d3ee); color: #fff;
-  font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
   padding: 2px 7px; border-radius: 9999px; font-family: var(--mono);
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
@@ -4011,14 +4259,14 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
   padding: 7px 12px; border-radius: 9999px;
   border: 1px solid rgba(34,211,238,0.45);
   background: rgba(34,211,238,0.12);
-  color: var(--accent, #22d3ee); font-size: 13px; font-weight: 700;
+  color: var(--accent, #22d3ee); font-size: 14.5px; font-weight: 700;
   font-family: inherit; cursor: pointer; white-space: nowrap; line-height: 1;
 }
 .iv-inhouse-pill:hover { background: rgba(34,211,238,0.22); }
 .iv-inhouse-pill.iv-active {
   background: linear-gradient(135deg,#7c3aed,#22d3ee); color: #fff; border-color: transparent;
 }
-.iv-inhouse-pill .ihp-lock { font-size: 12px; }
+.iv-inhouse-pill .ihp-lock { font-size: 13px; }
 @media (max-width: 1179px) {
   .iv-inhouse-pill .ihp-text { display: none; }
   .iv-inhouse-pill { padding: 7px 9px; }
@@ -4030,14 +4278,14 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
   border: 1px solid rgba(34,211,238,0.38);
   background: rgba(34,211,238,0.09);
 }
-.iv-inhouse-banner .ihb-lock { font-size: 18px; line-height: 1; }
+.iv-inhouse-banner .ihb-lock { font-size: 20px; line-height: 1; }
 .iv-inhouse-banner .ihb-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.iv-inhouse-banner .ihb-text b { font-size: 14px; color: var(--text-0); }
-.iv-inhouse-banner .ihb-names { font-size: 13px; color: var(--text-2); }
+.iv-inhouse-banner .ihb-text b { font-size: 15.5px; color: var(--text-0); }
+.iv-inhouse-banner .ihb-names { font-size: 14.5px; color: var(--text-2); }
 .iv-inhouse-banner .ihb-btn {
   margin-left: auto; padding: 8px 16px; border-radius: 8px; border: 0;
   background: linear-gradient(135deg,#7c3aed,#22d3ee); color: #fff;
-  font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap;
+  font-size: 14.5px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap;
 }
 .iv-inhouse-banner .ihb-btn:hover { filter: brightness(1.08); }
 .iv-inhouse-banner.iv-active { border-color: rgba(34,211,238,0.7); background: rgba(34,211,238,0.16); }
@@ -4049,7 +4297,7 @@ Filtering the table by cancer narrows the event count without affecting the 16,6
 .ctile-lockbadge {
   position: absolute; top: 8px; right: 8px;
   background: rgba(15,18,28,0.9); color: #fbbf24;
-  font-size: 10px; font-weight: 600; padding: 3px 7px;
+  font-size: 11px; font-weight: 600; padding: 3px 7px;
   border-radius: 999px; border: 1px solid rgba(251,191,36,0.45);
   letter-spacing: 0.3px; z-index: 2;
 }
@@ -4073,7 +4321,7 @@ a.dl-locked .sz { color: #fbbf24; }
   border: 1px solid var(--border-2);
   color: var(--text-1);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 500;
   cursor: pointer;
   backdrop-filter: blur(12px);
@@ -4106,8 +4354,8 @@ a.dl-locked .sz { color: #fbbf24; }
   box-shadow: var(--shadow-lg);
   position: relative;
 }
-.iv-fb-card h3 { font-size: 20px; margin: 0 0 4px; color: var(--text-0); font-weight: 700; }
-.iv-fb-lede { color: var(--text-2); font-size: 13.5px; margin: 0 0 18px; line-height: 1.55; }
+.iv-fb-card h3 { font-size: 21px; margin: 0 0 4px; color: var(--text-0); font-weight: 700; }
+.iv-fb-lede { color: var(--text-2); font-size: 15px; margin: 0 0 18px; line-height: 1.55; }
 .iv-fb-close {
   position: absolute;
   top: 14px; right: 14px;
@@ -4116,14 +4364,14 @@ a.dl-locked .sz { color: #fbbf24; }
   border: 1px solid var(--border);
   border-radius: 50%;
   color: var(--text-2);
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .iv-fb-close:hover { color: var(--text-0); border-color: var(--border-2); }
 .iv-fb-lbl {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -4137,7 +4385,7 @@ a.dl-locked .sz { color: #fbbf24; }
   border-radius: 12px;
   padding: 11px 14px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15.5px;
   color: var(--text-0);
   outline: none;
 }
@@ -4150,7 +4398,7 @@ a.dl-locked .sz { color: #fbbf24; }
 @media (max-width: 480px) { .iv-fb-row { grid-template-columns: 1fr; } }
 .iv-fb-counter {
   float: right;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-3);
   letter-spacing: 0.04em;
@@ -4165,7 +4413,7 @@ a.dl-locked .sz { color: #fbbf24; }
   border-radius: 9999px;
   padding: 9px 18px;
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -4184,7 +4432,7 @@ a.dl-locked .sz { color: #fbbf24; }
 .iv-fb-alert {
   padding: 10px 14px;
   border-radius: 12px;
-  font-size: 13px;
+  font-size: 14.5px;
   margin-bottom: 12px;
 }
 .iv-fb-alert.error   { background: rgba(248,113,113,0.10); border: 1px solid rgba(248,113,113,0.35); color: #f87171; }
@@ -4201,7 +4449,7 @@ a.dl-locked .sz { color: #fbbf24; }
        the entry lands under account.html → ★ Saved comparisons. -->
   <button class="copy-btn" id="saveCompareBtn" style="position:absolute; top:14px; right:50px; padding:4px 10px;" title="Sign in to save this comparison to your account" onclick="handleSaveComparison()">★ Save this comparison</button>
   <h3 style="margin:0 0 4px">Peptide comparison</h3>
-  <p style="color:var(--text-2);font-size:13px;margin:0 0 18px">Side-by-side attribute comparison. Pathogen and mutation rows pull from the detail files; every other row comes from the main table.</p>
+  <p style="color:var(--text-2);font-size: 14.5px;margin:0 0 18px">Side-by-side attribute comparison. Pathogen and mutation rows pull from the detail files; every other row comes from the main table.</p>
   <div id="compareModalBody"></div>
 </aside>
 
@@ -4224,7 +4472,9 @@ const CLASS_TIPS = {
   self_gene:'Canonical self-antigen: normal protein over-expressed or aberrantly presented by tumors',
   splicing:'Alternative splicing: peptide from a tumor-specific splice variant not found in normal tissue',
   variant:'Mutation neoantigen: peptide containing a somatic mutation (SNV, indel, frameshift)',
-  nuORF:"Cryptic ORF: peptide translated from a non-canonical open reading frame (5'UTR, 3'UTR, lncRNA, pseudogene)",
+  nuORF:"Cryptic ORF: peptide translated from a non-canonical open reading frame — 5'/3' UTR uORFs and dORFs, out-of-frame and overlapping frames",
+  lncRNA:'lncRNA ORF: peptide translated from a long non-coding RNA, a transcript annotated as non-protein-coding',
+  pseudogene:'Pseudogene ORF: peptide translated from a pseudogene, a disabled copy of a parent gene normally presumed silent',
   ERV:'Endogenous retroelement: peptide encoded by reactivated endogenous retroviruses or LINE/SINE elements',
   TE_chimeric_transcript:'TE chimeric transcript: fusion transcript driven by a transposable element promoter',
   intron_retention:'Intron retention: peptide from an unspliced intron retained in tumor mRNA',
@@ -4326,18 +4576,18 @@ function ivShareShell(inner) {
     document.body.appendChild(bd);
   }
   bd.innerHTML = `<div style="background:var(--bg-1,#0f1424);border:1px solid var(--border,#2a3350);border-radius:14px;max-width:480px;width:100%;padding:22px 24px;color:var(--text-0,#f2f5ff);box-shadow:0 20px 60px rgba(0,0,0,.5);">
-    <button onclick="document.getElementById('ivShareBackdrop').remove()" style="position:absolute;margin:-8px 0 0 0;float:right;background:none;border:0;color:var(--text-3,#8a93ad);font-size:22px;cursor:pointer;line-height:1;">×</button>
+    <button onclick="document.getElementById('ivShareBackdrop').remove()" style="position:absolute;margin:-8px 0 0 0;float:right;background:none;border:0;color:var(--text-3,#8a93ad);font-size: 23px;cursor:pointer;line-height:1;">×</button>
     ${inner}</div>`;
 }
 window.ivOpenShareDialog = function (code, pep) {
   const m = window.IV_INHOUSE[code];
   if (!m || !m.datasetId) { alert('Sharing goes live once this dataset is deployed (it needs the backend).'); return; }
   ivShareShell(`
-    <h3 style="margin:0 0 6px;font-size:17px;">🔗 Share in-house data</h3>
-    <p style="font-size:13px;color:var(--text-2,#c8cfe4);margin:0 0 16px;line-height:1.5;">Create a password-protected, read-only link for an outside collaborator. You choose how much to share.</p>
+    <h3 style="margin:0 0 6px;font-size: 18.5px;">🔗 Share in-house data</h3>
+    <p style="font-size: 14.5px;color:var(--text-2,#c8cfe4);margin:0 0 16px;line-height:1.5;">Create a password-protected, read-only link for an outside collaborator. You choose how much to share.</p>
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <button class="btn" style="text-align:left;padding:11px 14px;" onclick="ivCreateShare('${code}','${pep}','peptide')">Share <b>this peptide only</b><div style="font-size:11px;opacity:.65;font-weight:400;margin-top:2px;font-family:var(--mono,monospace);">${pep} · ${code}</div></button>
-      <button class="btn" style="text-align:left;padding:11px 14px;" onclick="ivCreateShare('${code}','','cohort')">Share <b>the whole cohort</b><div style="font-size:11px;opacity:.65;font-weight:400;margin-top:2px;">All peptides in ${code}</div></button>
+      <button class="btn" style="text-align:left;padding:11px 14px;" onclick="ivCreateShare('${code}','${pep}','peptide')">Share <b>this peptide only</b><div style="font-size: 12px;opacity:.65;font-weight:400;margin-top:2px;font-family:var(--mono,monospace);">${pep} · ${code}</div></button>
+      <button class="btn" style="text-align:left;padding:11px 14px;" onclick="ivCreateShare('${code}','','cohort')">Share <b>the whole cohort</b><div style="font-size: 12px;opacity:.65;font-weight:400;margin-top:2px;">All peptides in ${code}</div></button>
     </div>`);
 };
 window.ivCreateShare = async function (code, pep, scope) {
@@ -4349,14 +4599,14 @@ window.ivCreateShare = async function (code, pep, scope) {
     if (!r.ok) { let d = ''; try { d = (await r.json()).detail || ''; } catch (e) {} ivShareShell(`<p style="color:#f87171;margin:8px 0;">Could not create the link (HTTP ${r.status}).${d ? '<br>' + d : ''}</p>`); return; }
     const s = await r.json();
     const what = (s.scope === 'peptide' && s.peptide) ? `${s.peptide} in ${code}` : `all of ${code}`;
-    const fld = (label, val, big) => `<label style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3,#8a93ad);">${label}</label>
+    const fld = (label, val, big) => `<label style="font-size: 12px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3,#8a93ad);">${label}</label>
       <div style="display:flex;gap:8px;margin:4px 0 14px;">
         <input readonly value="${String(val || '').replace(/"/g, '&quot;')}" onclick="this.select()" style="flex:1;background:var(--bg-2,#151b2e);border:1px solid var(--border,#2a3350);border-radius:8px;padding:9px 12px;color:inherit;font-size:${big ? '15px' : '12px'};font-family:var(--mono,monospace);letter-spacing:.03em;" />
         <button class="btn" onclick="ivCopyVal(this)">Copy</button>
       </div>`;
     ivShareShell(`
-      <h3 style="margin:0 0 6px;font-size:17px;">🔗 Share link created</h3>
-      <p style="font-size:13px;color:var(--text-2,#c8cfe4);margin:0 0 16px;line-height:1.5;">Read-only access to <b>${what}</b>. Send your collaborator <b>both</b> the link and the password. Manage or revoke it anytime under <a href="account.html" style="color:var(--accent,#22d3ee);">Account → Shared links</a>.</p>
+      <h3 style="margin:0 0 6px;font-size: 18.5px;">🔗 Share link created</h3>
+      <p style="font-size: 14.5px;color:var(--text-2,#c8cfe4);margin:0 0 16px;line-height:1.5;">Read-only access to <b>${what}</b>. Send your collaborator <b>both</b> the link and the password. Manage or revoke it anytime under <a href="account.html" style="color:var(--accent,#22d3ee);">Account → Shared links</a>.</p>
       ${fld('Link', s.url, false)}
       ${fld('Password', s.password, true)}`);
   } catch (e) { ivShareShell('<p style="color:#f87171;margin:8px 0;">Network error creating the link.</p>'); }
@@ -4421,11 +4671,366 @@ const COL = {
   recurrence:17, totalSamples:18, code:19
 };
 const DETAIL_CACHE = {};  // {code: {pep: [addq, intens], ...}}
+
+/* ===== Dual-model immunogenicity: DeepImmuno + PRIME ======================
+   Two independent predictions for the SAME (peptide, HLA) pair, shown side by
+   side. They are never averaged, and no combined probability is derived.
+
+     DeepImmuno — immunogenicity potential in [0,1]; HIGHER is more favorable.
+                  bind index 5.
+     PRIME      — percentile rank; LOWER is more favorable. bind index 8.
+
+   Missingness has a known cause for every pair in the current table, and it is
+   never an unfavorable prediction:
+     - DeepImmuno is absent for every peptide whose length is not 9 or 10
+       (DeepImmuno-CNN accepts only 9/10-mers).
+     - PRIME is absent for HLA-C*03:01 (not in the allele list of the model
+       version that produced our table) and for 15-mers (over its length
+       ceiling).
+     - In-house cohorts have no immunogenicity run at all, so their bind rows
+       stop at index 7 and b[8] reads back as undefined.
+
+   Both cutoffs are PORTAL TRIAGE HEURISTICS, not published clinical cutoffs.
+   Set primeSemanticsConfirmed=false and every pair falls back to
+   "Interpretation pending" — the honest state while provenance is open.       */
+const IMMUNO_CFG = {
+  // Evidence that PRIME_immunogenicity is an allele-specific percentile rank:
+  // observed range 0.001–92.383 (a raw PRIME score is bounded by [0,1]); values
+  // on a 3-decimal grid; different values for the same peptide on different
+  // alleles; allele-specific medians (A*02:01 0.33 vs C*07:01 1.51). Still
+  // unconfirmed from source: the PRIME version, and whether the column is
+  // PRIME's immunogenicity %Rank or its passthrough binding %RankBinding.
+  primeSemanticsConfirmed: true,
+  deep: {
+    label: 'DeepImmuno',
+    favorable: 0.5,
+    // Below `favorable` but at or above `borderline` counts as a near miss rather
+    // than a real disagreement. 0.35 is ~0.15 under the cutoff and sits at the
+    // median of the sub-threshold DeepImmuno values (0.365), so it splits the
+    // near misses from the genuinely low scores. Portal heuristic.
+    borderline: 0.35,
+    better: 'higher',
+    fmt: v => v.toFixed(3),
+    unit: '',
+    basis: 'portal triage heuristic — the midpoint of the model’s [0,1] output. ' +
+           'DeepImmuno does not publish a single universal operating threshold.',
+    absent: 'DeepImmuno-CNN accepts only 9- and 10-mer peptides.',
+    // Why is there no value? Derived from the pair itself, so the tooltip never
+    // asserts a model limitation that does not actually apply to this peptide.
+    absentReason: (pep, allele) => (pep && (pep.length < 9 || pep.length > 10))
+      ? `DeepImmuno-CNN accepts only 9- and 10-mer peptides, and this one is ${pep.length} residues long.`
+      : 'This peptide–HLA pair is not present in the immunogenicity table, so DeepImmuno was ' +
+        'never run on it. The reason it was not run is not recorded.',
+  },
+  prime: {
+    label: 'PRIME %rank',
+    // 2% is the cutoff used in PRIME's own publication. Note this is NOT the
+    // NetMHCpan strong-binder rank (<0.5%) shown in the Rank % column: that one
+    // is about HLA binding, this one about predicted immunogenicity.
+    favorable: 2,
+    // Up to 5x the cutoff is a near miss; beyond that the models genuinely part
+    // company. Portal heuristic.
+    borderline: 10,
+    better: 'lower',
+    fmt: v => v.toFixed(3),
+    unit: '%',
+    basis: 'the cutoff used in PRIME’s own publication. It is NOT the NetMHCpan ' +
+           '0.5% strong-binder rank; that cutoff is about HLA binding, this one ' +
+           'is about predicted immunogenicity.',
+    absent: 'PRIME has no prediction for HLA-C*03:01 in the model version used, ' +
+            'and none for peptides longer than 14 residues.',
+    absentReason: (pep, allele) => {
+      if (allele === 'C*03:01') {
+        return 'PRIME returned no value for HLA-C*03:01 anywhere in this table — that allele is ' +
+               'outside the allele list of the model version used.';
+      }
+      if (pep && pep.length > 14) {
+        return `PRIME’s length ceiling is 14 residues, and this peptide is ${pep.length}.`;
+      }
+      return 'This peptide–HLA pair is not present in the immunogenicity table, so PRIME was ' +
+             'never run on it. The reason it was not run is not recorded.';
+    },
+  },
+};
+
+// Read the two scores off a bind row. `== null` catches both null (no
+// prediction) and undefined (cohort with no immunogenicity run). 0 is a legal
+// value for either model and survives this untouched.
+function immunoPair(b) {
+  const d = (b && b[5] != null) ? b[5] : null;
+  const p = (b && b[8] != null) ? b[8] : null;
+  return { deep: d, prime: p };
+}
+
+/* How far a value sits from its cutoff, phrased the way each metric actually
+   varies. DeepImmuno is a bounded [0,1] potential, so an absolute gap reads
+   naturally; PRIME %rank spans four orders of magnitude, so a fold change is the
+   honest summary (0.007 vs 0.5 is "71x below", not "0.493 below"). */
+function immunoDeepMargin(v) {
+  const t = IMMUNO_CFG.deep.favorable, d = v - t;
+  if (Math.abs(d) < 5e-4) return `exactly at the ${t} cutoff`;
+  return `${Math.abs(d).toFixed(3)} ${d > 0 ? 'above' : 'below'} the ${t} cutoff`;
+}
+function immunoPrimeMargin(v) {
+  const t = IMMUNO_CFG.prime.favorable, u = IMMUNO_CFG.prime.unit;
+  if (Math.abs(v - t) < 5e-4) return `exactly at the ${t}${u} cutoff`;
+  const fold = v < t ? t / Math.max(v, 1e-9) : v / t;
+  const f = fold >= 10 ? Math.round(fold) : fold.toFixed(1);
+  return `${f}× ${v < t ? 'below' : 'above'} the ${t}${u} cutoff`;
+}
+
+/* Where this allele stands among the SAME peptide's other alleles. This is what
+   makes a per-row tooltip about the row rather than about the state — two pairs
+   in the same state get different text because they rank differently. */
+function immunoRankPhrase(siblings, allele, slot, better) {
+  if (!Array.isArray(siblings)) return null;
+  const scored = siblings.filter(x => x && x[slot] != null);
+  if (scored.length < 2) return null;
+  const sorted = scored.slice().sort((a, b) =>
+    better === 'higher' ? b[slot] - a[slot] : a[slot] - b[slot]);
+  const pos = sorted.findIndex(x => x[0] === allele);
+  if (pos < 0) return null;
+  const n = scored.length;
+  if (pos === 0) return `the strongest of this peptide’s ${n} scored alleles`;
+  if (pos === n - 1) return `the weakest of this peptide’s ${n} scored alleles`;
+  return `#${pos + 1} of ${n} scored alleles for this peptide`;
+}
+
+/* Deterministic interpretation. No model call, no randomness — the same pair
+   always yields the same state. Returns {state, label, tone, icon, tip}.
+
+   The tooltip deliberately does NOT restate the rationale for the thresholds:
+   that text is identical on every row and already appears once in the standing
+   note under the table and in the column-header tooltips. The cutoffs themselves
+   still appear inline on the two value lines. */
+function immunoInterpret(deep, prime, ctx) {
+  const C = IMMUNO_CFG;
+  const pep = ctx && ctx.pep || null;
+  const allele = ctx && ctx.allele || null;
+  const whyDeep = C.deep.absentReason(pep, allele);
+  const whyPrime = C.prime.absentReason(pep, allele);
+  const dv = deep == null ? null : deep;
+  const pv = prime == null ? null : prime;
+  const dStr = dv == null ? 'Not available' : C.deep.fmt(dv);
+  const pStr = pv == null ? 'Not available' : C.prime.fmt(pv) + C.prime.unit;
+
+  const header =
+    `${C.deep.label}: ${dStr}  (higher = more favorable; favorable at ≥ ${C.deep.favorable})\n` +
+    `${C.prime.label}: ${pStr}  (lower = more favorable; favorable at ≤ ${C.prime.favorable}${C.prime.unit})`;
+
+  // Provenance unresolved -> we decline to classify at all.
+  if (!C.primeSemanticsConfirmed) {
+    return {
+      state: 'pending', label: 'Interpretation pending', tone: 'pending', icon: '?',
+      tip: header + '\n\n' +
+        'The semantics of the PRIME column are not yet confirmed, so no agreement ' +
+        'state is asserted. The supplied values are shown exactly as provided.\n\n' +
+        'Needs clarification: the PRIME version, and whether this column is PRIME’s ' +
+        'immunogenicity %Rank or its binding %RankBinding passthrough.',
+    };
+  }
+
+  const dFav = dv == null ? null : dv >= C.deep.favorable;
+  const pFav = pv == null ? null : pv <= C.prime.favorable;
+
+  // Pair-specific detail: margin from each cutoff plus this allele's standing
+  // among the peptide's other alleles. Replaces the block of threshold prose
+  // that used to repeat verbatim on every row.
+  const sib = ctx && ctx.siblings;
+  const bits = [];
+  if (dv != null) {
+    const r = immunoRankPhrase(sib, allele, 5, 'higher');
+    bits.push(`${C.deep.label} ${C.deep.fmt(dv)} is ${immunoDeepMargin(dv)}` +
+              (r ? ` — ${r}` : '') + '.');
+  }
+  if (pv != null) {
+    const r = immunoRankPhrase(sib, allele, 8, 'lower');
+    bits.push(`${C.prime.label} ${C.prime.fmt(pv)}${C.prime.unit} is ${immunoPrimeMargin(pv)}` +
+              (r ? ` — ${r}` : '') + '.');
+  }
+  const detail = bits.length ? '\n\n' + bits.join(' ') : '';
+
+  if (dFav === null && pFav === null) {
+    return {
+      state: 'unavailable', label: 'Predictions unavailable', tone: 'muted', icon: '—',
+      tip: header + '\n\nNeither model returned a prediction for this peptide–HLA pair, so ' +
+        'no interpretation is possible.\n\n' +
+        `${C.deep.label}: ${whyDeep}\n${C.prime.label}: ${whyPrime}` +
+        '\n\nAbsence of a prediction is not evidence of low immunogenicity.',
+    };
+  }
+
+  if (dFav === null || pFav === null) {
+    const have = dFav === null ? C.prime : C.deep;
+    const miss = dFav === null ? C.deep : C.prime;
+    const why = dFav === null ? whyDeep : whyPrime;
+    const favorable = dFav === null ? pFav : dFav;
+    return {
+      state: 'single', label: 'Single-model prediction', tone: 'single', icon: '◐',
+      tip: header + '\n\n' +
+        `Only ${have.label} is available for this peptide–HLA pair, and it ` +
+        `${favorable ? 'meets' : 'does not meet'} its favorable threshold. Agreement ` +
+        'between models cannot be assessed.\n\n' +
+        `${miss.label} returned no value: ${why}` + detail,
+    };
+  }
+
+  if (dFav && pFav) {
+    return {
+      state: 'concordant-favorable', label: 'Concordant favorable predictions',
+      tone: 'good', icon: '✓✓',
+      tip: header + detail +
+        '\n\nBoth models meet the configured favorable thresholds. This supports ' +
+        'prioritization for experimental evaluation; it does not establish immunogenicity. ' +
+        'Agreement between two computational models is not independent experimental ' +
+        'confirmation.',
+    };
+  }
+
+  // Disagreement is graded, not binary. One model favorable while the other sits
+  // just under its cutoff is a near miss; one model favorable while the other is
+  // far outside is a real parting of the ways. The badge names WHICH model is
+  // favorable, so a colour and a direction are carried at once.
+  if (dFav !== pFav) {
+    const near = dFav ? (pv <= C.prime.borderline) : (dv >= C.deep.borderline);
+    const only = dFav ? C.deep.label : C.prime.label;
+    const dir = dFav
+      ? `${C.deep.label} is favorable (${dStr} ≥ ${C.deep.favorable}) while ${C.prime.label} ` +
+        `is not (${pStr} > ${C.prime.favorable}${C.prime.unit}).`
+      : `${C.prime.label} is favorable (${pStr} ≤ ${C.prime.favorable}${C.prime.unit}) while ` +
+        `${C.deep.label} is not (${dStr} < ${C.deep.favorable}).`;
+    return near ? {
+      state: 'borderline', label: `${only} favorable — borderline`,
+      tone: 'warn', icon: '≈',
+      tip: header + detail + '\n\nBorderline. ' + dir +
+        ' The other model falls only just short of its threshold, so this is a near miss ' +
+        'rather than a clear disagreement.',
+    } : {
+      state: 'discordant', label: `${only} favorable only`,
+      tone: 'bad', icon: '⇅',
+      tip: header + detail + '\n\nThe two models disagree substantially: ' + dir +
+        ' Neither overrides the other — across this dataset the two scores are close to ' +
+        'uncorrelated, which is why both are shown rather than merged.',
+    };
+  }
+
+  return {
+    state: 'neither', label: 'Neither meets favorable thresholds', tone: 'muted', icon: '··',
+    tip: header + detail +
+      '\n\nNeither model meets its favorable threshold. This deprioritizes endogenous ' +
+      'T-cell recognition only — it does not mean the peptide is non-immunogenic, and it ' +
+      'does not rule out engineered binder approaches (TCR-mimic antibodies, PC-CAR, ' +
+      'bispecifics), which do not depend on the natural T-cell repertoire.',
+  };
+}
+
+// Compact, accessible badge. Reachable by hover, keyboard focus and click/tap;
+// carries text + icon as well as color so it never relies on color alone.
+function immunoBadgeHtml(b, pep, siblings, extraCls) {
+  const { deep, prime } = immunoPair(b);
+  const r = immunoInterpret(deep, prime, { pep: pep, allele: b && b[0], siblings: siblings });
+  return `<span class="immuno-badge tone-${r.tone}${extraCls ? ' ' + extraCls : ''}"
+    ><span class="ib-icon" aria-hidden="true">${r.icon}</span><span class="ib-text">${r.label}</span></span>`;
+}
+
+// Structured, read-only evidence for downstream consumers (e.g. an LLM asked to
+// explain a peptide). The deterministic classification is computed HERE; a
+// consumer may narrate it but must not recompute, override, or fill it in.
+function immunoEvidence(pep, code, b, siblings) {
+  const { deep, prime } = immunoPair(b);
+  const r = immunoInterpret(deep, prime, { pep: pep, allele: b && b[0], siblings: siblings });
+  return {
+    peptide: pep, cancer: code, hla: b && b[0] || null,
+    deepimmuno: { value: deep, available: deep != null, direction: 'higher_is_more_favorable',
+                  favorable_threshold: IMMUNO_CFG.deep.favorable,
+                  threshold_basis: IMMUNO_CFG.deep.basis,
+                  absent_reason: deep == null ? IMMUNO_CFG.deep.absentReason(pep, b && b[0]) : null },
+    prime_rank: { value: prime, available: prime != null, direction: 'lower_is_more_favorable',
+                  favorable_threshold: IMMUNO_CFG.prime.favorable,
+                  threshold_basis: IMMUNO_CFG.prime.basis,
+                  absent_reason: prime == null ? IMMUNO_CFG.prime.absentReason(pep, b && b[0]) : null },
+    interpretation: { state: r.state, label: r.label, deterministic: true,
+                      computed_by: 'portal immunoInterpret()' },
+    provenance: { prime_semantics_confirmed: IMMUNO_CFG.primeSemanticsConfirmed,
+                  source_file: 'final_immunogenicity.txt',
+                  matched_on: 'exact peptide sequence + normalized HLA allele',
+                  best_allele_substitution: false },
+    constraints: [
+      'These are computational predictions; they require experimental validation.',
+      'A missing prediction is not an unfavorable prediction.',
+      'Do not convert either score into a probability of clinical response.',
+      'Do not average the two metrics or derive a combined score.',
+      'Predicted immunogenicity is separate from MS evidence of presentation, tumor ' +
+        'selectivity, normal-tissue risk, HLA eligibility, antigen heterogeneity, immune ' +
+        'escape, and binder specificity.',
+      'Low predicted endogenous T-cell immunogenicity does not exclude a target from ' +
+        'engineered binder approaches (TCR-mimic antibody, PC-CAR, bispecific).',
+      'Frame any output as a research modality consideration, not a therapy recommendation.',
+    ],
+  };
+}
+// Exposed so a future "explain this peptide" hook can hand the model the
+// deterministic result instead of letting it infer one.
+window.__IV_IMMUNO_EVIDENCE = immunoEvidence;
+
+/* Per-allele modality summary for one peptide. Deterministic — it reads the same
+   states the badges do and turns them into prose, naming the actual alleles.
+
+   The split is mechanistic, not a ranking: approaches that rely on the natural
+   T-cell repertoire (vaccine, TIL) need predicted immunogenicity to be favorable,
+   whereas engineered binders (PC-CAR, BiTE, TCR-mimic) do not, so a low prediction
+   deprioritizes the former without ruling out the latter. */
+function immunoTherapyHtml(bind, pep) {
+  if (!Array.isArray(bind) || !bind.length) return '';
+  const g = { green: [], amber: [], low: [], none: [] };
+  bind.forEach(b => {
+    const { deep, prime } = immunoPair(b);
+    const st = immunoInterpret(deep, prime, { pep: pep, allele: b[0], siblings: bind }).state;
+    if (st === 'concordant-favorable') g.green.push(b[0]);
+    else if (st === 'borderline') g.amber.push(b[0]);
+    else if (st === 'discordant' || st === 'neither') g.low.push(b[0]);
+    else g.none.push(b[0]);          // single-model, unavailable, pending
+  });
+  const list = a => a.map(x => `<span class="mono">${x}</span>`).join(', ');
+  const out = [];
+  if (g.green.length) {
+    out.push(`<b>Concordant immunogenicity</b> on ${list(g.green)} — both models favorable. ` +
+      `Approaches that depend on the natural T-cell repertoire are on the table here: ` +
+      `cancer vaccine, TIL expansion, or TCR-T.`);
+  }
+  if (g.amber.length) {
+    out.push(`<b>Borderline</b> on ${list(g.amber)} — one model favorable, the other just short. ` +
+      `Treat as provisional and weigh alongside the MS and expression evidence above.`);
+  }
+  if (g.low.length) {
+    out.push(`<b>Low or conflicting predicted immunogenicity</b> on ${list(g.low)}. ` +
+      `This deprioritizes vaccine and TIL routes for those alleles, but not engineered ` +
+      `binders — PC-CAR, BiTEs, or TCR-T where a naive antigen-specific TCR can be ` +
+      `recovered from patients or healthy donors — which do not depend on the natural repertoire.`);
+  }
+  if (g.none.length) {
+    out.push(`<b>No prediction</b> for ${list(g.none)}, so no modality inference is drawn for ` +
+      `those alleles. A missing prediction is not a low one.`);
+  }
+  if (!out.length) return '';
+  return `<div class="immuno-note">
+      <div style="font-weight:700;color:var(--text-1);margin-bottom:6px;">Modality considerations by allele</div>
+      ${out.map(x => `<div style="margin-bottom:6px;">${x}</div>`).join('')}
+      <div style="color:var(--text-3);font-size:12px;font-style:italic;margin-top:8px;">
+        Research considerations from computational predictions only — not clinical guidance.
+        These predictions require experimental validation, and HLA eligibility, tumor
+        selectivity, normal-tissue risk and binder specificity all still apply.
+      </div>
+    </div>`;
+}
+
 const CLASS_LABELS = {
   self_gene:'Canonical self-antigen',
   splicing:'Alternative splicing',
   variant:'Mutation neoantigen',
   nuORF:'Cryptic ORF (nuORF)',
+  lncRNA:'lncRNA ORF',
+  pseudogene:'Pseudogene ORF',
   ERV:'Endogenous retroelement',
   TE_chimeric_transcript:'TE chimeric transcript',
   intron_retention:'Intron retention',
@@ -4440,6 +5045,8 @@ const CLASS_ICONS = {
   splicing:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>',
   variant:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 15.4 6.7 18.1l1-5.8L3.5 8.2l5.9-.9z"/></svg>',
   nuORF:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/><circle cx="18" cy="18" r="2.5"/></svg>',
+  lncRNA:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c3-6 6 6 9 0s6-6 9 0"/><circle cx="5" cy="7" r="1.4"/><circle cx="12" cy="7" r="1.4"/><circle cx="19" cy="7" r="1.4"/></svg>',
+  pseudogene:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="1.5"/><path d="M7 12h3M14 12h3"/><path d="M4 20L20 4"/></svg>',
   ERV:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4c4 3 8 3 12 0M6 12c4 3 8 3 12 0M6 20c4 3 8 3 12 0"/></svg>',
   TE_chimeric_transcript: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="8" height="4" rx="1"/><rect x="13" y="13" width="8" height="4" rx="1"/><path d="M11 9h2v6"/></svg>',
   intron_retention: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="5" height="6" rx="1"/><rect x="16" y="9" width="5" height="6" rx="1"/><path d="M8 12h8" stroke-dasharray="2 2"/><path d="M10 7v10M14 7v10" opacity=".5"/></svg>',
@@ -4452,7 +5059,9 @@ const CLASS_DESC = {
   self_gene:'Lineage-restricted or tumor-enriched proteins, the classic PC-CAR and TCR target class.',
   splicing:'Peptides spanning tumor-specific alternative splice junctions, including exon skips and cryptic sites.',
   variant:'Mutation-derived neoantigens from SNVs and indels in TCGA/TARGET, empirically confirmed on HLA.',
-  nuORF:'Cryptic ORFs from UTRs, pseudogenes, and overlapping frames — 69% of the non-canonical repertoire.',
+  nuORF:'Cryptic ORFs from UTRs and overlapping or out-of-frame reading frames — the largest non-canonical class.',
+  lncRNA:'ORFs translated from long non-coding RNAs — transcripts annotated as non-coding yet demonstrably presented on HLA.',
+  pseudogene:'ORFs translated from pseudogenes — disabled gene copies presumed silent, but re-expressed and presented in tumors.',
   ERV:'Endogenous retroviral / LINE-type retroelements, including the LINE1 ORF2 pan-cancer target.',
   TE_chimeric_transcript:'Transposable elements acting as alternative promoters, donors, or acceptors for host transcripts.',
   intron_retention:'Retained-intron-derived peptides, enriched in AML and other splicing-disrupted cancers.',
@@ -4461,10 +5070,34 @@ const CLASS_DESC = {
   rna_edit:'A-to-I (ADAR) RNA-edited peptides — recoded at the transcript level, absent from the genome.',
   circRNA:'Peptides spanning back-spliced circular-RNA junctions.',
 };
-// Canonical full set of known aberration classes. The last two (rna_edit, circRNA)
-// only appear in in-house cohorts; the public landing cards/body-map hide any class
-// with a zero global count, so they surface only where they actually have peptides.
-const CLASS_ORDER = ['self_gene','splicing','variant','nuORF','ERV','TE_chimeric_transcript','intron_retention','fusion','pathogen','rna_edit','circRNA'];
+// Canonical full set of known aberration classes, in display order. lncRNA and
+// pseudogene sit next to nuORF because all three are non-canonical ORFs: the
+// pipeline splits them out of the nuORF bucket on the `nuorf_type` subtype.
+const CLASS_ORDER = ['self_gene','splicing','variant','nuORF','lncRNA','pseudogene','ERV','TE_chimeric_transcript','intron_retention','fusion','pathogen','rna_edit','circRNA'];
+
+// The 11 classes the public atlas is built around. A per-cancer breakdown lists
+// all of them even at zero, so "this cancer has no gene fusions" is visible as a
+// fact rather than as an absent row the reader has to notice is missing.
+//
+// rna_edit and circRNA are deliberately NOT here: they have no peptides anywhere
+// in the public atlas and occur only in in-house cohorts. They are still in
+// CLASS_ORDER, so wherever they do have peptides they render normally — they
+// just don't pad every public cancer with two guaranteed zeros.
+const PUBLIC_CLASS_ORDER = CLASS_ORDER.filter(k => k !== 'rna_edit' && k !== 'circRNA');
+
+// nuORF, lncRNA and pseudogene are one family: all three come from the raw
+// `nuORF` bucket and share its source-annotation shape, hg19 coordinates and
+// subtype field. Anything that used to test `cls === 'nuORF'` must test this
+// instead, or the two split-out classes silently lose drawer features.
+const NUORF_FAMILY = ['nuORF', 'lncRNA', 'pseudogene'];
+const isNuorfFamily = cls => NUORF_FAMILY.includes(cls);
+
+// Classes to list for one cancer: the fixed public 11, plus any other class that
+// actually has peptides here (i.e. rna_edit / circRNA in an in-house cohort).
+function classRowsFor(classes) {
+  const extra = CLASS_ORDER.filter(k => !PUBLIC_CLASS_ORDER.includes(k) && (classes[k] || 0) > 0);
+  return [...PUBLIC_CLASS_ORDER, ...extra];
+}
 
 // Gene aliases — maps a user-facing search term to a list of forms the raw data
 // might use. Keeps backend canonicalization (integrate_data.py) in sync with
@@ -4610,7 +5243,7 @@ function renderCancerGrid(summary) {
       return `<span class="c-${k}" style="width:${w}%" title="${CLASS_LABELS[k]}: ${v.toLocaleString()} (${(v/classSum*100).toFixed(1)}%)"></span>`;
     }).join('');
     // Build class breakdown tooltip
-    const breakdown = CLASS_ORDER.filter(k => (c.classes[k]||0) > 0)
+    const breakdown = classRowsFor(c.classes)
       .map(k => `${CLASS_LABELS[k]}: ${(c.classes[k]||0).toLocaleString()}`).join(' · ');
     const locked = isLocked(c.code);
     const tileTitle = locked ? `Sign in to explore ${c.name}` : `${c.name} — ${breakdown}`;
@@ -4677,7 +5310,8 @@ const BODY_POSITIONS = {
 function classColor(k) {
   const map = {
     self_gene:'#22d3ee', splicing:'#a78bfa', variant:'#f472b6',
-    nuORF:'#fbbf24', ERV:'#86efac', TE_chimeric_transcript:'#60a5fa',
+    nuORF:'#fbbf24', lncRNA:'#fcd34d', pseudogene:'#d97706',
+    ERV:'#86efac', TE_chimeric_transcript:'#60a5fa',
     intron_retention:'#f87171', fusion:'#fb923c', pathogen:'#c084fc',
     rna_edit:'#2dd4bf', circRNA:'#fda4af'
   };
@@ -4721,14 +5355,15 @@ function showBodyInfo(code) {
   const box = document.getElementById('bodymapInfo');
   if (!c || !box) return;
   const classSum = CLASS_ORDER.reduce((a,k)=> a + (c.classes[k]||0), 0) || 1;
-  const breakdown = CLASS_ORDER
-    .filter(k => (c.classes[k]||0) > 0)
+  // Every molecular-event class for this cancer, biggest first, with the
+  // zero-count ones kept and pushed to the bottom — an explicit "0" is a result,
+  // and dropping the row would hide it.
+  const breakdown = classRowsFor(c.classes)
     .sort((a,b)=> (c.classes[b]||0) - (c.classes[a]||0))
-    .slice(0, 6)
     .map(k => {
       const v = c.classes[k] || 0;
       const pct = (v/classSum*100).toFixed(1);
-      return `<div class="cb-row">
+      return `<div class="cb-row${v ? '' : ' cb-zero'}">
         <div class="cb-lbl">${CLASS_LABELS[k]}</div>
         <div class="cb-bar"><span style="width:${pct}%; background:${classColor(k)}"></span></div>
         <div class="cb-v">${v.toLocaleString()}</div>
@@ -4811,7 +5446,7 @@ function populateCancerSelect() {
 function renderDownloadGrid(summary) {
   const el = document.getElementById('dlGrid');
   el.innerHTML = summary.cancers.map(c => {
-    const meta = `<div><b>${c.code}</b><div style="font-size:11px;color:var(--text-2);margin-top:1px;">${c.name}</div></div>`;
+    const meta = `<div><b>${c.code}</b><div style="font-size: 12px;color:var(--text-2);margin-top:1px;">${c.name}</div></div>`;
     if (isLocked(c.code)) {
       return `<a class="dl-locked" href="javascript:void(0)" onclick="openAuthGate(gateReturnUrl({cancer:'${c.code}'}))" title="Sign in to download">
         ${meta}<span class="sz">🔒</span>
@@ -5570,12 +6205,18 @@ async function downloadAllForPeptide(row, code, btnEl) {
     }, null, 2));
 
     // 2. Per-HLA observed binding CSV.
-    const obsRows = (row[COL.bind] || []).map(b => [
-      b[0], b[1], b[2], b[3], b[5], b[4], b[6], b[7] != null ? (b[7] * 100).toFixed(1) + '%' : '',
+    // Blank cells below mean "no prediction", never zero — see IMMUNO_CFG.
+    const sibs = row[COL.bind] || [];
+    const obsRows = sibs.map(b => [
+      b[0], b[1], b[2], b[3],
+      b[5] != null ? b[5] : '', b[8] != null ? b[8] : '',
+      immunoInterpret(b[5] != null ? b[5] : null, b[8] != null ? b[8] : null, {pep: pep, allele: b[0], siblings: sibs}).label,
+      b[4], b[6], b[7] != null ? (b[7] * 100).toFixed(1) + '%' : '',
     ]);
     if (obsRows.length) {
       zip.file(`${stem}/per_hla_observed.csv`, _buildCsv(
-        ['HLA', 'Rank %', 'nM', 'Category', 'Immunogenicity', '#Detected', '#TotalPatients', 'Recurrence'],
+        ['HLA', 'Rank %', 'nM', 'Category', 'DeepImmuno (higher=favorable)',
+         'PRIME %rank (lower=favorable)', 'Interpretation', '#Detected', '#TotalPatients', 'Recurrence'],
         obsRows,
       ));
     }
@@ -5680,12 +6321,18 @@ function downloadObservedHlaCsv() {
   const r = _drawerRow();
   if (!r) return;
   const code = DRAWER_CODE, pep = r[COL.pep];
-  const rows = (r[COL.bind] || []).map(b => [
-    b[0], b[1], b[2], b[3], b[5], b[4], b[6], b[7] != null ? (b[7] * 100).toFixed(1) + '%' : '',
+  // Blank cells below mean "no prediction", never zero — see IMMUNO_CFG.
+  const sibs = r[COL.bind] || [];
+  const rows = sibs.map(b => [
+    b[0], b[1], b[2], b[3],
+    b[5] != null ? b[5] : '', b[8] != null ? b[8] : '',
+    immunoInterpret(b[5] != null ? b[5] : null, b[8] != null ? b[8] : null, {pep: pep, allele: b[0], siblings: sibs}).label,
+    b[4], b[6], b[7] != null ? (b[7] * 100).toFixed(1) + '%' : '',
   ]);
   if (!rows.length) { _toast('No observed-HLA records to export', 'err'); return; }
   downloadCsv(
-    ['HLA', 'Rank %', 'nM', 'Category', 'Immunogenicity', '#Detected', '#TotalPatients', 'Recurrence'],
+    ['HLA', 'Rank %', 'nM', 'Category', 'DeepImmuno (higher=favorable)',
+     'PRIME %rank (lower=favorable)', 'Interpretation', '#Detected', '#TotalPatients', 'Recurrence'],
     rows,
     _safeFilename(`${code}_${pep}_per_hla_observed.csv`),
   );
@@ -7380,25 +8027,85 @@ function mountInteractiveSvg(host, svgText, opts) {
 // load failure), swap in the PNG from /assets/. If the PNG also fails,
 // mark the wrap as no-plot. No proxy needed — <img> handles cross-origin
 // images without CORS for both PNG and SVG.
+// ---- Cloudflare R2 mirror of the NYU /assets/ PNGs -----------------------
+// STRICTLY SECONDARY. NYU is always the primary source and is always tried
+// first; a URL on the mirror is only ever produced AFTER a NYU request has
+// already failed. Added 2026-09-01 because on 2026-08-31 genome.med.nyu.edu
+// went down and, since every hop of the render chain pointed at that one host,
+// the drawer rendered no figures at all.
+//
+// Only the public /assets/ PNG tree is mirrored (191,222 files). SVGs are NOT
+// mirrored, and in-house/private cohort figures (which come from `_ih.base`,
+// a signed private GCS URL) deliberately never match this prefix and so are
+// never rewritten to a public bucket.
+//
+// Leave IV_ASSET_MIRROR as '' to disable the fallback entirely (no-op).
+const IV_NYU_ASSETS  = 'https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/assets';
+const IV_ASSET_MIRROR = 'https://pub-1401efdd186340ed829e8c3c2e07533e.r2.dev/assets';
+// ^ Cloudflare R2 public bucket 'immunoverse', holding a byte-identical copy of
+//   the 191,222 PNGs under the NYU /assets/ tree (mirrored 2026-09-01).
+//   Swap this for a custom domain (e.g. https://assets.immuno-verse.com/assets)
+//   if a DNS record is ever added; nothing else needs to change.
+//   Set it back to '' to disable the secondary source entirely.
+
+window._ivMirrorUrl = function (nyuUrl) {
+  if (!IV_ASSET_MIRROR || !nyuUrl) return '';
+  // NB: must match on the prefix PLUS its trailing slash. Without it,
+  // '.../ImmunoVerse/assets_svg/...' also matches (because 'assets' is a
+  // prefix of 'assets_svg') and SVGs — which are NOT mirrored — would be
+  // rewritten to dead mirror URLs.
+  return nyuUrl.indexOf(IV_NYU_ASSETS + '/') === 0
+    ? IV_ASSET_MIRROR + nyuUrl.slice(IV_NYU_ASSETS.length)
+    : '';                     // not a mirrored public NYU asset -> left alone
+};
+
+// Render chain, in order. Each step only runs because the previous one failed:
+//   1. SVG @ NYU   (initial src)
+//   2. PNG @ NYU   (step 'png')
+//   3. PNG @ R2    (step 'mirror')  <- secondary, only if NYU did not respond
+//   4. give up     -> .no-plot
 window._figFallbackToPng = function (img, pngUrl) {
-  if (img.dataset.fellback) {
-    img.parentNode.classList.add('no-plot');
-    img.remove();
+  var step = img.dataset.fbStep || '';
+  if (!step) {                       // SVG failed -> try the NYU PNG
+    img.dataset.fbStep = 'png';
+    img.dataset.pngUrl = pngUrl;
+    img.src = pngUrl;
     return;
   }
-  img.dataset.fellback = '1';
-  img.src = pngUrl;
+  if (step === 'png') {              // NYU PNG failed -> try the R2 mirror
+    var m = window._ivMirrorUrl(img.dataset.pngUrl || pngUrl);
+    if (m) { img.dataset.fbStep = 'mirror'; img.src = m; return; }
+  }
+  img.parentNode.classList.add('no-plot');   // mirror failed too, or disabled
+  img.remove();
 };
 
 // Same idea but for the spectrum slot, which has a custom "not available"
 // message instead of the generic no-plot when even the PNG is missing.
 window._spectrumFallbackToPng = function (img, pngUrl) {
-  if (img.dataset.fellback) {
-    img.parentNode.innerHTML = '<div class="no-spectrum">Annotated spectrum not available for this peptide. Spectra are pre-generated for the most recurrent peptides; rare or private peptides may not have a rendered spectrum.<br><a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank">Browse ImmunoVerse data ↗</a></div>';
+  var step = img.dataset.fbStep || '';
+  if (!step) {                       // SVG failed -> NYU PNG
+    img.dataset.fbStep = 'png';
+    img.dataset.pngUrl = pngUrl;
+    img.src = pngUrl;
     return;
   }
-  img.dataset.fellback = '1';
-  img.src = pngUrl;
+  if (step === 'png') {              // NYU PNG failed -> R2 mirror (secondary)
+    var m = window._ivMirrorUrl(img.dataset.pngUrl || pngUrl);
+    if (m) { img.dataset.fbStep = 'mirror'; img.src = m; return; }
+  }
+  img.parentNode.innerHTML = '<div class="no-spectrum">Annotated spectrum not available for this peptide. Spectra are pre-generated for the most recurrent peptides; rare or private peptides may not have a rendered spectrum.<br><a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank">Browse ImmunoVerse data ↗</a></div>';
+};
+
+// Rank-abundance starts on the NYU PNG (no SVG-first step), so it only needs
+// the one secondary hop before giving up.
+window._rankFallback = function (img) {
+  if (!img.dataset.fbStep) {
+    var m = window._ivMirrorUrl(img.src);
+    if (m) { img.dataset.fbStep = 'mirror'; img.src = m; return; }
+  }
+  img.parentNode.classList.add('no-plot');
+  img.remove();
 };
 
 // Probe whether an SVG version of a figure exists at NYU, and reveal the
@@ -7503,7 +8210,7 @@ function _renderPngFallback(wrap, pngUrl, kind, code, pep) {
     <button class="dl-figure-btn" title="Download this figure as PNG" onclick="downloadDrawerFigure('${pngUrl}','${kind}')">${DL_ICON}PNG</button>
     ${canReturnToSvg ? `<button class="dl-figure-btn iv-back-to-svg" data-act="back-to-svg" title="Back to interactive view">↶ SVG view</button>` : ''}
     <button class="expand-btn" onclick="openLightbox('${pngUrl}','${expandTitle}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
-    <img src="${pngUrl}" alt="${kind}" onload="this.classList.add('ok')" onclick="openLightbox('${pngUrl}','${expandTitle}')" onerror="this.parentNode.classList.add('no-plot');this.remove();" />
+    <img src="${pngUrl}" alt="${kind}" onload="this.classList.add('ok')" onclick="openLightbox('${pngUrl}','${expandTitle}')" onerror="_rankFallback(this)" />
     <div class="plot-caption">${kind.replace(/_/g, ' ')} · served from <a href="https://genome.med.nyu.edu/public/yarmarkovichlab/ImmunoVerse/" target="_blank" rel="noopener">ImmunoVerse</a></div>`;
   // Wire the "back to SVG" button if it rendered.
   const back = wrap.querySelector('[data-act="back-to-svg"]');
@@ -7666,7 +8373,7 @@ function windowBadge(tumor, normal) {
   let cls = 'win-poor', label = 'narrow';
   if (ratio > 10) { cls = 'win-good'; label = 'wide'; }
   else if (ratio > 3) { cls = 'win-ok'; label = 'moderate'; }
-  return `<span class="window"><span class="dot ${cls}"></span><span style="font-family:var(--mono);font-size:11.5px;color:var(--text-1)">${ratio > 100 ? '>100×' : ratio.toFixed(1)+'×'}</span></span>`;
+  return `<span class="window"><span class="dot ${cls}"></span><span style="font-family:var(--mono);font-size: 12.5px;color:var(--text-1)">${ratio > 100 ? '>100×' : ratio.toFixed(1)+'×'}</span></span>`;
 }
 
 function renderRows(rows) {
@@ -7856,7 +8563,7 @@ async function openCompareModal() {
     return `<th>
       <span class="mono" style="color:var(--text-0);font-weight:700">${r[COL.pep]}</span>
       <button class="cmp-col-x" data-cmpkey="${key}" title="Remove ${r[COL.code]} from comparison" aria-label="Remove ${r[COL.code]}">×</button>
-      <br><span style="color:var(--text-2);font-size:11px">${r[COL.code]} · ${CLASS_LABELS[r[COL.cls]]||r[COL.cls]}</span>
+      <br><span style="color:var(--text-2);font-size: 12px">${r[COL.code]} · ${CLASS_LABELS[r[COL.cls]]||r[COL.cls]}</span>
     </th>`;
   }).join('');
   const attr = (label, pick, opts={}) => {
@@ -7868,13 +8575,13 @@ async function openCompareModal() {
     const d = (DETAIL_CACHE[r[COL.code]]||{})[r[COL.pep]];
     const mut = d && d[2] && d[2].mutations && d[2].mutations[0];
     if (!mut) return r[COL.cls]==='variant' ? '<span style="color:var(--text-3)">(no parsed mutation)</span>' : '—';
-    return `<span class="mono">${mut.gene||''} ${mut.protein_change||''}</span><br><span style="color:var(--text-3);font-size:10.5px">${mut.location||''} · ${mut.variant_type||''}</span>`;
+    return `<span class="mono">${mut.gene||''} ${mut.protein_change||''}</span><br><span style="color:var(--text-3);font-size: 11.5px">${mut.location||''} · ${mut.variant_type||''}</span>`;
   };
   const pathLine = r => {
     const d = (DETAIL_CACHE[r[COL.code]]||{})[r[COL.pep]];
     const p = d && d[2] && d[2].pathogen;
     if (!p) return '—';
-    return `<span>${p.organism||p.code||''}</span><br><span class="mono" style="color:var(--text-3);font-size:10.5px">${p.accession||''}</span>`;
+    return `<span>${p.organism||p.code||''}</span><br><span class="mono" style="color:var(--text-3);font-size: 11.5px">${p.accession||''}</span>`;
   };
   const bindSummary = r => {
     const b = r[COL.bind] || [];
@@ -7887,12 +8594,22 @@ async function openCompareModal() {
     if (!parts.length) parts.push(`<span class="mono">${b.map(x=>x[0]).join(', ')}</span>`);
     return parts.join('<br>');
   };
+  // Best value per model across this peptide's alleles, reported separately.
+  // The two maxima can come from DIFFERENT alleles, so no agreement state is
+  // claimed here — per-pair interpretation lives in the per-HLA table below.
   const immunoSummary = r => {
     const b = r[COL.bind] || [];
-    const scored = b.map(x => x[5]).filter(x => x != null);
-    if (!scored.length) return '—';
-    const max = Math.max(...scored);
-    return `<span style="color:${max>=0.5?'var(--accent-lime)':'var(--accent-amber)'}">${max.toFixed(2)}</span> <span style="color:var(--text-3);font-size:11px">max of ${scored.length}</span>`;
+    const d = b.map(x => x[5]).filter(x => x != null);
+    if (!d.length) return '<span style="color:var(--text-3)">Not available</span>';
+    const max = Math.max(...d);
+    return `<span style="color:${max>=IMMUNO_CFG.deep.favorable?'var(--accent-lime)':'var(--accent-amber)'}">${max.toFixed(3)}</span> <span style="color:var(--text-3);font-size: 12px">best of ${d.length}</span>`;
+  };
+  const primeSummary = r => {
+    const b = r[COL.bind] || [];
+    const p = b.map(x => x[8]).filter(x => x != null);
+    if (!p.length) return '<span style="color:var(--text-3)">Not available</span>';
+    const min = Math.min(...p);
+    return `<span style="color:${min<=IMMUNO_CFG.prime.favorable?'var(--accent-lime)':'var(--accent-amber)'}">${min.toFixed(3)}</span> <span style="color:var(--text-3);font-size: 12px">best of ${p.length}</span>`;
   };
   const atlasSummary = r => {
     const a = r[COL.atlas] || [];
@@ -7917,18 +8634,22 @@ async function openCompareModal() {
       const cat = (b[3]||'').toUpperCase();
       const catCls = cat === 'SB' ? 'bind-sb' : (cat === 'WB' ? 'bind-wb' : 'bind-nb');
       const immuno = b[5];
-      const immunoCol = immuno != null ? (immuno >= 0.5 ? 'var(--accent-lime)' : 'var(--accent-amber)') : 'var(--text-3)';
+      const immunoCol = immuno != null ? (immuno >= IMMUNO_CFG.deep.favorable ? 'var(--accent-lime)' : 'var(--accent-amber)') : 'var(--text-3)';
+      const prime = b[8] != null ? b[8] : null;
+      const primeCol = prime != null ? (prime <= IMMUNO_CFG.prime.favorable ? 'var(--accent-lime)' : 'var(--accent-amber)') : 'var(--text-3)';
       const rec = b[7];
       return `<tr>
         <td><span class="hla-tag">${b[0]}</span></td>
         <td class="num">${b[1] != null ? b[1].toFixed(2) : '—'}</td>
         <td class="num">${b[2] != null ? b[2].toFixed(0) : '—'}</td>
         <td><span class="bind-cat ${catCls}">${cat||'—'}</span></td>
-        <td class="num" style="color:${immunoCol}">${immuno != null ? immuno.toFixed(2) : '—'}</td>
+        <td class="num" style="color:${immunoCol}">${immuno != null ? immuno.toFixed(3) : 'n/a'}</td>
+        <td class="num" style="color:${primeCol}">${prime != null ? prime.toFixed(3) : 'n/a'}</td>
+        <td>${immunoBadgeHtml(b, pep, bind)}</td>
         <td class="num">${b[4]||0}${b[6] ? '/' + b[6] : ''}</td>
         <td class="num">${rec != null ? (rec*100).toFixed(0)+'%' : '—'}</td>
       </tr>`;
-    }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-3);padding:10px 0;">No per-HLA records on file.</td></tr>';
+    }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--text-3);padding:10px 0;">No per-HLA records on file.</td></tr>';
 
     const mutBlock = (() => {
       const d = (DETAIL_CACHE[code]||{})[pep];
@@ -7954,7 +8675,7 @@ async function openCompareModal() {
       if (!p) return '';
       const uniprotUrl = p.accession ? `https://www.uniprot.org/uniprotkb/${encodeURIComponent(p.accession)}/entry` : '';
       return `<div class="cmp-sub">Microbial origin</div>
-        <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;">
+        <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size: 13px;line-height:1.6;">
           <div><b style="color:var(--accent-cyan)">Organism:</b> ${p.organism||p.code||'—'}</div>
           ${p.protein ? `<div><b style="color:var(--accent-cyan)">Protein:</b> ${p.protein}</div>` : ''}
           ${p.accession ? `<div><b style="color:var(--accent-cyan)">UniProt:</b> ${uniprotUrl ? `<a href="${uniprotUrl}" target="_blank" rel="noopener" class="mono">${p.accession} ↗</a>` : `<span class="mono">${p.accession}</span>`}</div>` : ''}
@@ -8005,7 +8726,7 @@ async function openCompareModal() {
       ${pathBlock}
       <div class="cmp-sub">Per-HLA binding (all ${bind.length})</div>
       <div class="bind-wrap"><table class="bind-table">
-        <thead><tr><th>HLA</th><th>Rank%</th><th>nM</th><th>Cat</th><th>Immuno</th><th>#Det</th><th>Recur</th></tr></thead>
+        <thead><tr><th>HLA</th><th>Rank%</th><th>nM</th><th>Cat</th><th>DeepImm</th><th>PRIME</th><th>Interp.</th><th>#Det</th><th>Recur</th></tr></thead>
         <tbody>${bindRows}</tbody>
       </table></div>
       <div class="cmp-sub">Figures</div>
@@ -8097,7 +8818,8 @@ async function openCompareModal() {
         ${attr('Unique', r => r[COL.unique]===1 ? 'yes' : 'no')}
         ${attr('Atlas safety', atlasSummary, {html:true})}
         ${attr('HLAs (all)', bindSummary, {html:true})}
-        ${attr('Max immunogenicity', immunoSummary, {html:true})}
+        ${attr('Best DeepImmuno', immunoSummary, {html:true})}
+        ${attr('Best PRIME %rank', primeSummary, {html:true})}
         ${attr('ENSG', r => r[COL.ensg] || '—')}
       </tbody>
     </table>
@@ -8272,8 +8994,13 @@ async function openDrawer(r, opts) {
     const freq = hlaFreq(allele);
     const freqStr = freq != null ? (freq * 100).toFixed(1) + '%' : '—';
     const freqCls = freq != null ? (freq >= 0.10 ? 'color:var(--accent-lime)' : (freq >= 0.03 ? 'color:var(--accent-amber)' : 'color:var(--text-2)')) : 'color:var(--text-3)';
-    const immunoStr = immunoScore != null ? immunoScore.toFixed(2) : '—';
-    const immunoCls = immunoScore != null ? (immunoScore >= 0.5 ? 'color:var(--accent-lime)' : 'color:var(--accent-amber)') : 'color:var(--text-3)';
+    // Both models are read off THIS row, i.e. this exact (peptide, allele) pair —
+    // never a best-across-alleles value. `== null` keeps a legitimate 0 visible.
+    const primeScore = b[8] != null ? b[8] : null;
+    const immunoStr = immunoScore != null ? immunoScore.toFixed(3) : 'Not available';
+    const immunoCls = immunoScore != null ? (immunoScore >= IMMUNO_CFG.deep.favorable ? 'color:var(--accent-lime)' : 'color:var(--accent-amber)') : 'color:var(--text-3)';
+    const primeStr = primeScore != null ? primeScore.toFixed(3) : 'Not available';
+    const primeCls = primeScore != null ? (primeScore <= IMMUNO_CFG.prime.favorable ? 'color:var(--accent-lime)' : 'color:var(--accent-amber)') : 'color:var(--text-3)';
     const recStr = hlaRec != null ? (hlaRec * 100).toFixed(0) + '%' : '—';
     return `<tr>
       <td><span class="hla-tag">${allele}</span></td>
@@ -8282,10 +9009,12 @@ async function openDrawer(r, opts) {
       <td><span class="bind-cat ${catCls}">${cat||'—'}</span></td>
       <td class="num" style="${freqCls}">${freqStr}</td>
       <td class="num" style="${immunoCls}">${immunoStr}</td>
+      <td class="num" style="${primeCls}">${primeStr}</td>
+      <td>${immunoBadgeHtml(b, pep, bindSorted)}</td>
       <td class="num">${nDetected}${nTotal ? '/' + nTotal : ''}</td>
       <td class="num">${recStr}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--text-3);padding:14px 0;">No per-HLA binding records on file.<br><span style="font-size:10.5px;font-style:italic;">This can occur when the peptide was detected in samples where HLA typing was unavailable, or when the presenting allele could not be confidently assigned by NetMHCpan. The peptide was still empirically identified by mass spectrometry.</span></td></tr>';
+  }).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--text-3);padding:14px 0;">No per-HLA binding records on file.<br><span style="font-size: 11.5px;font-style:italic;">This can occur when the peptide was detected in samples where HLA typing was unavailable, or when the presenting allele could not be confidently assigned by NetMHCpan. The peptide was still empirically identified by mass spectrometry.</span></td></tr>';
 
   // MS/MS spectrum hotlink. Public cancers -> NYU server with {CODE}_-prefixed
   // names; in-house cancers -> their private asset base with NON-prefixed names
@@ -8431,7 +9160,7 @@ async function openDrawer(r, opts) {
       <div class="hero-kicker">Microbial / viral origin</div>
       <div class="hero-mut-primary">
         <span class="hero-gene">${organism}</span>
-        ${pathogen.code && organism !== pathogen.code ? `<span class="mono" style="color:var(--text-3);font-size:12px">(${pathogen.code})</span>` : ''}
+        ${pathogen.code && organism !== pathogen.code ? `<span class="mono" style="color:var(--text-3);font-size: 13px">(${pathogen.code})</span>` : ''}
       </div>
       ${protein ? `<div class="hero-mut-meta"><span class="hero-meta"><b>Protein</b> ${protein}</span></div>` : ''}
       <div class="hero-mut-meta">
@@ -8439,7 +9168,7 @@ async function openDrawer(r, opts) {
         ${gn ? `<span class="hero-meta"><b>Gene</b> <span class="mono">${gn}</span></span>` : ''}
       </div>
     </div>`;
-  } else if (rawSource && ['splicing', 'ERV', 'TE_chimeric_transcript', 'intron_retention', 'nuORF', 'fusion'].includes(r[COL.cls])) {
+  } else if (rawSource && ['splicing', 'ERV', 'TE_chimeric_transcript', 'intron_retention', 'fusion'].includes(r[COL.cls]) || isNuorfFamily(r[COL.cls])) {
     // Pull coordinate, transcript, and TE/retroelement fragments from the
     // structured source string so users can read location at a glance instead
     // of parsing the raw pipe-blob. Two coordinate formats appear in the raw
@@ -8462,6 +9191,7 @@ async function openDrawer(r, opts) {
       splicing: 'Splice junction', ERV: 'Retroelement',
       TE_chimeric_transcript: 'TE chimeric transcript',
       intron_retention: 'Retained intron', nuORF: 'Cryptic ORF',
+      lncRNA: 'lncRNA ORF', pseudogene: 'Pseudogene ORF',
       fusion: 'Gene fusion',
     }[r[COL.cls]] || 'Source annotation';
     // Pick the best primary identifier: gene > retroelement family > transcript.
@@ -8470,14 +9200,14 @@ async function openDrawer(r, opts) {
       <div class="hero-kicker">${kicker} · source annotation</div>
       <div class="hero-mut-primary">
         <span class="hero-gene">${primary}</span>
-        ${coord ? `<span class="mono" style="color:var(--text-1);font-size:13px">${coord}</span>` : ''}
+        ${coord ? `<span class="mono" style="color:var(--text-1);font-size: 14.5px">${coord}</span>` : ''}
       </div>
       <div class="hero-mut-meta">
-        ${transcript ? `<span class="hero-meta"><b>Transcript</b> <span class="mono">${transcript}</span>${txMeta && txMeta.displayName ? ` <span style="color:var(--text-3);font-size:11px">(${txMeta.displayName})</span>` : ''}</span>` : ''}
+        ${transcript ? `<span class="hero-meta"><b>Transcript</b> <span class="mono">${transcript}</span>${txMeta && txMeta.displayName ? ` <span style="color:var(--text-3);font-size: 12px">(${txMeta.displayName})</span>` : ''}</span>` : ''}
         ${txMeta && txMeta.ensg ? `<span class="hero-meta"><b>ENSG</b> <span class="mono">${txMeta.ensg}</span></span>` : ''}
         ${txMeta && txMeta.biotype ? `<span class="hero-meta"><b>Biotype</b> ${txMeta.biotype.replace(/_/g, ' ')}</span>` : ''}
         ${teFamily && teFamily !== primary ? `<span class="hero-meta"><b>TE family</b> <span class="mono">${teFamily}</span></span>` : ''}
-        ${r[COL.cls] === 'nuORF' && r[COL.nuorf] ? `<span class="hero-meta"><b>Subtype</b> ${r[COL.nuorf]}</span>` : ''}
+        ${isNuorfFamily(r[COL.cls]) && r[COL.nuorf] ? `<span class="hero-meta"><b>Subtype</b> ${r[COL.nuorf]}</span>` : ''}
       </div>
       ${(() => {
         const links = [];
@@ -8486,7 +9216,7 @@ async function openDrawer(r, opts) {
         // GRCh38 Ensembl links and the GRCh37 region link disagree with the
         // hg19 ORF coordinates the row actually shows, so they just add
         // noise. Skip the txMeta-derived links entirely for this class.
-        if (cls !== 'nuORF') {
+        if (!isNuorfFamily(cls)) {
           // Preferred route: the robust useast Gene/Summary URL with g/r/t
           // params (this is what the Ensembl search feature actually generates
           // and survives edge outages that break the bare transcript page).
@@ -8510,7 +9240,7 @@ async function openDrawer(r, opts) {
           // from the NeoVerse pipeline which aligns to GRCh38 → hg38.
           const ucscHg19 = `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg19 ↗</a>`;
           const ucscHg38 = `<a class="xref" href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=${encodeURIComponent(c)}" target="_blank" rel="noopener">UCSC hg38 ↗</a>`;
-          if (cls === 'nuORF') {
+          if (isNuorfFamily(cls)) {
             links.push(ucscHg19);
           } else {
             links.push(`<a class="xref" href="https://useast.ensembl.org/Homo_sapiens/Location/View?r=${encodeURIComponent(c.replace(/^chr/, ''))}" target="_blank" rel="noopener">Ensembl GRCh38 region ↗</a>`);
@@ -8586,7 +9316,7 @@ async function openDrawer(r, opts) {
       <div class="gbar"><div class="lbl">Tumor (median)</div><div class="track"><div class="fill fill-tumor" style="width:${Math.min(100, tumor/maxE*100).toFixed(0)}%"></div></div><div class="v">${tumor.toFixed(1)}</div></div>
       <div class="gbar"><div class="lbl">Max GTEx normal</div><div class="track"><div class="fill fill-normal" style="width:${Math.min(100, normal/maxE*100).toFixed(0)}%"></div></div><div class="v">${normal.toFixed(1)}</div></div>
     </div>
-    <div class="window-interp">${windowInterp(tumor, normal)}${exprInherited ? ` <span style="color:var(--text-3);font-size:11.5px;font-style:italic;">(inherited from parent gene — junction/variant-level expression not available)</span>` : ''}</div>
+    <div class="window-interp">${windowInterp(tumor, normal)}${exprInherited ? ` <span style="color:var(--text-3);font-size: 12.5px;font-style:italic;">(inherited from parent gene — junction/variant-level expression not available)</span>` : ''}</div>
     ${sourceBlock}
 
     ${(() => {
@@ -8638,7 +9368,7 @@ async function openDrawer(r, opts) {
           'TE_chimeric_transcript': 'TE family / junction pair',
         })[r[COL.cls]] || 'source';
         const candLine = cands.length
-          ? `<div style="margin-top:8px;padding:8px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;font-size:11.5px;color:var(--text-2);line-height:1.5;"><b style="color:var(--text-1)">${cands.length} candidate source${cands.length===1?'':'s'} detected:</b> ${cands.map(c => `<code style="background:var(--bg-3);padding:1px 5px;border-radius:3px;">${c}</code>`).join(' · ')}</div>`
+          ? `<div style="margin-top:8px;padding:8px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:6px;font-size: 12.5px;color:var(--text-2);line-height:1.5;"><b style="color:var(--text-1)">${cands.length} candidate source${cands.length===1?'':'s'} detected:</b> ${cands.map(c => `<code style="background:var(--bg-3);padding:1px 5px;border-radius:3px;">${c}</code>`).join(' · ')}</div>`
           : '';
         return `
         <div class="section-title" data-tip="This peptide could not be attributed to a single ${kindLabel} in this cancer — multiple candidates match. Per-source differential plots are intentionally omitted to avoid misleading attribution.">Per-source differential — multi-mapping</div>
@@ -8722,19 +9452,30 @@ async function openDrawer(r, opts) {
     <div class="section-subtitle">Normalized MS intensity in the individual patient samples that detected this peptide — consistent high bars across samples indicate a shared, robustly presented target.</div>
     ${intensBlock}` : ''}
 
-    <div class="section-title" data-tip="Shows which HLA alleles present this peptide on the tumor cell surface. Strong binders (SB, rank ≤ 0.5%) are the most therapeutically relevant. US Freq shows what % of the population carries each allele. Immunogenicity predicts whether T cells will recognize the peptide-HLA complex (DeepImmuno score, higher = more immunogenic). Recurrence shows the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples${bind.length ? `<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadObservedHlaCsv()">${DL_ICON}<span>CSV</span></button>` : ''}</div>
-    <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, DeepImmuno score, and per-patient recurrence.</div>
+    <div class="section-title" data-tip="Every HLA allele on which this peptide was actually detected. SB = NetMHCpan strong binder (rank &lt; 0.5%). US Freq is the share of the population carrying that allele. DeepImmuno and PRIME %rank are two independent immunogenicity predictions for that exact allele; the definitions and cutoffs are stated in the grey text under the table. Recurrence is the fraction of patients with that HLA who present this peptide.">Per-HLA binding — observed samples${bind.length ? `<button class="dl-inline-btn" title="Download this table as CSV" onclick="downloadObservedHlaCsv()">${DL_ICON}<span>CSV</span></button>` : ''}</div>
+    <div class="section-subtitle">Each HLA allele on which this peptide was actually detected, with NetMHCpan binding strength, US population frequency, both immunogenicity predictions for that exact allele, and per-patient recurrence.</div>
     <div class="bind-wrap">
       <table class="bind-table">
-        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th><th>Immuno.</th><th>#Det/#Tot</th><th>Recur.</th></tr></thead>
+        <thead><tr><th>HLA</th><th>Rank %</th><th>Affinity (nM)</th><th>Category</th><th>US Freq.</th>
+          <th>DeepImmuno</th>
+          <th>PRIME %rank</th>
+          <th>Interpretation</th>
+          <th>#Det/#Tot</th><th>Recur.</th></tr></thead>
         <tbody>${bindRows}</tbody>
       </table>
       <div class="bind-legend">
-        <span class="bind-cat bind-sb">SB</span> strong binder (rank ≤ 0.5%)
-        <span class="bind-cat bind-wb">WB</span> weak binder (rank ≤ 2%)
-        · Immuno. = DeepImmuno immunogenicity score
-        · Recur. = #Detected / #Total patients with this HLA
+        <div class="lg-row">
+          <span class="lg-item"><span class="bind-cat bind-sb">SB</span> NetMHCpan strong binder (rank &lt; 0.5%)</span>
+          <span class="lg-item"><span class="bind-cat bind-wb">WB</span> weak binder (rank ≤ 2%)</span>
+        </div>
+        <div class="lg-row">DeepImmuno: higher = more favorable, favorable at ≥ ${IMMUNO_CFG.deep.favorable}
+          · PRIME %rank: lower = more favorable, favorable at ≤ ${IMMUNO_CFG.prime.favorable}% (the cutoff used in PRIME's publication) — an immunogenicity rank, not the NetMHCpan binding rank</div>
+        <div class="lg-row">Interpretation: <b style="color:var(--accent-lime)">green</b> both models favorable ·
+          <b style="color:var(--immuno-borderline)">yellow-green</b> one favorable, the other just short ·
+          <b style="color:#f87171">red</b> the two models disagree substantially</div>
+        <div class="lg-row">Recur. = #Detected / #Total patients with this HLA</div>
       </div>
+      ${immunoTherapyHtml(bindSorted, pep)}
     </div>
 
     ${bind.length ? (() => {
@@ -8745,7 +9486,7 @@ async function openDrawer(r, opts) {
         const covAll = allBinders.length ? 1 - allBinders.reduce((p, b) => p * (1 - (hlaFreq(b[0]) || 0)), 1) : 0;
         const totalDetected = bind.reduce((s, b) => s + (b[4] || 0), 0);
         return `<div class="section-title" data-tip="Estimates what percentage of the US population could be targeted through this peptide, based on how common the presenting HLA alleles are. Higher coverage = more patients who could benefit from a therapy targeting this peptide.">Population coverage estimate</div>
-    <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;color:var(--text-1);line-height:1.6;">
+    <div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size: 14px;color:var(--text-1);line-height:1.6;">
       <b style="color:var(--accent-cyan)">${(covAll * 100).toFixed(1)}%</b> of the US population carries at least one presenting allele (strong + weak binders).`
           + (sbAlleles.length ? ` <b style="color:var(--accent-lime)">${(covSB * 100).toFixed(1)}%</b> carry a strong-binding allele.` : '')
           + `<br>Detected across <b style="color:var(--text-0)">${totalDetected}</b> immunopeptidome sample(s) total.
@@ -8767,7 +9508,7 @@ async function openDrawer(r, opts) {
     ${safetyBlock}` : ''}
 
     <div class="section-title" data-tip="An automated assessment of this peptide's therapeutic potential based on its recurrence, expression window, essentiality, safety profile, and molecular class. Summarizes the key factors a researcher would consider when prioritizing this target for TCR-T, CAR-T, bispecific, or vaccine development.">Therapeutic interpretation</div>
-    <p style="font-size:12.5px; color:var(--text-1); line-height:1.65; margin:0;">${interp(r)}</p>
+    <p style="font-size: 14px; color:var(--text-1); line-height:1.65; margin:0;">${interp(r)}</p>
 
     <div class="section-title" data-tip="Quick links to external databases for deeper investigation of this gene and peptide: GeneCards (gene function), UniProt (protein structure), DepMap (essentiality), Ensembl (genomic context), and IEDB (known immune epitopes).">Cross-references</div>
     <div class="xref-row">${xrefs.join('')}</div>
@@ -8795,7 +9536,7 @@ async function openDrawer(r, opts) {
 }
 
 function windowInterp(tumor, normal) {
-  if (!tumor && !normal) return '<span style="color:var(--text-3)">No RNA expression on file for this gene.</span><br><span style="color:var(--text-3);font-size:11px;font-style:italic;">This is common for mutation neoantigens, cryptic ORFs, retroelements, and pathogen-derived peptides — these arise from non-canonical sources where standard gene-level TCGA/GTEx expression is not applicable. The peptide was still empirically detected on HLA by mass spectrometry.</span>';
+  if (!tumor && !normal) return '<span style="color:var(--text-3)">No RNA expression on file for this gene.</span><br><span style="color:var(--text-3);font-size: 12px;font-style:italic;">This is common for mutation neoantigens, cryptic ORFs, retroelements, and pathogen-derived peptides — these arise from non-canonical sources where standard gene-level TCGA/GTEx expression is not applicable. The peptide was still empirically detected on HLA by mass spectrometry.</span>';
   const ratio = tumor / Math.max(normal, 0.01);
   if (ratio > 50) return `Tumor &gt;50× highest normal tissue — <b style="color:var(--accent-lime)">wide therapeutic window</b>.`;
   if (ratio > 10) return `Tumor ${ratio.toFixed(0)}× highest normal tissue — <b style="color:var(--accent-lime)">wide therapeutic window</b>.`;
@@ -8815,11 +9556,61 @@ function interp(r) {
   else if (r[COL.tumorExp]) bits.push(`Narrow tumor/normal window (${ratio.toFixed(1)}×) — check normal tissue safety carefully.`);
   if (r[COL.depmap] != null && r[COL.depmap] < -0.5) bits.push(`Strongly essential in DepMap (${r[COL.depmap].toFixed(2)}) — tumor dependency.`);
   if (cls === 'nuORF') bits.push(`Cryptic ORF — validate with Ribo-Seq.`);
+  if (cls === 'lncRNA') bits.push(`Translated from a long non-coding RNA — confirm the ORF with Ribo-Seq.`);
+  if (cls === 'pseudogene') bits.push(`Pseudogene-derived — confirm the ORF with Ribo-Seq and check read mapping against the parent gene.`);
   if (cls === 'splicing') bits.push(`Splicing-derived — verify junction specificity vs normal tissue.`);
   if (cls === 'variant') bits.push(`Mutation-derived neoantigen — cross-reference tumor WGS/WES.`);
   if (cls === 'ERV' || cls === 'TE_chimeric_transcript') bits.push(`Transposable element origin — assess off-target binding.`);
   if (cls === 'pathogen') bits.push(`Microbial/viral origin — cross-reference tumor microbiome data.`);
-  return bits.join(' ');
+  bits.push(immunoInterpSentence(r));
+  return bits.filter(Boolean).join(' ');
+}
+
+/* Immunogenicity clause for the therapeutic-interpretation paragraph.
+   Deterministic, like the rest of interp(). It deliberately stays a research
+   modality consideration: it never names a therapy as recommended, never mixes
+   these predictions with MS evidence / tumor selectivity / normal-tissue risk,
+   and never lets a low or missing score exclude engineered binder approaches. */
+function immunoInterpSentence(r) {
+  const bind = r[COL.bind] || [];
+  if (!bind.length) return '';
+  const tally = {};
+  bind.forEach(b => {
+    const { deep, prime } = immunoPair(b);
+    const s = immunoInterpret(deep, prime, {pep: r[COL.pep], allele: b[0]}).state;
+    (tally[s] = tally[s] || []).push(b[0]);
+  });
+  if (!IMMUNO_CFG.primeSemanticsConfirmed) {
+    return 'Immunogenicity interpretation pending — the PRIME metric’s semantics are ' +
+      'unconfirmed, so the two predictions are displayed without an agreement call.';
+  }
+  const conc = tally['concordant-favorable'] || [];
+  const disc = tally['discordant'] || [];
+  const none = tally['neither'] || [];
+  const single = tally['single'] || [];
+  const out = [];
+  if (conc.length) {
+    out.push(`DeepImmuno and PRIME both meet their favorable thresholds on ` +
+      `${conc.length} allele${conc.length > 1 ? 's' : ''} (${conc.slice(0, 3).join(', ')}` +
+      `${conc.length > 3 ? ', …' : ''}) — supports prioritizing those pairs for experimental ` +
+      `evaluation; it does not establish immunogenicity.`);
+  }
+  if (disc.length) {
+    out.push(`The two models disagree on ${disc.length} allele${disc.length > 1 ? 's' : ''}; ` +
+      `neither overrides the other.`);
+  }
+  if (single.length && !conc.length && !disc.length) {
+    out.push(`Only one model returned a prediction here, so agreement cannot be assessed.`);
+  }
+  if (!conc.length && !disc.length && none.length) {
+    out.push(`Neither model meets its favorable threshold on any observed allele. That ` +
+      `deprioritizes endogenous T-cell recognition only — it does not rule out TCR-mimic ` +
+      `antibody, PC-CAR, or bispecific approaches, which do not depend on the natural ` +
+      `T-cell repertoire.`);
+  }
+  if (!out.length) return '';
+  return out.join(' ') + ' Predicted immunogenicity is separate from the MS, expression, and ' +
+    'safety evidence above, and requires experimental validation.';
 }
 
 function updateCsvLink(filt) {
@@ -8833,10 +9624,11 @@ function updateCsvLink(filt) {
   const rows = filt.slice(0, 10000).map(r => {
     const tExp = r[COL.tumorExp], nExp = r[COL.normalExp];
     const ratio = tExp && nExp != null ? (tExp / Math.max(nExp, 0.01)).toFixed(2) : '';
-    // binding_detail: allele|rank|nM|cat|freq|immunogenicity|detected/total|recurrence
+    // binding_detail: allele|rank|nM|cat|freq|deepimmuno|prime_rank|detected/total|recurrence
+    // An empty deepimmuno/prime_rank field means "no prediction", never zero.
     const bindDetail = (r[COL.bind]||[]).map(b => {
       const freq = hlaFreq(b[0]);
-      return `${b[0]}|${b[1]!=null?b[1]:''}|${b[2]!=null?b[2]:''}|${b[3]||''}|${freq!=null?(freq*100).toFixed(1)+'%':''}|${b[5]!=null?b[5]:''}|${b[4]||0}/${b[6]||'?'}|${b[7]!=null?(b[7]*100).toFixed(0)+'%':''}`;
+      return `${b[0]}|${b[1]!=null?b[1]:''}|${b[2]!=null?b[2]:''}|${b[3]||''}|${freq!=null?(freq*100).toFixed(1)+'%':''}|${b[5]!=null?b[5]:''}|${b[8]!=null?b[8]:''}|${b[4]||0}/${b[6]||'?'}|${b[7]!=null?(b[7]*100).toFixed(0)+'%':''}`;
     }).join(';');
     return [
       r[COL.code], r[COL.pep], r[COL.pep].length, r[COL.gene]||'', r[COL.ensg]||'',
@@ -8906,13 +9698,13 @@ function openCitation() {
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: ${bg}; color: ${text}; margin: 0; padding: 36px 24px; }
   .wrap { max-width: 820px; margin: 0 auto; }
-  h1 { font-size: 22px; margin: 0 0 6px; }
-  .lede { color: ${muted}; margin: 0 0 24px; font-size: 14px; }
+  h1 { font-size: 23px; margin: 0 0 6px; }
+  .lede { color: ${muted}; margin: 0 0 24px; font-size: 15.5px; }
   section { background: ${card}; border: 1px solid ${border}; border-radius: 12px; padding: 20px; margin-bottom: 18px; position: relative; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: ${muted}; margin: 0 0 10px; font-weight: 600; }
-  pre { white-space: pre-wrap; word-break: break-word; margin: 0; font-family: ui-monospace, 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.65; color: ${text}; }
-  p.apa { margin: 0; font-size: 13.5px; line-height: 1.65; }
-  button { position: absolute; top: 14px; right: 14px; background: transparent; color: ${muted}; border: 1px solid ${border}; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; }
+  h2 { font-size: 14.5px; text-transform: uppercase; letter-spacing: 0.1em; color: ${muted}; margin: 0 0 10px; font-weight: 600; }
+  pre { white-space: pre-wrap; word-break: break-word; margin: 0; font-family: ui-monospace, 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.65; color: ${text}; }
+  p.apa { margin: 0; font-size: 15px; line-height: 1.65; }
+  button { position: absolute; top: 14px; right: 14px; background: transparent; color: ${muted}; border: 1px solid ${border}; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
   button:hover { color: ${text}; border-color: ${text}; }
   a { color: ${link}; }
 </style></head><body><div class="wrap">
@@ -9234,7 +10026,12 @@ window.addEventListener('popstate', async () => {
     tip.style.left = x + 'px';
     tip.style.top = y + 'px';
   }
+  let pinned = null;
   function hide() {
+    // A tooltip opened by click/tap or keyboard focus stays up until it is
+    // explicitly dismissed. Without this guard the mouseout that fires when the
+    // pointer crosses into a child element tears down a just-pinned tooltip.
+    if (pinned) return;
     hideTimer = setTimeout(() => tip.classList.remove('show'), 80);
   }
 
@@ -9255,6 +10052,47 @@ window.addEventListener('popstate', async () => {
   document.addEventListener('mouseout', e => {
     const el = e.target.closest('[data-tip]') || e.target.closest('[title]');
     if (el || e.target === activeEl) { hide(); activeEl = null; }
+  });
+
+  // Keyboard + touch parity. Hover alone leaves tooltip content unreachable for
+  // keyboard and touch users, which matters most for the immunogenicity badges,
+  // where the tooltip carries the whole explanation. A tooltip opened by click
+  // or focus is pinned until it is dismissed, rather than fading on a timer.
+  let pinnedAt = 0;
+  function open(el) {
+    const text = el.getAttribute('data-tip') || el.getAttribute('title');
+    if (!text) return;
+    clearTimeout(hideTimer);
+    activeEl = el; pinned = el; pinnedAt = Date.now();
+    show(el, text);
+  }
+  function unpin() {
+    pinned = null; activeEl = null;
+    clearTimeout(hideTimer);
+    tip.classList.remove('show');
+  }
+  document.addEventListener('focusin', e => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (el) open(el);
+  });
+  document.addEventListener('focusout', e => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (el && el === pinned) unpin();
+  });
+  document.addEventListener('click', e => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (!el) { if (pinned) unpin(); return; }
+    // Clicking a button also focuses it, and that focusin already pinned the
+    // tooltip. Without the age check the click half of the same gesture would
+    // immediately toggle it back off, so a mouse click would never open it.
+    if (el === pinned) {
+      if (Date.now() - pinnedAt > 250) unpin();   // a genuine second tap closes
+      return;
+    }
+    open(el);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && pinned) unpin();
   });
 })();
 </script>
@@ -9388,11 +10226,17 @@ window.addEventListener('popstate', async () => {
     if (a) a.style.display = '';
     if (m) m.style.display = 'none';
     setQueriesPillVisible(null);
+    // Signed out: restore the full-width nav labels (see the min-width:1600 block).
+    try { document.body.classList.remove('iv-signed-in'); } catch (e) {}
   }
   function showAccount(user) {
     const a = document.getElementById('ivSignInBtn');
     const m = document.getElementById('ivUserMenu');
     if (a) a.style.display = 'none';
+    // Marks the nav as carrying the signed-in-only controls (in-house pill,
+    // account chip, admin query counter) so the min-width:1600 rules can
+    // compact them and keep the section links from being squeezed.
+    try { document.body.classList.add('iv-signed-in'); } catch (e) {}
     if (!m) return;
     m.style.display = '';
     const display = user.name || user.email.split('@')[0];
@@ -9673,7 +10517,7 @@ window.addEventListener('popstate', async () => {
     if (!t) {
       t = document.createElement('div');
       t.id = 'ivToast';
-      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:11px 18px;border-radius:12px;font-size:13.5px;font-weight:500;z-index:9999;box-shadow:0 12px 32px rgba(0,0,0,0.35);transition:opacity 0.2s;backdrop-filter:blur(10px);';
+      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:11px 18px;border-radius:12px;font-size: 15px;font-weight:500;z-index:9999;box-shadow:0 12px 32px rgba(0,0,0,0.35);transition:opacity 0.2s;backdrop-filter:blur(10px);';
       document.body.appendChild(t);
     }
     const colors = {

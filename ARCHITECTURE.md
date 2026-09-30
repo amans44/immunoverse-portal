@@ -621,6 +621,50 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
+### 2026-09-30 — Immunogenicity panel reworked on Frank's review; /reviewers/ resynced
+
+**Where:** `index.html` (IMMUNO_CFG, `immunoInterpret`, `immunoBadgeHtml`, new
+`immunoTherapyHtml`, legend, CSS), mirrored verbatim into `reviewers/index.html`;
+`reviewers/data_js/` + `reviewers/data/` refreshed via `sync_reviewers.py`.
+
+Frank's four points, all implemented:
+- **PRIME cutoff 0.5% → 2%** (the cutoff used in PRIME's own publication) and
+  disagreement is now **graded in three tiers** instead of one "Discordant" state:
+  green both favorable · **yellow-green** one favorable with the other just short ·
+  red a substantial parting. Borderline bands are `DeepImmuno ≥ 0.35` (median of
+  the sub-threshold values is 0.365) and `PRIME ≤ 10%` (5× the cutoff) — portal
+  heuristics. Live distribution over 43,833 pairs: **59.7% green, 16.0%
+  yellow-green, 6.7% red**, 14.6% single-model, 1.6% no data.
+  Borderline is deliberately GREEN-ADJACENT (`--immuno-borderline`), not amber —
+  it should read as nearly-concordant, not as a warning.
+- **Grey legend** now states `NetMHCpan strong binder (rank < 0.5%)` and PRIME at
+  2%, in `.lg-row` blocks where each badge and its label are one `nowrap` unit so
+  "WB" can never be stranded from "weak binder".
+- **The blue callout is replaced** by `immunoTherapyHtml()` — a deterministic,
+  per-peptide, per-allele modality summary naming the actual alleles (concordant →
+  vaccine / TIL / TCR-T; low or conflicting → PC-CAR, BiTEs, TCR-T from a naive
+  repertoire). One short caveat line is retained: this was otherwise the last place
+  the page said these are not clinical recommendations.
+- **All hover removed from this table.** The badge is a plain `<span>` (no
+  `data-tip`, not focusable) and the three column-header tooltips are gone. Because
+  the tooltip no longer carries it, a red badge now NAMES the model
+  ("PRIME %rank favorable only") rather than saying a bare "Discordant".
+- The section tooltip was stale — it still described a single DeepImmuno score and
+  gave SB as `≤ 0.5%`. Rewritten.
+
+**`/reviewers/` was ~2 months behind** — it had neither the immunogenicity feature
+nor the class split (its data still read nuORF=10,707). Data mirrored with
+`sync_reviewers.py`; `index.html` + `chatbot.js` copied by hand, per the precedent
+of `095082b`. **Note:** that script's docstring claims reviewers is a frozen,
+login-free page — it is NOT, it carries the same auth code as root.
+
+**Unresolved, unchanged:** PRIME's model version, and whether the column is PRIME's
+immunogenicity `%Rank` or its `%RankBinding` passthrough. Relevant to the tier
+choice: Spearman(NetMHCpan %rank, PRIME) = **+0.75** over 25k pairs, so at a 2%
+cutoff "concordant" drifts toward meaning "is a good binder" — which is already the
+Rank % column. Spearman(DeepImmuno, PRIME) = +0.07: DeepImmuno is the independent
+signal, and the yellow-green band is what stops green becoming a rubber stamp.
+
 ### 2026-09-29 — nuORF split into Cryptic ORF / lncRNA / Pseudogene
 
 **Where:** `integrate_data.py` (`refine_nuorf_class`, `CLASS_LABELS`),
