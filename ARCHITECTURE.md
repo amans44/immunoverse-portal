@@ -621,6 +621,51 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
+### 2026-09-30 — Class names follow Figure 1B; in-house cohorts split
+
+**Where:** `index.html` + `reviewers/index.html` (CLASS_LABELS, CLASS_TIPS,
+CLASS_DESC), `integrate_data.py` (CLASS_LABELS), regenerated `data_js/` +
+`data/` label copies, and the six in-house `.js` files in GCS.
+
+**Naming.** Frank asked that the portal use Figure 1B's names verbatim so the
+paper and the site share one vocabulary. Labels are now
+`Figure-1B name (previous portal name)`; where the two already matched there is no
+bracket, so lncRNA, Pseudogene and Intron retention stand alone.
+
+| key | label |
+|---|---|
+| `self_gene` | Self-gene (Canonical self-antigen) |
+| `splicing` | Splicing (Alternative splicing) |
+| `variant` | Variant (Mutation neoantigen) |
+| `nuORF` | Cryptic ORF (nuORF) |
+| `lncRNA` | lncRNA |
+| `pseudogene` | Pseudogene |
+| `ERV` | TE Autonomous (Endogenous retroelement) |
+| `TE_chimeric_transcript` | TE Chimera (TE chimeric transcript) |
+| `intron_retention` | Intron retention |
+| `fusion` | Fusion (Gene fusion) |
+| `pathogen` | Pathogen (Microbial / viral) |
+
+**The KEYS did not change, and must not.** They appear in shareable URLs
+(`#explorer?class=ERV`), saved searches, view history and CSV exports. Only labels
+moved, so every existing link keeps working. `integrate_data.CLASS_LABELS` must
+mirror the JS dict — it builds the search index's class metadata, so a name that
+differs there is a name search cannot find.
+
+**In-house cohorts were still on the pre-split taxonomy** (443 nuORF, 0 lncRNA,
+0 pseudogene) because `integrate_inhouse.py` builds them from GCS and had not run
+since the split. Applied the same `refine_nuorf_class` mapping directly to the six
+built `.js` files rather than a full rebuild — a rebuild would re-derive every
+field and re-resolve asset names when only index 2 needed to change. 102 rows
+moved: lncRNA 86, pseudogene 16 (OS 52+11, MB 15+2, DIPG 9+1, CHORDOMA 8+2,
+NEPC 2+0, cTEC none). Verified nothing outside the class field differed.
+Pre-change copies are at
+`gs://immunoverse-private-datasets/reference/backups/inhouse-preclasssplit-2026-09-30/`.
+
+**Public vs admin totals differ, and reporting must say which.** Public atlas
+26,603; in-house adds 1,829 for a signed-in lab member, so e.g. fusion reads 11
+public but 12 to an admin, and rna_edit/circRNA (5/2) exist only in-house.
+
 ### 2026-09-30 — Immunogenicity panel reworked on Frank's review; /reviewers/ resynced
 
 **Where:** `index.html` (IMMUNO_CFG, `immunoInterpret`, `immunoBadgeHtml`, new

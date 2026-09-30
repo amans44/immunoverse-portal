@@ -111,20 +111,20 @@ CANCER_META = {
 }
 
 CLASS_LABELS = {
-    'self_gene': 'Canonical self-antigen',
-    'splicing': 'Alternative splicing',
-    'variant': 'Variant / neoantigen',
-    'nuORF': 'Cryptic / non-canonical ORF',
-    'lncRNA': 'lncRNA ORF',
-    'pseudogene': 'Pseudogene ORF',
-    'ERV': 'Endogenous retrovirus',
-    'TE_chimeric_transcript': 'TE chimeric transcript',
+    # Must mirror CLASS_LABELS in index.html — this dict builds the search index's
+    # class metadata, so a name that differs here is a name search cannot find.
+    # Names follow Figure 1B of the manuscript; brackets carry the prior wording.
+    'self_gene': 'Self-gene (Canonical self-antigen)',
+    'splicing': 'Splicing (Alternative splicing)',
+    'variant': 'Variant (Mutation neoantigen)',
+    'nuORF': 'Cryptic ORF (nuORF)',
+    'lncRNA': 'lncRNA',
+    'pseudogene': 'Pseudogene',
+    'ERV': 'TE Autonomous (Endogenous retroelement)',
+    'TE_chimeric_transcript': 'TE Chimera (TE chimeric transcript)',
     'intron_retention': 'Intron retention',
-    'fusion': 'Gene fusion',
-    'pathogen': 'Pathogen-derived',
-    # Only ever populated by in-house cohorts, but they still need a label here:
-    # this dict is what builds the search index's class metadata, so a class
-    # missing from it is a class nobody can search for.
+    'fusion': 'Fusion (Gene fusion)',
+    'pathogen': 'Pathogen (Microbial / viral)',
     'rna_edit': 'RNA editing',
     'circRNA': 'Circular RNA',
 }

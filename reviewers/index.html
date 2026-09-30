@@ -4475,8 +4475,8 @@ const CLASS_TIPS = {
   nuORF:"Cryptic ORF: peptide translated from a non-canonical open reading frame — 5'/3' UTR uORFs and dORFs, out-of-frame and overlapping frames",
   lncRNA:'lncRNA ORF: peptide translated from a long non-coding RNA, a transcript annotated as non-protein-coding',
   pseudogene:'Pseudogene ORF: peptide translated from a pseudogene, a disabled copy of a parent gene normally presumed silent',
-  ERV:'Endogenous retroelement: peptide encoded by reactivated endogenous retroviruses or LINE/SINE elements',
-  TE_chimeric_transcript:'TE chimeric transcript: fusion transcript driven by a transposable element promoter',
+  ERV:'TE Autonomous: peptide encoded by an autonomously transcribed transposable element that carries its own ORF — endogenous retroviral and LINE/SINE. Called "TE Autonomous" in Figure 1B.',
+  TE_chimeric_transcript:'TE Chimera: fusion transcript driven by a transposable element promoter. Called "TE Chimera" in Figure 1B.',
   intron_retention:'Intron retention: peptide from an unspliced intron retained in tumor mRNA',
   fusion:'Gene fusion: peptide spanning a fusion junction between two genes',
   pathogen:'Microbial/viral: peptide from a tumor-resident pathogen (CMV, HPV, HBV, bacteria)',
@@ -5025,17 +5025,23 @@ function immunoTherapyHtml(bind, pep) {
 }
 
 const CLASS_LABELS = {
-  self_gene:'Canonical self-antigen',
-  splicing:'Alternative splicing',
-  variant:'Mutation neoantigen',
+  // Names follow Figure 1B of the manuscript exactly, so the portal and the paper
+  // use one vocabulary. The bracketed part is the descriptive name the portal used
+  // before, kept so readers who know the old term still recognise the class.
+  // NOTE: the KEYS below are load-bearing — they appear in shareable URLs
+  // (#explorer?class=ERV), saved searches, view history and CSV exports. Rename a
+  // label freely; never rename a key.
+  self_gene:'Self-gene (Canonical self-antigen)',
+  splicing:'Splicing (Alternative splicing)',
+  variant:'Variant (Mutation neoantigen)',
   nuORF:'Cryptic ORF (nuORF)',
-  lncRNA:'lncRNA ORF',
-  pseudogene:'Pseudogene ORF',
-  ERV:'Endogenous retroelement',
-  TE_chimeric_transcript:'TE chimeric transcript',
+  lncRNA:'lncRNA',
+  pseudogene:'Pseudogene',
+  ERV:'TE Autonomous (Endogenous retroelement)',
+  TE_chimeric_transcript:'TE Chimera (TE chimeric transcript)',
   intron_retention:'Intron retention',
-  fusion:'Gene fusion',
-  pathogen:'Microbial / viral',
+  fusion:'Fusion (Gene fusion)',
+  pathogen:'Pathogen (Microbial / viral)',
   rna_edit:'RNA editing',
   circRNA:'Circular RNA',
 };
@@ -5062,7 +5068,7 @@ const CLASS_DESC = {
   nuORF:'Cryptic ORFs from UTRs and overlapping or out-of-frame reading frames — the largest non-canonical class.',
   lncRNA:'ORFs translated from long non-coding RNAs — transcripts annotated as non-coding yet demonstrably presented on HLA.',
   pseudogene:'ORFs translated from pseudogenes — disabled gene copies presumed silent, but re-expressed and presented in tumors.',
-  ERV:'Endogenous retroviral / LINE-type retroelements, including the LINE1 ORF2 pan-cancer target.',
+  ERV:'Autonomously transcribed transposable elements carrying their own ORF — endogenous retroviral and LINE-type, including the LINE1 ORF2 pan-cancer target.',
   TE_chimeric_transcript:'Transposable elements acting as alternative promoters, donors, or acceptors for host transcripts.',
   intron_retention:'Retained-intron-derived peptides, enriched in AML and other splicing-disrupted cancers.',
   fusion:'Gene fusion junction peptides — rare but tumor-specific.',
