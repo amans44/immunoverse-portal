@@ -635,8 +635,11 @@ Frank's four points, all implemented:
   the sub-threshold values is 0.365) and `PRIME ≤ 10%` (5× the cutoff) — portal
   heuristics. Live distribution over 43,833 pairs: **59.7% green, 16.0%
   yellow-green, 6.7% red**, 14.6% single-model, 1.6% no data.
-  Borderline is deliberately GREEN-ADJACENT (`--immuno-borderline`), not amber —
-  it should read as nearly-concordant, not as a warning.
+  Borderline is **amber** (`--immuno-borderline`). Frank asked for a green-adjacent
+  shade so borderline would not read as alarming, and `#bef264` was tried and
+  shipped briefly — but at badge size it was indistinguishable from the concordant
+  green (CIE dE 39 vs green, against 77 for amber). Reverted on review. Do not
+  re-apply a green-adjacent value from that email without checking legibility.
 - **Grey legend** now states `NetMHCpan strong binder (rank < 0.5%)` and PRIME at
   2%, in `.lg-row` blocks where each badge and its label are one `nowrap` unit so
   "WB" can never be stranded from "weak binder".
