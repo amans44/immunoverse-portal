@@ -1,1 +1,472 @@
-{"cancers":[{"code":"AML","name":"Acute Myeloid Leukemia","group":"Heme","count":4025,"unique":3646,"safe":3646,"classes":{"self_gene":755,"ERV":2505,"lncRNA":108,"nuORF":508,"intron_retention":75,"splicing":35,"variant":8,"TE_chimeric_transcript":6,"pseudogene":25},"genes":651,"totalSamples":125},{"code":"BLCA","name":"Bladder Urothelial Carcinoma","group":"GU","count":20,"unique":17,"safe":17,"classes":{"self_gene":13,"nuORF":6,"pseudogene":1},"genes":22,"totalSamples":2},{"code":"BRCA","name":"Breast Invasive Carcinoma","group":"Breast","count":718,"unique":634,"safe":634,"classes":{"self_gene":258,"nuORF":292,"variant":48,"ERV":17,"pseudogene":13,"lncRNA":69,"splicing":12,"TE_chimeric_transcript":3,"fusion":2,"pathogen":4},"genes":450,"totalSamples":49},{"code":"CESC","name":"Cervical Squamous Cell Carcinoma","group":"Gyn","count":1350,"unique":1260,"safe":1260,"classes":{"nuORF":356,"ERV":48,"self_gene":776,"lncRNA":63,"splicing":11,"pseudogene":15,"pathogen":31,"variant":47,"TE_chimeric_transcript":3},"genes":543,"totalSamples":15},{"code":"CHOL","name":"Cholangiocarcinoma","group":"GI","count":5,"unique":5,"safe":5,"classes":{"self_gene":3,"nuORF":2},"genes":4,"totalSamples":4},{"code":"COAD","name":"Colon Adenocarcinoma","group":"GI","count":3097,"unique":2865,"safe":2865,"classes":{"nuORF":861,"self_gene":1116,"pathogen":243,"lncRNA":203,"pseudogene":36,"TE_chimeric_transcript":12,"variant":493,"ERV":109,"splicing":23,"fusion":1},"genes":1492,"totalSamples":63},{"code":"DLBC","name":"Diffuse Large B-cell Lymphoma","group":"Heme","count":169,"unique":162,"safe":162,"classes":{"self_gene":130,"pseudogene":3,"lncRNA":5,"splicing":2,"nuORF":27,"TE_chimeric_transcript":1,"ERV":1},"genes":89,"totalSamples":3},{"code":"ESCA","name":"Esophageal Carcinoma","group":"GI","count":297,"unique":277,"safe":277,"classes":{"self_gene":99,"ERV":29,"nuORF":47,"pathogen":88,"lncRNA":6,"splicing":14,"TE_chimeric_transcript":3,"variant":7,"pseudogene":2,"fusion":1,"intron_retention":1},"genes":123,"totalSamples":7},{"code":"GBM","name":"Glioblastoma Multiforme","group":"CNS","count":1496,"unique":1285,"safe":1285,"classes":{"self_gene":389,"nuORF":717,"lncRNA":221,"ERV":44,"variant":61,"splicing":19,"pseudogene":29,"TE_chimeric_transcript":7,"pathogen":9},"genes":970,"totalSamples":33},{"code":"HNSC","name":"Head & Neck Squamous Cell Carc.","group":"H&N","count":608,"unique":545,"safe":545,"classes":{"self_gene":249,"ERV":38,"variant":67,"pathogen":69,"nuORF":128,"pseudogene":7,"lncRNA":34,"TE_chimeric_transcript":5,"splicing":9,"fusion":2},"genes":301,"totalSamples":56},{"code":"KIRC","name":"Kidney Renal Clear Cell Carc.","group":"GU","count":624,"unique":543,"safe":543,"classes":{"ERV":30,"self_gene":233,"nuORF":246,"pseudogene":14,"variant":24,"lncRNA":51,"splicing":20,"TE_chimeric_transcript":6},"genes":354,"totalSamples":72},{"code":"LIHC","name":"Liver Hepatocellular Carcinoma","group":"GI","count":1079,"unique":911,"safe":911,"classes":{"self_gene":337,"pathogen":46,"nuORF":416,"variant":60,"ERV":42,"lncRNA":90,"TE_chimeric_transcript":18,"splicing":59,"pseudogene":11},"genes":621,"totalSamples":72},{"code":"LUAD","name":"Lung Adenocarcinoma","group":"Lung","count":1548,"unique":1369,"safe":1369,"classes":{"self_gene":354,"nuORF":626,"variant":295,"ERV":60,"lncRNA":153,"splicing":21,"TE_chimeric_transcript":7,"pseudogene":28,"intron_retention":4},"genes":1052,"totalSamples":55},{"code":"LUSC","name":"Lung Squamous Cell Carcinoma","group":"Lung","count":1825,"unique":1641,"safe":1641,"classes":{"self_gene":614,"nuORF":622,"variant":274,"ERV":72,"lncRNA":152,"splicing":41,"pseudogene":28,"intron_retention":5,"TE_chimeric_transcript":15,"fusion":2},"genes":1091,"totalSamples":55},{"code":"MESO","name":"Mesothelioma","group":"Thoracic","count":100,"unique":91,"safe":91,"classes":{"self_gene":30,"nuORF":61,"variant":1,"lncRNA":6,"ERV":1,"pseudogene":1},"genes":87,"totalSamples":7},{"code":"NBL","name":"Neuroblastoma","group":"Pediatric","count":215,"unique":182,"safe":182,"classes":{"self_gene":96,"lncRNA":14,"pathogen":7,"nuORF":67,"ERV":16,"splicing":11,"pseudogene":2,"intron_retention":1,"variant":1},"genes":143,"totalSamples":16},{"code":"OV","name":"Ovarian Serous Cystadenocarc.","group":"Gyn","count":1605,"unique":1463,"safe":1463,"classes":{"nuORF":554,"self_gene":429,"pathogen":301,"lncRNA":111,"variant":39,"pseudogene":21,"splicing":79,"ERV":53,"TE_chimeric_transcript":14,"fusion":2,"intron_retention":2},"genes":764,"totalSamples":61},{"code":"PAAD","name":"Pancreatic Adenocarcinoma","group":"GI","count":1387,"unique":1238,"safe":1238,"classes":{"pseudogene":25,"self_gene":566,"nuORF":574,"ERV":50,"lncRNA":113,"variant":35,"splicing":18,"TE_chimeric_transcript":5,"fusion":1},"genes":720,"totalSamples":20},{"code":"RT","name":"Rhabdoid Tumor","group":"Pediatric","count":41,"unique":34,"safe":34,"classes":{"self_gene":18,"splicing":5,"nuORF":10,"pseudogene":2,"lncRNA":2,"TE_chimeric_transcript":1,"ERV":3},"genes":28,"totalSamples":23},{"code":"SKCM","name":"Skin Cutaneous Melanoma","group":"Skin","count":6371,"unique":5781,"safe":5781,"classes":{"self_gene":1608,"nuORF":2279,"pathogen":546,"variant":956,"pseudogene":99,"ERV":119,"splicing":168,"TE_chimeric_transcript":51,"lncRNA":539,"intron_retention":6},"genes":3063,"totalSamples":101},{"code":"STAD","name":"Stomach Adenocarcinoma","group":"GI","count":23,"unique":21,"safe":21,"classes":{"self_gene":11,"splicing":2,"pathogen":3,"nuORF":6,"variant":1},"genes":22,"totalSamples":2}],"stats":{"tumorSpecific":23970,"totalEntries":26603,"cancers":21,"molecularSources":9,"immunopeptidomes":1823,"rnaSeq":7188,"normalControls":17384,"scRNA":594},"classes":{"self_gene":8084,"ERV":3237,"lncRNA":1940,"nuORF":8405,"intron_retention":94,"splicing":549,"variant":2417,"TE_chimeric_transcript":157,"pseudogene":362,"fusion":11,"pathogen":1347},"totals":{"targets":26603,"tumorSpecific":23970,"genes":12590},"labels":{"self_gene":"Self-gene (Canonical self-antigen)","splicing":"Splicing (Alternative splicing)","variant":"Variant (Mutation neoantigen)","nuORF":"Cryptic ORF (nuORF)","lncRNA":"lncRNA","pseudogene":"Pseudogene","ERV":"TE Autonomous (Endogenous retroelement)","TE_chimeric_transcript":"TE Chimera (TE chimeric transcript)","intron_retention":"Intron retention","fusion":"Fusion (Gene fusion)","pathogen":"Pathogen (Microbial / viral)","rna_edit":"RNA editing","circRNA":"Circular RNA"}}
+{
+  "cancers": [
+    {
+      "code": "AML",
+      "name": "Acute Myeloid Leukemia",
+      "group": "Heme",
+      "count": 4025,
+      "unique": 3646,
+      "safe": 3646,
+      "classes": {
+        "self_gene": 755,
+        "splicing": 35,
+        "ERV": 2505,
+        "intron_retention": 75,
+        "TE_chimeric_transcript": 6,
+        "variant": 8,
+        "nuORF": 508,
+        "lncRNA": 108,
+        "pseudogene": 25
+      },
+      "genes": 651,
+      "totalSamples": 125
+    },
+    {
+      "code": "BLCA",
+      "name": "Bladder Urothelial Carcinoma",
+      "group": "GU",
+      "count": 20,
+      "unique": 17,
+      "safe": 17,
+      "classes": {
+        "self_gene": 13,
+        "nuORF": 6,
+        "pseudogene": 1
+      },
+      "genes": 22,
+      "totalSamples": 2
+    },
+    {
+      "code": "BRCA",
+      "name": "Breast Invasive Carcinoma",
+      "group": "Breast",
+      "count": 718,
+      "unique": 634,
+      "safe": 634,
+      "classes": {
+        "self_gene": 258,
+        "splicing": 12,
+        "ERV": 17,
+        "TE_chimeric_transcript": 3,
+        "pathogen": 4,
+        "variant": 48,
+        "fusion": 2,
+        "nuORF": 292,
+        "lncRNA": 69,
+        "pseudogene": 13
+      },
+      "genes": 450,
+      "totalSamples": 49
+    },
+    {
+      "code": "CESC",
+      "name": "Cervical Squamous Cell Carcinoma",
+      "group": "Gyn",
+      "count": 1350,
+      "unique": 1260,
+      "safe": 1260,
+      "classes": {
+        "self_gene": 776,
+        "splicing": 11,
+        "ERV": 48,
+        "TE_chimeric_transcript": 3,
+        "pathogen": 31,
+        "variant": 47,
+        "nuORF": 356,
+        "pseudogene": 15,
+        "lncRNA": 63
+      },
+      "genes": 543,
+      "totalSamples": 15
+    },
+    {
+      "code": "CHOL",
+      "name": "Cholangiocarcinoma",
+      "group": "GI",
+      "count": 5,
+      "unique": 5,
+      "safe": 5,
+      "classes": {
+        "self_gene": 3,
+        "nuORF": 2
+      },
+      "genes": 4,
+      "totalSamples": 4
+    },
+    {
+      "code": "COAD",
+      "name": "Colon Adenocarcinoma",
+      "group": "GI",
+      "count": 3097,
+      "unique": 2865,
+      "safe": 2865,
+      "classes": {
+        "self_gene": 1116,
+        "splicing": 23,
+        "ERV": 109,
+        "TE_chimeric_transcript": 12,
+        "pathogen": 243,
+        "variant": 493,
+        "fusion": 1,
+        "nuORF": 861,
+        "lncRNA": 203,
+        "pseudogene": 36
+      },
+      "genes": 1492,
+      "totalSamples": 63
+    },
+    {
+      "code": "DLBC",
+      "name": "Diffuse Large B-cell Lymphoma",
+      "group": "Heme",
+      "count": 169,
+      "unique": 162,
+      "safe": 162,
+      "classes": {
+        "self_gene": 130,
+        "splicing": 2,
+        "ERV": 1,
+        "TE_chimeric_transcript": 1,
+        "nuORF": 27,
+        "lncRNA": 5,
+        "pseudogene": 3
+      },
+      "genes": 89,
+      "totalSamples": 3
+    },
+    {
+      "code": "ESCA",
+      "name": "Esophageal Carcinoma",
+      "group": "GI",
+      "count": 297,
+      "unique": 277,
+      "safe": 277,
+      "classes": {
+        "self_gene": 99,
+        "splicing": 14,
+        "ERV": 29,
+        "intron_retention": 1,
+        "TE_chimeric_transcript": 3,
+        "pathogen": 88,
+        "variant": 7,
+        "fusion": 1,
+        "nuORF": 47,
+        "lncRNA": 6,
+        "pseudogene": 2
+      },
+      "genes": 123,
+      "totalSamples": 7
+    },
+    {
+      "code": "GBM",
+      "name": "Glioblastoma Multiforme",
+      "group": "CNS",
+      "count": 1496,
+      "unique": 1285,
+      "safe": 1285,
+      "classes": {
+        "self_gene": 389,
+        "splicing": 19,
+        "ERV": 44,
+        "TE_chimeric_transcript": 7,
+        "pathogen": 9,
+        "variant": 61,
+        "nuORF": 717,
+        "lncRNA": 221,
+        "pseudogene": 29
+      },
+      "genes": 970,
+      "totalSamples": 33
+    },
+    {
+      "code": "HNSC",
+      "name": "Head & Neck Squamous Cell Carc.",
+      "group": "H&N",
+      "count": 608,
+      "unique": 545,
+      "safe": 545,
+      "classes": {
+        "self_gene": 249,
+        "splicing": 9,
+        "ERV": 38,
+        "TE_chimeric_transcript": 5,
+        "pathogen": 69,
+        "variant": 67,
+        "fusion": 2,
+        "lncRNA": 34,
+        "nuORF": 128,
+        "pseudogene": 7
+      },
+      "genes": 301,
+      "totalSamples": 56
+    },
+    {
+      "code": "KIRC",
+      "name": "Kidney Renal Clear Cell Carc.",
+      "group": "GU",
+      "count": 624,
+      "unique": 543,
+      "safe": 543,
+      "classes": {
+        "self_gene": 233,
+        "splicing": 20,
+        "ERV": 30,
+        "TE_chimeric_transcript": 6,
+        "variant": 24,
+        "nuORF": 246,
+        "lncRNA": 51,
+        "pseudogene": 14
+      },
+      "genes": 354,
+      "totalSamples": 72
+    },
+    {
+      "code": "LIHC",
+      "name": "Liver Hepatocellular Carcinoma",
+      "group": "GI",
+      "count": 1079,
+      "unique": 911,
+      "safe": 911,
+      "classes": {
+        "self_gene": 337,
+        "splicing": 59,
+        "ERV": 42,
+        "TE_chimeric_transcript": 18,
+        "pathogen": 46,
+        "variant": 60,
+        "nuORF": 416,
+        "pseudogene": 11,
+        "lncRNA": 90
+      },
+      "genes": 621,
+      "totalSamples": 72
+    },
+    {
+      "code": "LUAD",
+      "name": "Lung Adenocarcinoma",
+      "group": "Lung",
+      "count": 1548,
+      "unique": 1369,
+      "safe": 1369,
+      "classes": {
+        "self_gene": 354,
+        "splicing": 21,
+        "ERV": 60,
+        "intron_retention": 4,
+        "TE_chimeric_transcript": 7,
+        "variant": 295,
+        "nuORF": 626,
+        "lncRNA": 153,
+        "pseudogene": 28
+      },
+      "genes": 1052,
+      "totalSamples": 55
+    },
+    {
+      "code": "LUSC",
+      "name": "Lung Squamous Cell Carcinoma",
+      "group": "Lung",
+      "count": 1825,
+      "unique": 1641,
+      "safe": 1641,
+      "classes": {
+        "self_gene": 614,
+        "splicing": 41,
+        "ERV": 72,
+        "intron_retention": 5,
+        "TE_chimeric_transcript": 15,
+        "variant": 274,
+        "fusion": 2,
+        "nuORF": 622,
+        "lncRNA": 152,
+        "pseudogene": 28
+      },
+      "genes": 1091,
+      "totalSamples": 55
+    },
+    {
+      "code": "MESO",
+      "name": "Mesothelioma",
+      "group": "Thoracic",
+      "count": 100,
+      "unique": 91,
+      "safe": 91,
+      "classes": {
+        "self_gene": 30,
+        "ERV": 1,
+        "variant": 1,
+        "nuORF": 61,
+        "lncRNA": 6,
+        "pseudogene": 1
+      },
+      "genes": 87,
+      "totalSamples": 7
+    },
+    {
+      "code": "NBL",
+      "name": "Neuroblastoma",
+      "group": "Pediatric",
+      "count": 215,
+      "unique": 182,
+      "safe": 182,
+      "classes": {
+        "self_gene": 96,
+        "splicing": 11,
+        "ERV": 16,
+        "intron_retention": 1,
+        "pathogen": 7,
+        "variant": 1,
+        "nuORF": 67,
+        "lncRNA": 14,
+        "pseudogene": 2
+      },
+      "genes": 143,
+      "totalSamples": 16
+    },
+    {
+      "code": "OV",
+      "name": "Ovarian Serous Cystadenocarc.",
+      "group": "Gyn",
+      "count": 1605,
+      "unique": 1463,
+      "safe": 1463,
+      "classes": {
+        "self_gene": 429,
+        "splicing": 79,
+        "ERV": 53,
+        "intron_retention": 2,
+        "TE_chimeric_transcript": 14,
+        "pathogen": 301,
+        "variant": 39,
+        "fusion": 2,
+        "nuORF": 554,
+        "lncRNA": 111,
+        "pseudogene": 21
+      },
+      "genes": 764,
+      "totalSamples": 61
+    },
+    {
+      "code": "PAAD",
+      "name": "Pancreatic Adenocarcinoma",
+      "group": "GI",
+      "count": 1387,
+      "unique": 1238,
+      "safe": 1238,
+      "classes": {
+        "self_gene": 566,
+        "splicing": 18,
+        "ERV": 50,
+        "TE_chimeric_transcript": 5,
+        "variant": 35,
+        "fusion": 1,
+        "nuORF": 574,
+        "lncRNA": 113,
+        "pseudogene": 25
+      },
+      "genes": 720,
+      "totalSamples": 20
+    },
+    {
+      "code": "RT",
+      "name": "Rhabdoid Tumor",
+      "group": "Pediatric",
+      "count": 41,
+      "unique": 34,
+      "safe": 34,
+      "classes": {
+        "self_gene": 18,
+        "splicing": 5,
+        "ERV": 3,
+        "TE_chimeric_transcript": 1,
+        "nuORF": 10,
+        "lncRNA": 2,
+        "pseudogene": 2
+      },
+      "genes": 28,
+      "totalSamples": 23
+    },
+    {
+      "code": "SKCM",
+      "name": "Skin Cutaneous Melanoma",
+      "group": "Skin",
+      "count": 6371,
+      "unique": 5781,
+      "safe": 5781,
+      "classes": {
+        "self_gene": 1608,
+        "splicing": 168,
+        "ERV": 119,
+        "intron_retention": 6,
+        "TE_chimeric_transcript": 51,
+        "pathogen": 546,
+        "variant": 956,
+        "nuORF": 2279,
+        "lncRNA": 539,
+        "pseudogene": 99
+      },
+      "genes": 3063,
+      "totalSamples": 101
+    },
+    {
+      "code": "STAD",
+      "name": "Stomach Adenocarcinoma",
+      "group": "GI",
+      "count": 23,
+      "unique": 21,
+      "safe": 21,
+      "classes": {
+        "self_gene": 11,
+        "splicing": 2,
+        "pathogen": 3,
+        "variant": 1,
+        "nuORF": 6
+      },
+      "genes": 22,
+      "totalSamples": 2
+    }
+  ],
+  "stats": {
+    "tumorSpecific": 23970,
+    "totalEntries": 26603,
+    "cancers": 21,
+    "molecularSources": 11,
+    "immunopeptidomes": 1823,
+    "rnaSeq": 7188,
+    "normalControls": 17384,
+    "scRNA": 594
+  },
+  "classes": {
+    "self_gene": 8084,
+    "splicing": 549,
+    "ERV": 3237,
+    "intron_retention": 94,
+    "TE_chimeric_transcript": 157,
+    "variant": 2417,
+    "nuORF": 8405,
+    "lncRNA": 1940,
+    "pseudogene": 362,
+    "pathogen": 1347,
+    "fusion": 11
+  },
+  "totals": {
+    "targets": 26603,
+    "tumorSpecific": 23970,
+    "genes": 12590
+  },
+  "labels": {
+    "self_gene": "Self-gene (Canonical self-antigen)",
+    "splicing": "Splicing (Alternative splicing)",
+    "variant": "Variant (Mutation neoantigen)",
+    "nuORF": "Cryptic ORF (nuORF)",
+    "lncRNA": "lncRNA",
+    "pseudogene": "Pseudogene",
+    "ERV": "TE Autonomous (Endogenous retroelement)",
+    "TE_chimeric_transcript": "TE Chimera (TE chimeric transcript)",
+    "intron_retention": "Intron retention",
+    "fusion": "Fusion (Gene fusion)",
+    "pathogen": "Pathogen (Microbial / viral)",
+    "rna_edit": "RNA editing",
+    "circRNA": "Circular RNA"
+  }
+}
