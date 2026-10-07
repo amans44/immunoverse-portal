@@ -118,6 +118,7 @@ h1 { font-size: 25px; margin: 0 0 8px; }
 }
 .hint { color: var(--text-3); font-size: 13px; margin-top: 6px; }
 </style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 <div class="bg-hero"></div>
@@ -163,6 +164,7 @@ h1 { font-size: 25px; margin: 0 0 8px; }
       <label class="label" for="rq-email">Email</label>
       <input id="rq-email" class="input" type="email" autocomplete="email" placeholder="you@institute.edu" required />
     </div>
+    <div class="cf-turnstile" data-sitekey="0x4AAAAAAFQrZTCnVsBcUUso" data-theme="auto" data-size="flexible" style="margin:4px 0 14px;"></div>
     <button id="requestSubmit" type="submit" class="submit-btn">Send reset link</button>
     <p class="foot"><a class="muted-link" href="login.html">← Back to sign in</a></p>
   </form>
@@ -258,6 +260,17 @@ if (TOKEN) {
   $('setForm').classList.remove('hidden');
 }
 
+// Cloudflare Turnstile ("verify you are human") — the backend refuses sign-up,
+// access-request and forgot-password without a valid token (anti-bot). Tokens
+// are single-use, so the widget is reset after every submit.
+function tsToken(form) {
+  const i = form && form.querySelector('[name="cf-turnstile-response"]');
+  return i ? i.value : '';
+}
+function tsReset(form) {
+  try { const w = form && form.querySelector('.cf-turnstile'); if (window.turnstile && w) window.turnstile.reset(w); } catch (e) {}
+}
+
 async function handleRequest(ev) {
   ev.preventDefault();
   hideAlert();
@@ -266,8 +279,9 @@ async function handleRequest(ev) {
     const res = await ivAuthFetch('/api/portal/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: $('rq-email').value.trim() }),
+      body: JSON.stringify({ email: $('rq-email').value.trim(), turnstile_token: tsToken($('requestForm')) }),
     });
+    tsReset($('requestForm'));
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       showAlert(data.detail || 'Could not send reset link.', 'error');

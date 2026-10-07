@@ -549,6 +549,7 @@ select.input {
 .req { color: var(--danger, #e5484d); font-weight: 700; margin-left: 3px; }
 .req[hidden] { display: none; }
 </style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -745,6 +746,7 @@ select.input {
           </div>
         </div>
 
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAFQrZTCnVsBcUUso" data-theme="auto" data-size="flexible" style="margin:4px 0 14px;"></div>
         <button id="registerSubmit" type="submit" class="submit-btn">Create account</button>
 
         <p style="text-align:center; margin: 16px 0 0;">
@@ -852,6 +854,17 @@ function showAlert(msg, kind) {
   el.classList.remove('hidden');
 }
 function hideAlert() { $('alert').classList.add('hidden'); }
+
+// Cloudflare Turnstile ("verify you are human") — the backend refuses sign-up,
+// access-request and forgot-password without a valid token (anti-bot). Tokens
+// are single-use, so the widget is reset after every submit.
+function tsToken(form) {
+  const i = form && form.querySelector('[name="cf-turnstile-response"]');
+  return i ? i.value : '';
+}
+function tsReset(form) {
+  try { const w = form && form.querySelector('.cf-turnstile'); if (window.turnstile && w) window.turnstile.reset(w); } catch (e) {}
+}
 
 function setLoading(btnId, label) {
   const b = $(btnId);
@@ -1084,8 +1097,10 @@ async function handleRegister(ev) {
         reason: reviewReason || null,
         password: $('rg-password').value,
         confirm_password: $('rg-confirm').value,
+        turnstile_token: tsToken($('registerForm')),
       }),
     });
+    tsReset($('registerForm'));
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       showAlert(data.detail || 'Registration failed.', 'error');
@@ -1138,8 +1153,10 @@ async function submitAccessRequest() {
         affiliation: $('rg-affiliation').value.trim(),
         role_type: $('rg-role').value,
         reason: $('rg-reason').value.trim(),
+        turnstile_token: tsToken($('registerForm')),
       }),
     });
+    tsReset($('registerForm'));
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       showAlert(data.detail || 'Submission failed.', 'error');

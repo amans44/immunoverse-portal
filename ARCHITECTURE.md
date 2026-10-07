@@ -458,8 +458,15 @@ admin console) is served by a **separate backend**, not by these static pages.
     `/reset-password` only mails **active** accounts, and only an approval
     (`setup`) link can activate a pending account — previously any reset link did,
     which let sign-up + forgot-password skip approval (never used, checked).
-    Bot sign-ups still land as pending (and alert the admin) until a CAPTCHA
-    (Cloudflare Turnstile) is added.
+  - **Cloudflare Turnstile ("verify you are human", 2026-10-07):** widget
+    (site key `0x4AAAAAAFQrZTCnVsBcUUso`, hostnames immuno-verse.com + www, Managed
+    mode) on the `login.html` Create-account/Request-access form and the `reset.html`
+    forgot-password form; each sends `turnstile_token`. The backend
+    (`portal_auth/turnstile.py`) verifies it with Cloudflare on `/register`,
+    `/request-access` and `/reset-password` — the server check is what stops the
+    bot, which calls the API directly. Secret `TURNSTILE_SECRET_KEY` in Secret
+    Manager. Fails OPEN only if Cloudflare is unreachable. Rotate: Cloudflare →
+    Turnstile → widget → Rotate secret, then add a new secret version + redeploy.
 - **Password flows:**
   - *Forgot password* — `POST /api/portal/auth/reset-password` (emails a
     one-time link) → user lands on `reset.html?token=…` → `POST
@@ -650,8 +657,9 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 `/reset-password` only emails active accounts (the bot used it to mail strangers);
 reset links no longer activate pending accounts (approval bypass); `admin.html` Users
-tab hides pending accounts (they live in Access requests). 5 bot accounts + 2 test
-requests cleaned up. Turnstile CAPTCHA pending Aman's Cloudflare keys.
+tab hides pending accounts (they live in Access requests). 6 bot accounts + 2 test
+requests cleaned up. Then Cloudflare Turnstile added to sign-up, access request
+and forgot-password (page widget + server-side check).
 
 ### 2026-10-07 — Signups in the Access-requests queue, bulk approve, admin email alerts
 
