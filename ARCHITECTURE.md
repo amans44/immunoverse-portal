@@ -434,6 +434,20 @@ admin console) is served by a **separate backend**, not by these static pages.
     (`admin.html`) so an admin sees *why* someone asked — including after approval.
     Approved access requests also remain viewable via the Access-requests tab's
     **"Approved"** filter.
+  - **One review queue (2026-10-07):** every account that needs approval lands in
+    the admin **Access requests** tab — a pending `/register` signup now files a
+    `portal_access_requests` row too (it used to appear only as a pending row under
+    Users). Approving that row activates the existing account and emails the user a
+    "you're approved, sign in" notice. Rejecting it suspends the pending account.
+    Activating/suspending a pending user from the Users tab closes their request.
+    Pending users that predate this get a request backfilled whenever the pending
+    queue loads. The queue has per-row checkboxes + **Approve selected / Reject
+    selected** (`POST /api/portal/admin/requests/bulk-approve|bulk-reject`, `{ids}`;
+    each id processed independently, per-id results returned).
+  - **Admin email alerts (2026-10-07):** a new pending signup, `/request-access`, or
+    dataset request-access emails `PORTAL_ADMIN_NOTIFY_EMAILS` (falls back to
+    `PORTAL_ADMIN_EMAILS`) with the requester's details + a link to `admin.html`.
+    Sent in a background task so sign-up isn't slowed.
 - **Password flows:**
   - *Forgot password* — `POST /api/portal/auth/reset-password` (emails a
     one-time link) → user lands on `reset.html?token=…` → `POST
@@ -451,11 +465,10 @@ admin console) is served by a **separate backend**, not by these static pages.
   `previously_deleted` in the user list, and `GET /api/portal/admin/deleted-users`
   shows the archive with a `reregistered` flag. Admins can't delete themselves
   or another admin (demote first).
-- **Email delivery:** `portal_auth/email.py` is provider-agnostic. Today the live
-  service has **no mail provider configured**, so reset/approval links fall back
-  to the server console + the admin-surfaced link. Plugging in Resend/SendGrid/
-  SMTP later is a config change (intended from address: `noreply@immuno-verse.com`,
-  which needs DNS access to that domain — currently pending).
+- **Email delivery:** `portal_auth/email.py` is provider-agnostic (Resend →
+  SendGrid → console). Live sends via **Resend** from
+  `ImmunoVerse <noreply@immuno-verse.com>` (since 2026-08-31). If a send fails, the
+  link is printed to the server log and surfaced to the admin.
 
 ## Private in-house datasets (lab-only cancers)
 
@@ -620,6 +633,22 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ---
 
 ## Change log
+
+### 2026-10-07 — Signups in the Access-requests queue, bulk approve, admin email alerts
+
+**Why:** accounts held for review from the Create-account form showed up only as
+pending rows under **Users**, never in **Access requests**; approving many requests
+meant one click each; and the admin had to keep reopening the dashboard to notice
+new requests.
+
+**What:** pending `/register` signups now file an access request (old ones
+backfilled on queue load); approving one activates the account + emails the user.
+The queue has checkboxes and **Approve / Reject selected**. New signups, access
+requests and dataset requests email the admin (`PORTAL_ADMIN_NOTIFY_EMAILS`).
+See *Authentication & accounts → One review queue / Admin email alerts*.
+
+**Files:** `admin.html` (portal); `portal_auth/{routes,admin_routes,dataset_routes,email}.py`,
+`deploy/gcp/deploy_auth.sh` (agent repo, auth-service).
 
 ### 2026-09-30 — Class names follow Figure 1B; in-house cohorts split
 

@@ -264,6 +264,14 @@ main {
 }
 .btn-danger:hover { background: rgba(248,113,113,0.10); }
 .row-actions { display:inline-flex; gap:6px; flex-wrap:wrap; }
+.bulk-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 12px; font-size:13px; color:var(--text-1, inherit); }
+.bulk-bar span { margin-right:auto; }
+.bulk-result { margin:0 0 12px; padding:10px 14px; border-radius:10px; border:1px solid rgba(120,150,220,.25); font-size:13px; line-height:1.55; }
+.bulk-result ul { margin:6px 0 0; padding-left:18px; }
+.bulk-result .bad { color: var(--danger); }
+.bulk-result a { word-break: break-all; }
+.sel-col { width:28px; }
+.sel-col input { width:16px; height:16px; cursor:pointer; }
 
 .reason-cell {
   max-width: 360px;
@@ -438,6 +446,12 @@ footer.page-footer a:hover { color: var(--text-0); }
     </div>
   </div>
   <div id="reqAlert" class="alert hidden"></div>
+  <div id="reqBulkResult" class="bulk-result" hidden></div>
+  <div id="reqBulkBar" class="bulk-bar" hidden>
+    <span id="reqSelCount">0 selected</span>
+    <button class="btn" id="reqBulkApprove" onclick="bulkReq('approve')" disabled>Approve selected</button>
+    <button class="btn btn-danger" id="reqBulkReject" onclick="bulkReq('reject')" disabled>Reject selected</button>
+  </div>
   <div id="reqBody">Loading…</div>
 </section>
 
@@ -780,15 +794,19 @@ async function loadRequests() {
     const r = await authedFetch('/api/portal/admin/requests?status_filter=' + encodeURIComponent(REQ_FILTER));
     if (!r.ok) throw new Error('Failed (' + r.status + ')');
     const items = await r.json();
+    const selectable = REQ_FILTER === 'pending' && items.length > 0;
+    $('reqBulkBar').hidden = !selectable;
     if (!items.length) {
       body.innerHTML = `<div class="empty-state">No ${esc(REQ_FILTER)} requests.</div>`;
       return;
     }
     body.innerHTML = `<table class="tbl">
       <thead><tr>
+        ${selectable ? `<th class="sel-col"><input type="checkbox" id="reqSelAll" title="Select all" aria-label="Select all requests"></th>` : ''}
         <th>Email / name</th><th>Affiliation</th><th>Role</th><th>Reason</th><th>Submitted</th><th></th>
       </tr></thead>
       <tbody>${items.map(req => `<tr>
+        ${selectable ? `<td class="sel-col"><input type="checkbox" class="req-sel" value="${esc(req.id)}" aria-label="Select ${esc(req.email)}"></td>` : ''}
         <td>
           <div style="font-weight:600;color:var(--text-0);">${esc(req.name||'—')}</div>
           <div class="email-mono">${esc(req.email)}</div>
@@ -807,9 +825,65 @@ async function loadRequests() {
       </tr>`).join('')}</tbody>
     </table>`;
     body.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', handleReqAction));
+    if (selectable) {
+      $('reqSelAll').addEventListener('change', e => {
+        body.querySelectorAll('.req-sel').forEach(c => { c.checked = e.target.checked; });
+        syncReqSelection();
+      });
+      body.querySelectorAll('.req-sel').forEach(c => c.addEventListener('change', syncReqSelection));
+    }
+    syncReqSelection();
   } catch (err) {
     alert_('reqAlert', err.message, 'error');
     body.innerHTML = '';
+  }
+}
+
+function selectedReqIds() {
+  return Array.from(document.querySelectorAll('#reqBody .req-sel:checked')).map(c => c.value);
+}
+function syncReqSelection() {
+  const all = document.querySelectorAll('#reqBody .req-sel');
+  const n = selectedReqIds().length;
+  $('reqSelCount').textContent = n ? `${n} selected` : 'Select requests to approve or reject them together';
+  $('reqBulkApprove').disabled = !n;
+  $('reqBulkReject').disabled = !n;
+  $('reqBulkApprove').textContent = n ? `Approve selected (${n})` : 'Approve selected';
+  $('reqBulkReject').textContent = n ? `Reject selected (${n})` : 'Reject selected';
+  const sa = $('reqSelAll');
+  if (sa) { sa.checked = n > 0 && n === all.length; sa.indeterminate = n > 0 && n < all.length; }
+}
+
+async function bulkReq(act) {
+  const ids = selectedReqIds();
+  if (!ids.length) return;
+  if (!confirm(`${act === 'approve' ? 'Approve' : 'Reject'} ${ids.length} request${ids.length > 1 ? 's' : ''}?`)) return;
+  clearAlert('reqAlert');
+  $('reqBulkResult').hidden = true;
+  const btn = act === 'approve' ? $('reqBulkApprove') : $('reqBulkReject');
+  $('reqBulkApprove').disabled = $('reqBulkReject').disabled = true;
+  btn.textContent = act === 'approve' ? 'Approving…' : 'Rejecting…';
+  try {
+    const r = await authedFetch(`/api/portal/admin/requests/bulk-${act}`, {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.detail || 'Bulk action failed');
+    // Surface anything that needs a human: failures, and new accounts whose
+    // set-password email didn't deliver (share the link manually).
+    const needs = (data.results || []).filter(x => !x.ok || x.set_password_url);
+    const verb = act === 'approve' ? 'approved' : 'rejected';
+    const box = $('reqBulkResult');
+    box.innerHTML = `<b>${data.succeeded} ${verb}</b>${data.failed ? `, <span class="bad">${data.failed} failed</span>` : ''}.` +
+      (needs.length ? `<ul>${needs.map(x => x.ok
+        ? `<li>${esc(x.email || x.id)} — email didn't deliver; share: <a href="${esc(x.set_password_url)}" target="_blank" rel="noopener">${esc(x.set_password_url)}</a></li>`
+        : `<li class="bad">${esc(x.email || x.id)} — ${esc(x.message)}</li>`).join('')}</ul>` : '');
+    box.hidden = false;
+    await Promise.all([loadRequests(), loadStats(), loadUsers()]);
+  } catch (err) {
+    alert_('reqAlert', err.message, 'error');
+    syncReqSelection();
   }
 }
 
@@ -834,7 +908,9 @@ async function handleReqAction(ev) {
       $('otpMsg').textContent = data.message || 'Account activated. Share this one-time password securely.';
       $('otpModal').hidden = false;
     }
+    $('reqBulkResult').hidden = true;
     await Promise.all([loadRequests(), loadStats(), loadUsers()]);
+    if (data.message && !data.one_time_password) alert_('reqAlert', data.message, 'success');
   } catch (err) {
     alert_('reqAlert', err.message, 'error');
     b.disabled = false; b.textContent = act === 'approve' ? 'Approve' : 'Reject';
