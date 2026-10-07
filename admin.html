@@ -412,7 +412,7 @@ footer.page-footer a:hover { color: var(--text-0); }
     <div class="value" id="statActive">—</div>
   </div>
   <div class="stat-card">
-    <div class="label">Pending users</div>
+    <div class="label">Pending sign-ups</div>
     <div class="value" id="statPendingUsers">—</div>
   </div>
   <div class="stat-card primary">
@@ -574,7 +574,6 @@ footer.page-footer a:hover { color: var(--text-0); }
     <div class="filter-row">
       <button class="filter-chip active" data-user-filter="">All</button>
       <button class="filter-chip" data-user-filter="active">Active</button>
-      <button class="filter-chip" data-user-filter="pending">Pending</button>
       <button class="filter-chip" data-user-filter="suspended">Suspended</button>
     </div>
   </div>
@@ -760,7 +759,7 @@ async function loadStats() {
     $('statAdmins').textContent = allU.filter(u => u.role === 'admin').length;
     $('statInq').textContent = newInq.length;
     $('tabReqCount').textContent = pendingReqs.length;
-    $('tabUserCount').textContent = allU.length;
+    $('tabUserCount').textContent = allU.filter(u => u.status !== 'pending').length;
     $('tabInqCount').textContent = newInq.length;
   } catch (err) {
     console.warn('stats failed', err);
@@ -936,7 +935,9 @@ async function loadUsers() {
       : '/api/portal/admin/users';
     const r = await authedFetch(path);
     if (!r.ok) throw new Error('Failed (' + r.status + ')');
-    const users = await r.json();
+    // Pending accounts live in the Access requests queue until approved, so
+    // the Users list only shows accounts that have been reviewed.
+    const users = (await r.json()).filter(u => u.status !== 'pending');
     if (!users.length) {
       body.innerHTML = `<div class="empty-state">No users matching this filter.</div>`;
       return;

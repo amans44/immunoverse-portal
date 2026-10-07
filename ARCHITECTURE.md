@@ -449,6 +449,17 @@ admin console) is served by a **separate backend**, not by these static pages.
     `PORTAL_ADMIN_EMAILS`) with the requester's details + a link to `admin.html`.
     Sent inline in the request (~0.5 s); a background task was tried first but
     Cloud Run's post-response CPU throttling delayed the alert ~30 s.
+  - **Pending accounts are hidden from the Users tab (2026-10-07)** — they're only in
+    Access requests until approved (the "Pending" filter chip was removed; the
+    header stat is now "Pending sign-ups").
+  - **Sign-up bot (since 2026-09-26):** a script registers throwaway pending
+    accounts under strangers' addresses (random-string name/affiliation/reason),
+    then calls forgot-password so we email them. Mitigated 2026-10-07:
+    `/reset-password` only mails **active** accounts, and only an approval
+    (`setup`) link can activate a pending account — previously any reset link did,
+    which let sign-up + forgot-password skip approval (never used, checked).
+    Bot sign-ups still land as pending (and alert the admin) until a CAPTCHA
+    (Cloudflare Turnstile) is added.
 - **Password flows:**
   - *Forgot password* — `POST /api/portal/auth/reset-password` (emails a
     one-time link) → user lands on `reset.html?token=…` → `POST
@@ -634,6 +645,13 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ---
 
 ## Change log
+
+### 2026-10-07 — Sign-up bot mitigated; pending hidden from Users
+
+`/reset-password` only emails active accounts (the bot used it to mail strangers);
+reset links no longer activate pending accounts (approval bypass); `admin.html` Users
+tab hides pending accounts (they live in Access requests). 5 bot accounts + 2 test
+requests cleaned up. Turnstile CAPTCHA pending Aman's Cloudflare keys.
 
 ### 2026-10-07 — Signups in the Access-requests queue, bulk approve, admin email alerts
 
