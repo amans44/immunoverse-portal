@@ -447,7 +447,8 @@ admin console) is served by a **separate backend**, not by these static pages.
   - **Admin email alerts (2026-10-07):** a new pending signup, `/request-access`, or
     dataset request-access emails `PORTAL_ADMIN_NOTIFY_EMAILS` (falls back to
     `PORTAL_ADMIN_EMAILS`) with the requester's details + a link to `admin.html`.
-    Sent in a background task so sign-up isn't slowed.
+    Sent inline in the request (~0.5 s); a background task was tried first but
+    Cloud Run's post-response CPU throttling delayed the alert ~30 s.
 - **Password flows:**
   - *Forgot password* — `POST /api/portal/auth/reset-password` (emails a
     one-time link) → user lands on `reset.html?token=…` → `POST
