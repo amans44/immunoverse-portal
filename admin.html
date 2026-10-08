@@ -280,7 +280,56 @@ main {
   line-height: 1.5;
   white-space: pre-wrap;
 }
-.email-mono { font-family: var(--mono); font-size: 14px; color: var(--text-0); }
+.email-mono { font-family: var(--mono); font-size: 14px; color: var(--text-0); overflow-wrap: anywhere; }
+
+/* Stacked record list (Access requests / Users / Feedback). Each record is
+   [checkbox] [details] [buttons]; details shrink, buttons never get pushed
+   off-screen. Below 720px the buttons drop under the details. */
+.rec-list { display: flex; flex-direction: column; }
+.rec {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 6px 16px; align-items: start;
+  padding: 14px 8px; border-bottom: 1px solid var(--border);
+}
+.rec:last-child { border-bottom: 0; }
+.rec:hover { background: var(--bg-2); }
+.rec.nosel { grid-template-columns: minmax(0, 1fr) auto; }
+.rec-sel { padding-top: 3px; }
+.rec-sel input { width: 16px; height: 16px; cursor: pointer; }
+.rec-main { min-width: 0; }
+.rec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.rec-name { font-weight: 600; color: var(--text-0); overflow-wrap: anywhere; }
+.rec-meta { margin-top: 4px; font-size: 13.5px; color: var(--text-2); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; overflow-wrap: anywhere; }
+.rec-meta .dot { color: var(--text-3); }
+.rec-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: 320px; }
+.rec-sub { margin-top: 2px; font-size: 12px; color: var(--text-3); font-family: var(--mono); overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+  /* Phone width: the tab bar scrolls sideways inside itself, and the top bar
+     tightens, so the page never scrolls sideways. */
+  .tabs { display: flex; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .tabs button { flex: 0 0 auto; padding: 8px 12px; }
+  .topnav-inner { padding: 10px 16px; gap: 6px 10px; flex-wrap: wrap; }
+  .brand { font-size: 16px; }
+  .topnav nav { gap: 10px; }
+  .topnav nav a { font-size: 14px; }
+  .rec { grid-template-columns: auto minmax(0, 1fr); }
+  .rec.nosel { grid-template-columns: minmax(0, 1fr); }
+  .rec-actions { grid-column: -2 / -1; justify-content: flex-start; max-width: none; }
+}
+/* Long text: wraps anywhere (even one 600-char word), 3 lines + Show more. */
+.clamp {
+  margin-top: 6px; font-size: 14px; color: var(--text-2); line-height: 1.5;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+}
+.clamp.open { display: block; -webkit-line-clamp: unset; overflow: visible; }
+.clamp-toggle {
+  background: none; border: 0; padding: 2px 0 0; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--primary);
+}
+.clamp-toggle:hover { text-decoration: underline; }
+.sel-all { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; }
+.sel-all input { width: 16px; height: 16px; cursor: pointer; }
 
 .empty-state {
   padding: 36px 18px; text-align: center;
@@ -448,6 +497,7 @@ footer.page-footer a:hover { color: var(--text-0); }
   <div id="reqAlert" class="alert hidden"></div>
   <div id="reqBulkResult" class="bulk-result" hidden></div>
   <div id="reqBulkBar" class="bulk-bar" hidden>
+    <label class="sel-all"><input type="checkbox" id="reqSelAll" aria-label="Select all requests"> Select all</label>
     <span id="reqSelCount">0 selected</span>
     <button class="btn" id="reqBulkApprove" onclick="bulkReq('approve')" disabled>Approve selected</button>
     <button class="btn btn-danger" id="reqBulkReject" onclick="bulkReq('reject')" disabled>Reject selected</button>
@@ -782,7 +832,38 @@ function switchTab(which) {
   $('tabDl').classList.toggle('active',    which === 'downloads');
   if (which === 'board') loadPortalBoard();
   if (which === 'downloads') loadDownloads();
+  wireClamps(document);   // tabs measured while hidden need their Show more toggles
 }
+
+// ---------- Stacked record lists: Show more / Show less ----------
+// A .clamp block shows 3 lines; add a toggle only where text actually overflows.
+// Measured after render, again when a tab becomes visible (hidden tabs measure
+// 0) and on resize, since the line count depends on the width.
+function wireClamps(root) {
+  (root || document).querySelectorAll('.clamp').forEach(el => {
+    if (el.classList.contains('open')) return;
+    let btn = el.nextElementSibling;
+    if (!btn || !btn.classList.contains('clamp-toggle')) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'clamp-toggle';
+      btn.textContent = 'Show more';
+      btn.addEventListener('click', () => {
+        const open = el.classList.toggle('open');
+        btn.textContent = open ? 'Show less' : 'Show more';
+      });
+      el.after(btn);
+    }
+    if (!el.offsetParent) { btn.hidden = true; return; }   // tab hidden — re-run later
+    btn.hidden = el.scrollHeight <= el.clientHeight + 2;
+  });
+}
+let _clampTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_clampTimer);
+  _clampTimer = setTimeout(() => wireClamps(document), 150);
+});
+const dot = '<span class="dot">·</span>';
 
 // ---------- Access requests ----------
 async function loadRequests() {
@@ -799,38 +880,37 @@ async function loadRequests() {
       body.innerHTML = `<div class="empty-state">No ${esc(REQ_FILTER)} requests.</div>`;
       return;
     }
-    body.innerHTML = `<table class="tbl">
-      <thead><tr>
-        ${selectable ? `<th class="sel-col"><input type="checkbox" id="reqSelAll" title="Select all" aria-label="Select all requests"></th>` : ''}
-        <th>Email / name</th><th>Affiliation</th><th>Role</th><th>Reason</th><th>Submitted</th><th></th>
-      </tr></thead>
-      <tbody>${items.map(req => `<tr>
-        ${selectable ? `<td class="sel-col"><input type="checkbox" class="req-sel" value="${esc(req.id)}" aria-label="Select ${esc(req.email)}"></td>` : ''}
-        <td>
-          <div style="font-weight:600;color:var(--text-0);">${esc(req.name||'—')}</div>
-          <div class="email-mono">${esc(req.email)}</div>
-          ${req.dataset_id ? `<div class="tag" style="margin-top:4px;background:var(--grad-primary-soft,rgba(20,184,166,.12));">🔒 dataset: ${esc(req.dataset_id)}</div>` : ''}
-        </td>
-        <td>${esc(req.affiliation|| (req.dataset_id ? 'existing account' : '—'))}</td>
-        <td>${esc(req.role_type||'—')}</td>
-        <td class="reason-cell">${esc(req.reason||'')}</td>
-        <td><div>${esc(timeAgo(req.created_at))}</div></td>
-        <td class="row-actions">
+    body.innerHTML = `<div class="rec-list">${items.map(req => `
+      <div class="rec${selectable ? '' : ' nosel'}">
+        ${selectable ? `<div class="rec-sel"><input type="checkbox" class="req-sel" value="${esc(req.id)}" aria-label="Select ${esc(req.email)}"></div>` : ''}
+        <div class="rec-main">
+          <div class="rec-head">
+            <span class="rec-name">${esc(req.name||'—')}</span>
+            <span class="email-mono">${esc(req.email)}</span>
+            ${req.dataset_id ? `<span class="tag" style="background:var(--grad-primary-soft,rgba(20,184,166,.12));">🔒 dataset: ${esc(req.dataset_id)}</span>` : ''}
+          </div>
+          <div class="rec-meta">
+            <span>${esc(req.affiliation || (req.dataset_id ? 'existing account' : '—'))}</span>${dot}
+            <span>${esc(req.role_type || '—')}</span>${dot}
+            <span title="${esc(req.created_at)}">${esc(timeAgo(req.created_at))}</span>
+          </div>
+          ${req.reason ? `<div class="clamp">${esc(req.reason)}</div>` : ''}
+        </div>
+        <div class="rec-actions">
           ${req.status === 'pending' ? `
             <button class="btn" data-act="approve" data-id="${esc(req.id)}">Approve</button>
             <button class="btn btn-danger" data-act="reject" data-id="${esc(req.id)}">Reject</button>
           ` : `<span class="tag tag-${esc(req.status)}">${esc(req.status)}</span>`}
-        </td>
-      </tr>`).join('')}</tbody>
-    </table>`;
+        </div>
+      </div>`).join('')}</div>`;
     body.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', handleReqAction));
-    if (selectable) {
-      $('reqSelAll').addEventListener('change', e => {
-        body.querySelectorAll('.req-sel').forEach(c => { c.checked = e.target.checked; });
-        syncReqSelection();
-      });
-      body.querySelectorAll('.req-sel').forEach(c => c.addEventListener('change', syncReqSelection));
-    }
+    wireClamps(body);
+    $('reqSelAll').checked = false;
+    $('reqSelAll').onchange = e => {
+      body.querySelectorAll('.req-sel').forEach(c => { c.checked = e.target.checked; });
+      syncReqSelection();
+    };
+    body.querySelectorAll('.req-sel').forEach(c => c.addEventListener('change', syncReqSelection));
     syncReqSelection();
   } catch (err) {
     alert_('reqAlert', err.message, 'error');
@@ -942,25 +1022,25 @@ async function loadUsers() {
       body.innerHTML = `<div class="empty-state">No users matching this filter.</div>`;
       return;
     }
-    body.innerHTML = `<table class="tbl">
-      <thead><tr>
-        <th>Email / name</th><th>Type</th><th>Status</th><th>Role</th><th>Affiliation</th><th>Joined</th><th>Last login</th><th></th>
-      </tr></thead>
-      <tbody>${users.map(u => `<tr>
-        <td>
-          <div style="font-weight:600;color:var(--text-0);">${esc(u.name||'—')}
+    body.innerHTML = `<div class="rec-list">${users.map(u => `
+      <div class="rec nosel">
+        <div class="rec-main">
+          <div class="rec-head">
+            <span class="rec-name">${esc(u.name||'—')}</span>
+            <span class="email-mono">${esc(u.email)}</span>
             ${u.previously_deleted ? `<span class="tag tag-pending" title="This email had a previously-deleted account on file">↺ returning</span>` : ''}
           </div>
-          <div class="email-mono">${esc(u.email)}</div>
-          ${u.reason ? `<div class="reason-cell" style="margin-top:4px;" title="Reason the user gave at sign-up">“${esc(u.reason)}”</div>` : ''}
-        </td>
-        <td><span class="tag tag-${u.access_type === 'institutional' ? 'inst' : 'indiv'}">${u.access_type === 'institutional' ? 'academic' : 'non-academic'}</span></td>
-        <td><span class="tag tag-${esc(u.status)}">${esc(u.status)}</span></td>
-        <td>${u.role === 'admin' ? '<span class="tag tag-admin">admin</span>' : esc(u.role)}</td>
-        <td>${esc(u.affiliation||'—')}</td>
-        <td>${esc(timeAgo(u.created_at))}</td>
-        <td>${esc(timeAgo(u.last_login))}</td>
-        <td class="row-actions">
+          <div class="rec-meta">
+            <span class="tag tag-${u.access_type === 'institutional' ? 'inst' : 'indiv'}">${u.access_type === 'institutional' ? 'academic' : 'non-academic'}</span>
+            <span class="tag tag-${esc(u.status)}">${esc(u.status)}</span>
+            ${u.role === 'admin' ? '<span class="tag tag-admin">admin</span>' : ''}
+            <span>${esc(u.affiliation||'—')}</span>${dot}
+            <span>joined ${esc(timeAgo(u.created_at))}</span>${dot}
+            <span>last login ${esc(timeAgo(u.last_login))}</span>
+          </div>
+          ${u.reason ? `<div class="clamp" title="Reason the user gave at sign-up">“${esc(u.reason)}”</div>` : ''}
+        </div>
+        <div class="rec-actions">
           ${u.status === 'pending' ? `<button class="btn" data-uact="activate" data-id="${esc(u.id)}">Activate</button>` : ''}
           ${u.status === 'active' ? `<button class="btn btn-danger" data-uact="suspend" data-id="${esc(u.id)}">Suspend</button>` : ''}
           ${u.status === 'suspended' ? `<button class="btn" data-uact="activate" data-id="${esc(u.id)}">Reinstate</button>` : ''}
@@ -970,9 +1050,9 @@ async function loadUsers() {
           ${u.role !== 'admin'
             ? `<button class="btn btn-danger" data-uact="delete" data-id="${esc(u.id)}" data-email="${esc(u.email)}">Delete</button>`
             : ''}
-        </td>
-      </tr>`).join('')}</tbody>
-    </table>`;
+        </div>
+      </div>`).join('')}</div>`;
+    wireClamps(body);
     body.querySelectorAll('[data-uact]').forEach(b => b.addEventListener('click', handleUserAction));
   } catch (err) {
     alert_('userAlert', err.message, 'error');
@@ -1350,42 +1430,38 @@ async function loadInquiries() {
       body.innerHTML = `<div class="empty-state">No ${esc(INQ_FILTER || '')} inquiries.</div>`;
       return;
     }
-    body.innerHTML = `<table class="tbl">
-      <thead><tr>
-        <th>From</th><th>Type</th><th>Subject &amp; message</th><th>Where</th><th>Submitted</th><th>Status</th><th></th>
-      </tr></thead>
-      <tbody>${items.map(inq => {
-        const ua = (inq.user_agent || '').slice(0, 80);
+    body.innerHTML = `<div class="rec-list">${items.map(inq => {
+        const ua = (inq.user_agent || '').slice(0, 120);
         const typeMap = { bug: 'tag-suspended', feature: 'tag-admin', feedback: 'tag-active', data_issue: 'tag-pending', other: '' };
         const typeCls = typeMap[inq.inquiry_type] || '';
         const where = inq.page_url
-          ? `<a href="${esc(inq.page_url)}" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none;font-size: 12px;" title="${esc(inq.page_url)}">${esc(inq.page_url.replace(/^https?:\/\//, '').slice(0, 36))}…</a>`
-          : '<span style="color:var(--text-3);font-size: 12px;">—</span>';
+          ? `<a href="${esc(inq.page_url)}" target="_blank" rel="noopener" style="color:var(--primary);text-decoration:none;" title="${esc(inq.page_url)}">${esc(inq.page_url.replace(/^https?:\/\//, '').slice(0, 48))}${inq.page_url.length > 56 ? '…' : ''}</a>`
+          : '';
         const actions = inq.status === 'resolved'
-          ? `<span style="font-size: 12px;color:var(--text-3);">${inq.admin_note ? 'Note: ' + esc(inq.admin_note) : 'No note'}</span>`
-          : `<div class="row-actions">
-              ${inq.status === 'new' ? `<button class="btn btn-ghost" data-inq-act="in_review" data-id="${esc(inq.id)}">Mark in review</button>` : ''}
-              <button class="btn" data-inq-act="resolve" data-id="${esc(inq.id)}">Resolve</button>
-            </div>`;
-        return `<tr>
-          <td>
-            <div style="font-weight:600;color:var(--text-0);">${esc(inq.name || '—')}</div>
-            <div class="email-mono">${esc(inq.email)}</div>
-            ${inq.user_id ? `<div style="font-size: 12px;color:var(--text-3);margin-top:2px;">signed-in</div>` : `<div style="font-size: 12px;color:var(--text-3);margin-top:2px;">anonymous</div>`}
-          </td>
-          <td><span class="tag ${typeCls}">${esc(inq.inquiry_type)}</span></td>
-          <td style="max-width:420px;">
-            <div style="font-weight:600;color:var(--text-0);">${esc(inq.subject)}</div>
-            <div class="reason-cell" style="margin-top:4px;">${esc(inq.message)}</div>
-            <div style="margin-top:6px;font-size: 12px;color:var(--text-3);font-family:var(--mono);">${esc(ua)}</div>
-          </td>
-          <td>${where}</td>
-          <td>${esc(timeAgo(inq.created_at))}</td>
-          <td><span class="tag tag-${esc((inq.status || '').replace('_','-'))}">${esc(inq.status)}</span></td>
-          <td>${actions}</td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>`;
+          ? `<span style="font-size: 12px;color:var(--text-3);overflow-wrap:anywhere;">${inq.admin_note ? 'Note: ' + esc(inq.admin_note) : 'No note'}</span>`
+          : `${inq.status === 'new' ? `<button class="btn btn-ghost" data-inq-act="in_review" data-id="${esc(inq.id)}">Mark in review</button>` : ''}
+             <button class="btn" data-inq-act="resolve" data-id="${esc(inq.id)}">Resolve</button>`;
+        return `<div class="rec nosel">
+          <div class="rec-main">
+            <div class="rec-head">
+              <span class="rec-name">${esc(inq.name || '—')}</span>
+              <span class="email-mono">${esc(inq.email)}</span>
+            </div>
+            <div class="rec-meta">
+              <span class="tag ${typeCls}">${esc(inq.inquiry_type)}</span>
+              <span class="tag tag-${esc((inq.status || '').replace('_','-'))}">${esc(inq.status)}</span>
+              <span>${inq.user_id ? 'signed-in' : 'anonymous'}</span>${dot}
+              <span>${esc(timeAgo(inq.created_at))}</span>
+              ${where ? `${dot}${where}` : ''}
+            </div>
+            <div style="margin-top:8px;font-weight:600;color:var(--text-0);overflow-wrap:anywhere;">${esc(inq.subject)}</div>
+            <div class="clamp" style="margin-top:2px;">${esc(inq.message)}</div>
+            ${ua ? `<div class="rec-sub">${esc(ua)}</div>` : ''}
+          </div>
+          <div class="rec-actions">${actions}</div>
+        </div>`;
+      }).join('')}</div>`;
+    wireClamps(body);
     body.querySelectorAll('[data-inq-act]').forEach(b => b.addEventListener('click', handleInqAction));
   } catch (err) {
     alert_('inqAlert', err.message, 'error');

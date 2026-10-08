@@ -653,6 +653,23 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
+### 2026-10-08 — Admin lists: stacked cards, Show more, fits any width
+
+**Why:** in `admin.html` the Access requests table was ~1,100 px wide inside a
+~780 px card with no overflow handling, so Submitted + Approve/Reject fell off the
+right edge and the page scrolled sideways; unbroken text (the bot's random strings)
+spilled across columns; long reasons had no collapse.
+
+**What:** Access requests, Users and Feedback now render as stacked records
+(`.rec`: checkbox · details · buttons). Details shrink (`minmax(0,1fr)`), buttons
+never leave the card, and below 720 px they drop under the details. Long text
+(`.clamp`) wraps anywhere and shows 3 lines with Show more / Show less; the toggle
+is added only where text overflows (`wireClamps`, re-run on tab switch + resize).
+"Select all" moved into the bulk bar. At phone width the tab bar scrolls inside
+itself and the top bar wraps, so the page never scrolls sideways. Checked in Chrome
+at 1,900 / 900 / 420 px with fixture data. Other tabs (allow-list, In-house,
+Downloads) still use `.tbl`.
+
 ### 2026-10-07 — Sign-up bot mitigated; pending hidden from Users
 
 `/reset-password` only emails active accounts (the bot used it to mail strangers);
