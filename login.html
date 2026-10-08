@@ -738,10 +738,10 @@ select.input {
           <div class="field">
             <label class="label" for="rg-reason">
               Reason for access<span class="req">*</span>
-              <span id="reasonCounter" class="reason-counter">0 / 80 min</span>
+              <span id="reasonCounter" class="reason-counter">0 / 80</span>
             </label>
-            <textarea id="rg-reason" class="input" rows="4" minlength="80"
-              placeholder="What are you working on? Which datasets or analyses do you hope to use? (80 character minimum)"
+            <textarea id="rg-reason" class="input" rows="2" maxlength="80"
+              placeholder="One line on what you'll use it for (max 80 characters)"
               oninput="updateReasonCounter(this)"></textarea>
           </div>
         </div>
@@ -955,8 +955,8 @@ function updateReasonCounter(el) {
   const n = (el.value || '').length;
   const c = $('reasonCounter');
   if (!c) return;
-  c.textContent = n + ' / 80 min';
-  c.classList.toggle('ok', n >= 80);
+  c.textContent = n + ' / 80';
+  c.classList.toggle('ok', n > 0 && n <= 80);
 }
 
 function refreshEmailHint() {
@@ -1077,8 +1077,8 @@ async function handleRegister(ev) {
       showAlert('Institution is required while your account awaits review.', 'error');
       return false;
     }
-    if (reviewReason.length < 80) {
-      showAlert('Please describe your use case in at least 80 characters.', 'error');
+    if (!reviewReason) {
+      showAlert('Please add a short reason for access.', 'error');
       return false;
     }
   }
@@ -1130,8 +1130,8 @@ async function handleRegister(ev) {
 }
 
 async function submitAccessRequest() {
-  if (($('rg-reason').value || '').trim().length < 80) {
-    showAlert('Please describe your use case in at least 80 characters.', 'error');
+  if (!($('rg-reason').value || '').trim()) {
+    showAlert('Please add a short reason for access.', 'error');
     return false;
   }
   if (!$('rg-affiliation').value.trim()) {
