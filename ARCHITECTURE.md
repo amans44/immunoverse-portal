@@ -486,7 +486,8 @@ admin console) is served by a **separate backend**, not by these static pages.
   or another admin (demote first).
 - **Email delivery:** `portal_auth/email.py` is provider-agnostic (Resend →
   SendGrid → console). Live sends via **Resend** from
-  `ImmunoVerse <noreply@immuno-verse.com>` (since 2026-08-31). If a send fails, the
+  `ImmunoVerse <noreply@immuno-verse.com>` (since 2026-08-31). Templates are light-themed with a dark
+  variant for clients that honour `prefers-color-scheme` (2026-10-08). If a send fails, the
   link is printed to the server log and surfaced to the admin.
 
 ## Private in-house datasets (lab-only cancers)
@@ -652,6 +653,13 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ---
 
 ## Change log
+
+### 2026-10-08 — Portal emails use a light theme
+
+All portal emails (admin alerts, "approved", set-password, reset) switched from a fixed
+dark palette to light (white card, dark text); mail apps that follow the reader's
+dark-mode setting get a dark version. Backend: `portal_auth/email.py` in the agent repo
+(commit `bb92b53`), live as `auth-service-00043-frx`.
 
 ### 2026-10-08 — Admin lists: stacked cards, Show more, fits any width
 
