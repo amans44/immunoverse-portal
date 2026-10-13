@@ -56,6 +56,14 @@ Two independent sync flows, both daily:
 - **Cache:** `~/.cache/immunoverse/extracted/` (24h TTL by default, overridable via `IMMUNOVERSE_CACHE_TTL`).
 - **Outputs:** `data_js/{CANCER}.js`, `data_js/{CANCER}_detail.js`, `data_js/_search_index.js`, `data_js/_summary.js`, and a `data/` folder with derived CSVs.
 - **Input columns it expects:** see the module docstring in `integrate_data.py`.
+- **Headline numbers are hard-coded, on purpose.** `16,667` tumor-specific pHLAs and
+  `2,402` neoantigens (`index.html` hero, stat tiles, neoantigen panel, meta description;
+  `login.html`; `chatbot/chatbot.js`) are the **manuscript** figures, not computed from the
+  tables. The portal tables carry a few hand-added targets that miss the paper threshold
+  (e.g. IGFBPL1 in NBL, TBXT in lung), so the raw unique-peptide count is higher (16,892).
+  Change them only when Frank gives new paper numbers. The detection-event figure
+  (`26,546`, = table rows) and its surplus (`9,879` = 26,546 − 16,667) are also hard-coded
+  and must follow the data.
 
 #### Aberration classes — 13 in the vocabulary, 11 public
 
@@ -653,6 +661,19 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 ---
 
 ## Change log
+
+### 2026-10-13 — Frank's revised final tables; headline numbers 16,667 / 2,402
+
+Frank fixed some edge cases in the final tables and moved them to a new Dropbox share
+(`qj3k8bj…`). Data rebuilt from it: 26,603 → 26,546 rows; unique peptides 16,912 → 16,892
+(−20); unique variant peptides 2,401 → 2,402 (new: `RFKEPSPGL`, ZNF408 p.A4Gfs*121, LUSC).
+Hard-coded text changed to match the revised paper: 16,687 → **16,667**, 2,401 → **2,402**,
+26,603 → 26,546 detection events, surplus 9,916 → 9,879. The default share URL in
+`integrate_data.py` and the `IMMUNOVERSE_DROPBOX_URL` repo variable now point at the new
+share (the variable overrides the default, so it had to change too). `reviewers/` and
+`demo/` were NOT changed (reviewers is frozen by rule; still says 16,687 / 2,401).
+"127 public neoantigens" and "96% not in IEDB" were left as they are; Frank did not
+revise them.
 
 ### 2026-10-08 — Portal emails use a light theme
 

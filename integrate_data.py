@@ -34,7 +34,7 @@ from pathlib import Path
 # an unset env var — so use `or` instead of `os.environ.get(..., default)` to
 # fall through to the hardcoded share URL when the env var is empty.
 DROPBOX_URL = os.environ.get('IMMUNOVERSE_DROPBOX_URL', '').strip() or \
-    'https://www.dropbox.com/scl/fo/2we0ndqepjbrc9dgrl4om/AFWgxeokcbxOkA4CFTTxJeA?rlkey=lre6rtqqkcjeglo2ylwtny3ea&dl=1'
+    'https://www.dropbox.com/scl/fo/qj3k8bjgg1ipcmm80ecea/AFZhbNO5cpsdrcUeJdJRu1E?rlkey=fm65q8x6h8vg6h5zlyvixt4f2&dl=1'
 # Where the extracted Dropbox files are cached between runs.
 EXTRACTED_DIR = Path(os.environ.get('IMMUNOVERSE_DATA', Path.home() / '.cache' / 'immunoverse' / 'extracted'))
 CACHE_ZIP = EXTRACTED_DIR.parent / 'dropbox.zip'
