@@ -662,6 +662,15 @@ const IMG_PROXY = IMG_PROXIES[0]; // kept for truthy checks elsewhere
 
 ## Change log
 
+### 2026-10-14 — /reviewers/ refreshed to the revised paper numbers + new data
+
+On Aman's explicit request. `reviewers/index.html` and `reviewers/chatbot/chatbot.js`
+differed from the root copies ONLY by the old numbers, so the same edits were applied
+there (16,667 / 2,402 / 26,546 / 9,879); the rest of the reviewers UI is untouched and
+now byte-identical to root. `python sync_reviewers.py` mirrored the new `data_js/` and
+`data/` (identical to root after the run). `reviewers/pancancer_image.png` kept as is.
+This supersedes the "reviewers NOT changed" note in the 2026-10-13 entry.
+
 ### 2026-10-13 — Frank's revised final tables; headline numbers 16,667 / 2,402
 
 Frank fixed some edge cases in the final tables and moved them to a new Dropbox share
