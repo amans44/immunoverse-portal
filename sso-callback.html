@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="referrer" content="no-referrer" />
+<title>Signing in to ImmunoVerse | ImmunoVerse</title>
+<link rel="icon" href="favicon.svg" />
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:#f8fafc;
+         color:#0f172a; margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  .card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:28px; max-width:420px;
+          width:calc(100% - 32px); box-sizing:border-box; }
+  h1 { font-size:18px; margin:0 0 6px; } p { font-size:14px; color:#475569; }
+  a { color:#6E36F0; }
+</style>
+</head>
+<body>
+<main class="card">
+  <h1>Signing in to ImmunoVerse</h1>
+  <p>Use your existing ImmunoVerse account. Chat access requires approval.</p>
+  <p id="sso-msg" role="status" aria-live="polite">One moment…</p>
+  <p id="sso-login" hidden><a href="login.html">Go to the sign-in page</a></p>
+</main>
+<script src="iv-sso.js"></script>
+<script>ivPortalSsoCallback();</script>
+</body>
+</html>

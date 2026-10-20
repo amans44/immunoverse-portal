@@ -657,6 +657,13 @@ select.input {
 
         <button id="signinSubmit" type="submit" class="submit-btn">Sign in</button>
 
+        <!-- One ImmunoVerse identity (2026-10-18): if this ImmunoVerse account is signed in on
+             ImmunoVerse Chat, continue with that sign-in. Works only for a Chat account linked to
+             this Portal account; it never merges accounts by email. -->
+        <button type="button" class="submit-btn" style="margin-top:10px;background:#fff;color:#6E36F0;border:1px solid #6E36F0"
+                onclick="ivPortalSsoFromChat()">Continue with your ImmunoVerse Chat sign-in</button>
+        <p id="sso-msg" style="font-size:13px;margin:8px 0 0"></p>
+
         <p style="text-align:center; margin: 16px 0 0;">
           <a class="muted-link" href="#" onclick="switchMode('register'); return false;">New here? Create an account →</a>
           <span style="color:var(--text-3); margin: 0 8px;">·</span>
@@ -813,7 +820,17 @@ async function ivAuthFetch(path, opts) {
   }
   throw lastErr || new Error('auth endpoints unreachable');
 }
-const RETURN_TO = (new URLSearchParams(location.search)).get('return') || 'account.html';
+// ⚠ Was used unvalidated: login.html?return=https://evil.example sent a freshly signed-in user
+// anywhere, and return=javascript:… ran script on this page. Now ONLY a same-origin page.
+const RETURN_TO = (function (raw) {
+  if (!raw) return 'account.html';
+  try {
+    if (/^[a-z][a-z0-9+.-]*:/i.test(raw) || raw.indexOf('//') === 0 || raw.indexOf(String.fromCharCode(92)) !== -1) return 'account.html';
+    var u = new URL(raw, location.href);
+    if (u.origin !== location.origin) return 'account.html';
+    return u.pathname.replace(/^\//, '') + u.search + u.hash;
+  } catch (e) { return 'account.html'; }
+})((new URLSearchParams(location.search)).get('return'));
 
 // Already signed in? Jump straight to the destination so users don't stare at
 // a login form when they're already logged in. If the access token has expired
@@ -1194,5 +1211,6 @@ function showPending(msg) {
   parent.appendChild(wrap);
 }
 </script>
+<script src="iv-sso.js"></script>
 </body>
 </html>
