@@ -502,7 +502,8 @@ admin console) is served by a **separate backend**, not by these static pages.
 
 In-house cohorts (**MB** medulloblastoma, **OS** osteosarcoma, **DIPG**, **NEPC**,
 **CHORDOMA** — 5 live as of 2026-06-15; plus **CTEC**, cortical thymic epithelial
-cells, a normal-tissue dataset added 2026-09-22 as admins-only) are hosted privately and folded into the
+cells, a normal-tissue dataset added 2026-09-22 as admins-only; and **BURNPIT**, a
+burn-pit exposure cohort added 2026-10-23, granted to the lab group) are hosted privately and folded into the
 **same explorer** as the 21 public cancers, so they're directly comparable — not a
 separate page. Visible ONLY to a lab allow-list;
 invisible to everyone else (nav, dropdown, grid, search). Adding a cohort is purely
@@ -901,6 +902,23 @@ compare modal, `interp()`), `data_js/*.js` (slot 8 backfilled).
   `gs://immunoverse-private-datasets/reference/immunogenicity/v2026-09-29/`
   (both files + `MANIFEST.json` with checksums and row counts). New prefix; no
   production object or bucket permission was touched.
+
+### 2026-10-23 — Burnpit added as a 7th in-house dataset (lab group)
+
+**Where:** data only — bucket `immunoverse-private-datasets/burnpit/` + Firestore
+`portal_private_datasets/burnpit`. No frontend or backend code change, no deploy.
+- **What:** burn-pit exposure cohort, 3,401 peptides (2,667 unique), 5 donors
+  (VACA001/002/005, VANYLUNG003/004, two runs each). Classes: ERV 1,562, self_gene 576,
+  splicing 426, nuORF 385 (→ cryptic 313 / lncRNA 52 / pseudogene 20), variant 248,
+  TE_chimeric 152, rna_edit 46, circRNA 6. Built with `integrate_inhouse.py --code BURNPIT
+  --name "Burnpit (in-house)" --group In-house`.
+- **Figures:** all 2,607 assets attach — 716 percentile, 716 rank-abundance, 717 spectrum,
+  405 ERV expr (503 peptides), 49 chr splicing (53 peptides), 4 gene boxplots (121
+  peptides). 0 broken refs, 0 unreferenced diff plots. Only ~717 of 3,395 unique peptides
+  have figures (what Frank generated); the rest render table-only.
+- **Access:** `visibility:restricted`, granted to the `yarmarkovichlab` group (2026-10-23). Manage on the
+  In-house access board.
+- **Not in chat** (same reason as cTEC).
 
 ### 2026-09-22 — cTEC added as a 6th in-house dataset (admins only)
 
