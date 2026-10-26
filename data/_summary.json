@@ -18,7 +18,7 @@
         "lncRNA": 111,
         "pseudogene": 25
       },
-      "genes": 285,
+      "genes": 130,
       "totalSamples": 125
     },
     {
@@ -32,7 +32,7 @@
         "self_gene": 13,
         "nuORF": 6
       },
-      "genes": 17,
+      "genes": 16,
       "totalSamples": 2
     },
     {
@@ -54,7 +54,7 @@
         "lncRNA": 69,
         "pseudogene": 14
       },
-      "genes": 191,
+      "genes": 104,
       "totalSamples": 60
     },
     {
@@ -75,7 +75,7 @@
         "pseudogene": 15,
         "lncRNA": 64
       },
-      "genes": 262,
+      "genes": 151,
       "totalSamples": 15
     },
     {
@@ -111,7 +111,7 @@
         "lncRNA": 206,
         "pseudogene": 36
       },
-      "genes": 860,
+      "genes": 591,
       "totalSamples": 120
     },
     {
@@ -130,7 +130,7 @@
         "lncRNA": 5,
         "pseudogene": 3
       },
-      "genes": 59,
+      "genes": 54,
       "totalSamples": 3
     },
     {
@@ -153,7 +153,7 @@
         "lncRNA": 6,
         "pseudogene": 2
       },
-      "genes": 84,
+      "genes": 68,
       "totalSamples": 7
     },
     {
@@ -174,7 +174,7 @@
         "lncRNA": 225,
         "pseudogene": 29
       },
-      "genes": 392,
+      "genes": 149,
       "totalSamples": 33
     },
     {
@@ -196,7 +196,7 @@
         "nuORF": 126,
         "pseudogene": 8
       },
-      "genes": 186,
+      "genes": 144,
       "totalSamples": 56
     },
     {
@@ -216,7 +216,7 @@
         "lncRNA": 51,
         "pseudogene": 15
       },
-      "genes": 143,
+      "genes": 72,
       "totalSamples": 72
     },
     {
@@ -237,7 +237,7 @@
         "pseudogene": 11,
         "lncRNA": 93
       },
-      "genes": 304,
+      "genes": 163,
       "totalSamples": 75
     },
     {
@@ -258,7 +258,7 @@
         "lncRNA": 152,
         "pseudogene": 27
       },
-      "genes": 553,
+      "genes": 366,
       "totalSamples": 56
     },
     {
@@ -280,7 +280,7 @@
         "lncRNA": 151,
         "pseudogene": 27
       },
-      "genes": 588,
+      "genes": 405,
       "totalSamples": 56
     },
     {
@@ -298,7 +298,7 @@
         "lncRNA": 6,
         "pseudogene": 2
       },
-      "genes": 44,
+      "genes": 22,
       "totalSamples": 7
     },
     {
@@ -319,7 +319,7 @@
         "lncRNA": 14,
         "pseudogene": 2
       },
-      "genes": 83,
+      "genes": 64,
       "totalSamples": 16
     },
     {
@@ -342,7 +342,7 @@
         "lncRNA": 109,
         "pseudogene": 21
       },
-      "genes": 343,
+      "genes": 179,
       "totalSamples": 62
     },
     {
@@ -363,7 +363,7 @@
         "nuORF": 565,
         "pseudogene": 25
       },
-      "genes": 281,
+      "genes": 99,
       "totalSamples": 22
     },
     {
@@ -382,7 +382,7 @@
         "lncRNA": 2,
         "pseudogene": 2
       },
-      "genes": 18,
+      "genes": 15,
       "totalSamples": 23
     },
     {
@@ -404,7 +404,7 @@
         "lncRNA": 537,
         "pseudogene": 100
       },
-      "genes": 1665,
+      "genes": 1066,
       "totalSamples": 103
     },
     {
@@ -421,7 +421,7 @@
         "variant": 1,
         "nuORF": 5
       },
-      "genes": 18,
+      "genes": 16,
       "totalSamples": 2
     }
   ],
@@ -451,7 +451,7 @@
   "totals": {
     "targets": 26546,
     "tumorSpecific": 23913,
-    "genes": 6378
+    "genes": 3876
   },
   "labels": {
     "self_gene": "Self-gene (Canonical self-antigen)",
