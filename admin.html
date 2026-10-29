@@ -1038,6 +1038,11 @@ async function loadUsers() {
             <span>joined ${esc(timeAgo(u.created_at))}</span>${dot}
             <span>last login ${esc(timeAgo(u.last_login))}</span>
           </div>
+          ${u.status_changed_by
+            ? `<div class="rec-meta" title="From the admin audit log">${esc((u.status_change||'changed').replace(/^./, c => c.toUpperCase()))} by <span class="email-mono">${esc(u.status_changed_by)}</span>${dot}<span>${esc(new Date(u.status_changed_at).toLocaleString())}</span></div>`
+            : (u.status === 'suspended'
+                ? `<div class="rec-meta" title="Status changes are recorded from 2026-10-29">Suspended before the admin audit log began (Oct 2026) — who and when not recorded</div>`
+                : '')}
           ${u.reason ? `<div class="clamp" title="Reason the user gave at sign-up">“${esc(u.reason)}”</div>` : ''}
         </div>
         <div class="rec-actions">

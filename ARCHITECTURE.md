@@ -903,6 +903,14 @@ compare modal, `interp()`), `data_js/*.js` (slot 8 backfilled).
   (both files + `MANIFEST.json` with checksums and row counts). New prefix; no
   production object or bucket permission was touched.
 
+### 2026-10-29 — Admin audit record for account status changes
+
+**Where:** `admin.html` (user cards) + the auth backend (`portal_auth`, sibling repo).
+- Every admin suspend / reinstate / approve stamps the account with who and when, and appends an
+  entry to Firestore `portal_admin_audit` (also role changes, deletes). Admin-only.
+- User cards show "Suspended by <admin> · <date>". An account suspended before this existed says
+  so ("who and when not recorded") instead of showing nothing.
+
 ### 2026-10-29 — Burnpit figure set expanded (2,607 → 5,669); slash-named repeats fixed
 
 **Where:** bucket `immunoverse-private-datasets/burnpit/` (assets + rebuilt `BURNPIT.js` /
