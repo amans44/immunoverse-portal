@@ -903,6 +903,21 @@ compare modal, `interp()`), `data_js/*.js` (slot 8 backfilled).
   (both files + `MANIFEST.json` with checksums and row counts). New prefix; no
   production object or bucket permission was touched.
 
+### 2026-10-29 — Burnpit figure set expanded (2,607 → 5,669); slash-named repeats fixed
+
+**Where:** bucket `immunoverse-private-datasets/burnpit/` (assets + rebuilt `BURNPIT.js` /
+`BURNPIT_detail.js`) and `integrate_inhouse.py`. No deploy; access unchanged.
+- **Data:** new figure set is a superset of the old one (0 missing, 1 regenerated:
+  `FSLTASTHF_percentile.png`, +3,057 new). Peptides with figures 716 → 1,675; with a
+  differential plot 677 → 1,215. Splicing 266 files → 290 peptides, ERV/TE expr 621 → 761,
+  gene boxplots 11 → 224. All 5,669 attach; 0 broken, 0 orphans; bucket verified by MD5.
+- **Fix:** repeat names can contain a slash (`BSR/Beta_dup332`), which a file name can't —
+  Frank's plots write it as `_`. `compute_diff_plot_inhouse` now maps `/` → `_` for the
+  ERV and TE_chimeric figure names. No other in-house cohort has slash names, so only
+  Burnpit's output changed (1 peptide, `ISPYSQGALTF`, gains its repeat plot).
+- Local master: `in-house/burnpit/assets/` (old set kept as `assets_old_2607/` until
+  checked; the bucket was synced without deletes, so nothing was removed there).
+
 ### 2026-10-23 — Burnpit added as a 7th in-house dataset (lab group)
 
 **Where:** data only — bucket `immunoverse-private-datasets/burnpit/` + Firestore

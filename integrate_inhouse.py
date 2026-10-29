@@ -61,7 +61,9 @@ def compute_diff_plot_inhouse(cls, source):
             # colon becomes an underscore), e.g. chr10_93416859-93434697_splicing.png
             return {'kind': 'splicing', 'splicing': f"{coords.replace(':', '_')}_splicing.png"}
         if cls == 'ERV':
-            erv = parts[0].split(':')[0]
+            # Repeat names can carry a slash (BSR/Beta_dup332); the plot file
+            # can't, so Frank's figures write it as an underscore.
+            erv = parts[0].split(':')[0].replace('/', '_')
             if not erv:
                 return None
             return {'kind': 'erv', 'erv': f'{erv}_expr.png'}
@@ -73,7 +75,7 @@ def compute_diff_plot_inhouse(cls, source):
                 return None
             return {'kind': 'both',
                     'splicing': f"{coords.replace(':', '_')}_splicing.png",
-                    'erv': f'{te_pieces[1]}_expr.png'}
+                    'erv': f"{te_pieces[1].replace('/', '_')}_expr.png"}
     except (IndexError, AttributeError):
         return None
     return None
